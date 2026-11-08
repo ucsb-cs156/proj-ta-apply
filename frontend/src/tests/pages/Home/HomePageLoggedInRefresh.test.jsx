@@ -94,19 +94,20 @@ describe("HomePageLoggedIn refreshes by itself (issue #281)", () => {
     axiosMock.onGet("/api/recruitments/applicable").reply(200, []);
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, [closedTa]);
     expect(
-      await screen.findByTestId("HomePageLoggedIn-admin-card-0-quarter"),
+      await screen.findByTestId("HomePageLoggedIn-admin-card-0-type"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByTestId("HomePageLoggedIn-admin-card-1-quarter"),
+      screen.queryByTestId("HomePageLoggedIn-admin-card-1-type"),
     ).toBeNull();
 
-    // Another admin creates a second recruitment.
+    // Another admin creates a second recruitment (of the same, newest, quarter, whose card is
+    // open; issue #379).
     axiosMock
       .onGet("/api/admin/recruitments/all")
       .reply(200, [openUla, closedTa]);
     expect(
       await screen.findByTestId(
-        "HomePageLoggedIn-admin-card-1-quarter",
+        "HomePageLoggedIn-admin-card-1-type",
         {},
         { timeout: 5000 },
       ),
@@ -121,7 +122,7 @@ describe("HomePageLoggedIn refreshes by itself (issue #281)", () => {
     renderHome(apiCurrentUserFixtures.adminUser);
     axiosMock.onGet("/api/recruitments/applicable").reply(200, []);
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, [closedTa]);
-    await screen.findByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    await screen.findByTestId("HomePageLoggedIn-admin-card-0-type");
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
     expect(

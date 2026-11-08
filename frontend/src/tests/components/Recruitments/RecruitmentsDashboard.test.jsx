@@ -37,6 +37,16 @@ function renderDashboard(queryClient = new QueryClient(), today = undefined) {
   );
 }
 
+/**
+ * Issue #379: the older quarter (W26) starts closed, with its cards not rendered. Opens it so
+ * cards 1 (W26 TA) and 2 (W26 ULA) are on screen.
+ */
+async function openOlderQuarter(prefix = "RecruitmentsDashboard") {
+  await userEvent.click(
+    await screen.findByTestId(`${prefix}-quarter-W26-toggle`),
+  );
+}
+
 // The queries behind the instructor and student sections of the home page. An admin action that
 // changes what they show (issue #250) must refresh all of them, without a page reload.
 const HOME_PAGE_KEYS = [
@@ -89,10 +99,15 @@ describe("RecruitmentsDashboard tests", () => {
       "Only one recruitment of each type (TA or ULA) may be created for a given quarter.",
       "Recruitments are automatically populated with the undergraduate courses offered in the specified quarter; the list of courses can then be manually adjusted using the Courses button.",
     ]);
+    // Issue #379: one card per quarter, the newest (S26) open with its TA card as card 0.
     expect(
-      await screen.findByTestId("RecruitmentsDashboard-card-0-quarter"),
+      await screen.findByTestId("RecruitmentsDashboard-quarter-S26-title"),
     ).toHaveTextContent("S26");
-    // Card 1 is W26 TA, id 1, with 15 applications.
+    expect(
+      screen.getByTestId("RecruitmentsDashboard-card-0-type"),
+    ).toHaveTextContent("TA");
+    // The older quarter starts closed; open it. Card 1 is W26 TA, id 1, with 15 applications.
+    await openOlderQuarter();
     await waitFor(() =>
       expect(
         screen.getByTestId("RecruitmentsDashboard-card-1-applications"),
@@ -120,8 +135,11 @@ describe("RecruitmentsDashboard tests", () => {
     expect(screen.getByTestId("Home-admin-intro")).toBeInTheDocument();
     expect(screen.getByTestId("Home-admin-create-button")).toBeInTheDocument();
     expect(
-      await screen.findByTestId("Home-admin-card-0-quarter"),
+      await screen.findByTestId("Home-admin-quarter-S26-title"),
     ).toHaveTextContent("S26");
+    expect(screen.getByTestId("Home-admin-card-0-type")).toHaveTextContent(
+      "TA",
+    );
   });
 
   test("creating a recruitment posts the form from its modal, toasts and closes it", async () => {
@@ -274,6 +292,7 @@ describe("RecruitmentsDashboard tests", () => {
 
   test("the delete warning names how many applications are on file", async () => {
     renderDashboard();
+    await openOlderQuarter();
     // Card 1 is W26 TA, id 1, with 15 applications; card 2 is W26 ULA, id 2, with 1.
     await waitFor(() =>
       expect(
@@ -301,6 +320,7 @@ describe("RecruitmentsDashboard tests", () => {
 
   test("confirming the modal deletes that recruitment", async () => {
     renderDashboard();
+    await openOlderQuarter();
     await screen.findByTestId("RecruitmentsDashboard-card-1-delete-button");
 
     await userEvent.click(
@@ -319,6 +339,7 @@ describe("RecruitmentsDashboard tests", () => {
     const queryClient = new QueryClient();
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     renderDashboard(queryClient);
+    await openOlderQuarter();
     await screen.findByTestId("RecruitmentsDashboard-card-1-delete-button");
 
     await userEvent.click(

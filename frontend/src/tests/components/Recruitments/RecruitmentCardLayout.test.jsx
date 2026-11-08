@@ -1,10 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
 import RecruitmentCardLayout, {
   DELETE_TOOLTIP,
+  RECRUITMENT_CARD_STORAGE_PREFIX,
 } from "main/components/Recruitments/RecruitmentCardLayout";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
@@ -36,13 +37,20 @@ function renderCard(props = {}) {
 }
 
 describe("RecruitmentCardLayout tests", () => {
-  test("header: quarter, type, status badges, application count and delete", async () => {
+  beforeEach(() => localStorage.clear());
+
+  test("header: the type in the large font (no quarter, issue #379), status badges, application count and delete", async () => {
     const { onDeleteRequested } = renderCard();
 
     expect(screen.getByTestId("C-card")).toHaveClass("w-100", "mb-3");
     expect(screen.getByTestId("C-card").style.maxWidth).toBe("");
-    expect(screen.getByTestId("C-quarter")).toHaveTextContent("W26");
-    expect(screen.getByTestId("C-type")).toHaveTextContent("TA");
+    expect(screen.queryByTestId("C-quarter")).toBeNull();
+    const header = screen.getByTestId("C-card").querySelector(".card-header");
+    expect(header).not.toHaveTextContent("W26");
+    const type = screen.getByTestId("C-type");
+    expect(type).toHaveTextContent(/^TA$/);
+    expect(type).toHaveClass("fs-5");
+    expect(type.tagName).toBe("STRONG");
     expect(screen.getByTestId("C-applicationStatus")).toHaveTextContent(
       "CLOSED",
     );
@@ -61,8 +69,18 @@ describe("RecruitmentCardLayout tests", () => {
     );
     const del = screen.getByTestId("C-delete-button");
     expect(del).toHaveAttribute("aria-label", DELETE_TOOLTIP);
+    // Beside the toggle, not inside it, at the right edge of the row.
+    expect(header).toContainElement(del);
+    expect(screen.getByTestId("C-toggle")).not.toContainElement(del);
+    expect(del).toHaveClass("btn-outline-danger", "btn-sm", "me-3");
+    expect(header.lastElementChild).toBe(del);
     await userEvent.click(del);
     expect(onDeleteRequested).toHaveBeenCalledWith(ta);
+    // Deleting is not toggling.
+    expect(screen.getByTestId("C-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
     await userEvent.hover(del);
     const tooltip = await screen.findByText(DELETE_TOOLTIP);
     expect(tooltip.closest('[role="tooltip"]')).toHaveAttribute(
@@ -71,12 +89,133 @@ describe("RecruitmentCardLayout tests", () => {
     );
   });
 
+  // ---- Issue #379: the card's top row opens and closes it ----
+
+  test("the top row is one toggle button, open by default, with the caret, type, badges and count inside it", () => {
+    renderCard({ recruitment: { ...ula, assignmentsPublished: true } });
+
+    const header = screen.getByTestId("C-card").querySelector(".card-header");
+    expect(header).toHaveClass("d-flex", "align-items-center", "p-0");
+    const toggle = screen.getByTestId("C-toggle");
+    expect(toggle.tagName).toBe("BUTTON");
+    expect(toggle).toHaveAttribute("type", "button");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveClass(
+      "btn",
+      "btn-link",
+      "flex-grow-1",
+      "text-start",
+      "text-reset",
+      "text-decoration-none",
+      "d-flex",
+      "gap-3",
+    );
+    expect(header.firstElementChild).toBe(toggle);
+    const caret = screen.getByTestId("C-caret");
+    expect(caret).toHaveTextContent("▾");
+    expect(caret).toHaveAttribute("aria-hidden", "true");
+    // Caret, type, the badges and the count, in that order, all inside the toggle.
+    expect(Array.from(toggle.children)).toEqual([
+      caret,
+      screen.getByTestId("C-type"),
+      screen.getByTestId("C-applicationStatus"),
+      screen.getByTestId("C-reviewStatus"),
+      screen.getByTestId("C-assignmentsPublished"),
+      screen.getByTestId("C-applications"),
+    ]);
+    expect(screen.getByTestId("C-type")).toHaveTextContent(/^ULA$/);
+    // Its accessible name reads the row without the caret.
+    expect(
+      screen.getByRole("button", {
+        name: /^ULA\s*OPEN\s*Faculty Reviews: Open\s*Assignments Published\s*15 applications$/,
+        expanded: true,
+      }),
+    ).toBe(toggle);
+    expect(localStorage.length).toBe(0);
+  });
+
+  test("clicking the row closes the card, hiding the dates, diagram and buttons, and clicking again opens it; each setting is remembered per quarter and type", async () => {
+    renderCard();
+    const toggle = screen.getByTestId("C-toggle");
+    expect(screen.getByTestId("C-dates")).toBeInTheDocument();
+
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("C-caret")).toHaveTextContent("▸");
+    expect(screen.queryByTestId("C-dates")).toBeNull();
+    expect(screen.queryByTestId("C-steps")).toBeNull();
+    expect(screen.queryByTestId("C-courses-button")).toBeNull();
+    expect(screen.queryByTestId("C-change-history-button")).toBeNull();
+    expect(screen.getByTestId("C-card").querySelector(".card-body")).toBeNull();
+    expect(
+      screen.getByTestId("C-card").querySelector(".card-footer"),
+    ).toBeNull();
+    // The row itself stays, badges, count and trash icon included.
+    expect(screen.getByTestId("C-applicationStatus")).toBeInTheDocument();
+    expect(screen.getByTestId("C-applications")).toBeInTheDocument();
+    expect(screen.getByTestId("C-delete-button")).toBeInTheDocument();
+    expect(
+      localStorage.getItem(`${RECRUITMENT_CARD_STORAGE_PREFIX}20261.TA`),
+    ).toBe("closed");
+
+    // Anywhere on the row: the count, here.
+    await userEvent.click(screen.getByTestId("C-applications"));
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("C-caret")).toHaveTextContent("▾");
+    expect(screen.getByTestId("C-dates")).toBeInTheDocument();
+    expect(screen.getByTestId("C-steps")).toBeInTheDocument();
+    expect(screen.getByTestId("C-courses-button")).toBeInTheDocument();
+    expect(
+      localStorage.getItem(`${RECRUITMENT_CARD_STORAGE_PREFIX}20261.TA`),
+    ).toBe("open");
+    expect(RECRUITMENT_CARD_STORAGE_PREFIX).toBe("adminRecruitmentCard.");
+  });
+
+  test("the keyboard toggles the card", async () => {
+    renderCard();
+    const toggle = screen.getByTestId("C-toggle");
+    toggle.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByTestId("C-dates")).toBeNull();
+    await userEvent.keyboard(" ");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("C-dates")).toBeInTheDocument();
+  });
+
+  test("defaultOpen false starts it closed; what this browser remembers wins over the default", () => {
+    renderCard({ defaultOpen: false });
+    expect(screen.getByTestId("C-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.queryByTestId("C-dates")).toBeNull();
+    cleanup();
+
+    localStorage.setItem(`${RECRUITMENT_CARD_STORAGE_PREFIX}20261.TA`, "open");
+    renderCard({ defaultOpen: false });
+    expect(screen.getByTestId("C-dates")).toBeInTheDocument();
+    cleanup();
+
+    localStorage.setItem(
+      `${RECRUITMENT_CARD_STORAGE_PREFIX}20261.TA`,
+      "closed",
+    );
+    renderCard();
+    expect(screen.queryByTestId("C-dates")).toBeNull();
+    // The ULA card of the same quarter is remembered on its own.
+    cleanup();
+    renderCard({ recruitment: ula });
+    expect(screen.getByTestId("C-dates")).toBeInTheDocument();
+  });
+
   test("an open recruitment shows green badges, and the published badge when published", () => {
     renderCard({
       recruitment: { ...ula, assignmentsPublished: true },
       applicationCount: 1,
       steps: recruitmentStepsFixtures.ulaFresh,
     });
+    expect(screen.getByTestId("C-type")).toHaveTextContent(/^ULA$/);
     expect(screen.getByTestId("C-applicationStatus")).toHaveTextContent("OPEN");
     expect(screen.getByTestId("C-applicationStatus")).toHaveClass("bg-success");
     expect(screen.getByTestId("C-reviewStatus")).toHaveClass("bg-success");

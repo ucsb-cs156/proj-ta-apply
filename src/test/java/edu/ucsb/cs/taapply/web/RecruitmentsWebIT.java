@@ -157,25 +157,50 @@ public class RecruitmentsWebIT extends WebTestCase {
 
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-type");
     waitFor(firstRow);
     assertThat(firstRow).isVisible();
 
-    // Issue #357: a QXX Budget card sits above the quarter's cards. Since issue #358 it has Budget
-    // Planning and one allocation button, labelled by the quarter's recruitments (only a TA one
-    // exists here), which opens the quarter's Combined Allocation page.
-    assertThat(
-            page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-title']"))
-        .containsText("Budget");
-    assertThat(
-            page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-budget']"))
+    // Issue #379: one card per quarter, headed by the quarter alone (it was "QXX Budget", issue
+    // #357), with Budget Planning and one allocation button on its row (issue #358), labelled by
+    // the quarter's recruitments (only a TA one exists here); it opens the Combined Allocation
+    // page. The recruitment's card is nested inside, headed "TA" with no quarter.
+    String quarterCard = "[data-testid^='HomePageLoggedIn-admin-quarter-']";
+    Locator quarterTitle = page.locator(quarterCard + "[data-testid$='-title']");
+    assertThat(quarterTitle).hasText(Pattern.compile("^[WSMF]\\d\\d$"));
+    assertThat(page.locator(quarterCard + "[data-testid$='-budget']"))
         .containsText("Budget Planning");
-    Locator allocate =
-        page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-allocate']");
+    Locator allocate = page.locator(quarterCard + "[data-testid$='-allocate']");
     assertThat(allocate).containsText("Allocate TA slots to Courses");
     assertThat(allocate).hasAttribute("href", Pattern.compile("/admin/allocations/[WSMF]\\d\\d"));
+    assertThat(firstRow).hasText("TA");
 
-    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
+    // The newest quarter starts open; its row closes the card and opens it again, and the
+    // nested card's row does the same for that card alone.
+    Locator quarterToggle = page.locator(quarterCard + "[data-testid$='-toggle']");
+    assertThat(quarterToggle).hasAttribute("aria-expanded", "true");
+    Locator coursesButton = page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button");
+    assertThat(coursesButton).isVisible();
+    quarterTitle.click();
+    assertThat(quarterToggle).hasAttribute("aria-expanded", "false");
+    assertThat(firstRow).not().isVisible();
+    assertThat(coursesButton).not().isVisible();
+    assertThat(allocate).isVisible();
+    quarterTitle.click();
+    assertThat(quarterToggle).hasAttribute("aria-expanded", "true");
+    assertThat(coursesButton).isVisible();
+    Locator cardToggle = page.getByTestId("HomePageLoggedIn-admin-card-0-toggle");
+    assertThat(cardToggle).hasAttribute("aria-expanded", "true");
+    firstRow.click();
+    assertThat(cardToggle).hasAttribute("aria-expanded", "false");
+    assertThat(coursesButton).not().isVisible();
+    assertThat(firstRow).isVisible();
+    assertThat(quarterToggle).hasAttribute("aria-expanded", "true");
+    firstRow.click();
+    assertThat(cardToggle).hasAttribute("aria-expanded", "true");
+    assertThat(coursesButton).isVisible();
+
+    coursesButton.click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
@@ -284,7 +309,7 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-type");
     waitFor(firstRow);
     page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
@@ -328,7 +353,7 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-type");
     waitFor(firstRow);
     page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
@@ -380,7 +405,7 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-type");
     waitFor(firstRow);
     page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
@@ -452,7 +477,7 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-type");
     waitFor(firstRow);
     page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 

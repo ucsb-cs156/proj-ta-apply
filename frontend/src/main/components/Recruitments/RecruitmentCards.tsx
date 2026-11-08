@@ -4,17 +4,13 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
 import AllocationVisibilityModal from "main/components/Recruitments/AllocationVisibilityModal";
 import PublishAssignmentsModal from "main/components/Recruitments/PublishAssignmentsModal";
-import AdminBudgetCard from "main/components/Recruitments/AdminBudgetCard";
+import AdminQuarterCard from "main/components/Recruitments/AdminQuarterCard";
 import RecruitmentCardLayout from "main/components/Recruitments/RecruitmentCardLayout";
 import { useBackendMutation } from "main/utils/useBackend";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
-import {
-  SORT_KEYS,
-  sortRecruitments,
-  type SortKey,
-} from "main/utils/recruitmentSort";
+import { sortRecruitments } from "main/utils/recruitmentSort";
 import {
   MORE_ABOUT_TEXT,
   OPEN_REVIEWS_CONFIRMATION,
@@ -56,11 +52,17 @@ const latestOfType = (
   )[0]?.id;
 };
 
+/** The newest quarter (as yyyyq) among the recruitments: the one quarter card that starts open. */
+const newestQuarter = (recruitments: Recruitment[]): string | undefined =>
+  recruitments.map((r) => r.quarter).sort((a, b) => b.localeCompare(a))[0];
+
 /**
  * The recruitments grouped by quarter, the quarters in the order each first appears in the sorted
- * list (so a quarter's budget card moves with it), each group keeping the sorted order within it.
- * Each group also names the quarter's TA and ULA recruitment: the one with the highest id if
- * there were ever more than one (the backend allows only one of each per quarter).
+ * list (newest or oldest first, as the Quarters control says), each group keeping the sorted order
+ * within it: TA before ULA. Each group also names the quarter's TA and ULA recruitment, so the
+ * quarter card can say which the quarter has (since issue #358 only that matters, not which one:
+ * the backend allows only one of each per quarter, and were there ever more, any of them would
+ * do).
  */
 type QuarterGroup = {
   quarter: string;
@@ -77,12 +79,7 @@ const groupByQuarter = (sorted: Recruitment[]): QuarterGroup[] => {
       items: [],
     };
     group.items.push({ recruitment, index });
-    const field = recruitment.type === "TA" ? "ta" : "ula";
-    const current = group[field];
-    // Stryker disable next-line EqualityOperator : two recruitments never share an id, so > and >= agree
-    if (current === undefined || recruitment.id > current.id) {
-      group[field] = recruitment;
-    }
+    group[recruitment.type === "TA" ? "ta" : "ula"] = recruitment;
     groups.set(recruitment.quarter, group);
   });
   return [...groups.values()];
@@ -149,13 +146,16 @@ type RecruitmentCardsProps = {
 };
 
 /**
- * One card per recruitment with a Sort by bar above (issue #86): the recruitments table had
- * thirteen columns and overflowed a laptop screen. Each card (RecruitmentCardLayout) has the
- * quarter, type, status and application count in its header with a trash icon at the right
- * (issue #108), the dates in its body, the live Recruitment Steps diagram in a collapsible panel
- * (issue #233) and the Courses and Applications buttons in its footer. The diagram's actions open
- * the confirmation modals defined here, the Allocation Visibility modal and the Publish
- * Assignments modal.
+ * One card per quarter (AdminQuarterCard, issue #379), headed QXX with the quarter's Budget
+ * Planning and allocation buttons, the newest quarter open and the older ones closed until the
+ * admin opens them; a Quarters control above them puts the newest or the oldest first (it replaced
+ * the Sort by bar of issue #86, which sorted the cards of every quarter by any field, before they
+ * were nested by quarter). Inside each quarter card, one nested card per recruitment
+ * (RecruitmentCardLayout), TA before ULA, with the type, status and application count in its
+ * toggle row and a trash icon at the right (issue #108), the dates in its body, the live
+ * Recruitment Steps diagram in a collapsible panel (issue #233) and the Courses and Applications
+ * buttons in its footer. The diagram's actions open the confirmation modals defined here, the
+ * Allocation Visibility modal and the Publish Assignments modal.
  */
 export default function RecruitmentCards({
   recruitments,
@@ -164,8 +164,7 @@ export default function RecruitmentCards({
   testIdPrefix = "RecruitmentCards",
 }: RecruitmentCardsProps): React.JSX.Element {
   // Newest quarter first, as the table listed them.
-  const [sortKey, setSortKey] = useState<SortKey>("quarter");
-  const [descending, setDescending] = useState(true);
+  const [newestFirst, setNewestFirst] = useState(true);
 
   const statusMutation = useBackendMutation<Recruitment, unknown>(
     (recruitment) => ({
@@ -308,17 +307,10 @@ export default function RecruitmentCards({
     }
   };
 
-  const sortBy = (key: SortKey) => {
-    if (key === sortKey) {
-      setDescending(!descending);
-    } else {
-      setSortKey(key);
-      setDescending(false);
-    }
-  };
-
   const all = Array.isArray(recruitments) ? recruitments : [];
-  const sorted = sortRecruitments(all, sortKey, descending);
+  // By quarter; ties (a quarter's two recruitments) come TA before ULA.
+  const sorted = sortRecruitments(all, "quarter", newestFirst);
+  const newest = newestQuarter(all);
   const latestTa = latestOfType(all, "TA");
   const latestUla = latestOfType(all, "ULA");
 
@@ -357,27 +349,28 @@ export default function RecruitmentCards({
   return (
     <div data-testid={`${testIdPrefix}-cards`}>
       <div className="d-flex align-items-center flex-wrap gap-2 mb-3">
-        <span id={`${testIdPrefix}-sort-label`}>Sort by</span>
+        <span id={`${testIdPrefix}-order-label`}>Quarters</span>
         <ButtonGroup
           size="sm"
-          aria-labelledby={`${testIdPrefix}-sort-label`}
-          data-testid={`${testIdPrefix}-sort-bar`}
+          aria-labelledby={`${testIdPrefix}-order-label`}
+          data-testid={`${testIdPrefix}-order-bar`}
         >
-          {SORT_KEYS.map(({ key, label }) => {
-            const active = key === sortKey;
-            return (
-              <Button
-                key={key}
-                variant={active ? "primary" : "outline-primary"}
-                aria-pressed={active}
-                onClick={() => sortBy(key)}
-                data-testid={`${testIdPrefix}-sort-${key}`}
-              >
-                {label}
-                {active && (descending ? " ▼" : " ▲")}
-              </Button>
-            );
-          })}
+          <Button
+            variant={newestFirst ? "primary" : "outline-primary"}
+            aria-pressed={newestFirst}
+            onClick={() => setNewestFirst(true)}
+            data-testid={`${testIdPrefix}-order-newest`}
+          >
+            Newest first
+          </Button>
+          <Button
+            variant={newestFirst ? "outline-primary" : "primary"}
+            aria-pressed={!newestFirst}
+            onClick={() => setNewestFirst(false)}
+            data-testid={`${testIdPrefix}-order-oldest`}
+          >
+            Oldest first
+          </Button>
         </ButtonGroup>
       </div>
 
@@ -388,16 +381,14 @@ export default function RecruitmentCards({
       )}
 
       {groupByQuarter(sorted).map((group) => (
-        <div
+        <AdminQuarterCard
           key={group.quarter}
-          data-testid={`${testIdPrefix}-quarter-${group.quarter}`}
+          quarter={group.quarter}
+          ta={group.ta}
+          ula={group.ula}
+          defaultOpen={group.quarter === newest}
+          testIdPrefix={`${testIdPrefix}-quarter`}
         >
-          <AdminBudgetCard
-            quarter={group.quarter}
-            ta={group.ta}
-            ula={group.ula}
-            testIdPrefix={`${testIdPrefix}-budget`}
-          />
           {group.items.map(({ recruitment, index }) => (
             <AdminRecruitmentCard
               key={recruitment.id}
@@ -413,7 +404,7 @@ export default function RecruitmentCards({
               testIdPrefix={`${testIdPrefix}-card-${index}`}
             />
           ))}
-        </div>
+        </AdminQuarterCard>
       ))}
       {visibilityRecruitment !== undefined && (
         <AllocationVisibilityModal

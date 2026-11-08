@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Card } from "react-bootstrap";
+import { useRememberedOpen } from "main/utils/useRememberedOpen";
 
 type CollapsibleCardProps = {
   title: string;
@@ -26,16 +26,10 @@ export default function CollapsibleCard({
   children,
   testIdPrefix = "CollapsibleCard",
 }: CollapsibleCardProps): React.JSX.Element {
-  const fullKey = `${STORAGE_PREFIX}${storageKey}`;
-  const [open, setOpen] = useState(
-    () => localStorage.getItem(fullKey) === "open",
+  const [open, toggle] = useRememberedOpen(
+    `${STORAGE_PREFIX}${storageKey}`,
+    false,
   );
-
-  const toggle = () => {
-    const next = !open;
-    localStorage.setItem(fullKey, next ? "open" : "closed");
-    setOpen(next);
-  };
 
   return (
     <Card className="mt-4" data-testid={testIdPrefix}>
