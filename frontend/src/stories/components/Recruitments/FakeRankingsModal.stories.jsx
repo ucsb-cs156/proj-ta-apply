@@ -1,7 +1,7 @@
 import React from "react";
 import { HttpResponse, http } from "msw";
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
-import { fakeRankingsNote } from "main/utils/fakeRankings";
+import { NO_APPLICANTS_NOTE } from "main/utils/fakeRankings";
 
 export default {
   title: "components/Recruitments/FakeRankingsModal",
@@ -21,7 +21,7 @@ export default {
 // one, and react-router refuses a second.
 const Template = (args) => (
   <FakeRankingsModal
-    recruitmentIds={[1]}
+    recruitmentId={1}
     onHide={() => {}}
     testIdPrefix="Story"
     {...args}
@@ -32,16 +32,11 @@ const Template = (args) => (
 export const Default = Template.bind({});
 Default.args = {};
 
-/** The Combined Allocation page (issue #358) with both reviews Open: one job per recruitment. */
-export const TwoRecruitments = Template.bind({});
-TwoRecruitments.args = {
-  recruitmentIds: [5, 6],
-  note: fakeRankingsNote(["TA", "ULA"], []),
-};
-
-/** The Combined Allocation page when only the TA review is Open: the ULA recruitment is left alone. */
-export const OnlyOneOpen = Template.bind({});
-OnlyOneOpen.args = {
-  recruitmentIds: [5],
-  note: fakeRankingsNote(["TA"], ["ULA"]),
+/**
+ * The Assignments page's note when the recruitment has no applicants (issue #385): the job would
+ * rank nobody.
+ */
+export const NoApplicants = Template.bind({});
+NoApplicants.args = {
+  note: NO_APPLICANTS_NOTE,
 };

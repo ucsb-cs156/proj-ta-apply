@@ -23,7 +23,7 @@ const Template = (args) => <RecruitmentCardLayout {...args} />;
 /**
  * The most recent TA recruitment: its steps panel opens expanded. The footer has Courses, Draft
  * Applications, Applications, Make Assignments and View Assignments (issue #317), then Download
- * Rankings CSV since reviews are open.
+ * Rankings CSV since reviews are open, and Change History at the right edge (issue #390).
  */
 export const ExpandedTA = Template.bind({});
 ExpandedTA.args = {
@@ -64,7 +64,7 @@ export const TwoRecruitments = (args) => (
 
 /**
  * Faculty reviews not started: there are no rankings yet, so no Download Rankings CSV; the footer
- * is exactly the five buttons.
+ * is the five workflow buttons, then the gap, then Change History flush right.
  */
 export const NoRankingsYet = Template.bind({});
 NoRankingsYet.args = {

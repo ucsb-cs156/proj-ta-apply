@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.repository;
 
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import java.util.Collection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
@@ -18,4 +19,11 @@ public interface RecruitmentAuditTrailRepository
 
   /** One page of the changes recorded against one recruitment, in the page's order. */
   Page<RecruitmentAuditTrail> findByRecruitmentId(Long recruitmentId, Pageable pageable);
+
+  /**
+   * One page of the changes to one field of any of the given recruitments, in the page's order
+   * (issue #391: the hiring-target changes of a quarter's TA and ULA recruitments).
+   */
+  Page<RecruitmentAuditTrail> findByRecruitmentIdInAndWhatChanged(
+      Collection<Long> recruitmentIds, String whatChanged, Pageable pageable);
 }

@@ -28,6 +28,39 @@ describe("CollapsibleCard", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Change History" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("CollapsibleCard-subtitle"),
+    ).not.toBeInTheDocument();
+  });
+
+  /** Issue #391: a smaller line beneath the title, on the header, clickable with it. */
+  test("a subtitle is shown beneath the title in a smaller font, whether open or closed", async () => {
+    renderCard({ subtitle: "Track changes to hiring targets" });
+
+    const toggle = screen.getByTestId("CollapsibleCard-toggle");
+    const subtitle = screen.getByTestId("CollapsibleCard-subtitle");
+    expect(toggle).toContainElement(subtitle);
+    expect(subtitle).toHaveTextContent("Track changes to hiring targets");
+    expect(subtitle).toHaveClass(
+      "d-block",
+      "fs-6",
+      "fw-normal",
+      "text-body-secondary",
+      "mt-1",
+    );
+    expect(toggle).toHaveTextContent(
+      "▸ Change HistoryTrack changes to hiring targets",
+    );
+    // Still the one heading, with the title first.
+    expect(
+      screen.getByRole("heading", { level: 2, name: /^Change History/ }),
+    ).toContainElement(subtitle);
+
+    await userEvent.click(toggle);
+    expect(screen.getByTestId("content")).toBeInTheDocument();
+    expect(screen.getByTestId("CollapsibleCard-subtitle")).toHaveTextContent(
+      "Track changes to hiring targets",
+    );
   });
 
   test("clicking toggles it open and closed, saving each setting", async () => {

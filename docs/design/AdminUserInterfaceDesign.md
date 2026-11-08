@@ -148,6 +148,32 @@ Mode's auto-create post to): the new TA recruitment's target is the TA recruitme
 recent earlier quarter that has one, the ULA's the ULA's, and 1 when there is none. Changing a
 later quarter's figures never touches the earlier quarter's.
 
+## The Audit Trail card of the Budget page (issue #391)
+
+At the bottom of `/admin/budget/QXX`, after the bottom line, is a `CollapsibleCard` headed **Audit
+Trail** with "Track changes to hiring targets" in a smaller font beneath the title on the header
+(the card's new `subtitle` prop). It is closed by default and remembers its setting under
+`collapsibleCard.BudgetPage-auditTrail`, like the other admin cards. Its body is only rendered, so
+only fetched, while it is open: `GET /api/admin/recruitmentaudittrail/hiringTargets?quarter=YYYYQ`
+(admin only; `page`, `size`, `sort`, `direction` as on `/all`), which returns the
+`totalHiringTarget` rows of the quarter's TA and ULA recruitments, newest first by default, each
+row augmented with the recruitment's `type`. Open, the card shows the page-size control, Previous
+and Next, "n changes recorded." and the `RecruitmentAuditTrailTable` with its `showType` column
+(id, Changed, Changed By, **Type**, What Changed, Old Value, New Value); a quarter with no
+recruitment or no change yet gets one sentence, "No hiring target has been changed yet for this
+quarter." While the next page is fetched the previous one stays up (`keepPreviousData`), so turning
+a page never shows that sentence in between.
+
+The rows exist because #391 made `totalHiringTarget` an audited field: it is the last entry of
+`RecruitmentAuditService.FIELDS`, and `RecruitmentsController.updateTotalHiringTarget` takes its
+snapshot inside the compare-and-set block (once the stored value is known to be the one the page
+saw) and saves through `saveAndRecordChanges`, so the target and its row are one transaction (#377)
+and a refused save (409) writes nothing. The same rows therefore also appear in the recruitment's
+own change history. A hiring target saved on the Budget page invalidates the card's query
+(`HIRING_TARGET_AUDIT_KEY` in `useBudgetSaves`), so an open card shows the new row at once; a
+budget-line save does not, since nothing on the `budgets` row is audited (fund lines, costs and the
+conversion factor remain planning figures).
+
 ## The Combined Allocation page (issue #358)
 
 `/admin/allocations/QXX` (for example `/admin/allocations/W26`; admins only) shows one quarter's TA
@@ -164,8 +190,8 @@ Courses pages" below).
   quarter, a `budget_courses` row shared by the TA and ULA recruitments, so the two recruitments'
   course rows always report the same value. (Before that each recruitment's course row had its own
   estimate; the page showed the higher of the two and saved an edit to every recruitment's row so
-  they agreed. The frontend still does both, harmlessly, until a follow-up removes it.) All the
-  ratios on the page use this one value.
+  they agreed.) An edit is saved to one of the section's rows, and the other recruitment's row takes
+  the value from the quarter's estimate (issue #381). All the ratios on the page use this one value.
 - **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
   same endpoint and version checks as the Recruitment Courses page, against that type's
   recruitment), Unrounded Allocation, Delta and TA:student (or ULA:student) ratio.
@@ -201,21 +227,20 @@ Courses pages" below).
   exists, with the same tooltip and confirmation modal). *Download Rankings CSV* is not on this
   page: it is on each recruitment's card (below).
 - **Developer mode** (part 2, PR #373): the footer has the Edit Courses page's *Fake Hiring Targets
-  and Allocations* and *Create Fake Rankings* buttons for the whole quarter. The first opens one
-  modal with a hiring target box per recruitment that has a course (*TA hiring target*, *ULA hiring
-  target*; one estimate source and one visibility choice for both) and sends one
-  `POST /api/admin/developer/fakeAllocations` per recruitment in one click; it is disabled when no
-  recruitment has a course. The second launches one `POST /api/admin/developer/fakeRankings` job
-  per recruitment whose faculty review is Open and which has a course; when only one of the two
-  qualifies the modal says which one and that the other is left alone, and the button is disabled
-  while neither qualifies. The modals (`FakeAllocationsModal`, `FakeRankingsModal`) take a list of
-  recruitments; the Edit Courses page passes its one to `FakeAllocationsModal`, and the admin
-  Assignments page (`/admin/recruitments/:id/assignments`) passes its one to `FakeRankingsModal`:
-  issue #385 moved the single-recruitment *Create Fake Rankings* button there from the Edit Courses
-  page, red like the other developer-mode buttons while it can be used. When it cannot (faculty
-  ranking not Open, or no course on offer) it is the neutral outline it always was, disabled, and
-  a tooltip on it says what must happen first (`fakeRankingsBlockers`); with no applicants the
-  modal notes that the job would rank nobody.
+  and Allocations* button for the whole quarter. It opens one modal with a hiring target box per
+  recruitment that has a course (*TA hiring target*, *ULA hiring target*; one estimate source and
+  one visibility choice for both) and sends one `POST /api/admin/developer/fakeAllocations` per
+  recruitment in one click; it is disabled when no recruitment has a course. `FakeAllocationsModal`
+  takes a list of recruitments; the Edit Courses page passes its one. Until issue #385 the footer
+  also had a *Create Fake Rankings* button that launched one `POST /api/admin/developer/fakeRankings`
+  job per recruitment whose faculty review was Open; the maintainer did not want rankings faked for
+  the TA and ULA recruitments at once, so it was removed, and the admin Assignments page
+  (`/admin/recruitments/:id/assignments`) is the only page in the app with *Create Fake Rankings*.
+  Issue #385 moved the single-recruitment button there from the Edit Courses page, red like the
+  other developer-mode buttons while it can be used. When it cannot (faculty ranking not Open, or
+  no course on offer) it is the neutral outline it always was, disabled, and a tooltip on it says
+  what must happen first (`fakeRankingsBlockers`); with no applicants the modal notes that the job
+  would rank nobody. `FakeRankingsModal` takes one `recruitmentId`.
 - **Multi-tab edit warning** (part 2, PR #373): the page is one tab on every recruitment of the
   quarter, so it heartbeats under each recruitment's Edit Courses page key,
   `courses-edit:<recruitmentId>`, with one client id (two heartbeats when the quarter has both),
@@ -339,7 +364,16 @@ The card becomes much wider to hold the diagram. From top to bottom:
    the page where candidates are assigned to slots) and **View Assignments** (→
    `/recruitments/:id/assignments`, the read-only page; shown whether or not the assignments are
    published, and the page says so until they are). Issue #390 adds a right-aligned **Change
-   History** button after them. Everything else the card offered moves:
+   History** button after them (`ms-auto`, so it sits at the right edge of the row, apart from the
+   workflow buttons, and after Download Rankings CSV when that is shown); it opens the
+   recruitment's own Change History page, `/admin/recruitments/:id/history` (admin only): the
+   recruitment's row, the intro sentence (with "Audit Trail page" linking to `/admin/audittrail`),
+   the page-size control, Previous and Next, "n changes recorded." and the
+   `RecruitmentAuditTrailTable`, newest first, paged on the server by
+   `GET /api/admin/recruitmentaudittrail/all`. Until #390 the same content was a collapsible
+   **Change History** card at the bottom of the Applications page (issues #139, #255, #337), which
+   nothing pointed to; that card is gone and the Applications page is otherwise unchanged. Everything
+   else the card offered moves:
    - **Test Application** moves to the Applications page.
    - **Download CSV** moves to near the top of the Applications page and is renamed
      **Download Applications as CSV**.

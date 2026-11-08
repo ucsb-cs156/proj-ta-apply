@@ -214,16 +214,46 @@ describe("RecruitmentCardLayout tests", () => {
       );
       expect(button).toHaveAttribute("download", "rankings-4.csv");
       expect(button).toHaveClass("btn", "btn-outline-primary");
-      expect(button).toBe(button.parentElement.lastElementChild);
       expect(button.parentElement).toBe(
         screen.getByTestId("C-applications-button").parentElement,
       );
-      // It follows View Assignments (issue #317).
+      // It follows View Assignments (issue #317) and ends the workflow buttons: only the
+      // right-aligned Change History (issue #390) comes after it.
       expect(button.previousElementSibling).toBe(
         screen.getByTestId("C-view-assignments-button"),
       );
+      expect(button.nextElementSibling).toBe(
+        screen.getByTestId("C-change-history-button"),
+      );
+      expect(button.parentElement.lastElementChild).toBe(
+        screen.getByTestId("C-change-history-button"),
+      );
     },
   );
+
+  test("Change History is the last button, pushed flush right, and opens the recruitment's history page (issue #390)", () => {
+    renderCard({ recruitment: { ...ta, id: 7, reviewStatus: "NotStarted" } });
+
+    const button = screen.getByTestId("C-change-history-button");
+    expect(button).toHaveTextContent("Change History");
+    expect(button.tagName).toBe("A");
+    expect(button).toHaveAttribute("href", "/admin/recruitments/7/history");
+    // The same button style as the row, plus ms-auto so it sits at the right edge.
+    expect(button).toHaveClass("btn", "btn-outline-secondary", "ms-auto");
+    const footer = screen.getByTestId("C-courses-button").parentElement;
+    expect(footer).toHaveClass("d-flex");
+    expect(button.parentElement).toBe(footer);
+    expect(footer.lastElementChild).toBe(button);
+    expect(button.previousElementSibling).toBe(
+      screen.getByTestId("C-view-assignments-button"),
+    );
+    // Only it is pushed right.
+    expect(
+      [...footer.children].filter((child) =>
+        child.classList.contains("ms-auto"),
+      ),
+    ).toEqual([button]);
+  });
 
   test("there is no Download Rankings CSV before faculty reviews have started", () => {
     renderCard({ recruitment: { ...ta, reviewStatus: "NotStarted" } });
@@ -234,11 +264,11 @@ describe("RecruitmentCardLayout tests", () => {
     expect(screen.queryByText(/Download/)).not.toBeInTheDocument();
   });
 
-  test("the footer has Courses, Draft Applications, Applications, Make Assignments and View Assignments, in that order", () => {
+  test("the footer has Courses, Draft Applications, Applications, Make Assignments, View Assignments and Change History, in that order", () => {
     renderCard({ recruitment: { ...ta, reviewStatus: "NotStarted" } });
 
     const footer = screen.getByTestId("C-courses-button").parentElement;
-    expect(within(footer).getAllByRole("link")).toHaveLength(5);
+    expect(within(footer).getAllByRole("link")).toHaveLength(6);
     expect(
       within(footer)
         .getAllByRole("link")
@@ -249,6 +279,7 @@ describe("RecruitmentCardLayout tests", () => {
       "Applications",
       "Make Assignments",
       "View Assignments",
+      "Change History",
     ]);
     // Issue #317: the two assignment pages, told apart by name, as steps 8 and 9 name them.
     const make = screen.getByTestId("C-make-assignments-button");
@@ -261,7 +292,10 @@ describe("RecruitmentCardLayout tests", () => {
     expect(view).toHaveAttribute("href", "/recruitments/1/assignments");
     expect(view).toHaveClass("btn", "btn-success");
     expect(view.tagName).toBe("A");
-    expect(view).toBe(footer.lastElementChild);
+    // View Assignments ends the workflow buttons; Change History (issue #390) is after the gap.
+    expect(view.nextElementSibling).toBe(
+      screen.getByTestId("C-change-history-button"),
+    );
     expect(screen.getByTestId("C-draft-applications-button")).toHaveAttribute(
       "href",
       "/admin/recruitments/1/draft-applications",

@@ -6,7 +6,9 @@ import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 /**
  * One change to a recruitment itself (issue #139): its creation or deletion, or one field going
  * from one value to another. Not to be confused with AuditTrailRow, a change to an application.
- * The editor's email (issue #337) is null on rows written before it was recorded.
+ * The editor's email (issue #337) is null on rows written before it was recorded. The type of the
+ * recruitment (TA or ULA) is only served with the hiring-target changes of a whole quarter, for the
+ * Budget page's Audit Trail card (issue #391).
  */
 export type RecruitmentAuditTrailRow = {
   id: number;
@@ -16,6 +18,7 @@ export type RecruitmentAuditTrailRow = {
   oldValue: string | null;
   newValue: string | null;
   editorEmail?: string | null;
+  type?: "TA" | "ULA";
 };
 
 /** One page of rows, in the shape the backend's paged endpoints all use. */
@@ -30,6 +33,8 @@ export type RecruitmentAuditTrailPage = {
 type RecruitmentAuditTrailTableProps = {
   rows: RecruitmentAuditTrailRow[];
   testIdPrefix?: string;
+  /** Adds a Type column (TA or ULA) when the rows are from more than one recruitment (issue #391). */
+  showType?: boolean;
 };
 
 /** Blank rather than "null": a created or deleted row has no values. */
@@ -44,10 +49,24 @@ const show = (value: unknown): string =>
 export default function RecruitmentAuditTrailTable({
   rows,
   testIdPrefix = "RecruitmentAuditTrailTable",
+  showType = false,
 }: RecruitmentAuditTrailTableProps): React.JSX.Element {
   const shrinkToContent = {
     style: { width: "1%", whiteSpace: "nowrap" as const },
   };
+
+  const typeColumn: LegacyColumn[] = showType
+    ? [
+        {
+          header: "Type",
+          id: "type",
+          accessorKey: "type",
+          meta: shrinkToContent,
+          cell: ({ cell }: { cell: Cell<RecruitmentAuditTrailRow, unknown> }) =>
+            show(cell.getValue()),
+        },
+      ]
+    : [];
 
   const columns: LegacyColumn[] = [
     { header: "id", id: "id", accessorKey: "id", meta: shrinkToContent },
@@ -68,6 +87,7 @@ export default function RecruitmentAuditTrailTable({
       cell: ({ cell }: { cell: Cell<RecruitmentAuditTrailRow, unknown> }) =>
         show(cell.getValue()),
     },
+    ...typeColumn,
     {
       header: "What Changed",
       id: "whatChanged",

@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw";
 import { Route, Routes } from "react-router";
 import BudgetPage from "main/pages/Admin/BudgetPage";
 import budgetFixtures from "fixtures/budgetFixtures";
+import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -11,14 +12,32 @@ export default {
   component: BudgetPage,
 };
 
-// The page reads :qyy from the route, so each story sets its own initial entry.
-const Template = () => (
-  <Routes>
-    <Route path="/admin/budget/:qyy" element={<BudgetPage />} />
-  </Routes>
-);
+const AUDIT_OPEN = "collapsibleCard.BudgetPage-auditTrail";
 
-const handlers = (summary, presence = { others: [], heartbeatSeconds: 5 }) => [
+// The page reads :qyy from the route, so each story sets its own initial entry. The Audit Trail
+// card (issue #391) remembers whether it was open; each story starts it as a first visit would,
+// closed, unless it says otherwise.
+const Template = ({ auditOpen = false }) => {
+  if (auditOpen) {
+    localStorage.setItem(AUDIT_OPEN, "open");
+  } else {
+    localStorage.removeItem(AUDIT_OPEN);
+  }
+  return (
+    <Routes>
+      <Route path="/admin/budget/:qyy" element={<BudgetPage />} />
+    </Routes>
+  );
+};
+
+const handlers = (
+  summary,
+  presence = { others: [], heartbeatSeconds: 5 },
+  auditTrail = recruitmentAuditTrailFixtures.hiringTargetPage,
+) => [
+  http.get("/api/admin/recruitmentaudittrail/hiringTargets", () =>
+    HttpResponse.json(auditTrail),
+  ),
   http.post("/api/admin/budget/heartbeat", () => HttpResponse.json(presence)),
   http.post(
     "/api/admin/budget/leave",
@@ -59,6 +78,26 @@ export const NotAQuarter = Template.bind({});
 NotAQuarter.parameters = {
   reactRouter: { initialEntries: ["/admin/budget/Fall2026"] },
   msw: { handlers: handlers(budgetFixtures.bothTypes) },
+};
+
+/** Issue #391: the Audit Trail card open, with the changes to both hiring targets. */
+export const AuditTrailOpen = () => <Template auditOpen />;
+AuditTrailOpen.parameters = {
+  reactRouter: { initialEntries: ["/admin/budget/F26"] },
+  msw: { handlers: handlers(budgetFixtures.bothTypes) },
+};
+
+/** The card open for a quarter whose hiring targets have never been changed. */
+export const AuditTrailOpenEmpty = () => <Template auditOpen />;
+AuditTrailOpenEmpty.parameters = {
+  reactRouter: { initialEntries: ["/admin/budget/W26"] },
+  msw: {
+    handlers: handlers(
+      budgetFixtures.taOnlyOverBudget,
+      { others: [], heartbeatSeconds: 5 },
+      recruitmentAuditTrailFixtures.emptyPage,
+    ),
+  },
 };
 
 const phill = {

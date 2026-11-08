@@ -92,7 +92,7 @@ Here's what the job should do:
 
 When developerMode is on, and the admin has opened faculty reviews, they can go to the Courses page. At the bottom of thec courses page, in the footer, just to the left of the developer mode badge, there will be a button [Create Fake Faculty Rankings].
 
-*(Issue #385 moved the button to the admin Assignments page, `/admin/recruitments/:id/assignments`, still in the footer to the left of the badge, and made it red like the other "Create Fake ..." buttons. While faculty ranking is not Open, or the recruitment has no course on offer, it keeps the neutral outline it had, disabled, and its tooltip says what must happen first; the wording is `fakeRankingsBlockers` in `frontend/src/main/utils/fakeRankings.ts`, quoted on the For Developers help page.)*
+*(Issue #385 moved the button to the admin Assignments page, `/admin/recruitments/:id/assignments`, still in the footer to the left of the badge, and made it red like the other "Create Fake ..." buttons. While faculty ranking is not Open, or the recruitment has no course on offer, it keeps the neutral outline it had, disabled, and its tooltip says what must happen first; the wording is `fakeRankingsBlockers` in `frontend/src/main/utils/fakeRankings.ts`, quoted on the For Developers help page. The same issue removed the Combined Allocation page's (`/admin/allocations/QXX`) version of the button, which ranked the quarter's TA and ULA recruitments in one click: the Assignments page is the only page in the app with Create Fake Rankings, and `FakeRankingsModal` takes one `recruitmentId`.)*
 
 This button will bring up a modal where the admin will have two options:
 

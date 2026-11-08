@@ -598,6 +598,10 @@ describe("Help pages (issue #140)", () => {
     expect(heading.nextElementSibling).toHaveTextContent(
       "A new quarter's budget starts as a copy of the most recent earlier quarter's: its costs, funds and conversion factor, and each recruitment's hiring target from the same type of recruitment in that quarter; change whatever differs.",
     );
+    // Issue #391: the Audit Trail card of the hiring targets.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "At the bottom of the page, a closed Audit Trail card (“Track changes to hiring targets”) opens to list every change to the quarter's TA and ULA hiring targets, newest first, with who made it, the old and new values and the Type of recruitment; the same rows appear in each recruitment's own change history.",
+    );
     expect(lines).toHaveTextContent(
       "its estimated cost per position (for ULAs, the computed rate times hours), the funds are the four lines added",
     );
@@ -789,9 +793,13 @@ describe("Help pages (issue #140)", () => {
     // Issue #220: the Create Fake Rankings button; issue #385 moved it to the Assignments page.
     const rankings = screen.getByTestId("HelpDeveloperPage-fake-rankings");
     expect(rankings).toHaveTextContent(
-      "While developer mode is on, the footer of a recruitment's Assignments page (/admin/recruitments/:id/assignments) has a red Create Fake Rankings button (until issue #385 it was on the Courses edit page). It can be used only while the recruitment's faculty ranking is Open, the only time instructors rank, and the recruitment has at least one course on offer.",
+      "While developer mode is on, the footer of a recruitment's Assignments page (/admin/recruitments/:id/assignments) has a red Create Fake Rankings button. That is the only page in the app with it: until issue #385 it was on the Courses edit page, and the Combined Allocation page had a version that ranked the quarter's TA and ULA recruitments at once, which was removed; fake rankings are added to each recruitment separately. It can be used only while the recruitment's faculty ranking is Open, the only time instructors rank, and the recruitment has at least one course on offer.",
     );
     expect(rankings).not.toHaveTextContent("Courses page also has");
+    // Issue #385's new criterion: no whole-quarter button on the Combined Allocation page.
+    expect(rankings).not.toHaveTextContent(
+      "has the same button for the whole quarter",
+    );
     // The tooltip's words, exactly as the button says them.
     expect(rankings).toHaveTextContent(
       'Otherwise the button is a grey outline, and hovering over it says what must happen first: "Faculty ranking must be Open for this recruitment; it is not started. Open it from the recruitment\'s card on the home page (Recruitment Steps, step 6: Open Faculty Ranking), which asks for a faculty ranking deadline." or "The recruitment must have at least one course on offer to rank; it has none. Fill its course list with Populate on its Courses page." (both, when both apply).',
@@ -807,9 +815,6 @@ describe("Help pages (issue #140)", () => {
     );
     expect(rankings).toHaveTextContent(
       "Courses that already have rankings are never changed.",
-    );
-    expect(rankings).toHaveTextContent(
-      "The Combined Allocation page's footer has the same button for the whole quarter: one click launches a job for each of the quarter's recruitments whose faculty review is Open and which has a course; when only one of the two qualifies the modal says which, and that the other is left alone. The button is disabled while neither qualifies.",
     );
     expect(
       fake.compareDocumentPosition(rankings) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -1659,7 +1664,7 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(10);
+    ).toHaveLength(11);
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
@@ -1992,7 +1997,24 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[8]).toMatch(
       /^View Assignments\. The read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\. The card's View Assignments button and step 9 of the diagram open it; until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet\.$/,
     );
-    expect(buttons[9]).toMatch(/^Delete\. Removes the recruitment/);
+    // Issue #390: the card's Change History button and page.
+    expect(buttons[9]).toBe(
+      "Change History. Every change to the recruitment itself, newest first: when it was created, each time applications or faculty reviews were opened or closed, each date or setting that changed, and (Changed By) who made the change. The button is at the right end of the card's row of buttons, apart from the others, and opens the recruitment's own Change History page, which shows the recruitment's row above the list and has a page-size control and Previous and Next buttons. Changes to individual applications are not here but in the Audit Trail.",
+    );
+    expect(buttons[10]).toMatch(/^Delete\. Removes the recruitment/);
+    expect(buttons).toHaveLength(11);
+    const changeHistory = screen.getByTestId("HelpAdminsPage-change-history");
+    expect(changeHistory).toHaveAttribute("id", "change-history");
+    expect(
+      within(changeHistory).getByRole("link", { name: "Audit Trail" }),
+    ).toHaveAttribute("href", "#audit-trail");
+    // The Audit Trail section says where the recruitment's own changes went.
+    const auditTrail =
+      document.getElementById("audit-trail").nextElementSibling;
+    expect(auditTrail).toHaveTextContent(
+      "A recruitment's own changes (its creation, opening, closing and dates) are not here: they are on its own Change History page, opened by the Change History button at the right end of its card's row of buttons on the home page, with the same Changed By column.",
+    );
+    expect(auditTrail).not.toHaveTextContent("Applications page");
     expect(
       document.getElementById("ta-app-settings").nextElementSibling.textContent,
     ).toMatch(/the Majors list and the Topics list \(the areas/);
@@ -2330,8 +2352,11 @@ describe("admin Help: the QXX Budget card (issue #357)", () => {
     );
     // Issue #317: the card's two assignment buttons, told apart.
     expect(card).toHaveTextContent(
-      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (it says the assignments are not published yet until they are).",
+      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (it says the assignments are not published yet until they are). Apart from them, at the right end of the same row, Change History opens the list of every change made to the recruitment itself (see Audit Trail below).",
     );
+    expect(
+      within(card).getByRole("link", { name: "Audit Trail" }),
+    ).toHaveAttribute("href", "#audit-trail");
     expect(card).not.toHaveTextContent("(see assignments)");
     expect(
       within(card).getAllByRole("link", {

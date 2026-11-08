@@ -324,7 +324,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
         />
         {showFakeRankings && (
           <FakeRankingsModal
-            recruitmentIds={[recruitmentId as string]}
+            recruitmentId={recruitmentId as string}
             // The job ranks the recruitment's applicants: with none it would do nothing.
             note={page.rows.length === 0 ? NO_APPLICANTS_NOTE : undefined}
             onHide={() => setShowFakeRankings(false)}

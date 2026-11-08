@@ -9,6 +9,7 @@ import type {
   BudgetRow,
   BudgetSummary,
 } from "main/components/Budget/budgetTypes";
+import { HIRING_TARGET_AUDIT_KEY } from "main/components/Budget/BudgetAuditTrailCard";
 
 /**
  * A figure of the quarter's budget row: the three subzero lines; the estimated cost per TA, the ULA
@@ -239,6 +240,10 @@ export function useBudgetSaves(
           learnCounts((response.data as BudgetSummary).budget);
         } else {
           state.expected[field] = value;
+          // Issue #391: the target's change is audited; an open Audit Trail card shows it.
+          queryClient.invalidateQueries({
+            queryKey: [HIRING_TARGET_AUDIT_KEY],
+          });
         }
         queryClient.invalidateQueries({ queryKey: [BUDGET_KEY] });
       } catch (error) {
