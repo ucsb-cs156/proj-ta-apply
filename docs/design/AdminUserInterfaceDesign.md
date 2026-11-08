@@ -164,8 +164,8 @@ Courses pages" below).
   quarter, a `budget_courses` row shared by the TA and ULA recruitments, so the two recruitments'
   course rows always report the same value. (Before that each recruitment's course row had its own
   estimate; the page showed the higher of the two and saved an edit to every recruitment's row so
-  they agreed. The frontend still does both, harmlessly, until a follow-up removes it.) All the
-  ratios on the page use this one value.
+  they agreed.) An edit is saved to one of the section's rows, and the other recruitment's row takes
+  the value from the quarter's estimate (issue #381). All the ratios on the page use this one value.
 - **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
   same endpoint and version checks as the Recruitment Courses page, against that type's
   recruitment), Unrounded Allocation, Delta and TA:student (or ULA:student) ratio.

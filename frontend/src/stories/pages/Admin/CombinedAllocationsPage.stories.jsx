@@ -81,6 +81,10 @@ const handlers = (
             : [],
       ),
   ),
+  // One save per estimate edit (issue #381), to one of the section's rows.
+  http.put("/api/recruitmentcourses/enrollmentEstimate", () =>
+    HttpResponse.json({}),
+  ),
   http.put("/api/recruitmentcourses/enrollmentEstimates", () =>
     HttpResponse.json([]),
   ),

@@ -102,8 +102,9 @@ type EstimateMeta = {
 /**
  * One section's Enrollment Estimate box, the box of the Recruitment Courses page (issue #175): saved
  * a second after the last keystroke, or at once when the box is left; an empty box clears the
- * estimate. The section's course rows of both recruitments are set to it (until issue #363 gives
- * a course one estimate). A module level component, for the same reason as AllocationCell.
+ * estimate. The save goes to one of the section's course rows (the TA recruitment's when there is
+ * one): the estimate is the quarter's (issue #363), so the backend sets both recruitments' rows
+ * from it. A module level component, for the same reason as AllocationCell.
  */
 function EnrollmentEstimateCell({
   cell,
@@ -115,7 +116,7 @@ function EnrollmentEstimateCell({
   const rows = [row.ta, row.ula].filter(
     (course): course is RecruitmentCourse => course !== undefined,
   );
-  const target = { key: row.enrollCode, ids: rows.map((course) => course.id) };
+  const target: EstimateTarget = { key: row.enrollCode, id: rows[0].id };
   const draft = meta.drafts[target.key];
   return (
     <Form.Control
@@ -175,7 +176,7 @@ type Row = CombinedCourse & {
  * The courses of one quarter's TA and ULA recruitments side by side (issue #358): for each type
  * that has a recruitment its Allocation, Unrounded Allocation, Delta and ratio columns, and, when
  * both do, the ASE:Student Ratio. The figures are the ones the Recruitment Courses page shows,
- * computed with the one Enrollment Estimate shown here (the higher of the two recruitments').
+ * computed with the one Enrollment Estimate shown here (the section's, shared by both recruitments).
  */
 export default function CombinedAllocationTable({
   courses,
@@ -201,11 +202,9 @@ export default function CombinedAllocationTable({
   // Stryker disable BooleanLiteral : the saves refresh the lists by each part of this key on its own, so whether removed courses are included makes no difference here
   const taSaves = useAllocationSaves(requestHeaders, taBulkVersion, false);
   const ulaSaves = useAllocationSaves(requestHeaders, ulaBulkVersion, false);
-  const { estimateDrafts, onEstimateChange, onEstimateBlur } = useEstimateSaves(
-    requestHeaders,
-    false,
-  );
   // Stryker restore BooleanLiteral
+  const { estimateDrafts, onEstimateChange, onEstimateBlur } =
+    useEstimateSaves(requestHeaders);
 
   // The totals row (as on the Recruitment Courses page): the sections counted, and the sums of the
   // columns that add up. Each is shown under its column, and goes with it when it is hidden.

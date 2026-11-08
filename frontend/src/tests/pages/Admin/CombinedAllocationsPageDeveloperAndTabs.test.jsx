@@ -189,7 +189,7 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
       expect(r.headers["X-Client-Id"]).toBe(id),
     );
 
-    // An estimate, saved on leaving the box, to both rows of the section.
+    // An estimate, saved on leaving the box, once per section (issue #381).
     const estimate = screen.getByTestId(
       "CombinedAllocationTable-cell-row-2-enrollmentEstimate",
     );
@@ -197,7 +197,7 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
     fireEvent.blur(estimate);
     await waitFor(() =>
       expect(puts("/api/recruitmentcourses/enrollmentEstimate")).toHaveLength(
-        2,
+        1,
       ),
     );
     puts("/api/recruitmentcourses/enrollmentEstimate").forEach((r) =>
