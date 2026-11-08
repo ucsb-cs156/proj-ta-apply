@@ -1322,7 +1322,19 @@
 <a name='L1257'></a><a href='#L1257'>1257</a>
 <a name='L1258'></a><a href='#L1258'>1258</a>
 <a name='L1259'></a><a href='#L1259'>1259</a>
-<a name='L1260'></a><a href='#L1260'>1260</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1260'></a><a href='#L1260'>1260</a>
+<a name='L1261'></a><a href='#L1261'>1261</a>
+<a name='L1262'></a><a href='#L1262'>1262</a>
+<a name='L1263'></a><a href='#L1263'>1263</a>
+<a name='L1264'></a><a href='#L1264'>1264</a>
+<a name='L1265'></a><a href='#L1265'>1265</a>
+<a name='L1266'></a><a href='#L1266'>1266</a>
+<a name='L1267'></a><a href='#L1267'>1267</a>
+<a name='L1268'></a><a href='#L1268'>1268</a>
+<a name='L1269'></a><a href='#L1269'>1269</a>
+<a name='L1270'></a><a href='#L1270'>1270</a>
+<a name='L1271'></a><a href='#L1271'>1271</a>
+<a name='L1272'></a><a href='#L1272'>1272</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1347,6 +1359,11 @@
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2581,6 +2598,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Link } from "react-router";
 import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -2683,7 +2707,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           &lt;strong&gt;Allocation&lt;/strong&gt;, how many applicants are{" "}
           &lt;strong&gt;Assigned&lt;/strong&gt; to it so far, and how many places are{" "}
           &lt;strong&gt;Left&lt;/strong&gt;, in red when more have been assigned than
-          allocated; those numbers stay put when you sort.
+          allocated; those numbers stay put when you sort. A progress
+          thermometer under the page heading shows how many assignments have
+          been made against the recruitment&amp;apos;s hiring target (entered on the
+          Budget page), as a filled bar with the numbers and percentage: green
+          when the target is met, red when more have been assigned than the
+          target, and an empty bar saying so when no target is set yet.
         &lt;/p&gt;
         &lt;p data-testid="HelpAdminsPage-assignment-columns"&gt;
           The &lt;strong&gt;Columns&lt;/strong&gt; menu above the table hides and shows
@@ -3124,8 +3153,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           &lt;em&gt;/admin/allocations/W26&lt;/em&gt;) is where a quarter&amp;apos;s enrollment
           estimates and its TA and ULA allocations are edited, side by side. You
           reach it from the{" "}
-          &lt;strong&gt;Allocate TA and ULA slots to Courses&lt;/strong&gt; button of the
-          quarter&amp;apos;s QXX Budget card on your home page (
+          &lt;strong&gt;Allocate TA and ULA slots to Courses&lt;/strong&gt; button on the
+          quarter&amp;apos;s card on your home page (
           &lt;strong&gt;Allocate TA slots to Courses&lt;/strong&gt; or{" "}
           &lt;strong&gt;Allocate ULA slots to Courses&lt;/strong&gt; when the quarter has
           one recruitment), from the &lt;em&gt;Allocations&lt;/em&gt; link of step 3 and the{" "}
@@ -3265,12 +3294,31 @@ export default function HelpAdminsPage(): React.JSX.Element {
           type (TA or ULA), a tentative opening date and a primary consideration
           date; only one recruitment of each type may exist per quarter.
           Creating one launches the job that fills its course list, so the list
-          is there without a second step. Each recruitment is a card, newest
-          quarter first, showing its status, dates and how many applications it
-          has. Under the dates is the live{" "}
+          is there without a second step. The recruitments are grouped by
+          quarter: one card per quarter, headed by the quarter (for example{" "}
+          &lt;em&gt;W26&lt;/em&gt;) with two buttons on the same row:{" "}
+          &lt;strong&gt;Budget Planning&lt;/strong&gt; opens that quarter&amp;apos;s Budget for
+          Quarter page, and one allocation button opens the quarter&amp;apos;s
+          Combined Allocation page, where the TA and ULA allocations are edited
+          side by side; its label says which recruitments the quarter has:{" "}
+          &lt;strong&gt;Allocate TA slots to Courses&lt;/strong&gt;,{" "}
+          &lt;strong&gt;Allocate ULA slots to Courses&lt;/strong&gt; or{" "}
+          &lt;strong&gt;Allocate TA and ULA slots to Courses&lt;/strong&gt;. Clicking
+          anywhere else on that row closes or opens the quarter&amp;apos;s card (the
+          caret at its left shows which it is); clicking a button on the row
+          goes to its page and leaves the card as it was. The newest quarter
+          starts open and the older quarters closed, and this browser remembers
+          each card as you left it. The &lt;strong&gt;Quarters&lt;/strong&gt; control above
+          the cards puts the newest or the oldest quarter first. Inside a
+          quarter&amp;apos;s card is a nested card for each of its recruitments,
+          headed &lt;strong&gt;TA&lt;/strong&gt; or &lt;strong&gt;ULA&lt;/strong&gt; with its status
+          badges and how many applications it has; clicking that row closes or
+          opens just that card, and the trash icon at its right deletes the
+          recruitment. Open, the card shows the recruitment&amp;apos;s dates, and
+          under the dates the live{" "}
           &lt;Link to="/help/recruitment-steps"&gt;Recruitment Steps&lt;/Link&gt; diagram
-          (collapsed to a one-line summary on older cards, expanded on the
-          latest TA and ULA recruitments). Its boxes carry the lifecycle
+          (collapsed to a one-line summary on older recruitments, expanded on
+          the latest TA and ULA recruitments). Its boxes carry the lifecycle
           actions, and the card has Courses, Draft Applications, Applications,
           Make Assignments and View Assignments buttons:{" "}
           &lt;strong&gt;Make Assignments&lt;/strong&gt; opens the page where candidates are
@@ -3284,19 +3332,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
           &lt;em&gt;(see allocations)&lt;/em&gt; links open the quarter&amp;apos;s{" "}
           &lt;Link to="#combined-allocations"&gt;Combined Allocation page&lt;/Link&gt;, and
           the same two assignment pages are under steps 8 and 9 as{" "}
-          &lt;em&gt;Make Assignments&lt;/em&gt; and &lt;em&gt;View Assignments&lt;/em&gt;. Above each
-          quarter&amp;apos;s recruitment card, or pair of cards when the quarter has
-          both a TA and a ULA recruitment, is a &lt;strong&gt;QXX Budget&lt;/strong&gt; card
-          (for example &lt;em&gt;W26 Budget&lt;/em&gt;) with two buttons:{" "}
-          &lt;strong&gt;Budget Planning&lt;/strong&gt; opens that quarter&amp;apos;s Budget for
-          Quarter page, and one allocation button opens the quarter&amp;apos;s
-          Combined Allocation page, where the TA and ULA allocations are edited
-          side by side; its label says which recruitments the quarter has:{" "}
-          &lt;strong&gt;Allocate TA slots to Courses&lt;/strong&gt;,{" "}
-          &lt;strong&gt;Allocate ULA slots to Courses&lt;/strong&gt; or{" "}
-          &lt;strong&gt;Allocate TA and ULA slots to Courses&lt;/strong&gt;. The budget card
-          stays with its quarter when the cards are sorted, so sorting by
-          anything but quarter groups each quarter&amp;apos;s cards together.
+          &lt;em&gt;Make Assignments&lt;/em&gt; and &lt;em&gt;View Assignments&lt;/em&gt;.
         &lt;/p&gt;
         &lt;p&gt;The lifecycle actions in the diagram and on the card are:&lt;/p&gt;
         &lt;ul data-testid="HelpAdminsPage-recruitment-buttons"&gt;
@@ -3847,7 +3883,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-08T20:38:34.982Z
+                at 2026-11-08T20:39:54.077Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
