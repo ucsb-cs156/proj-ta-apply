@@ -198,6 +198,18 @@ top ("3 Draft Applications"), then the same table as the Applications page. Open
 (`/admin/draft-applications/:id`) shows it read-only in the same summary an application has, with a
 box for the admin's comments.
 
+**Reminding draft applicants (issue #411).** When there are drafts, a **Copy emails of draft
+applicants to clipboard** button sits between the explanatory paragraph and the Columns chooser. It
+puts the email of everyone with a draft on the clipboard, one per line in the table's order (no
+sorting or deduplication; the backend allows one draft per person per recruitment), and confirms
+with a toast that says how many ("Emails of 3 draft applicants copied to clipboard."); if the
+browser refuses the clipboard, the toast says so instead. Its tooltip says what the list is for: a
+day or two before applications close, an admin emails those students to say they must log in and
+submit before the primary consideration date (the tooltip names the recruitment's date, or "the
+primary consideration date" if it has none) because drafts are not considered. The button is not
+shown when there are no drafts. The text helpers (`draftEmailsCopiedText`, `draftEmailsTooltip`)
+live in `main/utils/adminApplications.ts` beside `draftsText`.
+
 **One implementation for both, so they cannot drift.** The components are parameterized by whether
 the row is a draft, and nothing is copied:
 

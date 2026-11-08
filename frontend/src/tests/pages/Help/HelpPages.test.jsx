@@ -1875,6 +1875,10 @@ describe("Help pages (issue #140)", () => {
     expect(draftApplications).toHaveTextContent(
       "There is no CSV download of drafts",
     );
+    // Issue #411: the button that copies the draft applicants' emails.
+    expect(draftApplications).toHaveTextContent(
+      "Above the table, when there are drafts, a Copy emails of draft applicants to clipboard button copies the email address of everyone with a draft, one per line, so that a day or two before applications close you can paste them into an email reminding those students to log in and submit before the primary consideration date, since drafts are not considered.",
+    );
     expect(
       screen.getByTestId("HelpAdminsPage-recruitment-buttons"),
     ).toHaveTextContent("Draft Applications. The applications students");

@@ -50,7 +50,11 @@ const routeTo = (recruitmentId) => ({
   initialEntries: [`/admin/recruitments/${recruitmentId}/draft-applications`],
 });
 
-/** The TA round with id 1: two drafts. */
+/**
+ * The TA round with id 1: two drafts, so the "Copy emails of draft applicants to clipboard"
+ * button (issue #411) is above the Columns chooser; hover it for the tooltip, which names the
+ * recruitment's primary consideration date.
+ */
 export const TaRound = Template.bind({});
 TaRound.parameters = {
   reactRouter: routeTo(1),
@@ -64,6 +68,7 @@ TaRound.parameters = {
             ...draftApplicationsFixtures.adminSavedTaDraft,
             id: 23,
             firstName: "Uma",
+            email: "uma@ucsb.edu",
             adminComments: "Asked to apply to both rounds",
           },
         ]),
@@ -89,7 +94,7 @@ UlaRound.parameters = {
   },
 };
 
-/** No one has started an application: the count is 0 and there is no table. */
+/** No one has started an application: the count is 0, and there is no table and no copy-emails button. */
 export const NoDrafts = Template.bind({});
 NoDrafts.parameters = {
   reactRouter: routeTo(3),

@@ -81,3 +81,30 @@ export const adminApplicationUrls = (
 /** "3 Draft Applications" or "1 Draft Application", for the top of the drafts page. */
 export const draftsText = (count: number): string =>
   `${count} Draft ${count === 1 ? "Application" : "Applications"}`;
+
+/**
+ * Issue #411: the toast after the drafts page's "Copy emails of draft applicants to clipboard"
+ * button has done its work: "Emails of 3 draft applicants copied to clipboard." (or "Email of 1
+ * draft applicant").
+ */
+export const draftEmailsCopiedText = (count: number): string =>
+  count === 1
+    ? "Email of 1 draft applicant copied to clipboard."
+    : `Emails of ${count} draft applicants copied to clipboard.`;
+
+/**
+ * Issue #411: the tooltip over that button, which says what the emails are for. The recruitment's
+ * primary consideration date (as the backend sends it, yyyy-mm-dd, the same way the recruitment's
+ * row shows it) is the deadline it names; when the recruitment has none, or is not known yet, the
+ * sentence names "the primary consideration date" instead.
+ */
+export const draftEmailsTooltip = (
+  primaryConsiderationDate: string | null | undefined,
+): string =>
+  "A day or two before closing the applications, you may want to email all " +
+  "of the students that have submitted draft applications to let them know " +
+  "that they will need to login and finalize their application before " +
+  `${primaryConsiderationDate ?? "the primary consideration date"} if they ` +
+  "want their application to be reviewed. Let them know that draft " +
+  "applications are not considered; only applications that have been " +
+  "submitted.";

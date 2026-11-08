@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.web;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.microsoft.playwright.options.AriaRole;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
@@ -136,6 +137,16 @@ public class ApplicationsDraftsWebIT extends ApplicationsWebTestCase {
     assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-header-submittedAt"))
         .containsText("Last saved");
     assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-header-edit")).hasCount(0);
+    // Issue #411: the button to copy the draft applicants' emails is above the table, and its
+    // tooltip names the recruitment's primary consideration date.
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-copy-emails"))
+        .hasText("Copy emails of draft applicants to clipboard");
+    page.getByTestId("RecruitmentDraftApplicationsPage-copy-emails").hover();
+    assertThat(page.getByRole(AriaRole.TOOLTIP))
+        .containsText(
+            "finalize their application before "
+                + recruitment.getPrimaryConsiderationDate()
+                + " if they want their application to be reviewed");
 
     // Opening it shows what the student has so far, read only, with a box for comments.
     page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-id-link").click();
@@ -174,6 +185,7 @@ public class ApplicationsDraftsWebIT extends ApplicationsWebTestCase {
     assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-count"))
         .containsText("0 Draft Applications");
     assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-none")).isVisible();
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-copy-emails")).hasCount(0);
     goTo("/admin/recruitments/" + recruitment.getId() + "/applications");
     page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
     assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
