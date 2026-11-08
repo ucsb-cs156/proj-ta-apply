@@ -598,6 +598,10 @@ describe("Help pages (issue #140)", () => {
     expect(heading.nextElementSibling).toHaveTextContent(
       "A new quarter's budget starts as a copy of the most recent earlier quarter's: its costs, funds and conversion factor, and each recruitment's hiring target from the same type of recruitment in that quarter; change whatever differs.",
     );
+    // Issue #391: the Audit Trail card of the hiring targets.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "At the bottom of the page, a closed Audit Trail card (“Track changes to hiring targets”) opens to list every change to the quarter's TA and ULA hiring targets, newest first, with who made it, the old and new values and the Type of recruitment; the same rows appear in each recruitment's own change history.",
+    );
     expect(lines).toHaveTextContent(
       "its estimated cost per position (for ULAs, the computed rate times hours), the funds are the four lines added",
     );
@@ -1659,7 +1663,7 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(10);
+    ).toHaveLength(11);
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
@@ -1981,7 +1985,24 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[8]).toMatch(
       /^View Assignments\. The read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\. The card's View Assignments button and step 9 of the diagram open it; until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet\.$/,
     );
-    expect(buttons[9]).toMatch(/^Delete\. Removes the recruitment/);
+    // Issue #390: the card's Change History button and page.
+    expect(buttons[9]).toBe(
+      "Change History. Every change to the recruitment itself, newest first: when it was created, each time applications or faculty reviews were opened or closed, each date or setting that changed, and (Changed By) who made the change. The button is at the right end of the card's row of buttons, apart from the others, and opens the recruitment's own Change History page, which shows the recruitment's row above the list and has a page-size control and Previous and Next buttons. Changes to individual applications are not here but in the Audit Trail.",
+    );
+    expect(buttons[10]).toMatch(/^Delete\. Removes the recruitment/);
+    expect(buttons).toHaveLength(11);
+    const changeHistory = screen.getByTestId("HelpAdminsPage-change-history");
+    expect(changeHistory).toHaveAttribute("id", "change-history");
+    expect(
+      within(changeHistory).getByRole("link", { name: "Audit Trail" }),
+    ).toHaveAttribute("href", "#audit-trail");
+    // The Audit Trail section says where the recruitment's own changes went.
+    const auditTrail =
+      document.getElementById("audit-trail").nextElementSibling;
+    expect(auditTrail).toHaveTextContent(
+      "A recruitment's own changes (its creation, opening, closing and dates) are not here: they are on its own Change History page, opened by the Change History button at the right end of its card's row of buttons on the home page, with the same Changed By column.",
+    );
+    expect(auditTrail).not.toHaveTextContent("Applications page");
     expect(
       document.getElementById("ta-app-settings").nextElementSibling.textContent,
     ).toMatch(/the Majors list and the Topics list \(the areas/);
@@ -2319,8 +2340,11 @@ describe("admin Help: the QXX Budget card (issue #357)", () => {
     );
     // Issue #317: the card's two assignment buttons, told apart.
     expect(card).toHaveTextContent(
-      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (it says the assignments are not published yet until they are).",
+      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (it says the assignments are not published yet until they are). Apart from them, at the right end of the same row, Change History opens the list of every change made to the recruitment itself (see Audit Trail below).",
     );
+    expect(
+      within(card).getByRole("link", { name: "Audit Trail" }),
+    ).toHaveAttribute("href", "#audit-trail");
     expect(card).not.toHaveTextContent("(see assignments)");
     expect(
       within(card).getAllByRole("link", {

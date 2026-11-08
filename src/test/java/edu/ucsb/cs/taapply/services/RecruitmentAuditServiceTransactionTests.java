@@ -168,6 +168,41 @@ public class RecruitmentAuditServiceTransactionTests {
     assertEquals("NotStarted", stored(r.getId()).getReviewStatus());
   }
 
+  // ---- the hiring target (issue #391) ----
+
+  @Test
+  public void a_hiring_target_change_and_its_row_are_both_committed() {
+    Recruitment r = recruitmentRepository.save(recruitment());
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setTotalHiringTarget(12);
+
+    service.saveAndRecordChanges(before, r);
+
+    assertEquals(12, stored(r.getId()).getTotalHiringTarget());
+    assertEquals(List.of("totalHiringTarget"), whatChanged(r.getId()));
+    RecruitmentAuditTrail row = rows(r.getId()).get(0);
+    assertEquals("1", row.getOldValue());
+    assertEquals("12", row.getNewValue());
+    assertEquals("admin@ucsb.edu", row.getEditorEmail());
+  }
+
+  /** The audit row cannot be written, so the new target must not be in the database either. */
+  @Test
+  public void when_the_hiring_target_row_cannot_be_written_the_target_is_rolled_back() {
+    Recruitment r = recruitmentRepository.save(recruitment());
+    doThrow(new DataAccessResourceFailureException("connection lost"))
+        .when(auditTrailRepository)
+        .saveAll(any());
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setTotalHiringTarget(12);
+
+    assertThrows(
+        DataAccessResourceFailureException.class, () -> service.saveAndRecordChanges(before, r));
+
+    assertEquals(1, stored(r.getId()).getTotalHiringTarget());
+    assertEquals(0, auditTrailRepository.count());
+  }
+
   // ---- deletion ----
 
   @Test

@@ -33,9 +33,11 @@ type RecruitmentCardLayoutProps = {
  * Ranking Deadline; the live Recruitment Steps diagram in its collapsible panel; and the button
  * row: Courses, Draft Applications, Applications, Make Assignments (the admin page where candidates
  * are assigned to slots) and View Assignments (the read-only assignments page), and Download
- * Rankings CSV once faculty rankings have been opened (issues #358, #317). Everything else the old
- * card footer offered is reached through the diagram or has moved to the Courses and Applications
- * pages. Designed in Storybook first (issue #230); issue #233 puts it on the home page.
+ * Rankings CSV once faculty rankings have been opened (issues #358, #317), and, pushed to the right
+ * edge of the row and apart from those workflow buttons, Change History (issue #390), the page of
+ * every change to the recruitment itself. Everything else the old card footer offered is reached
+ * through the diagram or has moved to the Courses and Applications pages. Designed in Storybook
+ * first (issue #230); issue #233 puts it on the home page.
  */
 export default function RecruitmentCardLayout({
   recruitment,
@@ -186,6 +188,14 @@ export default function RecruitmentCardLayout({
             Download Rankings CSV
           </a>
         )}
+        {/* Issue #390: the recruitment's own change history, flush right, apart from the workflow. */}
+        <Link
+          className="btn btn-outline-secondary ms-auto"
+          to={`/admin/recruitments/${recruitment.id}/history`}
+          data-testid={id("change-history-button")}
+        >
+          Change History
+        </Link>
       </Card.Footer>
     </Card>
   );

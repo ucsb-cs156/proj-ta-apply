@@ -38,7 +38,7 @@ const base = {
   removed: false,
 };
 
-// CMPSC 156 is in both recruitments (the estimates disagree: 100 and 80), CMPSC 8 only in the TA
+// CMPSC 156 is in both recruitments (both rows carry its one estimate, 100), CMPSC 8 only in the TA
 // one, CMPSC 24 only in the ULA one.
 const taCourses = [
   {
@@ -82,7 +82,7 @@ const ulaCourses = [
     instructor: "CONRAD P",
     allocation: 6,
     allocationVersion: 9,
-    enrollmentEstimate: 80,
+    enrollmentEstimate: 100,
     unroundedAllocation: 7.25,
   },
   {
@@ -268,10 +268,10 @@ describe("CombinedAllocationTable tests", () => {
     expect(td(2, "courseId")).toHaveTextContent("CMPSC 156");
   });
 
-  test("a section in both recruitments is one row, with the higher estimate, both types' figures and the ASE ratio", () => {
+  test("a section in both recruitments is one row, with its one estimate, both types' figures and the ASE ratio", () => {
     renderTable();
 
-    // Row 2 is CMPSC 156: estimate max(100, 80) = 100.
+    // Row 2 is CMPSC 156: the estimate both rows carry, 100.
     expect(estimateBox(2)).toHaveValue(100);
     expect(cell(2, "TA-allocation")).toHaveValue(3);
     expect(cell(2, "ULA-allocation")).toHaveValue(6);
@@ -873,7 +873,7 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
   afterEach(() => vi.useRealTimers());
 
   // Rows: 0 is CMPSC 8 (TA course 2, estimate 60), 1 is CMPSC 24 (ULA course 12, no estimate),
-  // 2 is CMPSC 156 (TA course 1 and ULA course 11, estimates 100 and 80, shown 100).
+  // 2 is CMPSC 156 (TA course 1 and ULA course 11, both with the section's estimate, 100).
   const fx = fixtures;
   const renderIt = (props = {}) =>
     render(
@@ -917,7 +917,7 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
     );
   });
 
-  test("an estimate is saved one second after the last keystroke, to the course row of each recruitment", async () => {
+  test("an estimate is saved one second after the last keystroke, once, to the section's TA row (issue #381)", async () => {
     vi.useFakeTimers();
     renderIt();
     const box = estimateBox(2);
@@ -933,17 +933,17 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
 
     await act(() => vi.advanceTimersByTimeAsync(1));
 
-    // CMPSC 156 is TA course 1 and ULA course 11: both are set, so the two agree.
+    // CMPSC 156 is TA course 1 and ULA course 11: one save, to the TA row; the estimate is the
+    // quarter's, so the backend sets the ULA row from it (issue #363).
     expect(estimatePuts().map((r) => r.params)).toEqual([
       { id: 1, enrollmentEstimate: 150 },
-      { id: 11, enrollmentEstimate: 150 },
     ]);
     expect(estimatePuts()[0].method).toBe("put");
     await act(() => vi.advanceTimersByTimeAsync(5000));
-    expect(estimatePuts()).toHaveLength(2);
+    expect(estimatePuts()).toHaveLength(1);
   });
 
-  test("a section in one recruitment is saved to that one row only", async () => {
+  test("a section in one recruitment is saved to that one row", async () => {
     vi.useFakeTimers();
     renderIt();
 
@@ -981,10 +981,9 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
 
     expect(estimatePuts().map((r) => r.params)).toEqual([
       { id: 1, enrollmentEstimate: 210 },
-      { id: 11, enrollmentEstimate: 210 },
     ]);
     await act(() => vi.advanceTimersByTimeAsync(2000));
-    expect(estimatePuts()).toHaveLength(2);
+    expect(estimatePuts()).toHaveLength(1);
   });
 
   test("leaving the box after the save sends nothing more", async () => {
@@ -1054,7 +1053,7 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
     ]);
   });
 
-  test("leaving the page within the second still sends the pending estimates, to every row", async () => {
+  test("leaving the page within the second still sends the pending estimates, one per section", async () => {
     vi.useFakeTimers();
     const { unmount } = renderIt();
 
@@ -1066,11 +1065,24 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
 
     expect(estimatePuts().map((r) => r.params)).toEqual([
       { id: 1, enrollmentEstimate: 10 },
-      { id: 11, enrollmentEstimate: 10 },
       { id: 2 },
     ]);
     await act(() => vi.advanceTimersByTimeAsync(3000));
-    expect(estimatePuts()).toHaveLength(3);
+    expect(estimatePuts()).toHaveLength(2);
+  });
+
+  test("the unmount flush sends the tab's headers with each save", async () => {
+    vi.useFakeTimers();
+    const { unmount } = renderIt({
+      requestHeaders: { "X-Client-Id": "tab-1" },
+    });
+
+    fireEvent.change(estimateBox(2), { target: { value: "10" } });
+    unmount();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(estimatePuts()).toHaveLength(1);
+    expect(estimatePuts()[0].headers["X-Client-Id"]).toBe("tab-1");
   });
 
   test("unmounting with nothing pending sends nothing", async () => {
@@ -1115,6 +1127,130 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
           .enrollmentEstimate,
       ).toBe(333),
     );
+  });
+
+  test("the other recruitment's cached row for the section takes the saved estimate, and every list is read again (issue #381)", async () => {
+    // The backend answers with the saved TA row of CMPSC 156, its estimate and share recomputed.
+    const savedTa = {
+      ...fx.taCourses[0],
+      enrollmentEstimate: 333,
+      unroundedAllocation: 4.5,
+    };
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, savedTa);
+    const queryClient = new QueryClient();
+    const taKey = ["/api/recruitmentcourses/all", 5];
+    const ulaKey = ["/api/recruitmentcourses/all", 6];
+    // Another cached list, whose first item shares the saved row's id: not a course list, so
+    // neither patched nor marked stale.
+    const recruitmentsKey = ["/api/admin/recruitments/all"];
+    queryClient.setQueryData(taKey, fx.taCourses);
+    queryClient.setQueryData(ulaKey, fx.ulaCourses);
+    queryClient.setQueryData(recruitmentsKey, [
+      { id: 1, enrollCode: "07492" },
+      ...fx.recruitments,
+    ]);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CombinedAllocationTable
+            courses={combineCourses(fx.taCourses, fx.ulaCourses)}
+            hasTa
+            hasUla
+            conversionFactor={3}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(estimateBox(2), { target: { value: "333" } });
+    fireEvent.blur(estimateBox(2));
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData(taKey)[0].enrollmentEstimate).toBe(333),
+    );
+    // The saved row is replaced whole; the ULA row of the same enroll code takes the estimate and
+    // keeps everything else until the refetch brings its recomputed share.
+    expect(queryClient.getQueryData(taKey)[0]).toEqual(savedTa);
+    expect(queryClient.getQueryData(taKey)[1]).toEqual(fx.taCourses[1]);
+    expect(queryClient.getQueryData(ulaKey)[0]).toEqual({
+      ...fx.ulaCourses[0],
+      enrollmentEstimate: 333,
+    });
+    expect(queryClient.getQueryData(ulaKey)[1]).toEqual(fx.ulaCourses[1]);
+    // Both recruitments' allocations are recomputed by the save, so both lists are stale.
+    expect(queryClient.getQueryState(taKey).isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(ulaKey).isInvalidated).toBe(true);
+    // Only the course lists: the recruitments are untouched and not stale.
+    expect(queryClient.getQueryData(recruitmentsKey)).toEqual([
+      { id: 1, enrollCode: "07492" },
+      ...fx.recruitments,
+    ]);
+    expect(queryClient.getQueryState(recruitmentsKey).isInvalidated).toBe(
+      false,
+    );
+  });
+
+  test("a cached course list that never loaded becomes an empty one, not an error", async () => {
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, fx.taCourses[1]);
+    const queryClient = new QueryClient();
+    const emptyKey = ["/api/recruitmentcourses/all", 99];
+    // A query whose fetch failed is in the cache with no data at all.
+    await queryClient
+      .fetchQuery({
+        queryKey: emptyKey,
+        queryFn: () => Promise.reject(new Error("never loaded")),
+        retry: false,
+      })
+      .catch(() => undefined);
+    expect(queryClient.getQueryData(emptyKey)).toBeUndefined();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CombinedAllocationTable
+            courses={combineCourses(fx.taCourses, [])}
+            hasTa
+            hasUla={false}
+            conversionFactor={3}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(estimateBox(0), { target: { value: "61" } });
+    fireEvent.blur(estimateBox(0));
+
+    await waitFor(() => expect(queryClient.getQueryData(emptyKey)).toEqual([]));
+  });
+
+  test("a failed save still marks the lists stale", async () => {
+    axiosMock.onPut("/api/recruitmentcourses/enrollmentEstimate").reply(500);
+    const queryClient = new QueryClient();
+    const taKey = ["/api/recruitmentcourses/all", 5];
+    queryClient.setQueryData(taKey, fx.taCourses);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CombinedAllocationTable
+            courses={combineCourses(fx.taCourses, [])}
+            hasTa
+            hasUla={false}
+            conversionFactor={3}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(estimateBox(0), { target: { value: "5" } });
+    fireEvent.blur(estimateBox(0));
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(taKey).isInvalidated).toBe(true),
+    );
+    expect(queryClient.getQueryData(taKey)).toEqual(fx.taCourses);
   });
 
   test("a failed save is toasted", async () => {

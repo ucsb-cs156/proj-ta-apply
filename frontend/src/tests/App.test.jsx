@@ -157,6 +157,30 @@ describe("App", () => {
     expect(screen.queryByText("1 Draft Application")).toBeNull();
   });
 
+  test("/admin/recruitments/:id/history is the recruitment's change history, for admins only (issue #390)", async () => {
+    window.history.pushState({}, "", "/admin/recruitments/1/history");
+    renderApp();
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Change History: TA positions, W26",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("RecruitmentHistoryPage-audit-total"),
+    ).toHaveTextContent("3 changes recorded.");
+    cleanup();
+
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.userOnly);
+    renderApp();
+    expect(
+      await screen.findByText("You do not have access to this page."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/changes recorded/)).toBeNull();
+  });
+
   test("/admin/draft-applications/:id is the draft's page, for admins only (issue #296)", async () => {
     window.history.pushState({}, "", "/admin/draft-applications/21");
     axiosMock

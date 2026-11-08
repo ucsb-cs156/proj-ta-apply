@@ -55,6 +55,9 @@ public class RecruitmentAuditService {
     FIELDS.put("facultyRankingDeadline", Recruitment::getFacultyRankingDeadline);
     FIELDS.put("allocationVisibility", Recruitment::getAllocationVisibility);
     FIELDS.put("assignmentsPublished", Recruitment::getAssignmentsPublished);
+    // Issue #391: the hiring target, a planning figure, is audited too; the Budget page lists its
+    // changes for the quarter's two recruitments.
+    FIELDS.put("totalHiringTarget", Recruitment::getTotalHiringTarget);
   }
 
   /** A recruitment's audited fields as strings, keyed by field name; a null field is null. */

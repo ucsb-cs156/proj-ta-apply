@@ -522,34 +522,50 @@ public class RecruitmentsWebIT extends WebTestCase {
         .containsText("OPEN");
     assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-actualOpeningDate")).not().isEmpty();
 
-    // Issue #139: the Applications page lists the recruitment's own audit trail, newest
-    // first: the stamped opening date, the status change, then the creation.
-    page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
-    // Issue #255: the Change History card starts closed, so open it first.
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-changeHistory-toggle"))
-        .hasAttribute("aria-expanded", "false");
-    page.getByTestId("RecruitmentApplicationsPage-changeHistory-toggle").click();
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-total"))
+    // Issue #390: the Change History button at the right end of the card's button row opens the
+    // recruitment's own history page (until #390 a card on the Applications page, issue #139),
+    // newest first: the stamped opening date, the status change, then the creation.
+    Locator historyButton = page.getByTestId("HomePageLoggedIn-admin-card-0-change-history-button");
+    assertThat(historyButton).hasText("Change History");
+    assertThat(historyButton).hasClass(java.util.regex.Pattern.compile("\\bms-auto\\b"));
+    historyButton.click();
+    assertThat(page).hasURL(java.util.regex.Pattern.compile("/admin/recruitments/\\d+/history$"));
+    assertThat(page.getByTestId("RecruitmentHistoryPage-title"))
+        .containsText("Change History: TA positions");
+    assertThat(page.getByTestId("RecruitmentHistoryPage-recruitment-cell-row-0-col-type"))
+        .hasText("TA");
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-trail-link"))
+        .hasAttribute("href", "/admin/audittrail");
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-page-size")).hasValue("10");
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-total"))
         .hasText("3 changes recorded.");
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-whatChanged"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-0-col-whatChanged"))
         .hasText("actualOpeningDate");
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-oldValue"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-0-col-oldValue"))
         .hasText("");
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-newValue"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-0-col-newValue"))
         .hasText(java.time.LocalDate.now().toString());
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-1-col-whatChanged"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-1-col-whatChanged"))
         .hasText("applicationStatus");
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-1-col-oldValue"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-1-col-oldValue"))
         .hasText("CLOSED");
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-1-col-newValue"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-1-col-newValue"))
         .hasText("OPEN");
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-2-col-whatChanged"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-2-col-whatChanged"))
         .hasText("created");
     // Issue #337: every row, the creation included, names the admin who made the change.
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-editorEmail"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-0-col-editorEmail"))
         .hasText("admin@ucsb.edu");
-    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-2-col-editorEmail"))
+    assertThat(page.getByTestId("RecruitmentHistoryPage-audit-cell-row-2-col-editorEmail"))
         .hasText("admin@ucsb.edu");
+
+    // The Applications page no longer has the card.
+    page.goBack();
+    waitFor(page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button"));
+    page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
+    waitFor(page.getByTestId("RecruitmentApplicationsPage-count"));
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-changeHistory-toggle")).hasCount(0);
+    assertThat(page.getByText("Change History")).hasCount(0);
   }
 
   /**
@@ -624,7 +640,8 @@ public class RecruitmentsWebIT extends WebTestCase {
     waitFor(page.getByTestId(card + "courses-button"));
     Long id = recruitmentRepository.findAll().iterator().next().getId();
 
-    // The five buttons, in order, in one footer; reviews have not started, so no CSV button.
+    // The five workflow buttons, in order, in one footer, then Change History at its right edge
+    // (issue #390); reviews have not started, so no CSV button.
     Locator footer = page.getByTestId(card + "courses-button").locator("..");
     assertThat(footer.getByRole(AriaRole.LINK))
         .hasText(
@@ -633,8 +650,11 @@ public class RecruitmentsWebIT extends WebTestCase {
               "Draft Applications",
               "Applications",
               "Make Assignments",
-              "View Assignments"
+              "View Assignments",
+              "Change History"
             });
+    assertThat(page.getByTestId(card + "change-history-button"))
+        .hasAttribute("href", "/admin/recruitments/" + id + "/history");
     assertThat(page.getByTestId(card + "make-assignments-button"))
         .hasAttribute("href", "/admin/recruitments/" + id + "/assignments");
     assertThat(page.getByTestId(card + "view-assignments-button"))

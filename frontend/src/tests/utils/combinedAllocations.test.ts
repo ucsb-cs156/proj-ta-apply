@@ -254,21 +254,25 @@ describe("combineCourses: the union of the two recruitments by enroll code", () 
     });
   });
 
-  test("the enrollment estimate is the higher of the two", () => {
-    const estimate = (taEstimate: number | null, ulaEstimate: number | null) =>
+  test("the enrollment estimate is the one the section's rows share, from whichever row has it (issue #363)", () => {
+    const estimate = (
+      taEstimate: number | null | undefined,
+      ulaEstimate: number | null | undefined,
+    ) =>
       combineCourses(
         [course(1, 10, { enrollmentEstimate: taEstimate })],
         [course(2, 20, { enrollmentEstimate: ulaEstimate })],
       )[0].enrollmentEstimate;
 
-    expect(estimate(100, 80)).toBe(100);
-    expect(estimate(80, 100)).toBe(100);
     expect(estimate(90, 90)).toBe(90);
     expect(estimate(100, null)).toBe(100);
     expect(estimate(null, 80)).toBe(80);
+    expect(estimate(undefined, 80)).toBe(80);
     expect(estimate(null, null)).toBeNull();
+    expect(estimate(undefined, undefined)).toBeNull();
     expect(estimate(0, null)).toBe(0);
     expect(estimate(null, 0)).toBe(0);
+    expect(estimate(0, 0)).toBe(0);
   });
 
   test("a row in one recruitment keeps its own estimate, and a missing one stays null", () => {

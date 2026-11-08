@@ -559,7 +559,7 @@ describe("RecruitmentCards tests", () => {
     );
   });
 
-  test("the footer has the Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons, in that order, leading to that recruitment's pages", () => {
+  test("the footer has the Courses, Draft Applications, Applications, Make Assignments, View Assignments and Change History buttons, in that order, leading to that recruitment's pages", () => {
     renderCards(three.map((r) => ({ ...r, reviewStatus: "NotStarted" })));
     // Card 2 is id 2.
     const courses = screen.getByTestId("Cards-card-2-courses-button");
@@ -593,6 +593,12 @@ describe("RecruitmentCards tests", () => {
     expect(view).toHaveAttribute("href", "/recruitments/2/assignments");
     expect(view).toHaveClass("btn", "btn-success");
 
+    // Issue #390: the recruitment's own change history, at the right edge of the row.
+    const history = screen.getByTestId("Cards-card-2-change-history-button");
+    expect(history).toHaveTextContent("Change History");
+    expect(history).toHaveAttribute("href", "/admin/recruitments/2/history");
+    expect(history).toHaveClass("btn", "btn-outline-secondary", "ms-auto");
+
     // Everything else the footer once held is reached through the diagram or has moved (#234).
     const footer = screen
       .getByTestId("Cards-card-2-card")
@@ -604,6 +610,7 @@ describe("RecruitmentCards tests", () => {
       applications,
       make,
       view,
+      history,
     ]);
     expect(footer).not.toContainElement(
       screen.getByTestId("Cards-card-2-delete-button"),

@@ -1,7 +1,8 @@
 /**
  * The courses of F26's TA recruitment (id 5) and ULA recruitment (id 6), for the Combined
- * Allocation page (issue #358): CMPSC 156 is in both (their estimates disagree, 100 and 80), CMPSC
- * 8 only in the TA one, CMPSC 24 only in the ULA one. The ids match budgetFixtures.bothTypes.
+ * Allocation page (issue #358): CMPSC 156 is in both (both rows carry the section's one estimate,
+ * 100, issue #363), CMPSC 8 only in the TA one, CMPSC 24 only in the ULA one. The ids match
+ * budgetFixtures.bothTypes.
  */
 const row = {
   days: null,
@@ -62,7 +63,7 @@ const combinedAllocationsFixtures = {
       instructor: "CONRAD P",
       allocation: 6,
       allocationVersion: 9,
-      enrollmentEstimate: 80,
+      enrollmentEstimate: 100,
       unroundedAllocation: 7.25,
     },
     {
