@@ -1142,8 +1142,15 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
     const queryClient = new QueryClient();
     const taKey = ["/api/recruitmentcourses/all", 5];
     const ulaKey = ["/api/recruitmentcourses/all", 6];
+    // Another cached list, whose first item shares the saved row's id: not a course list, so
+    // neither patched nor marked stale.
+    const recruitmentsKey = ["/api/admin/recruitments/all"];
     queryClient.setQueryData(taKey, fx.taCourses);
     queryClient.setQueryData(ulaKey, fx.ulaCourses);
+    queryClient.setQueryData(recruitmentsKey, [
+      { id: 1, enrollCode: "07492" },
+      ...fx.recruitments,
+    ]);
     render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
@@ -1175,6 +1182,14 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
     // Both recruitments' allocations are recomputed by the save, so both lists are stale.
     expect(queryClient.getQueryState(taKey).isInvalidated).toBe(true);
     expect(queryClient.getQueryState(ulaKey).isInvalidated).toBe(true);
+    // Only the course lists: the recruitments are untouched and not stale.
+    expect(queryClient.getQueryData(recruitmentsKey)).toEqual([
+      { id: 1, enrollCode: "07492" },
+      ...fx.recruitments,
+    ]);
+    expect(queryClient.getQueryState(recruitmentsKey).isInvalidated).toBe(
+      false,
+    );
   });
 
   test("a cached course list that never loaded becomes an empty one, not an error", async () => {
