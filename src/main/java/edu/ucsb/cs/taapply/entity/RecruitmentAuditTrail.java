@@ -17,14 +17,16 @@ import lombok.NoArgsConstructor;
 /**
  * One change to a recruitment itself (issue #139): its creation, its deletion, or one field going
  * from one value to another, with the value before and after as strings. The admin's Applications
- * page for the recruitment lists these rows.
+ * page for the recruitment lists these rows; the Budget page lists the hiring-target rows of the
+ * quarter's two recruitments (issue #391).
  *
  * <p>This is the audit trail for <em>recruitments</em>. Changes an admin makes to an individual
  * student's application are a different table, {@link AuditTrail}.
  *
  * <p>{@code whatChanged} names the field ({@code applicationStatus}, {@code tentativeOpeningDate},
  * {@code primaryConsiderationDate}, {@code actualOpeningDate}, {@code actualClosingDate}, {@code
- * reviewStatus}, {@code facultyReviewOpeningDate}, {@code facultyRankingDeadline}), or is {@link
+ * reviewStatus}, {@code facultyReviewOpeningDate}, {@code facultyRankingDeadline}, {@code
+ * allocationVisibility}, {@code assignmentsPublished}, {@code totalHiringTarget}), or is {@link
  * #CREATED} or {@link #DELETED}, when both values are null. A change to several fields in one
  * request is several rows. There is deliberately no foreign key to the recruitment: the rows about
  * a deleted recruitment are the record that it existed.

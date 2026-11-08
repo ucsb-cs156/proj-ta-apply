@@ -71,4 +71,69 @@ recruitmentAuditTrailFixtures.emptyPage = {
   totalPages: 0,
 };
 
+/**
+ * Issue #391: the hiring-target changes of F26's two recruitments (TA 5, ULA 6, as in
+ * budgetFixtures.bothTypes), newest first, each with the type of its recruitment, as
+ * /api/admin/recruitmentaudittrail/hiringTargets serves them.
+ */
+recruitmentAuditTrailFixtures.hiringTargetRows = [
+  {
+    id: 12,
+    changedAt: "2026-01-07T10:15:00",
+    recruitmentId: 6,
+    whatChanged: "totalHiringTarget",
+    oldValue: "1",
+    newValue: "10",
+    editorEmail: "admin@ucsb.edu",
+    type: "ULA",
+  },
+  {
+    id: 11,
+    changedAt: "2026-01-07T10:14:00",
+    recruitmentId: 5,
+    whatChanged: "totalHiringTarget",
+    oldValue: "8",
+    newValue: "9",
+    editorEmail: "admin@ucsb.edu",
+    type: "TA",
+  },
+  {
+    id: 9,
+    changedAt: "2026-01-06T09:30:00",
+    recruitmentId: 5,
+    whatChanged: "totalHiringTarget",
+    oldValue: "1",
+    newValue: "8",
+    editorEmail: "phtcon@ucsb.edu",
+    type: "TA",
+  },
+];
+
+/** The three hiring-target changes as the one and only page. */
+recruitmentAuditTrailFixtures.hiringTargetPage = {
+  content: recruitmentAuditTrailFixtures.hiringTargetRows,
+  number: 0,
+  size: 10,
+  totalElements: 3,
+  totalPages: 1,
+};
+
+/** The first of two pages of two hiring-target changes each. */
+recruitmentAuditTrailFixtures.hiringTargetFirstOfTwoPages = {
+  content: recruitmentAuditTrailFixtures.hiringTargetRows.slice(0, 2),
+  number: 0,
+  size: 2,
+  totalElements: 3,
+  totalPages: 2,
+};
+
+/** The second of those two pages. */
+recruitmentAuditTrailFixtures.hiringTargetSecondOfTwoPages = {
+  content: recruitmentAuditTrailFixtures.hiringTargetRows.slice(2),
+  number: 1,
+  size: 2,
+  totalElements: 3,
+  totalPages: 2,
+};
+
 export default recruitmentAuditTrailFixtures;

@@ -197,8 +197,9 @@ public class RecruitmentsController extends ApiController {
       summary = "Set how many TAs or ULAs a recruitment expects to hire",
       description =
           "The total the per-course allocations on the Recruitment Courses page should add up to"
-              + " (issue #174). Must be at least 1. A planning figure: not recorded in the audit"
-              + " trail.")
+              + " (issue #174). Must be at least 1. Recorded in the recruitment audit trail as"
+              + " totalHiringTarget (issue #391); the Budget page lists these changes for both of"
+              + " the quarter's recruitments.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/totalHiringTarget")
   public ResponseEntity<Object> updateTotalHiringTarget(
@@ -219,8 +220,11 @@ public class RecruitmentsController extends ApiController {
       if (expected != null && !expected.equals(recruitment.getTotalHiringTarget())) {
         return staleValue(recruitment, "hiring target");
       }
+      // Issue #391: the change is audited, so the snapshot is taken inside the compare-and-set,
+      // once the stored value is known to be the one the page saw.
+      RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
       recruitment.setTotalHiringTarget(totalHiringTarget);
-      recruitmentRepository.save(recruitment);
+      recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     }
     // Every section's fractional share depends on the target (issue #176).
     allocationService.recompute(recruitment);
