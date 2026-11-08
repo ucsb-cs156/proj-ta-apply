@@ -304,7 +304,17 @@
 <a name='L239'></a><a href='#L239'>239</a>
 <a name='L240'></a><a href='#L240'>240</a>
 <a name='L241'></a><a href='#L241'>241</a>
-<a name='L242'></a><a href='#L242'>242</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -317,6 +327,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -561,12 +581,19 @@ export default function HelpInstructorsPage(): React.JSX.Element {
     &lt;BasicLayout&gt;
       &lt;div className="pt-2" data-testid="HelpInstructorsPage"&gt;
         &lt;h1 className="my-4"&gt;For Instructors&lt;/h1&gt;
-        &lt;p&gt;
+        &lt;p data-testid="HelpInstructorsPage-home-cards"&gt;
           When you are signed in, your home page has an{" "}
-          &lt;strong&gt;Instructor&lt;/strong&gt; section listing the recruitments that
-          apply to you: each TA or ULA recruitment for a quarter in which you
-          are teaching a course that is recruiting, with that course (or
-          courses) under it.
+          &lt;strong&gt;Instructor&lt;/strong&gt; section with one card per quarter, newest
+          first, for each quarter in which you teach a course that is in a TA or
+          ULA recruitment. The card&amp;apos;s header is the quarter; under it is a
+          drop-down for each of your courses in that quarter&amp;apos;s recruitments
+          (a course in both the TA and the ULA recruitment appears once). Open a
+          course to see its enrollment table (Section, Enrolled and Max, plus
+          the Enrollment Estimate and the TA and ULA Allocation once an admin
+          releases them), a note where you will one day be able to comment on
+          your allocations, and then a &lt;strong&gt;TA&lt;/strong&gt; card and/or a{" "}
+          &lt;strong&gt;ULA&lt;/strong&gt; card: one for each recruitment the course is in,
+          with that recruitment&amp;apos;s status and dates.
         &lt;/p&gt;
         &lt;p data-testid="HelpInstructorsPage-steps-link"&gt;
           Where your part fits in a recruitment, and what the admin does before
@@ -581,48 +608,50 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           the catalog name on your account.
         &lt;/p&gt;
         &lt;p&gt;
-          Each recruitment card shows whether faculty reviews are NotStarted,
-          Open, or Closed, the date reviews were first opened, and the faculty
-          ranking deadline. These dates and status are separate from the
+          Each TA or ULA card shows whether applications are open, whether
+          faculty reviews are NotStarted, Open, or Closed, the application
+          dates, the date reviews were first opened, and the faculty ranking
+          deadline. These review dates and status are separate from the
           application dates.
         &lt;/p&gt;
         &lt;p data-testid="HelpInstructorsPage-allocations"&gt;
-          Once an admin lets faculty see the allocations, each of your courses
-          shows a small table, both on the card and at the top of its ranking
-          page: the &lt;strong&gt;Hiring Target&lt;/strong&gt; (how many TAs or ULAs were
-          allocated to the course), the &lt;strong&gt;Ranking Target&lt;/strong&gt; (how
-          many candidates you are asked to rank: twice the hiring target, or
-          every interested candidate if there are fewer),{" "}
-          &lt;strong&gt;Candidates Ranked&lt;/strong&gt; so far and{" "}
-          &lt;strong&gt;Rankings Still Needed&lt;/strong&gt;. Please rank at least as many
-          as the hiring target, and preferably the whole ranking target. If you
-          have concerns about your course&amp;apos;s target, raise them with the
-          admin once you see it. Until the admin does, nothing about it is
-          shown. Each course you teach also has a &lt;strong&gt;Courses&lt;/strong&gt;{" "}
-          button, which opens it (click the course to see the button): the
-          read-only Courses page, listing every course of the recruitment with
-          its instructor, enrollment and meeting times. The{" "}
-          &lt;strong&gt;Columns&lt;/strong&gt; menu above the table hides and shows columns,
-          and your choice is remembered in this browser. (The old All
-          allocations page is now this one.)
+          Once an admin lets faculty see a recruitment&amp;apos;s allocations, the
+          course&amp;apos;s enrollment table gains the quarter&amp;apos;s{" "}
+          &lt;strong&gt;Enrollment Estimate&lt;/strong&gt; and that recruitment&amp;apos;s{" "}
+          &lt;strong&gt;TA Allocation&lt;/strong&gt; or &lt;strong&gt;ULA Allocation&lt;/strong&gt;, and
+          the TA or ULA card gains a small table, also shown at the top of the
+          ranking page: the &lt;strong&gt;Hiring Target&lt;/strong&gt; (how many TAs or ULAs
+          were allocated to the course; the same number as the allocation), the{" "}
+          &lt;strong&gt;Ranking Target&lt;/strong&gt; (how many candidates you are asked to
+          rank: twice the hiring target, or every interested candidate if there
+          are fewer), &lt;strong&gt;Candidates Ranked&lt;/strong&gt; so far and{" "}
+          &lt;strong&gt;Rankings Still Needed&lt;/strong&gt;. The ranking button sits in the
+          first column of that table. Please rank at least as many as the hiring
+          target, and preferably the whole ranking target. If you have concerns
+          about your course&amp;apos;s target, raise them with the admin once you
+          see it. Until the admin does, nothing about it is shown. The read-only
+          Courses page, listing every course of a recruitment with its
+          instructor, enrollment and meeting times, is being phased out and is
+          no longer linked from the home page.
         &lt;/p&gt;
         &lt;p&gt;
           When faculty reviews are open, expand one of your listed courses and
-          choose &lt;strong&gt;Rank Candidates&lt;/strong&gt;. After reviews close, the link
-          changes to &lt;strong&gt;View Candidate Rankings&lt;/strong&gt;. The course page
-          shows the recruitment dates and the course section; if you teach
-          multiple courses in that recruitment, it also links to your other
-          sections. The table contains real applicants who chose this course or
-          expressed enthusiasm or willingness to consider it. Each section has
-          independent rankings. The table always opens in the default sort: by
-          your ranking (1 first, unranked last), then by course preference
-          (first choice, second choice, enthusiastic, then would consider), then
-          in the order the applications were submitted. The{" "}
-          &lt;strong&gt;Default Sort&lt;/strong&gt; button returns to it after you sort by
-          another column, and also re-reads any rankings you have just typed.
-          Click any column heading to sort by that column; course preference
-          sorts from first choice to second choice, enthusiastic, then would
-          consider. Contact an admin if a course or ranking page is unavailable.
+          choose &lt;strong&gt;Rank Candidates&lt;/strong&gt; in its TA or ULA card. After
+          reviews close, the link changes to{" "}
+          &lt;strong&gt;View Candidate Rankings&lt;/strong&gt;. The course page shows the
+          recruitment dates and the course section; if you teach multiple
+          courses in that recruitment, it also links to your other sections. The
+          table contains real applicants who chose this course or expressed
+          enthusiasm or willingness to consider it. Each section has independent
+          rankings. The table always opens in the default sort: by your ranking
+          (1 first, unranked last), then by course preference (first choice,
+          second choice, enthusiastic, then would consider), then in the order
+          the applications were submitted. The &lt;strong&gt;Default Sort&lt;/strong&gt;{" "}
+          button returns to it after you sort by another column, and also
+          re-reads any rankings you have just typed. Click any column heading to
+          sort by that column; course preference sorts from first choice to
+          second choice, enthusiastic, then would consider. Contact an admin if
+          a course or ranking page is unavailable.
         &lt;/p&gt;
         &lt;p data-testid="HelpInstructorsPage-ranking-columns"&gt;
           The ranking table has a &lt;strong&gt;Columns&lt;/strong&gt; menu, like the other
@@ -679,8 +708,9 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           someone you expected to see.
         &lt;/p&gt;
         &lt;p data-testid="HelpInstructorsPage-assignments"&gt;
-          When the admins have settled who is hired, the recruitment card gains
-          an &lt;strong&gt;Assignments Published&lt;/strong&gt; badge and an{" "}
+          When the admins have settled who is hired, the recruitment&amp;apos;s TA
+          or ULA card, in each of your courses, gains an{" "}
+          &lt;strong&gt;Assignments Published&lt;/strong&gt; badge and an{" "}
           &lt;strong&gt;Assignments&lt;/strong&gt; button. The page it opens is read-only
           and covers every course in the recruitment, not just yours: choose{" "}
           &lt;strong&gt;One Row per course&lt;/strong&gt; to see each course with its
@@ -793,7 +823,7 @@ export default function HelpInstructorsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-08T01:54:27.588Z
+                at 2026-11-08T18:25:53.686Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
