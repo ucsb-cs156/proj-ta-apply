@@ -598,6 +598,10 @@ describe("Help pages (issue #140)", () => {
     expect(heading.nextElementSibling).toHaveTextContent(
       "A new quarter's budget starts as a copy of the most recent earlier quarter's: its costs, funds and conversion factor, and each recruitment's hiring target from the same type of recruitment in that quarter; change whatever differs.",
     );
+    // Issue #391: the Audit Trail card of the hiring targets.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "At the bottom of the page, a closed Audit Trail card (“Track changes to hiring targets”) opens to list every change to the quarter's TA and ULA hiring targets, newest first, with who made it, the old and new values and the Type of recruitment; the same rows appear in each recruitment's own change history.",
+    );
     expect(lines).toHaveTextContent(
       "its estimated cost per position (for ULAs, the computed rate times hours), the funds are the four lines added",
     );

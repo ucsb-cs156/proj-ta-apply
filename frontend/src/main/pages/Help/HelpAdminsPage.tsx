@@ -505,7 +505,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           A new quarter&apos;s budget starts as a copy of the most recent
           earlier quarter&apos;s: its costs, funds and conversion factor, and
           each recruitment&apos;s hiring target from the same type of
-          recruitment in that quarter; change whatever differs.
+          recruitment in that quarter; change whatever differs. At the bottom of
+          the page, a closed <strong>Audit Trail</strong> card (&ldquo;Track
+          changes to hiring targets&rdquo;) opens to list every change to the
+          quarter&apos;s TA and ULA hiring targets, newest first, with who made
+          it, the old and new values and the <em>Type</em> of recruitment; the
+          same rows appear in each recruitment&apos;s own change history.
         </p>
         <p id="budget-lines" data-testid="HelpAdminsPage-budget-lines">
           The three budget lines are the <strong>unrestricted</strong> temp

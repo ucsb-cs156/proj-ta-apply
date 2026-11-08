@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -1013,7 +1014,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(
             put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=5").with(csrf()))
         .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
@@ -1023,7 +1024,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(
             put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=5").with(csrf()))
         .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -1032,12 +1033,18 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(1, recruitment(1L, "20261", RecruitmentType.TA).getTotalHiringTarget());
   }
 
-  /** A planning figure: saved, returned, and not written to the audit trail. */
+  /**
+   * Saved and returned, and (issue #391) written to the audit trail: the snapshot is taken before
+   * the change, and the save and its rows go through the audit service in one transaction.
+   */
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void admin_can_change_the_hiring_target() throws Exception {
+  public void admin_can_change_the_hiring_target_and_the_change_is_audited() throws Exception {
     Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("totalHiringTarget", "1"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
 
     MvcResult response =
         mockMvc
@@ -1048,13 +1055,14 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals(12, r.getTotalHiringTarget());
-    verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+    // The snapshot comes first, then the audited save; the controller itself saves nothing.
     // Issue #176: every section's share depends on the target, recomputed after the save.
-    InOrder inOrder = inOrder(recruitmentRepository, allocationService);
-    inOrder.verify(recruitmentRepository).save(r);
+    InOrder inOrder = inOrder(recruitmentAuditService, allocationService);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentAuditService).saveAndRecordChanges(before, r);
     inOrder.verify(allocationService).recompute(r);
+    verify(recruitmentRepository, never()).save(any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -1070,7 +1078,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     assertEquals(1, r.getTotalHiringTarget());
-    verify(recruitmentRepository, times(1)).save(r);
+    verify(recruitmentAuditService, times(1)).saveAndRecordChanges(any(), eq(r));
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -1088,7 +1096,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
       assertEquals("totalHiringTarget must be at least 1", json.get("message"));
     }
     verify(recruitmentRepository, never()).findById(any());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     verify(allocationService, never()).recompute(any());
   }
 
@@ -1100,7 +1108,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=five")
                 .with(csrf()))
         .andExpect(status().isBadRequest());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -1116,7 +1124,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andExpect(status().isNotFound())
             .andReturn();
 
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
   }
@@ -1433,7 +1442,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     assertEquals(9, r.getTotalHiringTarget());
-    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).saveAndRecordChanges(any(), eq(r));
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -1456,7 +1465,9 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         "The hiring target was changed in another tab or window.",
         responseToJson(response).get("message"));
     assertEquals(8, r.getTotalHiringTarget());
-    verify(recruitmentRepository, never()).save(any());
+    // Issue #391: refused before the snapshot, so nothing is saved or audited.
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     verify(allocationService, never()).recompute(any());
   }
 }

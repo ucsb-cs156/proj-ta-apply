@@ -70,8 +70,29 @@ public class RecruitmentAuditServiceTests {
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
             "allocationVisibility",
-            "assignmentsPublished"),
+            "assignmentsPublished",
+            "totalHiringTarget"),
         new ArrayList<>(RecruitmentAuditService.FIELDS.keySet()));
+  }
+
+  /** Issue #391: the hiring target is audited, as a plain number. */
+  @Test
+  public void changing_the_hiring_target_records_old_and_new_as_numbers() {
+    Recruitment r = recruitment();
+    r.setTotalHiringTarget(8);
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setTotalHiringTarget(12);
+
+    List<RecruitmentAuditTrail> changes = service.saveAndRecordChanges(before, r);
+
+    assertEquals(1, changes.size());
+    assertEquals("totalHiringTarget", changes.get(0).getWhatChanged());
+    assertEquals("8", changes.get(0).getOldValue());
+    assertEquals("12", changes.get(0).getNewValue());
+    assertEquals(7L, changes.get(0).getRecruitmentId());
+    InOrder inOrder = inOrder(recruitmentRepository, repository);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(repository).saveAll(changes);
   }
 
   @Test
@@ -94,7 +115,8 @@ public class RecruitmentAuditServiceTests {
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
             "allocationVisibility",
-            "assignmentsPublished"),
+            "assignmentsPublished",
+            "totalHiringTarget"),
         new ArrayList<>(fields.keySet()));
     assertEquals("CLOSED", fields.get("applicationStatus"));
     assertEquals("2026-01-05", fields.get("tentativeOpeningDate"));
@@ -107,6 +129,8 @@ public class RecruitmentAuditServiceTests {
     assertNull(fields.get("facultyRankingDeadline"));
     assertEquals("ADMINS_ONLY", fields.get("allocationVisibility"));
     assertEquals("false", fields.get("assignmentsPublished"));
+    // Issue #391: the target defaults to 1 and is recorded as a plain number.
+    assertEquals("1", fields.get("totalHiringTarget"));
   }
 
   @Test
