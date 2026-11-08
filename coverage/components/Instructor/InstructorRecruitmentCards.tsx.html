@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>22/22</span>
+                <span class='fraction'>21/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>29/29</span>
+                <span class='fraction'>27/27</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>21/21</span>
+                <span class='fraction'>20/20</span>
             </div>
         
             
@@ -321,16 +321,8 @@
 <a name='L256'></a><a href='#L256'>256</a>
 <a name='L257'></a><a href='#L257'>257</a>
 <a name='L258'></a><a href='#L258'>258</a>
-<a name='L259'></a><a href='#L259'>259</a>
-<a name='L260'></a><a href='#L260'>260</a>
-<a name='L261'></a><a href='#L261'>261</a>
-<a name='L262'></a><a href='#L262'>262</a>
-<a name='L263'></a><a href='#L263'>263</a>
-<a name='L264'></a><a href='#L264'>264</a>
-<a name='L265'></a><a href='#L265'>265</a>
-<a name='L266'></a><a href='#L266'>266</a>
-<a name='L267'></a><a href='#L267'>267</a>
-<a name='L268'></a><a href='#L268'>268</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L259'></a><a href='#L259'>259</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -406,10 +398,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">98x</span>
-<span class="cline-any cline-yes">1169x</span>
+<span class="cline-any cline-yes">777x</span>
 <span class="cline-any cline-yes">98x</span>
 <span class="cline-any cline-yes">98x</span>
 <span class="cline-any cline-yes">98x</span>
@@ -431,14 +421,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">392x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -600,7 +582,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Accordion, Badge, Card } from "react-bootstrap";
 import { Link } from "react-router";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
-import { DATE_KEYS } from "main/utils/recruitmentSort";
 import DetailsTable from "main/components/Common/DetailsTable";
 import { targetsColumns } from "main/utils/courseTargets";
 import {
@@ -622,7 +603,9 @@ type InstructorRecruitmentCardsProps = {
 &nbsp;
 /**
  * The ranking action for a course in a recruitment: Rank Candidates while faculty reviews are Open,
- * View Candidate Rankings once Closed, and otherwise a note that they have not opened.
+ * View Candidate Rankings once Closed, and otherwise a note that they have not opened. The note
+ * takes the natural width of whatever holds it (issue #410), wrapping like ordinary text even in a
+ * table cell that does not wrap.
  */
 function RankingAction({
   entry,
@@ -652,11 +635,7 @@ function RankingAction({
     );
   }
   return (
-    &lt;span
-      className="d-inline-block"
-      style={{ whiteSpace: "normal", maxWidth: "16rem" }}
-      data-testid={id("not-open")}
-    &gt;
+    &lt;span style={{ whiteSpace: "normal" }} data-testid={id("not-open")}&gt;
       {NOT_OPEN_NOTE}
     &lt;/span&gt;
   );
@@ -665,8 +644,10 @@ function RankingAction({
 /**
  * The TA or ULA card of a course (issue #364): everything the old per-recruitment card had, except
  * the Courses button. The type, the application and faculty-review status, the Assignments
- * Published badge and button, the dates, and, once the allocations are released, the targets table
- * with the ranking action in an unlabelled first column; while they are withheld, the action alone.
+ * Published badge and button, the faculty review dates (since issue #410 only those: the date
+ * reviews opened and the ranking deadline, not the application dates), and, once the allocations
+ * are released, the targets table with the ranking action in an unlabelled first column; while
+ * they are withheld, the action alone.
  */
 function RecruitmentCard({
   entry,
@@ -704,16 +685,6 @@ function RecruitmentCard({
       &lt;/Card.Header&gt;
       &lt;Card.Body&gt;
         &lt;dl className="row mb-0"&gt;
-          {DATE_KEYS.map(({ key, label }) =&gt; (
-            &lt;div className="col-sm-6 d-flex" key={key}&gt;
-              &lt;dt className="me-2"&gt;{label}:&lt;/dt&gt;
-              &lt;dd className="mb-1" data-testid={id(key)}&gt;
-                {recruitment[key] ?? ""}
-              &lt;/dd&gt;
-            &lt;/div&gt;
-          ))}
-        &lt;/dl&gt;
-        &lt;dl className="row mb-0 mt-2"&gt;
           &lt;div className="col-sm-6 d-flex"&gt;
             &lt;dt className="me-2"&gt;Faculty Reviews Opened:&lt;/dt&gt;
             &lt;dd className="mb-1" data-testid={id("facultyReviewOpeningDate")}&gt;
@@ -759,8 +730,10 @@ function RecruitmentCard({
 }
 &nbsp;
 /**
- * What a course's accordion item holds (issue #364): the enrollment table, the placeholder for the
- * allocation feedback to come, then the TA card and the ULA card for each recruitment it is in.
+ * What a course's accordion item holds (issue #364): the enrollment table (always all six columns
+ * since issue #410, Enrollment Estimate and the two Allocations reading TBD or N/A until there is a
+ * number), the placeholder for the allocation feedback to come, then the TA card and the ULA card
+ * for each recruitment it is in.
  */
 function CourseBody({
   course,
@@ -871,7 +844,7 @@ export default function InstructorRecruitmentCards({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-08T20:40:30.929Z
+                at 2026-11-08T21:24:59.265Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
