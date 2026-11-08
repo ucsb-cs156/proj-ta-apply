@@ -79,6 +79,19 @@ loadScripts(document, 'script');</script>
 <div class="block">Budgets are keyed on the quarter (YYYYQ), one per quarter.</div>
 </div>
 </div>
+<div class="caption"><span>Methods in <a href="../../repository/package-summary.html">edu.ucsb.cs.taapply.repository</a> that return types with arguments of type <a href="../Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetRepository.</span><code><a href="../../repository/BudgetRepository.html#findFirstByQuarterLessThanOrderByQuarterDesc(java.lang.String)" class="member-name-link">findFirstByQuarterLessThanOrderByQuarterDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The budget of the most recent quarter before the given one (issue #384): the one with the
+largest YYYYQ smaller than <code>quarter</code>, which the fixed width of YYYYQ makes a plain string
+comparison.</div>
+</div>
+</div>
 </section>
 </li>
 <li>
@@ -97,8 +110,13 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color"><code><a href="../Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a></code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">BudgetService.</span><code><a href="../../services/BudgetService.html#budgetFor(java.lang.String)" class="member-name-link">budgetFor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">The quarter's budget row, created with every line at zero if this is the first time it is asked
-for.</div>
+<div class="block">The quarter's budget row, created if this is the first time it is asked for, as a copy of the
+most recent earlier quarter's (issue #384; see <a href="../../services/BudgetCreationService.html" title="class in edu.ucsb.cs.taapply.services"><code>BudgetCreationService</code></a>).</div>
+</div>
+<div class="col-first even-row-color"><code><a href="../Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCreationService.</span><code><a href="../../services/BudgetCreationService.html#findOrCreate(java.lang.String)" class="member-name-link">findOrCreate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The quarter's budget row, created as described above if this is the first time it is asked for.</div>
 </div>
 </div>
 <div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a></span></div>

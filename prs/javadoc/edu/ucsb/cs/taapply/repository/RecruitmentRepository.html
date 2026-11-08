@@ -60,6 +60,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#findByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" tabindex="0">findByQuarterAndType(String, RecruitmentType)</a></li>
 <li><a href="#existsByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" tabindex="0">existsByQuarterAndType(String, RecruitmentType)</a></li>
 <li><a href="#findAllByOrderByQuarterDescTypeAsc()" tabindex="0">findAllByOrderByQuarterDescTypeAsc()</a></li>
+<li><a href="#findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" tabindex="0">findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(String, RecruitmentType)</a></li>
 <li><a href="#bumpAssignmentsVersionIf(java.lang.Long,java.lang.Integer)" tabindex="0">bumpAssignmentsVersionIf(Long, Integer)</a></li>
 <li><a href="#bumpAssignmentsVersion(java.lang.Long)" tabindex="0">bumpAssignmentsVersion(Long)</a></li>
 </ol>
@@ -121,6 +122,14 @@ expected</code> (issue #280).</div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findByQuarterAndType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findFirstByQuarterLessThanAndTypeOrderByQuarterDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">The recruitment of the given type in the most recent quarter before the given one (issue #384):
+the one with the largest YYYYQ smaller than <code>quarter</code>, which the fixed width of YYYYQ
+makes a plain string comparison.</div>
+</div>
 </div>
 </div>
 </div>
@@ -162,6 +171,18 @@ expected</code> (issue #280).</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</span>&nbsp;<span class="element-name">findAllByOrderByQuarterDescTypeAsc</span>()</div>
 <div class="block">Most recent quarter first, as the admin listing shows them.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)">
+<h3>findFirstByQuarterLessThanAndTypeOrderByQuarterDesc</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</span>&nbsp;<span class="element-name">findFirstByQuarterLessThanAndTypeOrderByQuarterDesc</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</span></div>
+<div class="block">The recruitment of the given type in the most recent quarter before the given one (issue #384):
+the one with the largest YYYYQ smaller than <code>quarter</code>, which the fixed width of YYYYQ
+makes a plain string comparison. Empty when no earlier quarter has one of that type.</div>
 </div>
 </section>
 </li>
