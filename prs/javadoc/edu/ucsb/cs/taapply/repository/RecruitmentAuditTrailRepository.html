@@ -58,6 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#findByRecruitmentId(java.lang.Long,org.springframework.data.domain.Pageable)" tabindex="0">findByRecruitmentId(Long, Pageable)</a></li>
+<li><a href="#findByRecruitmentIdInAndWhatChanged(java.util.Collection,java.lang.String,org.springframework.data.domain.Pageable)" tabindex="0">findByRecruitmentIdInAndWhatChanged(Collection, String, Pageable)</a></li>
 </ol>
 </li>
 </ol>
@@ -100,6 +101,14 @@ changes to individual applications is <a href="AuditTrailRepository.html" title=
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">One page of the changes recorded against one recruitment, in the page's order.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>org.springframework.data.domain.Page<wbr>&lt;<a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByRecruitmentIdInAndWhatChanged(java.util.Collection,java.lang.String,org.springframework.data.domain.Pageable)" class="member-name-link">findByRecruitmentIdInAndWhatChanged</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;recruitmentIds,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;whatChanged,
+ org.springframework.data.domain.Pageable&nbsp;pageable)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">One page of the changes to one field of any of the given recruitments, in the page's order
+(issue #391: the hiring-target changes of a quarter's TA and ULA recruitments).</div>
+</div>
 </div>
 </div>
 </div>
@@ -127,6 +136,18 @@ changes to individual applications is <a href="AuditTrailRepository.html" title=
 <div class="member-signature"><span class="return-type">org.springframework.data.domain.Page&lt;<a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</span>&nbsp;<span class="element-name">findByRecruitmentId</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  org.springframework.data.domain.Pageable&nbsp;pageable)</span></div>
 <div class="block">One page of the changes recorded against one recruitment, in the page's order.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="findByRecruitmentIdInAndWhatChanged(java.util.Collection,java.lang.String,org.springframework.data.domain.Pageable)">
+<h3>findByRecruitmentIdInAndWhatChanged</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">org.springframework.data.domain.Page&lt;<a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</span>&nbsp;<span class="element-name">findByRecruitmentIdInAndWhatChanged</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;recruitmentIds,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;whatChanged,
+ org.springframework.data.domain.Pageable&nbsp;pageable)</span></div>
+<div class="block">One page of the changes to one field of any of the given recruitments, in the page's order
+(issue #391: the hiring-target changes of a quarter's TA and ULA recruitments).</div>
 </div>
 </section>
 </li>
