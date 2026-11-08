@@ -151,8 +151,15 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           &quot;{NO_APPLICANTS_NOTE}&quot; It launches a job that ranks
           candidates as the faculty would, for every course that has no rankings
           yet or for a random part of them. Each course gets as many interested
-          candidates as its ranking target asks for, and a checkbox also ranks
-          one or two applicants who did not express interest. Courses that
+          candidates as its ranking target asks for, ranked by interest tier as
+          an instructor would (issue #414): applicants whose first choice the
+          course is come first, then second choice, then Enthusiastic, then
+          Would Consider, in a random order within each tier. The target is
+          filled from the top tiers down, so Would Consider applicants are
+          ranked only when the first three tiers together hold fewer applicants
+          than the target, and only enough of them to make up the difference. A
+          checkbox also ranks one or two applicants who did not express
+          interest; they go last, after every interested applicant. Courses that
           already have rankings are never changed.
         </p>
 
