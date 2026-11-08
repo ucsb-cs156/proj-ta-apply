@@ -1006,3 +1006,220 @@ describe("AdminAssignmentsPage: publishing the assignments (issue #358)", () => 
     ).toBeNull();
   });
 });
+
+/** Issue #385: Developer Mode's Create Fake Rankings, in this page's footer since the Courses edit page lost it. */
+describe("AdminAssignmentsPage: Create Fake Rankings (issue #385)", () => {
+  const withReview = (reviewStatus) => ({
+    ...recruitmentsFixtures.threeRecruitments[0],
+    id: 7,
+    reviewStatus,
+  });
+  const BUTTON = "AdminAssignmentsPage-fake-rankings";
+  const WRAPPER = "AdminAssignmentsPage-fake-rankings-wrapper";
+  const MODAL = "AdminAssignmentsPage-fake-rankings-modal";
+  const OPEN_IT =
+    "Faculty ranking must be Open for this recruitment; it is not started. Open it from the recruitment's card on the home page (Recruitment Steps, step 6: Open Faculty Ranking), which asks for a faculty ranking deadline.";
+  const REOPEN_IT =
+    "Faculty ranking must be Open for this recruitment; it is closed. Reopen it from the recruitment's card on the home page (Recruitment Steps, step 6: Open Faculty Ranking), which asks for a faculty ranking deadline.";
+  const NO_COURSES =
+    "The recruitment must have at least one course on offer to rank; it has none. Fill its course list with Populate on its Courses page.";
+  const fakeRankingsPosts = () =>
+    axiosMock.history.post.filter(
+      (r) => r.url === "/api/admin/developer/fakeRankings",
+    );
+  const recruitmentsGets = () =>
+    axiosMock.history.get.filter(
+      (r) => r.url === "/api/admin/recruitments/all",
+    );
+
+  beforeEach(() => {
+    mockToast.mockClear();
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.adminUser);
+    axiosMock
+      .onGet("/api/systemInfo")
+      .reply(200, systemInfoFixtures.developerModeAvailable);
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [withReview("Open")]);
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, assignmentsFixtures.taPage);
+    axiosMock.onGet("/api/admin/assignments/cancelled").reply(200, []);
+    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
+    axiosMock
+      .onPost("/api/admin/developer/fakeRankings")
+      .reply(200, { id: 5, status: "running" });
+  });
+
+  /** The page's data has arrived: the table has a row and the recruitment was read. */
+  const loaded = async () => {
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    await waitFor(() => expect(recruitmentsGets().length).toBeGreaterThan(0));
+  };
+
+  test("while the review is Open and there are courses, the footer has a red enabled button that launches the job for this recruitment", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByTestId(BUTTON)).toBeEnabled());
+
+    const button = screen.getByTestId(BUTTON);
+    expect(button).toHaveTextContent("Create Fake Rankings");
+    // Issue #252: every usable developer-mode control is red, like the badge it sits beside.
+    expect(button).toHaveClass("btn-danger", "btn-sm");
+    expect(button).not.toHaveClass("btn-outline-secondary");
+    expect(button).not.toHaveStyle({ pointerEvents: "none" });
+    expect(
+      screen.getByTestId("Footer-developer-mode-controls"),
+    ).toContainElement(button);
+    expect(screen.queryByTestId(WRAPPER)).toBeNull();
+    expect(screen.queryByTestId(`${MODAL}-modal`)).toBeNull();
+
+    await userEvent.click(button);
+    expect(await screen.findByTestId(`${MODAL}-modal`)).toBeInTheDocument();
+    // There are applicants, so nothing is said about them.
+    expect(screen.queryByTestId(`${MODAL}-note`)).toBeNull();
+
+    await userEvent.click(screen.getByTestId(`${MODAL}-create`));
+
+    await waitFor(() => expect(fakeRankingsPosts()).toHaveLength(1));
+    expect(fakeRankingsPosts()[0].params).toEqual({
+      recruitmentId: "7",
+      scope: "ALL",
+      includeNotInterested: false,
+    });
+    expect(
+      await screen.findByTestId(`${MODAL}-launched-modal`),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId(`${MODAL}-launched-close`));
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${MODAL}-launched-modal`)).toBeNull(),
+    );
+  });
+
+  test("Cancel closes the modal without launching anything", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByTestId(BUTTON)).toBeEnabled());
+    await userEvent.click(screen.getByTestId(BUTTON));
+    await userEvent.click(await screen.findByTestId(`${MODAL}-cancel`));
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${MODAL}-modal`)).toBeNull(),
+    );
+    expect(fakeRankingsPosts()).toHaveLength(0);
+  });
+
+  test("with no applicants the modal says the job would rank nobody", async () => {
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, { ...assignmentsFixtures.taPage, rows: [] });
+    renderPage();
+    await waitFor(() => expect(screen.getByTestId(BUTTON)).toBeEnabled());
+    await userEvent.click(screen.getByTestId(BUTTON));
+    expect(await screen.findByTestId(`${MODAL}-note`)).toHaveTextContent(
+      "This recruitment has no applicants yet, so the job would rank nobody. Create fake applications on the recruitment's Applications page first.",
+    );
+  });
+
+  /** A disabled button gets no mouse events, so the tooltip hangs off its wrapper. */
+  const expectDisabledWithTooltip = async (text) => {
+    const button = screen.getByTestId(BUTTON);
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Create Fake Rankings");
+    // The look it had before: a neutral outline, small.
+    expect(button).toHaveClass("btn-outline-secondary", "btn-sm");
+    expect(button).not.toHaveClass("btn-danger");
+    expect(button).toHaveStyle({ pointerEvents: "none" });
+    const wrapper = screen.getByTestId(WRAPPER);
+    expect(wrapper).toContainElement(button);
+    expect(wrapper).toHaveClass("d-inline-block");
+    expect(wrapper).toHaveAttribute("tabindex", "0");
+    expect(
+      screen.getByTestId("Footer-developer-mode-controls"),
+    ).toContainElement(wrapper);
+
+    fireEvent.mouseOver(wrapper);
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip.textContent).toBe(text);
+    expect(tooltip).toHaveAttribute(
+      "id",
+      "AdminAssignmentsPage-fake-rankings-tooltip",
+    );
+  };
+
+  test("while the review is not started the button is disabled, in its old neutral look, and the tooltip says to open faculty ranking", async () => {
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [withReview("NotStarted")]);
+    renderPage();
+    await loaded();
+    await expectDisabledWithTooltip(OPEN_IT);
+  });
+
+  test("while the review is closed the tooltip says to reopen it", async () => {
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [withReview("Closed")]);
+    renderPage();
+    await loaded();
+    await expectDisabledWithTooltip(REOPEN_IT);
+  });
+
+  test("with the review Open but no course on offer, the tooltip is about the courses alone", async () => {
+    axiosMock.onGet("/api/admin/assignments").reply(200, {
+      ...assignmentsFixtures.taPage,
+      courses: assignmentsFixtures.taPage.courses.map((course) => ({
+        ...course,
+        historical: true,
+      })),
+    });
+    renderPage();
+    await loaded();
+    await expectDisabledWithTooltip(NO_COURSES);
+  });
+
+  test("with neither condition met the tooltip gives both reasons, the review first", async () => {
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [withReview("NotStarted")]);
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, assignmentsFixtures.empty);
+    renderPage();
+    await screen.findByTestId("AdminAssignmentsPage-intro");
+    await waitFor(() => expect(assignmentsGets()).toHaveLength(1));
+    await waitFor(() => expect(recruitmentsGets().length).toBeGreaterThan(0));
+    await expectDisabledWithTooltip(`${OPEN_IT} ${NO_COURSES}`);
+  });
+
+  test("an unknown recruitment: the review status is not known yet", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+    await loaded();
+    await expectDisabledWithTooltip(
+      "Faculty ranking must be Open for this recruitment; it is not known yet. Open it from the recruitment's card on the home page (Recruitment Steps, step 6: Open Faculty Ranking), which asks for a faculty ranking deadline.",
+    );
+  });
+
+  test("there is no button while developer mode is off", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: false });
+    renderPage();
+    await loaded();
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/developerMode")
+          .length,
+      ).toBeGreaterThan(0),
+    );
+    expect(screen.queryByTestId(BUTTON)).toBeNull();
+    expect(screen.queryByText("Create Fake Rankings")).toBeNull();
+  });
+});

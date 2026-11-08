@@ -1404,134 +1404,36 @@ describe("RecruitmentCoursesPage tests", () => {
     );
   });
 
-  /** Issue #220: Developer Mode's Create Fake Rankings, in the footer beside the allocations. */
-  const recruitmentWithReview = (reviewStatus) =>
+  /** Issue #385: Create Fake Rankings moved to the Assignments page; this footer has one button. */
+  test("has no Create Fake Rankings button, even with developer mode on and the review Open: it is on the Assignments page", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
       {
         ...recruitmentsFixtures.threeRecruitments[1],
         id: 7,
-        reviewStatus,
+        reviewStatus: "Open",
       },
     ]);
-
-  test("while the faculty review is Open, the footer button launches fake rankings", async () => {
-    axiosMock
-      .onGet("/api/developerMode")
-      .reply(200, { available: true, on: true });
-    recruitmentWithReview("Open");
-    axiosMock
-      .onPost("/api/admin/developer/fakeRankings")
-      .reply(200, { id: 5, status: "running" });
     renderPage();
 
-    const button = await screen.findByTestId(
-      "RecruitmentCoursesPage-fake-rankings",
-    );
-    expect(button).toHaveTextContent("Create Fake Rankings");
-    await waitFor(() => expect(button).toBeEnabled());
-    expect(
-      screen.queryByTestId("RecruitmentCoursesPage-fake-rankings-modal-modal"),
-    ).not.toBeInTheDocument();
-
-    await userEvent.click(button);
-    expect(
-      await screen.findByTestId(
-        "RecruitmentCoursesPage-fake-rankings-modal-modal",
-      ),
-    ).toBeInTheDocument();
-    await userEvent.click(
-      screen.getByTestId("RecruitmentCoursesPage-fake-rankings-modal-create"),
-    );
-
-    await waitFor(() =>
-      expect(
-        axiosMock.history.post.filter(
-          (r) => r.url === "/api/admin/developer/fakeRankings",
-        )[0].params,
-      ).toEqual({
-        recruitmentId: "7",
-        scope: "ALL",
-        includeNotInterested: false,
-      }),
-    );
-    expect(
-      await screen.findByTestId(
-        "RecruitmentCoursesPage-fake-rankings-modal-launched-modal",
-      ),
-    ).toBeInTheDocument();
-    await userEvent.click(
-      screen.getByTestId(
-        "RecruitmentCoursesPage-fake-rankings-modal-launched-close",
-      ),
+    const allocations = await screen.findByTestId(
+      "RecruitmentCoursesPage-fake-allocations",
     );
     await waitFor(() =>
       expect(
-        screen.queryByTestId(
-          "RecruitmentCoursesPage-fake-rankings-modal-launched-modal",
-        ),
-      ).not.toBeInTheDocument(),
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ).length,
+      ).toBeGreaterThan(0),
     );
-  });
-
-  test("Cancel closes the fake rankings modal", async () => {
-    axiosMock
-      .onGet("/api/developerMode")
-      .reply(200, { available: true, on: true });
-    renderPage();
-
-    const button = await screen.findByTestId(
-      "RecruitmentCoursesPage-fake-rankings",
-    );
-    await waitFor(() => expect(button).toBeEnabled());
-    await userEvent.click(button);
-    await userEvent.click(
-      await screen.findByTestId(
-        "RecruitmentCoursesPage-fake-rankings-modal-cancel",
-      ),
-    );
-    await waitFor(() =>
-      expect(
-        screen.queryByTestId(
-          "RecruitmentCoursesPage-fake-rankings-modal-modal",
-        ),
-      ).not.toBeInTheDocument(),
-    );
-  });
-
-  test.each(["NotStarted", "Closed"])(
-    "the fake rankings button is disabled while the faculty review is %s",
-    async (reviewStatus) => {
-      axiosMock
-        .onGet("/api/developerMode")
-        .reply(200, { available: true, on: true });
-      recruitmentWithReview(reviewStatus);
-      renderPage();
-
-      const button = await screen.findByTestId(
-        "RecruitmentCoursesPage-fake-rankings",
-      );
-      await waitFor(() =>
-        expect(
-          axiosMock.history.get.filter(
-            (r) => r.url === "/api/admin/recruitments/all",
-          ).length,
-        ).toBeGreaterThan(0),
-      );
-      await screen.findByTestId("RecruitmentCoursesPage-fake-allocations");
-      expect(button).toBeDisabled();
-    },
-  );
-
-  test("there is no fake rankings button while developer mode is off", async () => {
-    axiosMock
-      .onGet("/api/developerMode")
-      .reply(200, { available: true, on: false });
-    renderPage();
-
-    await screen.findByTestId("RecruitmentCoursesPage-populate");
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-fake-rankings"),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText("Create Fake Rankings")).not.toBeInTheDocument();
+    // Alone in the slot, the allocations button no longer keeps a gap for a neighbour.
+    expect(allocations).not.toHaveClass("me-2");
   });
 
   test("there is no fake allocations button while developer mode is off", async () => {

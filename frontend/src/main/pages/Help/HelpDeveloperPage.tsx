@@ -2,7 +2,18 @@ import { Link } from "react-router";
 import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { DEVELOPER_MENU_ENTRIES } from "main/utils/helpPages";
+import {
+  NO_APPLICANTS_NOTE,
+  fakeRankingsBlockers,
+} from "main/utils/fakeRankings";
 import useScrollToHash from "main/utils/useScrollToHash";
+
+// Issue #385: the words of the disabled button's tooltip, one sentence per unmet condition, so the
+// handbook and the tooltip cannot drift apart.
+const [RANKING_NOT_OPEN, NO_COURSE_ON_OFFER] = fakeRankingsBlockers(
+  "NotStarted",
+  0,
+);
 
 /**
  * The developer's handbook: /help/developer (issue #266). A table of every option on the Developer
@@ -124,9 +135,17 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           choice.
         </p>
         <p data-testid="HelpDeveloperPage-fake-rankings">
-          While developer mode is on, the footer of a recruitment&apos;s Courses
-          page also has a <strong>Create Fake Rankings</strong> button, enabled
-          only while faculty ranking is open. It launches a job that ranks
+          While developer mode is on, the footer of a recruitment&apos;s
+          Assignments page (<code>/admin/recruitments/:id/assignments</code>)
+          has a red <strong>Create Fake Rankings</strong> button (until issue
+          #385 it was on the Courses edit page). It can be used only while the
+          recruitment&apos;s faculty ranking is Open, the only time instructors
+          rank, and the recruitment has at least one course on offer. Otherwise
+          the button is a grey outline, and hovering over it says what must
+          happen first: &quot;{RANKING_NOT_OPEN}&quot; or &quot;
+          {NO_COURSE_ON_OFFER}&quot; (both, when both apply). The job ranks the
+          recruitment&apos;s applicants, so when there are none the modal adds:
+          &quot;{NO_APPLICANTS_NOTE}&quot; It launches a job that ranks
           candidates as the faculty would, for every course that has no rankings
           yet or for a random part of them. Each course gets as many interested
           candidates as its ranking target asks for, and a checkbox also ranks

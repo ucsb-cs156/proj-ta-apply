@@ -209,7 +209,13 @@ Courses pages" below).
   per recruitment whose faculty review is Open and which has a course; when only one of the two
   qualifies the modal says which one and that the other is left alone, and the button is disabled
   while neither qualifies. The modals (`FakeAllocationsModal`, `FakeRankingsModal`) take a list of
-  recruitments; the Edit Courses page passes its one.
+  recruitments; the Edit Courses page passes its one to `FakeAllocationsModal`, and the admin
+  Assignments page (`/admin/recruitments/:id/assignments`) passes its one to `FakeRankingsModal`:
+  issue #385 moved the single-recruitment *Create Fake Rankings* button there from the Edit Courses
+  page, red like the other developer-mode buttons while it can be used. When it cannot (faculty
+  ranking not Open, or no course on offer) it is the neutral outline it always was, disabled, and
+  a tooltip on it says what must happen first (`fakeRankingsBlockers`); with no applicants the
+  modal notes that the job would rank nobody.
 - **Multi-tab edit warning** (part 2, PR #373): the page is one tab on every recruitment of the
   quarter, so it heartbeats under each recruitment's Edit Courses page key,
   `courses-edit:<recruitmentId>`, with one client id (two heartbeats when the quarter has both),

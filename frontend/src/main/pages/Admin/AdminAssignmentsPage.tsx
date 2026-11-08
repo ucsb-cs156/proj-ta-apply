@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -6,6 +8,13 @@ import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import AssignmentsTable from "main/components/Assignments/AssignmentsTable";
 import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
+import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
+import {
+  NO_APPLICANTS_NOTE,
+  canCreateFakeRankings,
+  fakeRankingsBlockers,
+} from "main/utils/fakeRankings";
+import { DeveloperFooterControls } from "main/utils/developerModeFooter";
 import CancelledApplicationsTable, {
   type CancelledApplication,
 } from "main/components/Applications/CancelledApplicationsTable";
@@ -164,10 +173,61 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
     },
   );
 
+  // Issue #385: Developer Mode's Create Fake Rankings lives in this page's footer slot (it used to
+  // be on the Courses edit page), red like the other developer buttons while it can be used. The
+  // backend refuses the job unless the faculty review is Open, and a recruitment with no course on
+  // offer has nothing to rank; while either holds the button is a neutral outline whose tooltip
+  // says what must happen first.
+  const [showFakeRankings, setShowFakeRankings] = useState(false);
+  const courseCount = page.courses.filter((c) => !c.historical).length;
+  const fakeRankingsEnabled = canCreateFakeRankings(
+    recruitment?.reviewStatus,
+    courseCount,
+  );
+  const developerButtons = fakeRankingsEnabled ? (
+    <Button
+      variant="danger"
+      size="sm"
+      onClick={() => setShowFakeRankings(true)}
+      data-testid="AdminAssignmentsPage-fake-rankings"
+    >
+      Create Fake Rankings
+    </Button>
+  ) : (
+    <OverlayTrigger
+      placement="top"
+      overlay={
+        <Tooltip id="AdminAssignmentsPage-fake-rankings-tooltip">
+          {fakeRankingsBlockers(recruitment?.reviewStatus, courseCount).join(
+            " ",
+          )}
+        </Tooltip>
+      }
+    >
+      {/* A disabled button gets no mouse events, so the wrapper carries the tooltip. */}
+      <span
+        className="d-inline-block"
+        tabIndex={0}
+        data-testid="AdminAssignmentsPage-fake-rankings-wrapper"
+      >
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          disabled
+          style={{ pointerEvents: "none" }}
+          data-testid="AdminAssignmentsPage-fake-rankings"
+        >
+          Create Fake Rankings
+        </Button>
+      </span>
+    </OverlayTrigger>
+  );
+
   const columnChoices = assignmentColumnChoices(page);
   const positions = `${page.type}s`;
   return (
     <BasicLayout>
+      <DeveloperFooterControls controls={developerButtons} />
       <div className="pt-2">
         <h1>
           Assignments
@@ -253,6 +313,15 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           audience="admin"
           testIdPrefix="AdminAssignmentsPage-cancelled"
         />
+        {showFakeRankings && (
+          <FakeRankingsModal
+            recruitmentIds={[recruitmentId as string]}
+            // The job ranks the recruitment's applicants: with none it would do nothing.
+            note={page.rows.length === 0 ? NO_APPLICANTS_NOTE : undefined}
+            onHide={() => setShowFakeRankings(false)}
+            testIdPrefix="AdminAssignmentsPage-fake-rankings-modal"
+          />
+        )}
       </div>
     </BasicLayout>
   );

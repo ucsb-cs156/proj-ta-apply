@@ -13,8 +13,9 @@ import {
 type FakeRankingsModalProps = {
   /**
    * The recruitments whose courses get rankings, one job each in one click: one on a
-   * recruitment's own Courses page, the quarter's recruitments whose faculty review is Open on
-   * the Combined Allocation page (issue #358).
+   * recruitment's own Assignments page (issue #385; the Courses edit page before that), the
+   * quarter's recruitments whose faculty review is Open on the Combined Allocation page (issue
+   * #358).
    */
   recruitmentIds: (number | string)[];
   /** Something the page wants said about which recruitments are acted on, if anything. */

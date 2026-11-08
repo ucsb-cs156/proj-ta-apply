@@ -20,8 +20,6 @@ import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
 import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
-import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
-import { canCreateFakeRankings } from "main/utils/fakeRankings";
 import { DeveloperFooterControls } from "main/utils/developerModeFooter";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
@@ -263,39 +261,22 @@ export default function RecruitmentCoursesPage({
   // Stryker restore all
 
   // Issue #225: the developer-mode button, in the footer's developer slot (which shows only while
-  // developer mode is on), opens the Fake Hiring Targets and Allocations modal.
+  // developer mode is on), opens the Fake Hiring Targets and Allocations modal. Create Fake
+  // Rankings used to sit beside it; since issue #385 it is on the Assignments page.
   const [showFakeAllocations, setShowFakeAllocations] = useState(false);
   // Stryker disable next-line all : useBackend answers [] until the list arrives; this guards the type only
   const loadedCourses = courses ?? [];
   const courseCount = loadedCourses.filter((c) => !c.removed).length;
-  // Issue #220: Create Fake Rankings sits beside it, offered only while the faculty review is Open.
-  const [showFakeRankings, setShowFakeRankings] = useState(false);
-  const fakeRankingsEnabled = canCreateFakeRankings(
-    recruitment?.reviewStatus,
-    courseCount,
-  );
   const developerButtons = (
-    <>
-      <Button
-        variant="danger"
-        size="sm"
-        className="me-2"
-        disabled={courseCount === 0}
-        onClick={() => setShowFakeAllocations(true)}
-        data-testid="RecruitmentCoursesPage-fake-allocations"
-      >
-        Fake Hiring Targets and Allocations
-      </Button>
-      <Button
-        variant="outline-secondary"
-        size="sm"
-        disabled={!fakeRankingsEnabled}
-        onClick={() => setShowFakeRankings(true)}
-        data-testid="RecruitmentCoursesPage-fake-rankings"
-      >
-        Create Fake Rankings
-      </Button>
-    </>
+    <Button
+      variant="danger"
+      size="sm"
+      disabled={courseCount === 0}
+      onClick={() => setShowFakeAllocations(true)}
+      data-testid="RecruitmentCoursesPage-fake-allocations"
+    >
+      Fake Hiring Targets and Allocations
+    </Button>
   );
 
   const addMutation = useBackendMutation<string, RecruitmentCourse>(
@@ -561,13 +542,6 @@ export default function RecruitmentCoursesPage({
             ]}
             onHide={() => setShowFakeAllocations(false)}
             testIdPrefix="RecruitmentCoursesPage-fake-allocations-modal"
-          />
-        )}
-        {edit && showFakeRankings && (
-          <FakeRankingsModal
-            recruitmentIds={[recruitmentId as string]}
-            onHide={() => setShowFakeRankings(false)}
-            testIdPrefix="RecruitmentCoursesPage-fake-rankings-modal"
           />
         )}
       </div>
