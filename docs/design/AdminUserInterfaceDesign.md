@@ -177,6 +177,32 @@ Mode's auto-create post to): the new TA recruitment's target is the TA recruitme
 recent earlier quarter that has one, the ULA's the ULA's, and 1 when there is none. Changing a
 later quarter's figures never touches the earlier quarter's.
 
+## The Audit Trail card of the Budget page (issue #391)
+
+At the bottom of `/admin/budget/QXX`, after the bottom line, is a `CollapsibleCard` headed **Audit
+Trail** with "Track changes to hiring targets" in a smaller font beneath the title on the header
+(the card's new `subtitle` prop). It is closed by default and remembers its setting under
+`collapsibleCard.BudgetPage-auditTrail`, like the other admin cards. Its body is only rendered, so
+only fetched, while it is open: `GET /api/admin/recruitmentaudittrail/hiringTargets?quarter=YYYYQ`
+(admin only; `page`, `size`, `sort`, `direction` as on `/all`), which returns the
+`totalHiringTarget` rows of the quarter's TA and ULA recruitments, newest first by default, each
+row augmented with the recruitment's `type`. Open, the card shows the page-size control, Previous
+and Next, "n changes recorded." and the `RecruitmentAuditTrailTable` with its `showType` column
+(id, Changed, Changed By, **Type**, What Changed, Old Value, New Value); a quarter with no
+recruitment or no change yet gets one sentence, "No hiring target has been changed yet for this
+quarter." While the next page is fetched the previous one stays up (`keepPreviousData`), so turning
+a page never shows that sentence in between.
+
+The rows exist because #391 made `totalHiringTarget` an audited field: it is the last entry of
+`RecruitmentAuditService.FIELDS`, and `RecruitmentsController.updateTotalHiringTarget` takes its
+snapshot inside the compare-and-set block (once the stored value is known to be the one the page
+saw) and saves through `saveAndRecordChanges`, so the target and its row are one transaction (#377)
+and a refused save (409) writes nothing. The same rows therefore also appear in the recruitment's
+own change history. A hiring target saved on the Budget page invalidates the card's query
+(`HIRING_TARGET_AUDIT_KEY` in `useBudgetSaves`), so an open card shows the new row at once; a
+budget-line save does not, since nothing on the `budgets` row is audited (fund lines, costs and the
+conversion factor remain planning figures).
+
 ## The Combined Allocation page (issue #358)
 
 `/admin/allocations/QXX` (for example `/admin/allocations/W26`; admins only) shows one quarter's TA
@@ -193,8 +219,8 @@ Courses pages" below).
   quarter, a `budget_courses` row shared by the TA and ULA recruitments, so the two recruitments'
   course rows always report the same value. (Before that each recruitment's course row had its own
   estimate; the page showed the higher of the two and saved an edit to every recruitment's row so
-  they agreed. The frontend still does both, harmlessly, until a follow-up removes it.) All the
-  ratios on the page use this one value.
+  they agreed.) An edit is saved to one of the section's rows, and the other recruitment's row takes
+  the value from the quarter's estimate (issue #381). All the ratios on the page use this one value.
 - **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
   same endpoint and version checks as the Recruitment Courses page, against that type's
   recruitment), Unrounded Allocation, Delta and TA:student (or ULA:student) ratio.

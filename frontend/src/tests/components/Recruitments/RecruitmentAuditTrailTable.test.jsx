@@ -120,6 +120,68 @@ describe("RecruitmentAuditTrailTable tests", () => {
     ).toBeNull();
   });
 
+  /** Issue #391: the Budget page's card lists two recruitments' changes, so it says which is which. */
+  test("with showType, a Type column sits between Changed By and What Changed", () => {
+    render(
+      <RecruitmentAuditTrailTable
+        rows={recruitmentAuditTrailFixtures.hiringTargetRows}
+        showType
+      />,
+    );
+
+    expect(
+      [...screen.getAllByRole("columnheader")].map((th) => th.textContent),
+    ).toEqual([
+      "id",
+      "Changed",
+      "Changed By",
+      "Type",
+      "What Changed",
+      "Old Value",
+      "New Value",
+    ]);
+    const cell = (row) =>
+      screen.getByTestId(`RecruitmentAuditTrailTable-cell-row-${row}-col-type`);
+    expect(cell(0)).toHaveTextContent("ULA");
+    expect(cell(1)).toHaveTextContent("TA");
+    expect(cell(2)).toHaveTextContent("TA");
+    expect(
+      screen.getByTestId(
+        "RecruitmentAuditTrailTable-cell-row-0-col-whatChanged",
+      ),
+    ).toHaveTextContent("totalHiringTarget");
+    // Shrunk to its content like the other leading columns.
+    expect(
+      screen.getByTestId("RecruitmentAuditTrailTable-header-type").style.width,
+    ).toBe("1%");
+  });
+
+  test("with showType, a row with no type is blank, not null; without it there is no Type column", () => {
+    const { type: _ignored, ...untyped } =
+      recruitmentAuditTrailFixtures.hiringTargetRows[0];
+    const { rerender } = render(
+      <RecruitmentAuditTrailTable rows={[untyped]} showType />,
+    );
+    expect(
+      screen.getByTestId("RecruitmentAuditTrailTable-cell-row-0-col-type")
+        .textContent,
+    ).toBe("");
+    expect(screen.queryByText("null")).toBeNull();
+
+    rerender(
+      <RecruitmentAuditTrailTable
+        rows={recruitmentAuditTrailFixtures.hiringTargetRows}
+      />,
+    );
+    expect(screen.queryByText("Type")).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentAuditTrailTable-cell-row-0-col-type"),
+    ).toBeNull();
+    expect(
+      [...screen.getAllByRole("columnheader")].map((th) => th.textContent),
+    ).toEqual(headers);
+  });
+
   test("the table takes its natural width, so Old Value and New Value are no wider than their values (issue #201)", () => {
     render(
       <RecruitmentAuditTrailTable

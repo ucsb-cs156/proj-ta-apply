@@ -14,6 +14,7 @@ import { vi } from "vitest";
 
 import BudgetPage from "main/pages/Admin/BudgetPage";
 import budgetFixtures from "fixtures/budgetFixtures";
+import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -1291,6 +1292,146 @@ describe("BudgetPage tests", () => {
         ),
       );
     }
+  });
+
+  // ---- the Audit Trail card (issue #391) ----
+
+  const AUDIT_URL = "/api/admin/recruitmentaudittrail/hiringTargets";
+  const auditGets = () =>
+    axiosMock.history.get.filter((r) => r.url === AUDIT_URL);
+  const AUDIT_OPEN = "collapsibleCard.BudgetPage-auditTrail";
+
+  test("the Audit Trail card is at the bottom of the page, closed, and fetches nothing until opened", async () => {
+    localStorage.removeItem(AUDIT_OPEN);
+    axiosMock
+      .onGet(AUDIT_URL)
+      .reply(200, recruitmentAuditTrailFixtures.hiringTargetPage);
+    renderPage("F26");
+    await screen.findByTestId("BudgetPage-bottom-line");
+
+    const card = screen.getByTestId("BudgetPage-auditTrail");
+    const toggle = screen.getByTestId("BudgetPage-auditTrail-toggle");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveTextContent("▸ Audit Trail");
+    expect(
+      screen.getByTestId("BudgetPage-auditTrail-subtitle"),
+    ).toHaveTextContent("Track changes to hiring targets");
+    expect(
+      screen.queryByTestId("BudgetPage-auditTrail-body"),
+    ).not.toBeInTheDocument();
+    // Last thing on the page: after the bottom line.
+    const bottomLine = screen.getByTestId("BudgetPage-bottom-line");
+    expect(
+      bottomLine.compareDocumentPosition(card) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(card.nextElementSibling).toBeNull();
+    expect(auditGets()).toHaveLength(0);
+
+    await userEvent.click(toggle);
+    await screen.findByTestId("BudgetPage-audit-total");
+    expect(auditGets()).toHaveLength(1);
+    expect(auditGets()[0].params).toEqual({
+      quarter: "20264",
+      page: 0,
+      size: 10,
+      sort: "id",
+      direction: "desc",
+    });
+    expect(
+      screen.getByTestId("BudgetPage-audit-cell-row-0-col-type"),
+    ).toHaveTextContent("ULA");
+  });
+
+  test("the card is not there for something that is not a quarter, or while the budget is loading", async () => {
+    renderPage("F2");
+    await screen.findByTestId("BudgetPage-bad-quarter");
+    expect(screen.queryByTestId("BudgetPage-auditTrail")).toBeNull();
+
+    renderPage("F26");
+    expect(screen.getByTestId("BudgetPage-loading")).toBeInTheDocument();
+    expect(screen.queryByTestId("BudgetPage-auditTrail")).toBeNull();
+    await screen.findByTestId("BudgetPage-bottom-line");
+    expect(screen.getByTestId("BudgetPage-auditTrail")).toBeInTheDocument();
+  });
+
+  test("the card asks for the quarter of the page, not another", async () => {
+    localStorage.setItem(AUDIT_OPEN, "open");
+    axiosMock
+      .onGet(AUDIT_URL)
+      .reply(200, recruitmentAuditTrailFixtures.emptyPage);
+    renderPage("W26");
+    await screen.findByTestId("BudgetPage-bottom-line");
+
+    expect(
+      await screen.findByTestId("BudgetPage-audit-empty"),
+    ).toHaveTextContent(
+      "No hiring target has been changed yet for this quarter.",
+    );
+    await waitFor(() => expect(auditGets()).toHaveLength(1));
+    expect(auditGets()[0].params.quarter).toBe("20261");
+    localStorage.removeItem(AUDIT_OPEN);
+  });
+
+  test("saving a hiring target re-reads the open card, so the new row shows; a budget line does not", async () => {
+    localStorage.setItem(AUDIT_OPEN, "open");
+    let auditAnswer = recruitmentAuditTrailFixtures.emptyPage;
+    axiosMock.onGet(AUDIT_URL).reply(() => [200, auditAnswer]);
+    renderPage("F26");
+    expect(await screen.findByTestId("BudgetPage-audit-empty")).toBeVisible();
+    await waitFor(() => expect(auditGets()).toHaveLength(1));
+    const usersBefore = userGets().length;
+
+    // The next read finds the change just saved.
+    auditAnswer = recruitmentAuditTrailFixtures.hiringTargetPage;
+    const box = screen.getByTestId("BudgetPage-target-ula-input");
+    await userEvent.clear(box);
+    await userEvent.type(box, "9");
+
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(1));
+    expect(
+      await screen.findByTestId("BudgetPage-audit-total"),
+    ).toHaveTextContent("3 changes recorded.");
+    expect(
+      screen.getByTestId("BudgetPage-audit-cell-row-0-col-newValue"),
+    ).toHaveTextContent("10");
+    expect(auditGets()).toHaveLength(2);
+    // Nothing else was re-read for it.
+    expect(userGets()).toHaveLength(usersBefore);
+
+    // A budget line is not audited, so saving one leaves the card alone.
+    const cost = screen.getByTestId("BudgetPage-taCostPerQuarter");
+    const budgetBefore = budgetGets().length;
+    await userEvent.clear(cost);
+    await userEvent.type(cost, "7");
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(1));
+    await waitFor(() =>
+      expect(budgetGets().length).toBeGreaterThan(budgetBefore),
+    );
+    expect(auditGets()).toHaveLength(2);
+    localStorage.removeItem(AUDIT_OPEN);
+  });
+
+  test("a refused hiring target does not re-read the card", async () => {
+    localStorage.setItem(AUDIT_OPEN, "open");
+    axiosMock
+      .onGet(AUDIT_URL)
+      .reply(200, recruitmentAuditTrailFixtures.emptyPage);
+    axiosMock
+      .onPut(TARGET)
+      .reply(409, { recruitment: { totalHiringTarget: 9 } });
+    renderPage("F26");
+    await screen.findByTestId("BudgetPage-audit-empty");
+    await waitFor(() => expect(auditGets()).toHaveLength(1));
+
+    const box = screen.getByTestId("BudgetPage-target-ta-input");
+    await userEvent.clear(box);
+    await userEvent.type(box, "1");
+
+    await screen.findByTestId("BudgetPage-conflict-target-ta");
+    await waitFor(() => expect(budgetGets().length).toBeGreaterThan(1));
+    expect(auditGets()).toHaveLength(1);
+    localStorage.removeItem(AUDIT_OPEN);
   });
 
   // ---- the multi-tab warning (issue #277) ----

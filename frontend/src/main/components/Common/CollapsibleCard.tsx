@@ -3,6 +3,8 @@ import { useRememberedOpen } from "main/utils/useRememberedOpen";
 
 type CollapsibleCardProps = {
   title: string;
+  /** A line in a smaller font beneath the title, on the header (issue #391). */
+  subtitle?: string;
   /** Names the localStorage entry that remembers whether the card is open. */
   storageKey: string;
   children: React.ReactNode;
@@ -19,6 +21,7 @@ const STORAGE_PREFIX = "collapsibleCard.";
  */
 export default function CollapsibleCard({
   title,
+  subtitle,
   storageKey,
   children,
   testIdPrefix = "CollapsibleCard",
@@ -39,6 +42,14 @@ export default function CollapsibleCard({
           data-testid={`${testIdPrefix}-toggle`}
         >
           <span aria-hidden="true">{open ? "▾" : "▸"}</span> {title}
+          {subtitle && (
+            <span
+              className="d-block fs-6 fw-normal text-body-secondary mt-1"
+              data-testid={`${testIdPrefix}-subtitle`}
+            >
+              {subtitle}
+            </span>
+          )}
         </button>
       </Card.Header>
       {open && (

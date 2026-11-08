@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { Alert, Button, Col, Row, Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import SavedOnChangeInput from "main/components/Budget/SavedOnChangeInput";
+import BudgetAuditTrailCard from "main/components/Budget/BudgetAuditTrailCard";
 import type {
   BudgetSide,
   BudgetSummary,
@@ -38,7 +39,8 @@ const TYPE_OF: Record<Side, "TA" | "ULA"> = { ta: "TA", ula: "ULA" };
  * temp subzero lines and the other funds for ASEs.
  * Then the hiring targets of both recruitments beside what has been allocated so far, the
  * enrollment totals and ratios, and the anticipated expenses, funds and bottom line. Every box saves
- * as it is typed and the whole page recomputes from the backend.
+ * as it is typed and the whole page recomputes from the backend. At the bottom, closed by default,
+ * the Audit Trail card of the two hiring targets' changes (issue #391).
  */
 export default function BudgetPage(): React.JSX.Element {
   const { qyy } = useParams();
@@ -467,6 +469,8 @@ function BudgetForQuarter({
               {bottom.text}
             </strong>
           </p>
+          {/* Issue #391: the changes to the two hiring targets, closed until asked for. */}
+          <BudgetAuditTrailCard yyyyq={yyyyq} />
         </>
       </div>
     </BasicLayout>

@@ -1190,7 +1190,7 @@ describe("CombinedAllocationsPage tests", () => {
       expect(headerIds()).toContain("summerSession");
     });
 
-    test("an estimate typed in the table is saved to the section's course rows of both recruitments", async () => {
+    test("an estimate typed in the table is saved once, to the section's TA row (issue #381)", async () => {
       axiosMock
         .onPut("/api/recruitmentcourses/enrollmentEstimate")
         .reply(200, {});
@@ -1210,10 +1210,7 @@ describe("CombinedAllocationsPage tests", () => {
               (r) => r.url === "/api/recruitmentcourses/enrollmentEstimate",
             )
             .map((r) => r.params),
-        ).toEqual([
-          { id: 1, enrollmentEstimate: 120 },
-          { id: 11, enrollmentEstimate: 120 },
-        ]),
+        ).toEqual([{ id: 1, enrollmentEstimate: 120 }]),
       );
     });
 

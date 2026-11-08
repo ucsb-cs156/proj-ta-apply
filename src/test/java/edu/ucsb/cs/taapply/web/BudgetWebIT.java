@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.BudgetCourseRepository;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Issue #277: the Budget page warns when the same quarter is open twice, and asks the newer tab.
- * Issue #388: its costs and funds table. Issue #358: the Combined Allocation page.
+ * Issue #388: its costs and funds table. Issue #391: its Audit Trail card. Issue #358: the Combined
+ * Allocation page.
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
@@ -39,6 +41,7 @@ public class BudgetWebIT extends WebTestCase {
 
   @Autowired BudgetRepository budgetRepository;
   @Autowired BudgetCourseRepository budgetCourseRepository;
+  @Autowired RecruitmentAuditTrailRepository recruitmentAuditTrailRepository;
 
   /**
    * A recruitment with CMPSC 156 lecture 07492. The section's enrollment estimate is the quarter's,
@@ -228,6 +231,66 @@ public class BudgetWebIT extends WebTestCase {
         new java.math.BigDecimal("110.00"), budget.getEstimatedHoursPerULAPerQuarter());
     org.junit.jupiter.api.Assertions.assertEquals(
         new java.math.BigDecimal("32200.00"), budget.getGiftFundsForASEs());
+  }
+
+  /**
+   * Issue #391: the Audit Trail card at the bottom of the Budget page. Closed at first; open, it
+   * says nothing has changed, and then lists each hiring target saved on the page, newest first,
+   * with the type of the recruitment it belongs to.
+   */
+  @Test
+  public void the_audit_trail_card_lists_each_change_to_a_hiring_target() throws Exception {
+    recruitmentWithOneCourse(RecruitmentType.TA);
+    recruitmentWithOneCourse(RecruitmentType.ULA);
+    setupAdminUser();
+    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/budget/F26"));
+    assertThat(page.getByTestId("BudgetPage-bottom-line")).isVisible();
+
+    // Closed by default, with the title and the smaller line beneath it.
+    var toggle = page.getByTestId("BudgetPage-auditTrail-toggle");
+    assertThat(toggle).isVisible();
+    assertThat(toggle).hasAttribute("aria-expanded", "false");
+    assertThat(toggle).containsText("Audit Trail");
+    assertThat(page.getByTestId("BudgetPage-auditTrail-subtitle"))
+        .hasText("Track changes to hiring targets");
+    assertThat(page.getByTestId("BudgetPage-auditTrail-body")).not().isVisible();
+
+    // Open, with nothing changed yet: one sentence.
+    toggle.click();
+    assertThat(toggle).hasAttribute("aria-expanded", "true");
+    assertThat(page.getByTestId("BudgetPage-audit-empty"))
+        .hasText("No hiring target has been changed yet for this quarter.");
+
+    // Saving the TA target writes a row, and the open card shows it without a reload.
+    page.getByTestId("BudgetPage-target-ta-input").fill("12");
+    assertThat(page.getByTestId("BudgetPage-audit-total")).hasText("1 changes recorded.");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-0-col-type")).hasText("TA");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-0-col-whatChanged"))
+        .hasText("totalHiringTarget");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-0-col-oldValue")).hasText("1");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-0-col-newValue")).hasText("12");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-0-col-editorEmail"))
+        .hasText("admin@ucsb.edu");
+    assertThat(page.getByTestId("BudgetPage-audit-header-type")).hasText("Type");
+
+    // Then the ULA target: newest first, so it comes before the TA row.
+    page.getByTestId("BudgetPage-target-ula-input").fill("4");
+    assertThat(page.getByTestId("BudgetPage-audit-total")).hasText("2 changes recorded.");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-0-col-type")).hasText("ULA");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-0-col-newValue")).hasText("4");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-1-col-type")).hasText("TA");
+    assertThat(page.getByTestId("BudgetPage-audit-cell-row-1-col-newValue")).hasText("12");
+    assertThat(page.getByTestId("BudgetPage-audit-page-indicator")).hasText("Page 1 of 1");
+
+    // The card stays open across a reload, and the rows are the database's.
+    page.reload();
+    assertThat(page.getByTestId("BudgetPage-audit-total")).hasText("2 changes recorded.");
+    long rows =
+        java.util.stream.StreamSupport.stream(
+                recruitmentAuditTrailRepository.findAll().spliterator(), false)
+            .filter(row -> "totalHiringTarget".equals(row.getWhatChanged()))
+            .count();
+    org.junit.jupiter.api.Assertions.assertEquals(2, rows);
   }
 
   @Test

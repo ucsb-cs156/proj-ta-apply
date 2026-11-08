@@ -77,19 +77,11 @@ export type CombinedCourse = {
   summerSession: string | null;
   /** Set by Populate when the section was not found (issue #122). */
   stale?: boolean;
-  /** The higher of the two recruitments' estimates; null when neither has one. */
+  /** The section's estimate for the quarter, from whichever row has it; null when neither does. */
   enrollmentEstimate: number | null;
   ta?: RecruitmentCourse;
   ula?: RecruitmentCourse;
 };
-
-const higher = (a: number | null | undefined, b: number | null | undefined) =>
-  a == null
-    ? (b ?? null)
-    : // Stryker disable next-line ConditionalExpression : an estimate is never negative, so Math.max treats a missing one as 0
-      b == null
-      ? a
-      : Math.max(a, b);
 
 /** Code-unit order, as the course list is sorted, so padded ids such as "CMPSC   130A" sort. */
 const orderKey = (value: string | null): string => value ?? "";
@@ -99,8 +91,10 @@ const compare = (a: string | null, b: string | null): number =>
 /**
  * The union of a quarter's TA and ULA courses (issue #358), one row per enroll code (so two
  * lectures of a course are two rows, and a section in both recruitments is one), in course id then
- * section order. Details (title, instructor, days, time, room, enrollment, status) come from the TA row when there is one, and from the ULA row otherwise: a section in both recruitments is the same course. The enrollment estimate is the
- * higher of the two recruitments' (they may disagree until issue #363 gives a course one).
+ * section order. Details (title, instructor, days, time, room, enrollment, status) come from the TA
+ * row when there is one, and from the ULA row otherwise: a section in both recruitments is the same
+ * course. The enrollment estimate is the section's one estimate for the quarter (issue #363), which
+ * both recruitments' rows carry, so it is taken from whichever row has it.
  */
 export const combineCourses = (
   taCourses: RecruitmentCourse[],
@@ -124,10 +118,8 @@ export const combineCourses = (
       status: details.status,
       summerSession: details.summerSession,
       stale: details.stale,
-      enrollmentEstimate: higher(
-        existing?.enrollmentEstimate,
-        course.enrollmentEstimate,
-      ),
+      enrollmentEstimate:
+        existing?.enrollmentEstimate ?? course.enrollmentEstimate ?? null,
       ta: existing?.ta,
       ula: existing?.ula,
       [type]: course,

@@ -12,6 +12,7 @@ import RecruitmentCourseTable, {
   STALE_LABEL,
 } from "main/components/Recruitments/RecruitmentCourseTable";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
+import { COURSE_NUMBER_WIDTH } from "main/utils/columnWidths";
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -774,12 +775,12 @@ describe("RecruitmentCourseTable tests", () => {
     ).not.toBeNull();
   });
 
-  test("the Course Number cell is 13 characters wide, and the totals footer is stacked too", () => {
+  test("the Course Number cell is the shared course-number width, and the totals footer is stacked too", () => {
     renderWith({});
 
     // The widest thing in the column sets its width, so the cell is as wide as the widest
-    // possible course number, not as wide as the data happens to be, and the one-line footer no
-    // longer forces the column wider than that.
+    // possible course number (COURSE_NUMBER_WIDTH, 11ch since issue #383), not as wide as the
+    // data happens to be, and the one-line footer no longer forces the column wider than that.
     const cellText = screen
       .getByTestId("RecruitmentCourseTable-cell-row-0-col-courseId")
       .querySelector("span");
@@ -787,7 +788,8 @@ describe("RecruitmentCourseTable tests", () => {
       normalizeWhitespace: false,
     });
     expect(cellText.style.display).toBe("inline-block");
-    expect(cellText.style.minWidth).toBe("13ch");
+    expect(cellText.style.minWidth).toBe(COURSE_NUMBER_WIDTH);
+    expect(COURSE_NUMBER_WIDTH).toBe("11ch");
     expect(cellText.style.whiteSpace).toBe("pre");
     expect(cellText.style.fontFamily).toBe("monospace");
 
