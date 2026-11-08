@@ -1,6 +1,8 @@
 import {
   adminApplicationEditPath,
   adminApplicationUrls,
+  draftEmailsCopiedText,
+  draftEmailsTooltip,
   draftsText,
   adminApplicationPath,
   applicationsListPath,
@@ -99,5 +101,28 @@ describe("adminApplications utils", () => {
     expect(draftsText(0)).toBe("0 Draft Applications");
     expect(draftsText(1)).toBe("1 Draft Application");
     expect(draftsText(2)).toBe("2 Draft Applications");
+  });
+
+  // Issue #411: the copy-emails button's toast and tooltip.
+  test("draftEmailsCopiedText counts, with the singular for one", () => {
+    expect(draftEmailsCopiedText(1)).toBe(
+      "Email of 1 draft applicant copied to clipboard.",
+    );
+    expect(draftEmailsCopiedText(2)).toBe(
+      "Emails of 2 draft applicants copied to clipboard.",
+    );
+    expect(draftEmailsCopiedText(24)).toBe(
+      "Emails of 24 draft applicants copied to clipboard.",
+    );
+  });
+
+  test("draftEmailsTooltip names the primary consideration date, or says which date when there is none", () => {
+    expect(draftEmailsTooltip("2026-01-20")).toBe(
+      "A day or two before closing the applications, you may want to email all of the students that have submitted draft applications to let them know that they will need to login and finalize their application before 2026-01-20 if they want their application to be reviewed. Let them know that draft applications are not considered; only applications that have been submitted.",
+    );
+    expect(draftEmailsTooltip(null)).toBe(
+      "A day or two before closing the applications, you may want to email all of the students that have submitted draft applications to let them know that they will need to login and finalize their application before the primary consideration date if they want their application to be reviewed. Let them know that draft applications are not considered; only applications that have been submitted.",
+    );
+    expect(draftEmailsTooltip(undefined)).toBe(draftEmailsTooltip(null));
   });
 });

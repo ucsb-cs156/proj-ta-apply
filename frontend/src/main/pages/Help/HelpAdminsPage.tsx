@@ -811,7 +811,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
             deleted) takes its comments with it. There is no CSV download of
             drafts, since a draft may be empty or half finished. Drafts show the
             same personal details as applications do, so the same care is asked
-            of you.
+            of you. Above the table, when there are drafts, a{" "}
+            <strong>Copy emails of draft applicants to clipboard</strong> button
+            copies the email address of everyone with a draft, one per line, so
+            that a day or two before applications close you can paste them into
+            an email reminding those students to log in and submit before the
+            primary consideration date, since drafts are not considered.
           </li>
           <li>
             <strong>Applications.</strong> The list of applications, with a

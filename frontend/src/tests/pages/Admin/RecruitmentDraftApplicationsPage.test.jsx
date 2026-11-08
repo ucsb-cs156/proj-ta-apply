@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
+import { vi } from "vitest";
 
 import RecruitmentDraftApplicationsPage from "main/pages/Admin/RecruitmentDraftApplicationsPage";
 import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
@@ -12,10 +13,26 @@ import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
+const mockToast = vi.fn();
+vi.mock("react-toastify", async (importOriginal) => {
+  return {
+    ...(await importOriginal()),
+    toast: (x) => mockToast(x),
+  };
+});
+
+const mockClipboardWriteText = vi.fn();
+
 const axiosMock = new AxiosMockAdapter(axios);
 
 const taDraft = draftApplicationsFixtures.adminSavedTaDraft;
 const ulaDraft = draftApplicationsFixtures.adminSavedUlaDraft;
+const umaDraft = {
+  ...taDraft,
+  id: 23,
+  firstName: "Uma",
+  email: "uma@ucsb.edu",
+};
 
 function renderPage(recruitmentId = 1) {
   return render(
@@ -40,6 +57,13 @@ const prefix = "RecruitmentDraftApplicationsPage";
 
 describe("RecruitmentDraftApplicationsPage tests", () => {
   beforeEach(() => {
+    mockToast.mockClear();
+    mockClipboardWriteText.mockReset();
+    mockClipboardWriteText.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: mockClipboardWriteText },
+    });
     localStorage.clear();
     axiosMock.reset();
     axiosMock.resetHistory();
@@ -57,7 +81,7 @@ describe("RecruitmentDraftApplicationsPage tests", () => {
       .onGet("/api/admin/draftApplications/all", {
         params: { recruitmentId: "1" },
       })
-      .reply(200, [taDraft, { ...taDraft, id: 23, firstName: "Uma" }]);
+      .reply(200, [taDraft, umaDraft]);
     axiosMock
       .onGet("/api/admin/draftApplications/all", {
         params: { recruitmentId: "2" },
@@ -260,6 +284,114 @@ describe("RecruitmentDraftApplicationsPage tests", () => {
     );
     expect(screen.queryByTestId(`${prefix}-drafts`)).toBeNull();
     expect(screen.queryByTestId(`${prefix}-columns-toggle`)).toBeNull();
+    // Issue #411: nobody to email, so no button to copy their addresses.
+    expect(screen.queryByTestId(`${prefix}-copy-emails`)).toBeNull();
+  });
+
+  // Issue #411: the button that copies the draft applicants' emails.
+  describe("Copy emails of draft applicants", () => {
+    const BUTTON = `${prefix}-copy-emails`;
+
+    test("sits between the explanation and the Columns chooser, small and outlined", async () => {
+      renderPage(1);
+      const button = await screen.findByTestId(BUTTON);
+
+      expect(button).toHaveTextContent(
+        /^Copy emails of draft applicants to clipboard$/,
+      );
+      expect(button).toHaveClass("btn-outline-primary", "btn-sm");
+      expect(button).toBeEnabled();
+      const about = screen.getByTestId(`${prefix}-about`);
+      const columns = screen.getByTestId(`${prefix}-columns-toggle`);
+      expect(
+        about.compareDocumentPosition(button) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        button.compareDocumentPosition(columns) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      // Its own row, above the chooser's.
+      expect(button.parentElement).toHaveClass("mb-2");
+      expect(button.parentElement.nextElementSibling).toContainElement(columns);
+    });
+
+    test("its tooltip explains the reminder and names the primary consideration date", async () => {
+      renderPage(1);
+      const button = await screen.findByTestId(BUTTON);
+      await screen.findByTestId(`${prefix}-recruitment-cell-row-0-col-quarter`);
+
+      fireEvent.mouseOver(button);
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveAttribute(
+        "id",
+        "RecruitmentDraftApplicationsPage-copy-emails-tooltip",
+      );
+      expect(tooltip.textContent).toBe(
+        "A day or two before closing the applications, you may want to email all of the students that have submitted draft applications to let them know that they will need to login and finalize their application before 2026-01-20 if they want their application to be reviewed. Let them know that draft applications are not considered; only applications that have been submitted.",
+      );
+    });
+
+    test("before the recruitment is known the tooltip names the date generically", async () => {
+      axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+      renderPage(1);
+      const button = await screen.findByTestId(BUTTON);
+
+      fireEvent.mouseOver(button);
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip.textContent).toContain(
+        "finalize their application before the primary consideration date if they want",
+      );
+    });
+
+    test("clicking copies the emails one per line, in the table's order, and says how many", async () => {
+      renderPage(1);
+      await screen.findByTestId(`${prefix}-drafts-cell-row-1-col-name`);
+
+      await userEvent.click(screen.getByTestId(BUTTON));
+
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Emails of 2 draft applicants copied to clipboard.",
+        ),
+      );
+      expect(mockClipboardWriteText).toHaveBeenCalledTimes(1);
+      expect(mockClipboardWriteText).toHaveBeenCalledWith(
+        "ta@ucsb.edu\numa@ucsb.edu",
+      );
+      expect(mockToast).toHaveBeenCalledTimes(1);
+    });
+
+    test("one draft is copied in the singular", async () => {
+      renderPage(2);
+      await screen.findByTestId(`${prefix}-drafts-cell-row-0-col-name`);
+
+      await userEvent.click(screen.getByTestId(BUTTON));
+
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Email of 1 draft applicant copied to clipboard.",
+        ),
+      );
+      expect(mockClipboardWriteText).toHaveBeenCalledWith("ula@ucsb.edu");
+    });
+
+    test("reports clipboard failures explicitly", async () => {
+      mockClipboardWriteText.mockRejectedValueOnce(
+        new Error("permission denied"),
+      );
+      renderPage(1);
+      await screen.findByTestId(`${prefix}-drafts-cell-row-1-col-name`);
+
+      await userEvent.click(screen.getByTestId(BUTTON));
+
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Unable to copy to clipboard. Check your browser clipboard permissions.",
+        ),
+      );
+      expect(mockToast).toHaveBeenCalledTimes(1);
+    });
   });
 
   test("links back to the recruitment's applications", async () => {

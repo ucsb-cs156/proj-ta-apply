@@ -1,4 +1,6 @@
 import { Link, useParams } from "react-router";
+import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend } from "main/utils/useBackend";
 import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
@@ -12,6 +14,8 @@ import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import {
   adminApplicationUrls,
   applicationsListPath,
+  draftEmailsCopiedText,
+  draftEmailsTooltip,
   draftsText,
 } from "main/utils/adminApplications";
 import type { AdminDraftApplication } from "main/utils/draftApplications";
@@ -56,6 +60,21 @@ export default function RecruitmentDraftApplicationsPage(): React.JSX.Element {
     recruitmentId,
     recruitment?.type,
   );
+
+  // Issue #411: the addresses of everyone with a draft, one per line in the table's order, so an
+  // admin can remind them to submit before the deadline.
+  const copyDraftEmails = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        draftList.map((draft) => draft.email).join("\n"),
+      );
+      toast(draftEmailsCopiedText(draftList.length));
+    } catch {
+      toast(
+        "Unable to copy to clipboard. Check your browser clipboard permissions.",
+      );
+    }
+  };
 
   return (
     <BasicLayout>
@@ -104,6 +123,25 @@ export default function RecruitmentDraftApplicationsPage(): React.JSX.Element {
           </p>
         ) : (
           <>
+            <div className="mb-2">
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip id="RecruitmentDraftApplicationsPage-copy-emails-tooltip">
+                    {draftEmailsTooltip(recruitment?.primaryConsiderationDate)}
+                  </Tooltip>
+                }
+              >
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={copyDraftEmails}
+                  data-testid="RecruitmentDraftApplicationsPage-copy-emails"
+                >
+                  Copy emails of draft applicants to clipboard
+                </Button>
+              </OverlayTrigger>
+            </div>
             <div className="mb-2">
               <ColumnVisibilityControl
                 choices={columnChoices}
