@@ -1,12 +1,26 @@
 import React from "react";
 import { fn } from "storybook/test";
-import RecruitmentCardLayout from "main/components/Recruitments/RecruitmentCardLayout";
+import RecruitmentCardLayout, {
+  RECRUITMENT_CARD_STORAGE_PREFIX,
+} from "main/components/Recruitments/RecruitmentCardLayout";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
+
+/**
+ * The card remembers whether it is open in localStorage, so each story first forgets what an
+ * earlier story left, and starts from its own default.
+ */
+const forgetRecruitmentCards = (Story) => {
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith(RECRUITMENT_CARD_STORAGE_PREFIX))
+    .forEach((key) => localStorage.removeItem(key));
+  return <Story />;
+};
 
 export default {
   title: "components/Recruitments/RecruitmentCardLayout",
   component: RecruitmentCardLayout,
+  decorators: [forgetRecruitmentCards],
   args: {
     onChangeDeadline: fn(),
     onDeleteRequested: fn(),
@@ -21,7 +35,9 @@ const ulaRecruitment = recruitmentsFixtures.threeRecruitments[1];
 const Template = (args) => <RecruitmentCardLayout {...args} />;
 
 /**
- * The most recent TA recruitment: its steps panel opens expanded. The footer has Courses, Draft
+ * The most recent TA recruitment: its steps panel opens expanded. Since issue #379 the card sits
+ * inside its quarter's card, so its top row is headed "TA" (no quarter) and is one toggle button
+ * with the caret, badges and count; the trash icon is beside it. The footer has Courses, Draft
  * Applications, Applications, Make Assignments and View Assignments (issue #317), then Download
  * Rankings CSV since reviews are open, and Change History at the right edge (issue #390).
  */
@@ -33,7 +49,7 @@ ExpandedTA.args = {
   defaultExpanded: true,
 };
 
-/** An older recruitment: collapsed to the one-line summary. */
+/** An older recruitment: open, but its diagram collapsed to the one-line summary. */
 export const CollapsedULA = Template.bind({});
 CollapsedULA.args = {
   recruitment: ulaRecruitment,
@@ -41,7 +57,22 @@ CollapsedULA.args = {
   steps: recruitmentStepsFixtures.ulaFresh,
 };
 
-/** Two cards as the home page will show them: the current one expanded, the other collapsed. */
+/**
+ * Issue #379: the card closed by its top row. Only the row shows: caret, "ULA", the badges, the
+ * count and the trash icon; clicking the row opens it again.
+ */
+export const ClosedCard = Template.bind({});
+ClosedCard.args = {
+  recruitment: ulaRecruitment,
+  applicationCount: 1,
+  steps: recruitmentStepsFixtures.ulaFresh,
+  defaultOpen: false,
+};
+
+/**
+ * Two cards as they nest inside a quarter's card on the home page: TA then ULA, both open, the
+ * current one's diagram expanded, the other's collapsed. Each row toggles its own card.
+ */
 export const TwoRecruitments = (args) => (
   <>
     <RecruitmentCardLayout

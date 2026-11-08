@@ -103,7 +103,7 @@ public class HomePageRefreshWebIT extends WebTestCase {
     page.getByTestId("RecruitmentForm-tentativeOpeningDate").fill("2026-01-05");
     page.getByTestId("RecruitmentForm-primaryConsiderationDate").fill("2026-01-20");
     page.getByTestId("RecruitmentForm-submit").click();
-    waitFor(page.getByTestId("HomePageLoggedIn-admin-card-0-quarter"));
+    waitFor(page.getByTestId("HomePageLoggedIn-admin-card-0-type"));
 
     // Issue #364: the instructor section's card is the quarter's, not the recruitment's.
     String quarter = recruitmentRepository.findAll().iterator().next().getQuarter();
@@ -122,7 +122,7 @@ public class HomePageRefreshWebIT extends WebTestCase {
     page.getByTestId("RecruitmentDeleteModal-confirm").click();
 
     // The admin card goes, and so does the course in the instructor section.
-    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-quarter")).not().isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-type")).not().isVisible();
     assertThat(page.getByTestId(instructorCard + "-courses")).not().isVisible();
     assertThat(page.getByTestId("HomePageLoggedIn-instructor-none"))
         .containsText("No recruitment includes a course you are listed as teaching.");

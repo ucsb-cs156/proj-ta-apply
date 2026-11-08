@@ -629,7 +629,7 @@ describe("Help pages (issue #140)", () => {
       "whichever recruitment's row the page saves it under, both recruitments see the same value",
     );
     expect(page).toHaveTextContent(
-      "is where a quarter's enrollment estimates and its TA and ULA allocations are edited, side by side. You reach it from the Allocate TA and ULA slots to Courses button of the quarter's QXX Budget card on your home page (Allocate TA slots to Courses or Allocate ULA slots to Courses when the quarter has one recruitment), from the Allocations link of step 3 and the (see allocations) link of step 5 of each recruitment card's diagram, from the Combined allocations link at the top of the Budget for Quarter page, and from the pointer on each recruitment's view-only Courses page.",
+      "is where a quarter's enrollment estimates and its TA and ULA allocations are edited, side by side. You reach it from the Allocate TA and ULA slots to Courses button on the quarter's card on your home page (Allocate TA slots to Courses or Allocate ULA slots to Courses when the quarter has one recruitment), from the Allocations link of step 3 and the (see allocations) link of step 5 of each recruitment card's diagram, from the Combined allocations link at the top of the Budget for Quarter page, and from the pointer on each recruitment's view-only Courses page.",
     );
     expect(page).toHaveTextContent(
       "Allocation (how many TAs or ULAs of that recruitment the section gets; a whole number, saved as you type it, against the recruitment of that type)",
@@ -1655,10 +1655,10 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
-    // Issue #233: the live Recruitment Steps diagram on each card.
-    const cardIntro = screen.getByText(/Under the dates is the live/);
+    // Issue #233: the live Recruitment Steps diagram on each card (nested since issue #379).
+    const cardIntro = screen.getByText(/Open, the card shows the recruitment/);
     expect(cardIntro).toHaveTextContent(
-      "Under the dates is the live Recruitment Steps diagram (collapsed to a one-line summary on older cards, expanded on the latest TA and ULA recruitments).",
+      "Open, the card shows the recruitment's dates, and under the dates the live Recruitment Steps diagram (collapsed to a one-line summary on older recruitments, expanded on the latest TA and ULA recruitments).",
     );
     expect(
       within(cardIntro).getByRole("link", { name: "Recruitment Steps" }),
@@ -2312,14 +2312,28 @@ describe("Help pages (issue #140)", () => {
   });
 });
 
-describe("admin Help: the QXX Budget card (issue #357)", () => {
-  test("describes the card's two buttons: Budget Planning and the allocation button with its three labels (issue #358)", async () => {
+describe("admin Help: the home page's quarter cards (issues #357, #379)", () => {
+  test("describes one card per quarter with its two buttons, the nested TA and ULA cards, how they open and close, the default state and the Quarters control", async () => {
     renderPage(<HelpAdminsPage />);
-    const card = (await screen.findByText("QXX Budget")).parentElement;
-    expect(within(card).getByText("Budget Planning")).toBeInTheDocument();
+    const card = (await screen.findByText("Budget Planning")).parentElement;
     expect(card).toHaveTextContent(
-      "with two buttons: Budget Planning opens that quarter's Budget for Quarter page, and one allocation button opens the quarter's Combined Allocation page, where the TA and ULA allocations are edited side by side; its label says which recruitments the quarter has: Allocate TA slots to Courses, Allocate ULA slots to Courses or Allocate TA and ULA slots to Courses.",
+      "The recruitments are grouped by quarter: one card per quarter, headed by the quarter (for example W26) with two buttons on the same row: Budget Planning opens that quarter's Budget for Quarter page, and one allocation button opens the quarter's Combined Allocation page, where the TA and ULA allocations are edited side by side; its label says which recruitments the quarter has: Allocate TA slots to Courses, Allocate ULA slots to Courses or Allocate TA and ULA slots to Courses.",
     );
+    expect(card).toHaveTextContent(
+      "Clicking anywhere else on that row closes or opens the quarter's card (the caret at its left shows which it is); clicking a button on the row goes to its page and leaves the card as it was. The newest quarter starts open and the older quarters closed, and this browser remembers each card as you left it. The Quarters control above the cards puts the newest or the oldest quarter first.",
+    );
+    expect(card).toHaveTextContent(
+      "Inside a quarter's card is a nested card for each of its recruitments, headed TA or ULA with its status badges and how many applications it has; clicking that row closes or opens just that card, and the trash icon at its right deletes the recruitment. Open, the card shows the recruitment's dates, and under the dates the live Recruitment Steps diagram (collapsed to a one-line summary on older recruitments, expanded on the latest TA and ULA recruitments).",
+    );
+    expect(
+      within(card).getByRole("link", { name: "Recruitment Steps" }),
+    ).toHaveAttribute("href", "/help/recruitment-steps");
+    // Issue #379: no longer a flat "QXX Budget" card, and no Sort by bar.
+    expect(card).not.toHaveTextContent("QXX Budget");
+    expect(card).not.toHaveTextContent("Budget card");
+    expect(card).not.toHaveTextContent("sorted");
+    expect(card).not.toHaveTextContent("Sort by");
+    expect(screen.queryByText(/QXX Budget/)).toBeNull();
     expect(card).not.toHaveTextContent("TA allocations and ULA allocations");
     expect(card).not.toHaveTextContent("greyed out");
     // The diagram's links, described in the same paragraph.

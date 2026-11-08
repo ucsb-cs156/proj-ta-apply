@@ -113,21 +113,50 @@ closed at, assignments published at) and stamp them
 from the existing endpoints. The backend computes the labels, done flags and link targets in one
 endpoint so the frontend only draws.
 
-## The QXX Budget card (issue #357)
+## The quarter card (issues #357, #379)
 
-Above each quarter's recruitment card, or pair of cards when the quarter has both a TA and a ULA
-recruitment, the admin home page shows a lighter **QXX Budget** card (QXX from `yyyyqToQyy`, such
-as "W26 Budget") with two buttons since issue #358 (part 3): **Budget Planning**
-(`/admin/budget/QXX`; it was labelled **Budget**) and one allocation button to the quarter's
-Combined Allocation page, `/admin/allocations/QXX`, labelled by the recruitments the quarter has:
-**Allocate TA slots to Courses**, **Allocate ULA slots to Courses** or **Allocate TA and ULA slots
-to Courses** (before part 3 there were two buttons, **TA allocations** and **ULA allocations**, to
-`/admin/recruitments/:id/courses/edit` of that quarter's TA or ULA recruitment, each greyed out
-when the quarter had no recruitment of that type; the single button is greyed out only when the
-quarter has neither, which the home page never shows). The cards are grouped by
-quarter, in the order each quarter first appears in the sorted list, so the budget card moves with
-its quarter; sorting by anything other than Quarter therefore keeps a quarter's cards together
-instead of interleaving them.
+The admin home page shows **one card per quarter** (`AdminQuarterCard`; until issue #379 a flat,
+lighter **QXX Budget** card above the quarter's recruitment cards, issue #357). Its header row,
+on a light background, is headed by the quarter alone (QXX from `yyyyqToQyy`, such as "W26", in
+the large font) and carries the quarter's two buttons, since issue #358 (part 3): **Budget
+Planning** (`/admin/budget/QXX`; it was labelled **Budget**) and one allocation button to the
+quarter's Combined Allocation page, `/admin/allocations/QXX`, labelled by the recruitments the
+quarter has: **Allocate TA slots to Courses**, **Allocate ULA slots to Courses** or **Allocate TA
+and ULA slots to Courses** (before part 3 there were two buttons, **TA allocations** and **ULA
+allocations**, to `/admin/recruitments/:id/courses/edit` of that quarter's TA or ULA recruitment,
+each greyed out when the quarter had no recruitment of that type; the single button is greyed out
+only when the quarter has neither, which the home page never shows).
+
+**Opening and closing (issue #379).** Everything on the header row except the two buttons is one
+`<button aria-expanded>`: a caret (▾ open, ▸ closed) and the quarter. It grows to fill the row, so
+clicking anywhere on the row other than a button toggles the card, a button click only navigates,
+and the keyboard (Tab to the row, Enter or Space) toggles it too. The two buttons sit together at
+the right end of the row, after the toggle. The quarter's recruitment cards are nested inside the
+quarter card's body, which is not rendered while the card is closed (so a closed quarter's steps
+are not fetched). The **nested recruitment card** (`RecruitmentCardLayout`) has the same kind of
+row: one toggle button holding the caret, the type (**TA** or **ULA**, in the large font the
+quarter used to have; the quarter itself is dropped from the heading, since the card sits inside
+the quarter's), the status badges and the application count, with the trash icon beside the toggle
+at the right edge; its dates, steps panel and button row are rendered only while it is open, and
+each nested card opens and closes independently of the other and of the quarter.
+
+*Default state:* the newest quarter (the largest `yyyyq` among the recruitments, whichever order
+the cards are shown in) starts open with both of its nested cards open; every older quarter starts
+closed, and its nested cards start open when it is opened (one click shows the quarter's two cards,
+each with its dates and the steps diagram's one-line summary). The diagram inside keeps its own
+rule: expanded on the most recent TA and the most recent ULA recruitment, collapsed elsewhere.
+*Remembered:* each card's state is kept in this browser's localStorage (`useRememberedOpen`, the
+hook `CollapsibleCard` also uses) under `adminQuarterCard.QXX` for a quarter and
+`adminRecruitmentCard.yyyyq.TYPE` for a nested card, so it stays as the admin left it, as the hidden
+columns of the tables do; the default applies only until the card has been toggled once. When a new
+quarter is created it has nothing remembered, so it opens as the newest; the quarter it displaces
+falls back to closed unless the admin had toggled it.
+
+*The Sort by bar is gone.* With the cards nested by quarter, sorting across quarters by type,
+status or a date no longer meant anything, so the seven-button bar of issue #86 is replaced by a
+**Quarters** control with two buttons, **Newest first** (the default) and **Oldest first**, which
+only order the quarter cards; within a quarter the TA card always comes before the ULA card. The
+quarter card and the nested cards move with the order and keep their open or closed state.
 
 ## The budget of a new quarter (issue #384)
 
@@ -309,7 +338,10 @@ pointer or hiring target.
 
 The card becomes much wider to hold the diagram. From top to bottom:
 
-1. **Header**: quarter, type and the status badges, as today.
+1. **Header**: quarter, type and the status badges, as today. Since issue #379 the card is nested
+   inside its quarter's card and the header is the card's toggle row: the caret, the type (TA or
+   ULA) in the large font, the status badges and the application count in one `aria-expanded`
+   button, the trash icon beside it; the quarter is dropped (see "The quarter card" above).
 2. **Dates panel**: as today, including the **Change** button beside the Faculty Ranking
    Deadline.
 3. **The live Recruitment Steps diagram** for this recruitment, in a collapsible panel whose

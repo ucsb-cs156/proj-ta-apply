@@ -1,4 +1,5 @@
 import {
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -15,7 +16,7 @@ import { vi } from "vitest";
 import RecruitmentCards from "main/components/Recruitments/RecruitmentCards";
 import { DELETE_TOOLTIP } from "main/components/Recruitments/RecruitmentCardLayout";
 import { applicationsText } from "main/utils/adminApplications";
-import { SORT_KEYS, sortRecruitments } from "main/utils/recruitmentSort";
+import { sortRecruitments } from "main/utils/recruitmentSort";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { STALE_CONFIRMATION_MESSAGE } from "main/utils/recruitmentActions";
 
@@ -162,10 +163,22 @@ function Where() {
   return <div data-testid="where">{useLocation().pathname}</div>;
 }
 
+/**
+ * Issue #379: every quarter but the newest starts closed, with its recruitment cards not rendered.
+ * Opens each closed quarter card so every recruitment's card is on screen.
+ */
+function openClosedQuarters(prefix = "Cards") {
+  screen
+    .queryAllByTestId(new RegExp(`^${prefix}-quarter-[WSMF]\\d\\d-toggle$`))
+    .filter((toggle) => toggle.getAttribute("aria-expanded") === "false")
+    .forEach((toggle) => fireEvent.click(toggle));
+}
+
 function renderCards(
   recruitments = three,
   onDeleteRequested = vi.fn(),
   applicationCounts = undefined,
+  openAll = true,
 ) {
   rendered = Array.isArray(recruitments) ? recruitments : [];
   render(
@@ -187,6 +200,7 @@ function renderCards(
       </MemoryRouter>
     </QueryClientProvider>,
   );
+  if (openAll) openClosedQuarters();
   return onDeleteRequested;
 }
 
@@ -204,19 +218,22 @@ async function stepButton(index, number) {
   );
 }
 
-/** The quarter and type of each card, top to bottom. */
+/** The quarter (from the quarter card around it) and type of each recruitment card, top to bottom. */
 const order = () =>
   screen
-    .getAllByTestId(/^Cards-card-\d+-card$/)
-    .map(
-      (card) =>
-        within(card).getByTestId(/-quarter$/).textContent +
-        " " +
-        within(card).getByTestId(/-type$/).textContent,
-    );
+    .getAllByTestId(/^Cards-quarter-[WSMF]\d\d-card$/)
+    .flatMap((quarterCard) => {
+      const quarter = within(quarterCard).getByTestId(
+        /^Cards-quarter-[WSMF]\d\d-title$/,
+      ).textContent;
+      return within(quarterCard)
+        .queryAllByTestId(/^Cards-card-\d+-type$/)
+        .map((type) => `${quarter} ${type.textContent}`);
+    });
 
 describe("RecruitmentCards tests", () => {
   beforeEach(() => {
+    localStorage.clear();
     mockToast.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
@@ -234,16 +251,280 @@ describe("RecruitmentCards tests", () => {
       .reply(200, {});
   });
 
-  test("shows one card per recruitment, newest quarter first, TA before ULA", () => {
+  test("shows one card per recruitment inside its quarter's card, newest quarter first, TA before ULA", () => {
     renderCards();
     expect(order()).toEqual(["S26 TA", "W26 TA", "W26 ULA"]);
     expect(screen.queryByTestId("Cards-empty")).toBeNull();
+    // Issue #379: the recruitment cards are nested in the body of their quarter's card.
+    expect(screen.getByTestId("Cards-quarter-W26-body")).toContainElement(
+      screen.getByTestId("Cards-card-1-card"),
+    );
+    expect(screen.getByTestId("Cards-quarter-W26-body")).toContainElement(
+      screen.getByTestId("Cards-card-2-card"),
+    );
+    expect(screen.getByTestId("Cards-quarter-S26-body")).toContainElement(
+      screen.getByTestId("Cards-card-0-card"),
+    );
+    expect(screen.getByTestId("Cards-quarter-S26-body")).not.toContainElement(
+      screen.getByTestId("Cards-card-1-card"),
+    );
+  });
+
+  // ---- Issue #379: one card per quarter, the recruitment cards nested in it ----
+
+  test("each quarter card is headed by the quarter alone with the Budget Planning and Allocate buttons on the row; the nested cards are headed TA and ULA without the quarter", () => {
+    renderCards();
+    expect(screen.getByTestId("Cards-quarter-S26-title")).toHaveTextContent(
+      /^S26$/,
+    );
+    expect(screen.getByTestId("Cards-quarter-W26-title")).toHaveTextContent(
+      /^W26$/,
+    );
+    expect(screen.queryByText(/Budget$/)).toBeNull();
+    const header = screen
+      .getByTestId("Cards-quarter-W26-card")
+      .querySelector(".card-header");
+    expect(header).toContainElement(
+      screen.getByTestId("Cards-quarter-W26-budget"),
+    );
+    expect(screen.getByTestId("Cards-quarter-W26-budget")).toHaveTextContent(
+      "Budget Planning",
+    );
+    expect(header).toContainElement(
+      screen.getByTestId("Cards-quarter-W26-allocate"),
+    );
+    expect(screen.getByTestId("Cards-quarter-W26-allocate")).toHaveTextContent(
+      "Allocate TA and ULA slots to Courses",
+    );
+    expect(screen.getByTestId("Cards-quarter-S26-allocate")).toHaveTextContent(
+      "Allocate TA slots to Courses",
+    );
+    // The nested cards: type in the large font, no quarter.
+    for (const [index, type] of [
+      [0, "TA"],
+      [1, "TA"],
+      [2, "ULA"],
+    ]) {
+      const heading = screen.getByTestId(`Cards-card-${index}-type`);
+      expect(heading).toHaveTextContent(new RegExp(`^${type}$`));
+      expect(heading).toHaveClass("fs-5");
+      expect(screen.queryByTestId(`Cards-card-${index}-quarter`)).toBeNull();
+      expect(
+        screen
+          .getByTestId(`Cards-card-${index}-card`)
+          .querySelector(".card-header"),
+      ).not.toHaveTextContent(/[WSMF]\d\d/);
+    }
+  });
+
+  test("by default the newest quarter is open with both nested cards open, and the older quarters are closed", () => {
+    renderCards(three, vi.fn(), undefined, false);
+    const s26 = screen.getByTestId("Cards-quarter-S26-toggle");
+    const w26 = screen.getByTestId("Cards-quarter-W26-toggle");
+    expect(s26).toHaveAttribute("aria-expanded", "true");
+    expect(w26).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("Cards-quarter-S26-caret")).toHaveTextContent(
+      "▾",
+    );
+    expect(screen.getByTestId("Cards-quarter-W26-caret")).toHaveTextContent(
+      "▸",
+    );
+    // The newest quarter's nested card is open: its dates and buttons show.
+    expect(screen.getByTestId("Cards-card-0-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByTestId("Cards-card-0-dates")).toBeInTheDocument();
+    expect(screen.getByTestId("Cards-card-0-courses-button")).toBeVisible();
+    // The closed quarter's recruitment cards are not rendered at all.
+    expect(screen.queryByTestId("Cards-quarter-W26-body")).toBeNull();
+    expect(screen.queryByTestId("Cards-card-1-card")).toBeNull();
+    expect(screen.queryByTestId("Cards-card-2-card")).toBeNull();
+    expect(order()).toEqual(["S26 TA"]);
+    // Its buttons are still on the row.
+    expect(screen.getByTestId("Cards-quarter-W26-budget")).toBeVisible();
+    expect(screen.getByTestId("Cards-quarter-W26-allocate")).toBeVisible();
+    // Only the newest quarter's steps are fetched while the others are closed.
+    expect(stepsGets(3)).toHaveLength(1);
+    expect(stepsGets(1)).toHaveLength(0);
+    expect(stepsGets(2)).toHaveLength(0);
+    expect(localStorage.length).toBe(0);
+  });
+
+  test("the newest quarter is the newest whichever order the quarters are shown in", async () => {
+    const make = (id, quarter, type) => ({ ...three[0], id, quarter, type });
+    renderCards(
+      [
+        make(10, "20254", "TA"),
+        make(11, "20262", "ULA"),
+        make(12, "20261", "TA"),
+      ],
+      vi.fn(),
+      undefined,
+      false,
+    );
+    expect(screen.getByTestId("Cards-quarter-S26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByTestId("Cards-quarter-W26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.getByTestId("Cards-quarter-F25-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await userEvent.click(screen.getByTestId("Cards-order-oldest"));
+    expect(screen.getByTestId("Cards-quarter-S26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByTestId("Cards-quarter-F25-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
+  test("clicking a quarter's row opens it, showing its nested cards open, and clicking again closes it", async () => {
+    renderCards(three, vi.fn(), undefined, false);
+    const w26 = screen.getByTestId("Cards-quarter-W26-toggle");
+
+    await userEvent.click(w26);
+    expect(w26).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("Cards-quarter-W26-caret")).toHaveTextContent(
+      "▾",
+    );
+    expect(order()).toEqual(["S26 TA", "W26 TA", "W26 ULA"]);
+    // Both nested cards open, with their dates, and their steps now fetched.
+    expect(screen.getByTestId("Cards-card-1-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByTestId("Cards-card-2-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByTestId("Cards-card-1-dates")).toBeInTheDocument();
+    expect(screen.getByTestId("Cards-card-2-dates")).toBeInTheDocument();
+    await waitFor(() => expect(stepsGets(1)).toHaveLength(1));
+    await waitFor(() => expect(stepsGets(2)).toHaveLength(1));
+    // The newest quarter is untouched.
+    expect(screen.getByTestId("Cards-quarter-S26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    // Clicking the title (part of the row) closes it again.
+    await userEvent.click(screen.getByTestId("Cards-quarter-W26-title"));
+    expect(w26).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByTestId("Cards-card-1-card")).toBeNull();
+    expect(screen.queryByTestId("Cards-card-2-card")).toBeNull();
+    expect(screen.getByTestId("Cards-card-0-card")).toBeInTheDocument();
+
+    // The newest quarter closes the same way, taking its card with it.
+    await userEvent.click(screen.getByTestId("Cards-quarter-S26-toggle"));
+    expect(screen.queryByTestId("Cards-card-0-card")).toBeNull();
+    expect(order()).toEqual([]);
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("clicking a nested card's row closes or opens only that card", async () => {
+    renderCards();
+    const ta = screen.getByTestId("Cards-card-1-toggle");
+    const ula = screen.getByTestId("Cards-card-2-toggle");
+
+    await userEvent.click(ta);
+    expect(ta).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("Cards-card-1-caret")).toHaveTextContent("▸");
+    expect(screen.queryByTestId("Cards-card-1-dates")).toBeNull();
+    expect(screen.queryByTestId("Cards-card-1-courses-button")).toBeNull();
+    // Its row stays: heading, badges, count and trash icon.
+    expect(screen.getByTestId("Cards-card-1-type")).toHaveTextContent("TA");
+    expect(screen.getByTestId("Cards-card-1-applicationStatus")).toBeVisible();
+    expect(screen.getByTestId("Cards-card-1-delete-button")).toBeVisible();
+    // The ULA card beside it, and the quarter card around it, are untouched.
+    expect(ula).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("Cards-card-2-dates")).toBeInTheDocument();
+    expect(screen.getByTestId("Cards-quarter-W26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    await userEvent.click(screen.getByTestId("Cards-card-2-applicationStatus"));
+    expect(ula).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByTestId("Cards-card-2-dates")).toBeNull();
+    expect(ta).toHaveAttribute("aria-expanded", "false");
+
+    await userEvent.click(ta);
+    expect(ta).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("Cards-card-1-dates")).toBeInTheDocument();
+    expect(ula).toHaveAttribute("aria-expanded", "false");
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("clicking a button on a quarter's row navigates and does not toggle the quarter", async () => {
+    renderCards(three, vi.fn(), undefined, false);
+    const w26 = screen.getByTestId("Cards-quarter-W26-toggle");
+    const s26 = screen.getByTestId("Cards-quarter-S26-toggle");
+
+    await userEvent.click(screen.getByTestId("Cards-quarter-W26-budget"));
+    expect(screen.getByTestId("where")).toHaveTextContent("/admin/budget/W26");
+    expect(w26).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByTestId("Cards-card-1-card")).toBeNull();
+
+    await userEvent.click(screen.getByTestId("Cards-quarter-S26-allocate"));
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/admin/allocations/S26",
+    );
+    expect(s26).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("Cards-card-0-card")).toBeInTheDocument();
+
+    // Nor does the trash icon on a nested card's row toggle that card.
+    await userEvent.click(screen.getByTestId("Cards-card-0-delete-button"));
+    expect(screen.getByTestId("Cards-card-0-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(localStorage.length).toBe(0);
+  });
+
+  test("each card's open or closed state is remembered in this browser, per quarter and per recruitment card", async () => {
+    renderCards(three, vi.fn(), undefined, false);
+    await userEvent.click(screen.getByTestId("Cards-quarter-W26-toggle"));
+    await userEvent.click(screen.getByTestId("Cards-card-2-toggle"));
+    await userEvent.click(screen.getByTestId("Cards-quarter-S26-toggle"));
+    expect(localStorage.getItem("adminQuarterCard.W26")).toBe("open");
+    expect(localStorage.getItem("adminQuarterCard.S26")).toBe("closed");
+    expect(localStorage.getItem("adminRecruitmentCard.20261.ULA")).toBe(
+      "closed",
+    );
+    expect(localStorage.getItem("adminRecruitmentCard.20261.TA")).toBeNull();
+
+    // Shown again: as left, whatever the defaults say.
+    cleanup();
+    renderCards(three, vi.fn(), undefined, false);
+    expect(screen.getByTestId("Cards-quarter-W26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByTestId("Cards-quarter-S26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.getByTestId("Cards-card-1-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByTestId("Cards-card-2-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
   });
 
   test("a card has both statuses in its header and the dates in its body", () => {
     renderCards();
     // Card 2 is W26 ULA, OPEN (id 2).
-    expect(screen.getByTestId("Cards-card-2-quarter")).toHaveTextContent("W26");
     expect(screen.getByTestId("Cards-card-2-type")).toHaveTextContent("ULA");
     const status = screen.getByTestId("Cards-card-2-applicationStatus");
     expect(status).toHaveTextContent("OPEN");
@@ -294,70 +575,77 @@ describe("RecruitmentCards tests", () => {
     expect(screen.getByTestId("Cards-card-2-card").style.maxWidth).toBe("");
   });
 
-  test("the Sort by bar has a button per field, with Quarter selected and descending at first", () => {
+  test("the Quarters control above the cards offers Newest first (selected at first) and Oldest first, and the Sort by bar is gone (issue #379)", () => {
     renderCards();
-    expect(SORT_KEYS.map((k) => k.label)).toEqual([
-      "Quarter",
-      "Type",
-      "Status",
-      "Tentative Opening",
-      "Primary Consideration",
-      "Actually Opened",
-      "Actually Closed",
-    ]);
-    expect(screen.getByText("Sort by")).toBeInTheDocument();
-    const bar = screen.getByTestId("Cards-sort-bar");
-    expect(bar).toHaveAttribute("aria-labelledby", "Cards-sort-label");
-    expect(screen.getByText("Sort by")).toHaveAttribute(
-      "id",
-      "Cards-sort-label",
-    );
-    expect(within(bar).getAllByRole("button")).toHaveLength(7);
+    expect(screen.queryByText("Sort by")).toBeNull();
+    expect(screen.queryByTestId("Cards-sort-bar")).toBeNull();
+    expect(screen.queryByTestId("Cards-sort-quarter")).toBeNull();
+    expect(screen.queryByTestId("Cards-sort-type")).toBeNull();
 
-    const quarter = screen.getByTestId("Cards-sort-quarter");
-    expect(quarter).toHaveTextContent("Quarter ▼");
-    expect(quarter).toHaveAttribute("aria-pressed", "true");
-    expect(quarter).toHaveClass("btn-primary");
-    const type = screen.getByTestId("Cards-sort-type");
-    expect(type).toHaveTextContent("Type");
-    expect(type).not.toHaveTextContent("▲");
-    expect(type).not.toHaveTextContent("▼");
-    expect(type).toHaveAttribute("aria-pressed", "false");
-    expect(type).toHaveClass("btn-outline-primary");
-    expect(bar).toHaveClass("btn-group-sm");
+    const label = screen.getByText("Quarters");
+    expect(label).toHaveAttribute("id", "Cards-order-label");
+    const bar = screen.getByTestId("Cards-order-bar");
+    expect(bar).toHaveAttribute("aria-labelledby", "Cards-order-label");
+    expect(bar).toHaveClass("btn-group", "btn-group-sm");
+    expect(label.parentElement).toBe(bar.parentElement);
+    // The control comes before the cards.
+    expect(
+      bar.compareDocumentPosition(
+        screen.getByTestId("Cards-quarter-S26-card"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    const newest = screen.getByTestId("Cards-order-newest");
+    const oldest = screen.getByTestId("Cards-order-oldest");
+    expect(within(bar).getAllByRole("button")).toEqual([newest, oldest]);
+    expect(newest).toHaveTextContent(/^Newest first$/);
+    expect(newest).toHaveAttribute("aria-pressed", "true");
+    expect(newest).toHaveClass("btn-primary");
+    expect(newest).not.toHaveClass("btn-outline-primary");
+    expect(oldest).toHaveTextContent(/^Oldest first$/);
+    expect(oldest).toHaveAttribute("aria-pressed", "false");
+    expect(oldest).toHaveClass("btn-outline-primary");
   });
 
-  test("clicking a key sorts ascending by it; clicking it again reverses", async () => {
+  test("Oldest first reverses the quarters, keeping TA before ULA within a quarter; Newest first puts them back", async () => {
     renderCards();
+    expect(order()).toEqual(["S26 TA", "W26 TA", "W26 ULA"]);
 
-    await userEvent.click(screen.getByTestId("Cards-sort-quarter"));
-    expect(screen.getByTestId("Cards-sort-quarter")).toHaveTextContent(
-      "Quarter ▲",
-    );
+    await userEvent.click(screen.getByTestId("Cards-order-oldest"));
     expect(order()).toEqual(["W26 TA", "W26 ULA", "S26 TA"]);
-
-    await userEvent.click(screen.getByTestId("Cards-sort-type"));
-    expect(screen.getByTestId("Cards-sort-type")).toHaveTextContent("Type ▲");
-    expect(screen.getByTestId("Cards-sort-quarter")).toHaveTextContent(
-      "Quarter",
+    expect(screen.getByTestId("Cards-order-oldest")).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
-    expect(screen.getByTestId("Cards-sort-quarter")).toHaveAttribute(
+    expect(screen.getByTestId("Cards-order-oldest")).toHaveClass("btn-primary");
+    expect(screen.getByTestId("Cards-order-newest")).toHaveAttribute(
       "aria-pressed",
       "false",
     );
-    // TA cards first (newest quarter first among them), then the ULA one.
-    expect(order()).toEqual(["S26 TA", "W26 TA", "W26 ULA"]);
+    expect(screen.getByTestId("Cards-order-newest")).toHaveClass(
+      "btn-outline-primary",
+    );
+    // The quarter cards moved with their recruitments, and stayed open.
+    const quarters = screen
+      .getAllByTestId(/^Cards-quarter-[WSMF]\d\d-title$/)
+      .map((title) => title.textContent);
+    expect(quarters).toEqual(["W26", "S26"]);
+    expect(screen.getByTestId("Cards-quarter-W26-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
 
-    await userEvent.click(screen.getByTestId("Cards-sort-type"));
-    expect(screen.getByTestId("Cards-sort-type")).toHaveTextContent("Type ▼");
-    // A quarter's cards stay together under its budget card: W26 (ULA, TA), then S26.
-    expect(order()).toEqual(["W26 ULA", "W26 TA", "S26 TA"]);
-
-    await userEvent.click(screen.getByTestId("Cards-sort-actualClosingDate"));
-    // Ascending: the blank dates first (ties in backend order), then the one real date.
-    expect(order()).toEqual(["S26 TA", "W26 ULA", "W26 TA"]);
-    await userEvent.click(screen.getByTestId("Cards-sort-actualClosingDate"));
+    // Clicking the selected one again changes nothing.
+    await userEvent.click(screen.getByTestId("Cards-order-oldest"));
     expect(order()).toEqual(["W26 TA", "W26 ULA", "S26 TA"]);
+
+    await userEvent.click(screen.getByTestId("Cards-order-newest"));
+    expect(order()).toEqual(["S26 TA", "W26 TA", "W26 ULA"]);
+    expect(screen.getByTestId("Cards-order-newest")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(axiosMock.history.put).toHaveLength(0);
   });
 
   test("sortRecruitments orders by the key, blanks first ascending, ties newest quarter then TA first", () => {
@@ -390,6 +678,7 @@ describe("RecruitmentCards tests", () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
+    openClosedQuarters();
     // Card 0 is S26 TA, CLOSED (id 3); card 2 is W26 ULA, OPEN (id 2).
     const openButton = await stepButton(0, 2);
     const closeButton = await stepButton(2, 4);
@@ -874,17 +1163,22 @@ describe("RecruitmentCards tests", () => {
     );
   });
 
-  test("the trash icon sits at the right of the header with a tooltip", async () => {
+  test("the trash icon sits at the right of the header, outside the toggle, with a tooltip", async () => {
     renderCards();
 
     const button = screen.getByTestId("Cards-card-2-delete-button");
-    expect(button).toHaveClass("btn-outline-danger", "btn-sm", "ms-auto");
+    expect(button).toHaveClass("btn-outline-danger", "btn-sm", "me-3");
     expect(button).toHaveAttribute("aria-label", "Delete this Recruitment");
     expect(button.querySelector("svg")).not.toBeNull();
     expect(button.textContent).toBe("");
-    expect(
-      screen.getByTestId("Cards-card-2-card").querySelector(".card-header"),
-    ).toContainElement(button);
+    const header = screen
+      .getByTestId("Cards-card-2-card")
+      .querySelector(".card-header");
+    expect(header).toContainElement(button);
+    expect(header.lastElementChild).toBe(button);
+    expect(screen.getByTestId("Cards-card-2-toggle")).not.toContainElement(
+      button,
+    );
     expect(DELETE_TOOLTIP).toBe("Delete this Recruitment");
 
     fireEvent.mouseOver(button);
@@ -904,14 +1198,15 @@ describe("RecruitmentCards tests", () => {
     expect(axiosMock.history.delete.length).toBe(0);
   });
 
-  test("with no recruitments it says so, and the sort bar is still there", () => {
+  test("with no recruitments it says so, and the Quarters control is still there", () => {
     renderCards([]);
     expect(screen.getByTestId("Cards-empty")).toHaveTextContent(
       "No recruitments yet.",
     );
     expect(screen.getByTestId("Cards-empty")).toHaveClass("text-muted");
     expect(screen.queryByTestId("Cards-card-0-card")).toBeNull();
-    expect(screen.getByTestId("Cards-sort-quarter")).toBeInTheDocument();
+    expect(screen.queryByTestId(/^Cards-quarter-/)).toBeNull();
+    expect(screen.getByTestId("Cards-order-newest")).toBeInTheDocument();
   });
 
   test("tolerates a non-array recruitments prop", () => {
@@ -928,8 +1223,11 @@ describe("RecruitmentCards tests", () => {
       </QueryClientProvider>,
     );
     expect(
-      screen.getByTestId("RecruitmentCards-card-0-quarter"),
+      screen.getByTestId("RecruitmentCards-quarter-S26-title"),
     ).toHaveTextContent("S26");
+    expect(
+      screen.getByTestId("RecruitmentCards-card-0-type"),
+    ).toHaveTextContent("TA");
     await userEvent.click(
       screen.getByTestId("RecruitmentCards-card-0-delete-button"),
     );
@@ -1210,8 +1508,8 @@ describe("RecruitmentCards tests", () => {
     axiosMock.onGet(stepsUrl).reply(500, { message: "boom" });
     renderCards();
 
-    expect(await screen.findByTestId("Cards-card-0-quarter")).toHaveTextContent(
-      "S26",
+    expect(await screen.findByTestId("Cards-card-0-type")).toHaveTextContent(
+      "TA",
     );
     await waitFor(() => expect(stepsGets(3)).toHaveLength(1));
     expect(
@@ -1439,6 +1737,7 @@ describe("RecruitmentCards confirmations when the list refreshes", () => {
   const [s26Ta, w26Ula, w26Ta] = three;
 
   beforeEach(() => {
+    localStorage.clear();
     mockToast.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
@@ -1465,6 +1764,7 @@ describe("RecruitmentCards confirmations when the list refreshes", () => {
       </QueryClientProvider>
     );
     const view = render(ui(three));
+    openClosedQuarters();
     return {
       /** What the page would show after a background refresh. */
       refreshTo: (recruitments) => {

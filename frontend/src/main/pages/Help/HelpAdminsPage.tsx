@@ -536,8 +536,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <em>/admin/allocations/W26</em>) is where a quarter&apos;s enrollment
           estimates and its TA and ULA allocations are edited, side by side. You
           reach it from the{" "}
-          <strong>Allocate TA and ULA slots to Courses</strong> button of the
-          quarter&apos;s QXX Budget card on your home page (
+          <strong>Allocate TA and ULA slots to Courses</strong> button on the
+          quarter&apos;s card on your home page (
           <strong>Allocate TA slots to Courses</strong> or{" "}
           <strong>Allocate ULA slots to Courses</strong> when the quarter has
           one recruitment), from the <em>Allocations</em> link of step 3 and the{" "}
@@ -677,12 +677,31 @@ export default function HelpAdminsPage(): React.JSX.Element {
           type (TA or ULA), a tentative opening date and a primary consideration
           date; only one recruitment of each type may exist per quarter.
           Creating one launches the job that fills its course list, so the list
-          is there without a second step. Each recruitment is a card, newest
-          quarter first, showing its status, dates and how many applications it
-          has. Under the dates is the live{" "}
+          is there without a second step. The recruitments are grouped by
+          quarter: one card per quarter, headed by the quarter (for example{" "}
+          <em>W26</em>) with two buttons on the same row:{" "}
+          <strong>Budget Planning</strong> opens that quarter&apos;s Budget for
+          Quarter page, and one allocation button opens the quarter&apos;s
+          Combined Allocation page, where the TA and ULA allocations are edited
+          side by side; its label says which recruitments the quarter has:{" "}
+          <strong>Allocate TA slots to Courses</strong>,{" "}
+          <strong>Allocate ULA slots to Courses</strong> or{" "}
+          <strong>Allocate TA and ULA slots to Courses</strong>. Clicking
+          anywhere else on that row closes or opens the quarter&apos;s card (the
+          caret at its left shows which it is); clicking a button on the row
+          goes to its page and leaves the card as it was. The newest quarter
+          starts open and the older quarters closed, and this browser remembers
+          each card as you left it. The <strong>Quarters</strong> control above
+          the cards puts the newest or the oldest quarter first. Inside a
+          quarter&apos;s card is a nested card for each of its recruitments,
+          headed <strong>TA</strong> or <strong>ULA</strong> with its status
+          badges and how many applications it has; clicking that row closes or
+          opens just that card, and the trash icon at its right deletes the
+          recruitment. Open, the card shows the recruitment&apos;s dates, and
+          under the dates the live{" "}
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
-          (collapsed to a one-line summary on older cards, expanded on the
-          latest TA and ULA recruitments). Its boxes carry the lifecycle
+          (collapsed to a one-line summary on older recruitments, expanded on
+          the latest TA and ULA recruitments). Its boxes carry the lifecycle
           actions, and the card has Courses, Draft Applications, Applications,
           Make Assignments and View Assignments buttons:{" "}
           <strong>Make Assignments</strong> opens the page where candidates are
@@ -696,19 +715,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <em>(see allocations)</em> links open the quarter&apos;s{" "}
           <Link to="#combined-allocations">Combined Allocation page</Link>, and
           the same two assignment pages are under steps 8 and 9 as{" "}
-          <em>Make Assignments</em> and <em>View Assignments</em>. Above each
-          quarter&apos;s recruitment card, or pair of cards when the quarter has
-          both a TA and a ULA recruitment, is a <strong>QXX Budget</strong> card
-          (for example <em>W26 Budget</em>) with two buttons:{" "}
-          <strong>Budget Planning</strong> opens that quarter&apos;s Budget for
-          Quarter page, and one allocation button opens the quarter&apos;s
-          Combined Allocation page, where the TA and ULA allocations are edited
-          side by side; its label says which recruitments the quarter has:{" "}
-          <strong>Allocate TA slots to Courses</strong>,{" "}
-          <strong>Allocate ULA slots to Courses</strong> or{" "}
-          <strong>Allocate TA and ULA slots to Courses</strong>. The budget card
-          stays with its quarter when the cards are sorted, so sorting by
-          anything but quarter groups each quarter&apos;s cards together.
+          <em>Make Assignments</em> and <em>View Assignments</em>.
         </p>
         <p>The lifecycle actions in the diagram and on the card are:</p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">

@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { vi } from "vitest";
@@ -129,10 +130,18 @@ describe("HomePageLoggedIn tests", () => {
     expect(
       screen.getByTestId("HomePageLoggedIn-admin-create-button"),
     ).toHaveTextContent("Create New Recruitment");
+    // Issue #379: one card per quarter, the newest open; its TA card is card 0.
     expect(
-      await screen.findByTestId("HomePageLoggedIn-admin-card-0-quarter"),
+      await screen.findByTestId("HomePageLoggedIn-admin-quarter-S26-title"),
     ).toHaveTextContent("S26");
-    // Cards run newest quarter first, TA before ULA: card 1 is W26 TA, closed 2026-02-01.
+    expect(
+      screen.getByTestId("HomePageLoggedIn-admin-card-0-type"),
+    ).toHaveTextContent("TA");
+    // The older quarter starts closed; opening it shows its cards, TA before ULA: card 1 is W26
+    // TA, closed 2026-02-01.
+    await userEvent.click(
+      screen.getByTestId("HomePageLoggedIn-admin-quarter-W26-toggle"),
+    );
     expect(
       screen.getByTestId("HomePageLoggedIn-admin-card-1-actualClosingDate"),
     ).toHaveTextContent("2026-02-01");
