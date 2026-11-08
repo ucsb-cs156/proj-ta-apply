@@ -1,7 +1,6 @@
 import { Accordion, Badge, Card } from "react-bootstrap";
 import { Link } from "react-router";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
-import { DATE_KEYS } from "main/utils/recruitmentSort";
 import DetailsTable from "main/components/Common/DetailsTable";
 import { targetsColumns } from "main/utils/courseTargets";
 import {
@@ -23,7 +22,9 @@ type InstructorRecruitmentCardsProps = {
 
 /**
  * The ranking action for a course in a recruitment: Rank Candidates while faculty reviews are Open,
- * View Candidate Rankings once Closed, and otherwise a note that they have not opened.
+ * View Candidate Rankings once Closed, and otherwise a note that they have not opened. The note
+ * takes the natural width of whatever holds it (issue #410), wrapping like ordinary text even in a
+ * table cell that does not wrap.
  */
 function RankingAction({
   entry,
@@ -53,11 +54,7 @@ function RankingAction({
     );
   }
   return (
-    <span
-      className="d-inline-block"
-      style={{ whiteSpace: "normal", maxWidth: "16rem" }}
-      data-testid={id("not-open")}
-    >
+    <span style={{ whiteSpace: "normal" }} data-testid={id("not-open")}>
       {NOT_OPEN_NOTE}
     </span>
   );
@@ -66,8 +63,10 @@ function RankingAction({
 /**
  * The TA or ULA card of a course (issue #364): everything the old per-recruitment card had, except
  * the Courses button. The type, the application and faculty-review status, the Assignments
- * Published badge and button, the dates, and, once the allocations are released, the targets table
- * with the ranking action in an unlabelled first column; while they are withheld, the action alone.
+ * Published badge and button, the faculty review dates (since issue #410 only those: the date
+ * reviews opened and the ranking deadline, not the application dates), and, once the allocations
+ * are released, the targets table with the ranking action in an unlabelled first column; while
+ * they are withheld, the action alone.
  */
 function RecruitmentCard({
   entry,
@@ -105,16 +104,6 @@ function RecruitmentCard({
       </Card.Header>
       <Card.Body>
         <dl className="row mb-0">
-          {DATE_KEYS.map(({ key, label }) => (
-            <div className="col-sm-6 d-flex" key={key}>
-              <dt className="me-2">{label}:</dt>
-              <dd className="mb-1" data-testid={id(key)}>
-                {recruitment[key] ?? ""}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <dl className="row mb-0 mt-2">
           <div className="col-sm-6 d-flex">
             <dt className="me-2">Faculty Reviews Opened:</dt>
             <dd className="mb-1" data-testid={id("facultyReviewOpeningDate")}>
@@ -160,8 +149,9 @@ function RecruitmentCard({
 }
 
 /**
- * What a course's accordion item holds (issue #364): the enrollment table, the placeholder for the
- * allocation feedback to come, then the TA card and the ULA card for each recruitment it is in.
+ * What a course's accordion item holds (issue #364): the enrollment table (with a TA Allocation and
+ * a ULA Allocation column always, issue #410), the placeholder for the allocation feedback to come,
+ * then the TA card and the ULA card for each recruitment it is in.
  */
 function CourseBody({
   course,

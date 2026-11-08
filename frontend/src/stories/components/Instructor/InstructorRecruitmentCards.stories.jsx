@@ -38,21 +38,45 @@ CourseInOneRecruitmentOnly.args = {
   ],
 };
 
-/** Two quarters, newest first; nothing released: Section, Enrolled and Max (3 columns). */
+/**
+ * Two quarters, newest first; nothing released (issue #410): all six columns, with Enrollment
+ * Estimate, TA Allocation and ULA Allocation reading TBD, or N/A on the side a course is not in
+ * (the sectionless 156 lecture is TA-only, CMPSC 1A ULA-only, S26 has no ULA recruitment). Each
+ * card shows only the two faculty review dates, and the S26 card's not-open note runs the full
+ * width.
+ */
 export const NothingReleased = Template.bind({});
 NothingReleased.args = { recruitments: nothingReleased };
 
-/** The TA allocations are released: Enrollment Estimate and TA Allocation join (5 columns). */
+/**
+ * The TA allocations are released: Enrollment Estimate and TA Allocation are numbers and ULA
+ * Allocation is still TBD (or N/A for the TA-only lecture); ULA-only CMPSC 1A stays TBD / N/A /
+ * TBD.
+ */
 export const TaAllocationsReleased = Template.bind({});
 TaAllocationsReleased.args = { recruitments: taReleased };
 
-/** The ULA allocations are released: Enrollment Estimate and ULA Allocation (5 columns). */
+/**
+ * The ULA allocations are released: Enrollment Estimate and ULA Allocation are numbers and TA
+ * Allocation is still TBD (or N/A for ULA-only CMPSC 1A); the TA-only lecture stays TBD / TBD /
+ * N/A.
+ */
 export const UlaAllocationsReleased = Template.bind({});
 UlaAllocationsReleased.args = { recruitments: ulaReleased };
 
-/** Both released: all six columns for the course in both recruitments. */
+/** Both released: all six columns as numbers for the course in both recruitments. */
 export const BothAllocationsReleased = Template.bind({});
 BothAllocationsReleased.args = { recruitments: bothReleased };
+
+/**
+ * A quarter whose only recruitment has not started faculty reviews (issue #410): the enrollment
+ * table's three right-hand cells read TBD, TBD and N/A; the card body holds just Faculty Reviews
+ * Opened and Faculty Ranking Deadline (both blank); and the footer's "Candidate rankings will be
+ * available when faculty reviews open." note takes the natural width of the footer instead of
+ * wrapping at 16rem.
+ */
+export const ReviewsNotStarted = Template.bind({});
+ReviewsNotStarted.args = { recruitments: [s26Ta] };
 
 /** The W26 TA recruitment's assignments are published (issue #180). */
 export const WithPublishedAssignments = Template.bind({});

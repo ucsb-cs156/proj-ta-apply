@@ -147,15 +147,24 @@ public class HomePageWebIT extends WebTestCase {
     assertThat(page.getByTestId(card + "-courses").locator(".accordion-item")).hasCount(1);
 
     page.getByTestId(header).getByRole(com.microsoft.playwright.options.AriaRole.BUTTON).click();
-    // Nothing released: Section, Enrolled and Max, then the feedback placeholder.
-    assertThat(page.getByTestId(course + "-enrollment").locator("thead th")).hasCount(3);
+    // Nothing released (issue #410): all six columns; Enrollment Estimate and TA Allocation read
+    // TBD (the TA recruitment has not released) and ULA Allocation N/A (there is no ULA
+    // recruitment), then the feedback placeholder.
+    assertThat(page.getByTestId(course + "-enrollment").locator("thead th")).hasCount(6);
     assertThat(page.getByTestId(course + "-section")).hasText("0100");
+    assertThat(page.getByTestId(course + "-enrollment-estimate")).hasText("TBD");
+    assertThat(page.getByTestId(course + "-ta-allocation")).hasText("TBD");
+    assertThat(page.getByTestId(course + "-ula-allocation")).hasText("N/A");
     assertThat(page.getByTestId(course + "-feedback"))
         .containsText("Coming soon: the ability for faculty to provide feedback");
-    // The TA card carries the recruitment's status; there is no ULA recruitment, so no ULA card.
+    // The TA card carries the recruitment's status and, since issue #410, only the faculty review
+    // dates: the application dates are not on it. There is no ULA recruitment, so no ULA card.
     assertThat(page.getByTestId(course + "-TA-type")).hasText("TA");
     assertThat(page.getByTestId(course + "-TA-applicationStatus")).containsText("OPEN");
-    assertThat(page.getByTestId(course + "-TA-tentativeOpeningDate")).hasText("2026-01-05");
+    assertThat(page.getByTestId(course + "-TA-tentativeOpeningDate")).hasCount(0);
+    assertThat(page.getByTestId(course + "-TA-card")).not().containsText("2026-01-05");
+    assertThat(page.getByTestId(course + "-TA-card")).containsText("Faculty Reviews Opened:");
+    assertThat(page.getByTestId(course + "-TA-card")).containsText("Faculty Ranking Deadline:");
     assertThat(page.getByTestId(course + "-ULA-card")).hasCount(0);
     // Reviews have not started, so no ranking action is offered yet; and no Courses button.
     assertThat(page.getByTestId(course + "-TA-not-open"))
