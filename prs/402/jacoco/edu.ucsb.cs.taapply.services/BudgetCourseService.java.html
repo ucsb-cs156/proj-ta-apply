@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BudgetCourseService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">BudgetCourseService.java</span></div><h1>BudgetCourseService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
 
-import edu.ucsb.cs.taapply.entity.Budget;
 import edu.ucsb.cs.taapply.entity.BudgetCourse;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
@@ -8,7 +7,6 @@ import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.BudgetCourseRepository;
-import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.time.AppTime;
@@ -34,24 +32,24 @@ import org.springframework.stereotype.Service;
  * within {@link #TTL}, and the refresh skips the API when so.
  */
 @Service
-<span class="fc" id="L37">@Slf4j</span>
-<span class="fc" id="L38">public class BudgetCourseService {</span>
+<span class="fc" id="L35">@Slf4j</span>
+<span class="fc" id="L36">public class BudgetCourseService {</span>
 
   /** How long the cached enrollment figures are trusted before a page opening re-fetches them. */
-<span class="fc" id="L41">  public static final Duration TTL = Duration.ofHours(24);</span>
+<span class="fc" id="L39">  public static final Duration TTL = Duration.ofHours(24);</span>
 
   @Autowired BudgetCourseRepository budgetCourseRepository;
-  @Autowired BudgetRepository budgetRepository;
+  @Autowired BudgetCreationService budgetCreationService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
 
   /** The quarter's rows keyed by enroll code. */
   public Map&lt;String, BudgetCourse&gt; byEnrollCode(String quarter) {
-<span class="fc" id="L50">    Map&lt;String, BudgetCourse&gt; result = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L51" title="All 2 branches covered.">    for (BudgetCourse row : budgetCourseRepository.findByQuarter(quarter)) {</span>
-<span class="fc" id="L52">      result.put(row.getEnrollCode(), row);</span>
-<span class="fc" id="L53">    }</span>
-<span class="fc" id="L54">    return result;</span>
+<span class="fc" id="L48">    Map&lt;String, BudgetCourse&gt; result = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">    for (BudgetCourse row : budgetCourseRepository.findByQuarter(quarter)) {</span>
+<span class="fc" id="L50">      result.put(row.getEnrollCode(), row);</span>
+<span class="fc" id="L51">    }</span>
+<span class="fc" id="L52">    return result;</span>
   }
 
   /**
@@ -60,19 +58,19 @@ import org.springframework.stereotype.Service;
    * gets blanks.
    */
   public void attach(String quarter, Collection&lt;RecruitmentCourse&gt; rows) {
-<span class="fc" id="L63">    Map&lt;String, BudgetCourse&gt; figures = byEnrollCode(quarter);</span>
-<span class="fc bfc" id="L64" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
-<span class="fc" id="L65">      row.attachFigures(figures.get(row.getEnrollCode()));</span>
-<span class="fc" id="L66">    }</span>
-<span class="fc" id="L67">  }</span>
+<span class="fc" id="L61">    Map&lt;String, BudgetCourse&gt; figures = byEnrollCode(quarter);</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
+<span class="fc" id="L63">      row.attachFigures(figures.get(row.getEnrollCode()));</span>
+<span class="fc" id="L64">    }</span>
+<span class="fc" id="L65">  }</span>
 
   /** The same for one row. */
   public void attach(String quarter, RecruitmentCourse row) {
-<span class="fc" id="L71">    row.attachFigures(</span>
+<span class="fc" id="L69">    row.attachFigures(</span>
         budgetCourseRepository
-<span class="fc" id="L73">            .findByQuarterAndEnrollCode(quarter, row.getEnrollCode())</span>
-<span class="fc" id="L74">            .orElse(null));</span>
-<span class="fc" id="L75">  }</span>
+<span class="fc" id="L71">            .findByQuarterAndEnrollCode(quarter, row.getEnrollCode())</span>
+<span class="fc" id="L72">            .orElse(null));</span>
+<span class="fc" id="L73">  }</span>
 
   /**
    * The row for a recruitment course's section, created (with the quarter's budget, if that is
@@ -81,13 +79,15 @@ import org.springframework.stereotype.Service;
    * or the admin's next entry.
    */
   public BudgetCourse ensure(String quarter, RecruitmentCourse row) {
-<span class="fc" id="L84">    return budgetCourseRepository</span>
-<span class="fc" id="L85">        .findByQuarterAndEnrollCode(quarter, row.getEnrollCode())</span>
-<span class="fc" id="L86">        .orElseGet(() -&gt; budgetCourseRepository.save(fresh(quarter, row)));</span>
+<span class="fc" id="L82">    return budgetCourseRepository</span>
+<span class="fc" id="L83">        .findByQuarterAndEnrollCode(quarter, row.getEnrollCode())</span>
+<span class="fc" id="L84">        .orElseGet(() -&gt; budgetCourseRepository.save(fresh(quarter, row)));</span>
   }
 
   private BudgetCourse fresh(String quarter, RecruitmentCourse row) {
-<span class="fc" id="L90">    ensureBudget(quarter);</span>
+    // The quarter's budget is the row's parent: created, as a copy of the most recent earlier
+    // quarter's (issue #384), if this is the first time anything needs it.
+<span class="fc" id="L90">    budgetCreationService.findOrCreate(quarter);</span>
 <span class="fc" id="L91">    return BudgetCourse.builder()</span>
 <span class="fc" id="L92">        .quarter(quarter)</span>
 <span class="fc" id="L93">        .enrollCode(row.getEnrollCode())</span>
@@ -96,21 +96,14 @@ import org.springframework.stereotype.Service;
 <span class="fc" id="L96">        .build();</span>
   }
 
-  /** Creates the quarter's budget, at zero, if this is the first time anything needs it. */
-  private void ensureBudget(String quarter) {
-<span class="fc bfc" id="L101" title="All 2 branches covered.">    if (budgetRepository.findById(quarter).isEmpty()) {</span>
-<span class="fc" id="L102">      budgetRepository.save(Budget.builder().quarter(quarter).build());</span>
-    }
-<span class="fc" id="L104">  }</span>
-
   /**
    * Caches one section's figures from the API's answer for it (Add by enroll code), creating the
    * row if need be, and returns the row.
    */
   public BudgetCourse cache(String quarter, RecruitmentCourse row, UcsbSection section) {
-<span class="fc" id="L111">    BudgetCourse figures = ensure(quarter, row);</span>
-<span class="fc" id="L112">    copy(section, figures, AppTime.now());</span>
-<span class="fc" id="L113">    return budgetCourseRepository.save(figures);</span>
+<span class="fc" id="L104">    BudgetCourse figures = ensure(quarter, row);</span>
+<span class="fc" id="L105">    copy(section, figures, AppTime.now());</span>
+<span class="fc" id="L106">    return budgetCourseRepository.save(figures);</span>
   }
 
   /**
@@ -125,30 +118,30 @@ import org.springframework.stereotype.Service;
    */
   public int refreshCache(
       String quarter, Collection&lt;RecruitmentCourse&gt; rows, Map&lt;String, UcsbSection&gt; sections) {
-<span class="fc" id="L128">    Map&lt;String, BudgetCourse&gt; existing = byEnrollCode(quarter);</span>
-<span class="fc bfc" id="L129" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
-<span class="fc" id="L130">      existing.computeIfAbsent(row.getEnrollCode(), code -&gt; fresh(quarter, row));</span>
-<span class="fc" id="L131">    }</span>
-<span class="fc" id="L132">    LocalDateTime now = AppTime.now();</span>
-<span class="fc" id="L133">    int cached = 0;</span>
-<span class="fc bfc" id="L134" title="All 2 branches covered.">    for (BudgetCourse figures : existing.values()) {</span>
-<span class="fc" id="L135">      UcsbSection section = sections.get(figures.getEnrollCode());</span>
-<span class="fc bfc" id="L136" title="All 2 branches covered.">      if (section != null) {</span>
-<span class="fc" id="L137">        copy(section, figures, now);</span>
-<span class="fc" id="L138">        cached++;</span>
+<span class="fc" id="L121">    Map&lt;String, BudgetCourse&gt; existing = byEnrollCode(quarter);</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
+<span class="fc" id="L123">      existing.computeIfAbsent(row.getEnrollCode(), code -&gt; fresh(quarter, row));</span>
+<span class="fc" id="L124">    }</span>
+<span class="fc" id="L125">    LocalDateTime now = AppTime.now();</span>
+<span class="fc" id="L126">    int cached = 0;</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">    for (BudgetCourse figures : existing.values()) {</span>
+<span class="fc" id="L128">      UcsbSection section = sections.get(figures.getEnrollCode());</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">      if (section != null) {</span>
+<span class="fc" id="L130">        copy(section, figures, now);</span>
+<span class="fc" id="L131">        cached++;</span>
       } else {
-<span class="fc" id="L140">        figures.setEnrollmentRefreshedAt(now);</span>
+<span class="fc" id="L133">        figures.setEnrollmentRefreshedAt(now);</span>
       }
-<span class="fc" id="L142">      budgetCourseRepository.save(figures);</span>
-<span class="fc" id="L143">    }</span>
-<span class="fc" id="L144">    return cached;</span>
+<span class="fc" id="L135">      budgetCourseRepository.save(figures);</span>
+<span class="fc" id="L136">    }</span>
+<span class="fc" id="L137">    return cached;</span>
   }
 
   private static void copy(UcsbSection section, BudgetCourse figures, LocalDateTime now) {
-<span class="fc" id="L148">    figures.setEnrollment(section.getEnrolledTotal());</span>
-<span class="fc" id="L149">    figures.setMaxEnroll(section.getMaxEnroll());</span>
-<span class="fc" id="L150">    figures.setEnrollmentRefreshedAt(now);</span>
-<span class="fc" id="L151">  }</span>
+<span class="fc" id="L141">    figures.setEnrollment(section.getEnrolledTotal());</span>
+<span class="fc" id="L142">    figures.setMaxEnroll(section.getMaxEnroll());</span>
+<span class="fc" id="L143">    figures.setEnrollmentRefreshedAt(now);</span>
+<span class="fc" id="L144">  }</span>
 
   /**
    * Whether every given recruitment course's figures were checked against the UCSB API within
@@ -156,17 +149,17 @@ import org.springframework.stereotype.Service;
    * never stamped, is not fresh. With no rows there is nothing to refresh, so they are fresh.
    */
   public boolean isFresh(String quarter, Collection&lt;RecruitmentCourse&gt; rows) {
-<span class="fc" id="L159">    Map&lt;String, BudgetCourse&gt; figures = byEnrollCode(quarter);</span>
-<span class="fc" id="L160">    LocalDateTime limit = AppTime.now().minus(TTL);</span>
-<span class="fc bfc" id="L161" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
-<span class="fc" id="L162">      BudgetCourse found = figures.get(row.getEnrollCode());</span>
-<span class="fc bfc" id="L163" title="All 2 branches covered.">      if (found == null</span>
-<span class="fc bfc" id="L164" title="All 2 branches covered.">          || found.getEnrollmentRefreshedAt() == null</span>
-<span class="fc bfc" id="L165" title="All 2 branches covered.">          || found.getEnrollmentRefreshedAt().isBefore(limit)) {</span>
-<span class="fc" id="L166">        return false;</span>
+<span class="fc" id="L152">    Map&lt;String, BudgetCourse&gt; figures = byEnrollCode(quarter);</span>
+<span class="fc" id="L153">    LocalDateTime limit = AppTime.now().minus(TTL);</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
+<span class="fc" id="L155">      BudgetCourse found = figures.get(row.getEnrollCode());</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">      if (found == null</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">          || found.getEnrollmentRefreshedAt() == null</span>
+<span class="fc bfc" id="L158" title="All 2 branches covered.">          || found.getEnrollmentRefreshedAt().isBefore(limit)) {</span>
+<span class="fc" id="L159">        return false;</span>
       }
-<span class="fc" id="L168">    }</span>
-<span class="fc" id="L169">    return true;</span>
+<span class="fc" id="L161">    }</span>
+<span class="fc" id="L162">    return true;</span>
   }
 
   /**
@@ -174,10 +167,10 @@ import org.springframework.stereotype.Service;
    * so with no source; creates the row if need be. Returns the row.
    */
   public BudgetCourse setEstimate(String quarter, RecruitmentCourse row, Integer estimate) {
-<span class="fc" id="L177">    BudgetCourse figures = ensure(quarter, row);</span>
-<span class="fc" id="L178">    figures.setEnrollmentEstimate(estimate);</span>
-<span class="fc" id="L179">    figures.setEnrollmentEstimateSource(null);</span>
-<span class="fc" id="L180">    return budgetCourseRepository.save(figures);</span>
+<span class="fc" id="L170">    BudgetCourse figures = ensure(quarter, row);</span>
+<span class="fc" id="L171">    figures.setEnrollmentEstimate(estimate);</span>
+<span class="fc" id="L172">    figures.setEnrollmentEstimateSource(null);</span>
+<span class="fc" id="L173">    return budgetCourseRepository.save(figures);</span>
   }
 
   /**
@@ -187,23 +180,23 @@ import org.springframework.stereotype.Service;
    */
   public int fillEstimates(
       String quarter, Collection&lt;RecruitmentCourse&gt; rows, EnrollmentEstimateSource source) {
-<span class="fc" id="L190">    Map&lt;String, BudgetCourse&gt; figures = byEnrollCode(quarter);</span>
-<span class="fc" id="L191">    int filled = 0;</span>
-<span class="fc bfc" id="L192" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
-<span class="fc" id="L193">      BudgetCourse found = figures.get(row.getEnrollCode());</span>
-<span class="fc bfc" id="L194" title="All 2 branches covered.">      if (found == null) {</span>
-<span class="fc" id="L195">        continue;</span>
+<span class="fc" id="L183">    Map&lt;String, BudgetCourse&gt; figures = byEnrollCode(quarter);</span>
+<span class="fc" id="L184">    int filled = 0;</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
+<span class="fc" id="L186">      BudgetCourse found = figures.get(row.getEnrollCode());</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">      if (found == null) {</span>
+<span class="fc" id="L188">        continue;</span>
       }
       Integer value =
-<span class="fc bfc" id="L198" title="All 2 branches covered.">          source == EnrollmentEstimateSource.MAX ? found.getMaxEnroll() : found.getEnrollment();</span>
-<span class="fc bfc" id="L199" title="All 2 branches covered.">      if (value != null) {</span>
-<span class="fc" id="L200">        found.setEnrollmentEstimate(value);</span>
-<span class="fc" id="L201">        found.setEnrollmentEstimateSource(source);</span>
-<span class="fc" id="L202">        budgetCourseRepository.save(found);</span>
-<span class="fc" id="L203">        filled++;</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">          source == EnrollmentEstimateSource.MAX ? found.getMaxEnroll() : found.getEnrollment();</span>
+<span class="fc bfc" id="L192" title="All 2 branches covered.">      if (value != null) {</span>
+<span class="fc" id="L193">        found.setEnrollmentEstimate(value);</span>
+<span class="fc" id="L194">        found.setEnrollmentEstimateSource(source);</span>
+<span class="fc" id="L195">        budgetCourseRepository.save(found);</span>
+<span class="fc" id="L196">        filled++;</span>
       }
-<span class="fc" id="L205">    }</span>
-<span class="fc" id="L206">    return filled;</span>
+<span class="fc" id="L198">    }</span>
+<span class="fc" id="L199">    return filled;</span>
   }
 
   /**
@@ -213,30 +206,30 @@ import org.springframework.stereotype.Service;
    * was deleted.
    */
   public boolean dropIfUnused(String quarter, String enrollCode) {
-<span class="fc bfc" id="L216" title="All 2 branches covered.">    for (RecruitmentType type : RecruitmentType.values()) {</span>
-<span class="fc" id="L217">      Optional&lt;Recruitment&gt; recruitment = recruitmentRepository.findByQuarterAndType(quarter, type);</span>
-<span class="fc bfc" id="L218" title="All 4 branches covered.">      if (recruitment.isPresent() &amp;&amp; stillHas(recruitment.get(), enrollCode)) {</span>
-<span class="fc" id="L219">        return false;</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">    for (RecruitmentType type : RecruitmentType.values()) {</span>
+<span class="fc" id="L210">      Optional&lt;Recruitment&gt; recruitment = recruitmentRepository.findByQuarterAndType(quarter, type);</span>
+<span class="fc bfc" id="L211" title="All 4 branches covered.">      if (recruitment.isPresent() &amp;&amp; stillHas(recruitment.get(), enrollCode)) {</span>
+<span class="fc" id="L212">        return false;</span>
       }
     }
-<span class="fc" id="L222">    Optional&lt;BudgetCourse&gt; row =</span>
-<span class="fc" id="L223">        budgetCourseRepository.findByQuarterAndEnrollCode(quarter, enrollCode);</span>
-<span class="fc" id="L224">    row.ifPresent(</span>
+<span class="fc" id="L215">    Optional&lt;BudgetCourse&gt; row =</span>
+<span class="fc" id="L216">        budgetCourseRepository.findByQuarterAndEnrollCode(quarter, enrollCode);</span>
+<span class="fc" id="L217">    row.ifPresent(</span>
         figures -&gt; {
-<span class="fc" id="L226">          budgetCourseRepository.delete(figures);</span>
-<span class="fc" id="L227">          log.info(</span>
+<span class="fc" id="L219">          budgetCourseRepository.delete(figures);</span>
+<span class="fc" id="L220">          log.info(</span>
               &quot;Deleted the quarter figures of section {} in {}: no recruitment has it any more&quot;,
               enrollCode,
               quarter);
-<span class="fc" id="L231">        });</span>
-<span class="fc" id="L232">    return row.isPresent();</span>
+<span class="fc" id="L224">        });</span>
+<span class="fc" id="L225">    return row.isPresent();</span>
   }
 
   private boolean stillHas(Recruitment recruitment, String enrollCode) {
-<span class="fc" id="L236">    return recruitmentCourseRepository</span>
-<span class="fc" id="L237">        .findByRecruitmentIdAndEnrollCode(recruitment.getId(), enrollCode)</span>
-<span class="fc bfc" id="L238" title="All 2 branches covered.">        .filter(row -&gt; !row.isRemoved())</span>
-<span class="fc" id="L239">        .isPresent();</span>
+<span class="fc" id="L229">    return recruitmentCourseRepository</span>
+<span class="fc" id="L230">        .findByRecruitmentIdAndEnrollCode(recruitment.getId(), enrollCode)</span>
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L232">        .isPresent();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
