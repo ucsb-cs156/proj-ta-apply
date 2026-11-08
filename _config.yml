@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/361-split-applications-it","number":402,"title":"Split ApplicationsWebIT and re-balance the integration shards (closes #361)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/402"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/320-courses-page-text","number":400,"title":"Recruitment Courses page: quarter/type title, short intro, hiring-target table (closes #320)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/400"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/361-split-applications-it","number":402,"title":"Split ApplicationsWebIT and re-balance the integration shards (closes #361)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/402"}]
