@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/414-realistic-fake-rankings","number":416,"title":"Rank fake candidates by interest tier, Would Consider only to fill the target (closes #414)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/416"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/415-assignments-page-ux","number":418,"title":"Assignments page UX: \"To Assign\" heading, 100px course columns, selected-cell outline, CSS classes (closes #415)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/418"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/414-realistic-fake-rankings","number":416,"title":"Rank fake candidates by interest tier, Would Consider only to fill the target (closes #414)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/416"}]
