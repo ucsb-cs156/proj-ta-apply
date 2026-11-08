@@ -1,5 +1,9 @@
 import {
+  ALLOCATION_NA,
+  ALLOCATION_TBD,
+  allocationCell,
   enrollmentColumns,
+  estimateCell,
   FEEDBACK_PLACEHOLDER,
   groupByQuarter,
   isReleased,
@@ -19,6 +23,110 @@ describe("instructorQuarters tests", () => {
     expect(NOT_OPEN_NOTE).toBe(
       "Candidate rankings will be available when faculty reviews open.",
     );
+    expect(ALLOCATION_TBD).toBe("TBD");
+    expect(ALLOCATION_NA).toBe("N/A");
+  });
+
+  describe("estimateCell (issue #410)", () => {
+    test("TBD until the allocations of either recruitment the course is in are released", () => {
+      const [, w26] = groupByQuarter(nothingReleased);
+      expect(w26.courses.map(estimateCell)).toEqual(["TBD", "TBD", "TBD"]);
+      // Even if a withheld row carried an estimate.
+      expect(estimateCell({ ...w26.courses[2], enrollmentEstimate: 99 })).toBe(
+        "TBD",
+      );
+      // A course in no recruitment at all (not something groupByQuarter makes) is TBD too.
+      expect(
+        estimateCell({ ...w26.courses[2], ta: undefined, ula: undefined }),
+      ).toBe("TBD");
+    });
+
+    test("the number once either side is released; blank, not null, when there is none", () => {
+      expect(groupByQuarter(taReleased)[1].courses.map(estimateCell)).toEqual([
+        "TBD",
+        "70",
+        "130",
+      ]);
+      expect(groupByQuarter(ulaReleased)[1].courses.map(estimateCell)).toEqual([
+        "220",
+        "TBD",
+        "130",
+      ]);
+      expect(groupByQuarter(bothReleased)[1].courses.map(estimateCell)).toEqual(
+        ["220", "70", "130"],
+      );
+      const [, w26] = groupByQuarter(bothReleased);
+      expect(estimateCell({ ...w26.courses[2], enrollmentEstimate: 0 })).toBe(
+        "0",
+      );
+      expect(
+        estimateCell({ ...w26.courses[2], enrollmentEstimate: null }),
+      ).toBe("");
+      expect(
+        estimateCell({ ...w26.courses[2], enrollmentEstimate: undefined }),
+      ).toBe("");
+      // Released on the ULA side only, with the TA side unreleased: still the number.
+      const [, taOnly] = groupByQuarter(ulaReleased);
+      expect(estimateCell({ ...taOnly.courses[2], ula: undefined })).toBe(
+        "TBD",
+      );
+      expect(estimateCell({ ...taOnly.courses[2], ta: undefined })).toBe("130");
+    });
+  });
+
+  describe("allocationCell (issue #410)", () => {
+    test("N/A when the course is in no recruitment of that type", () => {
+      expect(allocationCell(undefined)).toBe("N/A");
+    });
+
+    test("TBD while the recruitment's allocations are withheld, whatever the row says", () => {
+      const [, w26Ta] = nothingReleased;
+      expect(
+        allocationCell({ recruitment: w26Ta, course: w26Ta.courses[0] }),
+      ).toBe("TBD");
+      expect(
+        allocationCell({
+          recruitment: { ...w26Ta, allocationsReleased: false },
+          course: { ...w26Ta.courses[0], allocation: 2 },
+        }),
+      ).toBe("TBD");
+      const absent = { ...w26Ta };
+      delete absent.allocationsReleased;
+      expect(
+        allocationCell({ recruitment: absent, course: w26Ta.courses[0] }),
+      ).toBe("TBD");
+    });
+
+    test("the number once released; blank, not null, when there is none", () => {
+      const [, ta, ula] = bothReleased;
+      expect(allocationCell({ recruitment: ta, course: ta.courses[0] })).toBe(
+        "2",
+      );
+      expect(allocationCell({ recruitment: ta, course: ta.courses[1] })).toBe(
+        "3",
+      );
+      expect(allocationCell({ recruitment: ula, course: ula.courses[0] })).toBe(
+        "1",
+      );
+      expect(
+        allocationCell({
+          recruitment: ta,
+          course: { ...ta.courses[0], allocation: 0 },
+        }),
+      ).toBe("0");
+      expect(
+        allocationCell({
+          recruitment: ta,
+          course: { ...ta.courses[0], allocation: null },
+        }),
+      ).toBe("");
+      expect(
+        allocationCell({
+          recruitment: ta,
+          course: { ...ta.courses[0], allocation: undefined },
+        }),
+      ).toBe("");
+    });
   });
 
   test("isReleased is the backend's flag, and false when it is absent", () => {
@@ -154,13 +262,41 @@ describe("instructorQuarters tests", () => {
     const columns = (fixture, index = 2) =>
       enrollmentColumns(groupByQuarter(fixture)[1].courses[index], "P");
 
-    test("three columns while nothing is released", () => {
+    const SIX = [
+      "Section",
+      "Enrolled",
+      "Max",
+      "Enrollment Estimate",
+      "TA Allocation",
+      "ULA Allocation",
+    ];
+
+    test("all six columns while nothing is released: the estimate and both allocations TBD (issue #410)", () => {
       expect(columns(nothingReleased)).toEqual([
         { label: "Section", value: "0100", text: "0100", testId: "P-section" },
         { label: "Enrolled", value: "120", text: "120", testId: "P-enrolled" },
         { label: "Max", value: "150", text: "150", testId: "P-max" },
+        {
+          label: "Enrollment Estimate",
+          value: "TBD",
+          text: "TBD",
+          testId: "P-enrollment-estimate",
+        },
+        {
+          label: "TA Allocation",
+          value: "TBD",
+          text: "TBD",
+          testId: "P-ta-allocation",
+        },
+        {
+          label: "ULA Allocation",
+          value: "TBD",
+          text: "TBD",
+          testId: "P-ula-allocation",
+        },
       ]);
-      // A sectionless lecture with no figures: blanks, not nulls.
+      // A sectionless lecture with no figures: blanks, not nulls; it is in the TA recruitment
+      // alone, so N/A on the ULA side.
       const [w26] = groupByQuarter([
         {
           ...w26Ta,
@@ -169,17 +305,30 @@ describe("instructorQuarters tests", () => {
       ]);
       expect(
         enrollmentColumns(w26.courses[0], "P").map((c) => c.value),
-      ).toEqual(["", "", ""]);
+      ).toEqual(["", "", "", "TBD", "TBD", "N/A"]);
+      // CMPSC 1A is in the ULA recruitment alone: N/A on the TA side.
+      expect(columns(nothingReleased, 0).map((c) => c.value)).toEqual([
+        "0100",
+        "200",
+        "250",
+        "TBD",
+        "N/A",
+        "TBD",
+      ]);
+      // A row that carries an estimate while withheld (not what the backend does) still reads TBD.
+      const [withEstimate] = groupByQuarter([
+        {
+          ...w26Ta,
+          courses: [{ ...w26Ta.courses[0], enrollmentEstimate: 130 }],
+        },
+      ]);
+      expect(enrollmentColumns(withEstimate.courses[0], "P")[3].value).toBe(
+        "TBD",
+      );
     });
 
-    test("the estimate and each released allocation are added, in order", () => {
-      expect(columns(taReleased).map((c) => c.label)).toEqual([
-        "Section",
-        "Enrolled",
-        "Max",
-        "Enrollment Estimate",
-        "TA Allocation",
-      ]);
+    test("the estimate becomes a number once either side is released; the released side shows its number", () => {
+      expect(columns(taReleased).map((c) => c.label)).toEqual(SIX);
       expect(columns(taReleased).slice(3)).toEqual([
         {
           label: "Enrollment Estimate",
@@ -193,50 +342,77 @@ describe("instructorQuarters tests", () => {
           text: "2",
           testId: "P-ta-allocation",
         },
+        {
+          label: "ULA Allocation",
+          value: "TBD",
+          text: "TBD",
+          testId: "P-ula-allocation",
+        },
       ]);
-      expect(columns(ulaReleased).map((c) => c.label)).toEqual([
-        "Section",
-        "Enrolled",
-        "Max",
-        "Enrollment Estimate",
-        "ULA Allocation",
+      expect(columns(ulaReleased).map((c) => c.label)).toEqual(SIX);
+      expect(columns(ulaReleased).slice(4)).toEqual([
+        {
+          label: "TA Allocation",
+          value: "TBD",
+          text: "TBD",
+          testId: "P-ta-allocation",
+        },
+        {
+          label: "ULA Allocation",
+          value: "1",
+          text: "1",
+          testId: "P-ula-allocation",
+        },
       ]);
-      expect(columns(ulaReleased)[4]).toEqual({
-        label: "ULA Allocation",
-        value: "1",
-        text: "1",
-        testId: "P-ula-allocation",
-      });
-      expect(columns(bothReleased).map((c) => c.label)).toEqual([
-        "Section",
-        "Enrolled",
-        "Max",
-        "Enrollment Estimate",
-        "TA Allocation",
-        "ULA Allocation",
+      expect(columns(bothReleased).map((c) => c.label)).toEqual(SIX);
+      expect(columns(bothReleased).map((c) => c.value)).toEqual([
+        "0100",
+        "120",
+        "150",
+        "130",
+        "2",
+        "1",
       ]);
     });
 
-    test("a release counts only for the recruitments the course is in", () => {
+    test("a release counts only for the recruitments the course is in; the other side is N/A", () => {
       // CMPSC 1A is only in the ULA recruitment; the sectionless lecture only in the TA one.
-      expect(columns(taReleased, 0)).toHaveLength(3);
-      expect(columns(taReleased, 1)).toHaveLength(5);
-      expect(columns(ulaReleased, 0)).toHaveLength(5);
-      expect(columns(ulaReleased, 1)).toHaveLength(3);
-      expect(columns(bothReleased, 0).map((c) => c.label)).toEqual([
-        "Section",
-        "Enrolled",
-        "Max",
-        "Enrollment Estimate",
-        "ULA Allocation",
-      ]);
-      expect(columns(bothReleased, 1).map((c) => c.label)).toEqual([
-        "Section",
-        "Enrolled",
-        "Max",
-        "Enrollment Estimate",
-        "TA Allocation",
-      ]);
+      expect(columns(taReleased, 0).map((c) => c.label)).toEqual(SIX);
+      expect(
+        columns(taReleased, 0)
+          .map((c) => c.value)
+          .slice(3),
+      ).toEqual(["TBD", "N/A", "TBD"]);
+      expect(columns(taReleased, 1).map((c) => c.label)).toEqual(SIX);
+      expect(
+        columns(taReleased, 1)
+          .map((c) => c.value)
+          .slice(3),
+      ).toEqual(["70", "3", "N/A"]);
+      expect(columns(ulaReleased, 0).map((c) => c.label)).toEqual(SIX);
+      expect(
+        columns(ulaReleased, 0)
+          .map((c) => c.value)
+          .slice(3),
+      ).toEqual(["220", "N/A", "4"]);
+      expect(columns(ulaReleased, 1).map((c) => c.label)).toEqual(SIX);
+      expect(
+        columns(ulaReleased, 1)
+          .map((c) => c.value)
+          .slice(3),
+      ).toEqual(["TBD", "TBD", "N/A"]);
+      expect(columns(bothReleased, 0).map((c) => c.label)).toEqual(SIX);
+      expect(
+        columns(bothReleased, 0)
+          .map((c) => c.value)
+          .slice(3),
+      ).toEqual(["220", "N/A", "4"]);
+      expect(columns(bothReleased, 1).map((c) => c.label)).toEqual(SIX);
+      expect(
+        columns(bothReleased, 1)
+          .map((c) => c.value)
+          .slice(3),
+      ).toEqual(["70", "3", "N/A"]);
     });
 
     test("a released allocation that is missing is blank", () => {
@@ -256,7 +432,7 @@ describe("instructorQuarters tests", () => {
       ]);
       expect(
         enrollmentColumns(w26.courses[0], "P").map((c) => c.value),
-      ).toEqual(["0100", "120", "150", "", ""]);
+      ).toEqual(["0100", "120", "150", "", "", "N/A"]);
     });
   });
 });

@@ -129,20 +129,49 @@ const figure = (value: number | null | undefined): string =>
   value === null || value === undefined ? "" : String(value);
 
 /**
- * The columns of a course's enrollment table (issue #364): Section, Enrolled and Max always; the
- * quarter's Enrollment Estimate once the allocations of either recruitment the course is in are
- * released; and the TA and ULA Allocation each once its recruitment's allocations are released. So
- * three, five or six columns.
+ * What an allocation cell says while that recruitment's allocations are withheld, and what the
+ * Enrollment Estimate cell says while neither recruitment's are (issue #410).
+ */
+export const ALLOCATION_TBD = "TBD";
+
+/** What an allocation cell says when the course is in no recruitment of that type (issue #410). */
+export const ALLOCATION_NA = "N/A";
+
+/**
+ * What the TA or ULA Allocation cell of a course shows (issue #410): the allocation (blank when
+ * there is none) once that recruitment's allocations are released, TBD while they are withheld,
+ * and N/A when the course is in no recruitment of that type.
+ */
+export const allocationCell = (
+  entry: CourseInRecruitment | undefined,
+): string =>
+  entry === undefined
+    ? ALLOCATION_NA
+    : isReleased(entry.recruitment)
+      ? figure(entry.course.allocation)
+      : ALLOCATION_TBD;
+
+/**
+ * What the Enrollment Estimate cell of a course shows (issue #410): the quarter's estimate (blank
+ * when there is none) once the allocations of either recruitment the course is in are released,
+ * and TBD until then.
+ */
+export const estimateCell = (course: QuarterCourse): string =>
+  [course.ta, course.ula].some(
+    (entry) => entry !== undefined && isReleased(entry.recruitment),
+  )
+    ? figure(course.enrollmentEstimate)
+    : ALLOCATION_TBD;
+
+/**
+ * The columns of a course's enrollment table (issue #364; always all six since issue #410):
+ * Section, Enrolled, Max, Enrollment Estimate, TA Allocation and ULA Allocation, the last three
+ * reading the number, TBD or N/A as `estimateCell` and `allocationCell` say.
  */
 export function enrollmentColumns(
   course: QuarterCourse,
   testIdPrefix: string,
 ): DetailsColumn[] {
-  // The TA and ULA rows of the course, only while their recruitment's allocations are released.
-  const ta =
-    course.ta && isReleased(course.ta.recruitment) ? course.ta : undefined;
-  const ula =
-    course.ula && isReleased(course.ula.recruitment) ? course.ula : undefined;
   const column = (
     label: string,
     value: string,
@@ -153,29 +182,12 @@ export function enrollmentColumns(
     text: value,
     testId: `${testIdPrefix}-${testId}`,
   });
-  const columns = [
+  return [
     column("Section", course.section ?? "", "section"),
     column("Enrolled", figure(course.enrollment), "enrolled"),
     column("Max", figure(course.maxEnroll), "max"),
+    column("Enrollment Estimate", estimateCell(course), "enrollment-estimate"),
+    column("TA Allocation", allocationCell(course.ta), "ta-allocation"),
+    column("ULA Allocation", allocationCell(course.ula), "ula-allocation"),
   ];
-  if (ta || ula) {
-    columns.push(
-      column(
-        "Enrollment Estimate",
-        figure(course.enrollmentEstimate),
-        "enrollment-estimate",
-      ),
-    );
-  }
-  if (ta) {
-    columns.push(
-      column("TA Allocation", figure(ta.course.allocation), "ta-allocation"),
-    );
-  }
-  if (ula) {
-    columns.push(
-      column("ULA Allocation", figure(ula.course.allocation), "ula-allocation"),
-    );
-  }
-  return columns;
 }

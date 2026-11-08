@@ -116,14 +116,23 @@ describe("InstructorRecruitmentCards tests", () => {
 
   // ---- level 3: the enrollment table and the feedback placeholder ----
 
-  test("nothing released: Section, Enrolled and Max, in a details table", () => {
+  const SIX = [
+    "Section",
+    "Enrolled",
+    "Max",
+    "EnrollmentEstimate",
+    "TAAllocation",
+    "ULAAllocation",
+  ];
+
+  test("nothing released: all six columns, the Estimate and both Allocations reading TBD, in a details table", () => {
     renderCards();
 
     const body = screen.getByTestId(`${W26}-course-2-body`);
     const table = screen.getByTestId(`${W26}-course-2-enrollment`);
     expect(within(body).getByTestId(`${W26}-course-2-enrollment`)).toBe(table);
     expect(table).toHaveClass("table", "table-sm", "table-bordered", "w-auto");
-    expect(headings(table)).toEqual(["Section", "Enrolled", "Max"]);
+    expect(headings(table)).toEqual(SIX);
     expect(screen.getByTestId(`${W26}-course-2-section`)).toHaveTextContent(
       "0100",
     );
@@ -131,18 +140,58 @@ describe("InstructorRecruitmentCards tests", () => {
       "120",
     );
     expect(screen.getByTestId(`${W26}-course-2-max`)).toHaveTextContent("150");
+    // Issue #410: the course is in both recruitments and neither has released: TBD three times.
     expect(
-      screen.queryByTestId(`${W26}-course-2-enrollment-estimate`),
-    ).toBeNull();
-    expect(screen.queryByText("Enrollment Estimate")).toBeNull();
-    expect(screen.queryByTestId(`${W26}-course-2-ta-allocation`)).toBeNull();
-    expect(screen.queryByTestId(`${W26}-course-2-ula-allocation`)).toBeNull();
-    // A sectionless lecture has a blank Section cell, not "null".
+      screen.getByTestId(`${W26}-course-2-enrollment-estimate`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-2-ta-allocation`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-2-ula-allocation`).textContent,
+    ).toBe("TBD");
+    // A sectionless lecture has a blank Section cell, not "null"; it is in the TA recruitment
+    // alone, so its ULA Allocation is N/A.
     expect(screen.getByTestId(`${W26}-course-3-section`).textContent).toBe("");
     expect(screen.getByTestId(`${W26}-course-3-enrolled`)).toHaveTextContent(
       "60",
     );
+    expect(
+      screen.getByTestId(`${W26}-course-3-enrollment-estimate`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-3-ta-allocation`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-3-ula-allocation`).textContent,
+    ).toBe("N/A");
+    // CMPSC 1A is in the ULA recruitment alone: the other way round.
     expect(screen.getByTestId(`${W26}-course-1-max`)).toHaveTextContent("250");
+    expect(
+      screen.getByTestId(`${W26}-course-1-ta-allocation`).textContent,
+    ).toBe("N/A");
+    expect(
+      screen.getByTestId(`${W26}-course-1-ula-allocation`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-1-enrollment-estimate`).textContent,
+    ).toBe("TBD");
+    // The quarter with a TA recruitment alone: TBD, TBD and N/A, under the same six headings.
+    expect(headings(screen.getByTestId(`${S26}-course-6-enrollment`))).toEqual(
+      SIX,
+    );
+    expect(
+      screen.getByTestId(`${S26}-course-6-enrollment-estimate`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${S26}-course-6-ta-allocation`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${S26}-course-6-ula-allocation`).textContent,
+    ).toBe("N/A");
+    // Every TBD is visible text: 2 for 1A, 2 for the lecture, 3 for 156 (0100) and 2 for S26's 8.
+    expect(screen.getAllByText("TBD")).toHaveLength(9);
+    expect(screen.getAllByText("N/A")).toHaveLength(3);
   });
 
   test("blank enrollment figures read as nothing, not null", () => {
@@ -157,56 +206,66 @@ describe("InstructorRecruitmentCards tests", () => {
     expect(screen.getByTestId(`${S26}-course-6-max`).textContent).toBe("");
   });
 
-  test("TA allocations released: Enrollment Estimate and TA Allocation join the table (5 columns)", () => {
+  test("TA allocations released: Enrollment Estimate and TA Allocation are numbers, ULA Allocation still TBD", () => {
     renderCards(taReleased);
 
-    const table = screen.getByTestId(`${W26}-course-2-enrollment`);
-    expect(headings(table)).toEqual([
-      "Section",
-      "Enrolled",
-      "Max",
-      "EnrollmentEstimate",
-      "TAAllocation",
-    ]);
+    expect(headings(screen.getByTestId(`${W26}-course-2-enrollment`))).toEqual(
+      SIX,
+    );
     expect(
       screen.getByTestId(`${W26}-course-2-enrollment-estimate`),
     ).toHaveTextContent("130");
     expect(
       screen.getByTestId(`${W26}-course-2-ta-allocation`),
     ).toHaveTextContent("2");
-    expect(screen.queryByTestId(`${W26}-course-2-ula-allocation`)).toBeNull();
-    // The sectionless lecture, in the TA recruitment alone, gets the same five.
     expect(
-      headings(screen.getByTestId(`${W26}-course-3-enrollment`)),
-    ).toHaveLength(5);
+      screen.getByTestId(`${W26}-course-2-ula-allocation`).textContent,
+    ).toBe("TBD");
+    // The sectionless lecture, in the TA recruitment alone: the number and N/A.
+    expect(headings(screen.getByTestId(`${W26}-course-3-enrollment`))).toEqual(
+      SIX,
+    );
     expect(
       screen.getByTestId(`${W26}-course-3-enrollment-estimate`),
     ).toHaveTextContent("70");
     expect(
       screen.getByTestId(`${W26}-course-3-ta-allocation`),
     ).toHaveTextContent("3");
-    // CMPSC 1A is only in the ULA recruitment, whose allocations are still withheld: three.
-    expect(headings(screen.getByTestId(`${W26}-course-1-enrollment`))).toEqual([
-      "Section",
-      "Enrolled",
-      "Max",
-    ]);
-    // S26's recruitment is not released either.
     expect(
-      headings(screen.getByTestId(`${S26}-course-6-enrollment`)),
-    ).toHaveLength(3);
+      screen.getByTestId(`${W26}-course-3-ula-allocation`).textContent,
+    ).toBe("N/A");
+    // CMPSC 1A is only in the ULA recruitment, whose allocations are still withheld: the estimate
+    // is TBD too, N/A on the TA side and TBD on the ULA side.
+    expect(headings(screen.getByTestId(`${W26}-course-1-enrollment`))).toEqual(
+      SIX,
+    );
+    expect(
+      screen.getByTestId(`${W26}-course-1-enrollment-estimate`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-1-ta-allocation`).textContent,
+    ).toBe("N/A");
+    expect(
+      screen.getByTestId(`${W26}-course-1-ula-allocation`).textContent,
+    ).toBe("TBD");
+    // S26's recruitment is not released either.
+    expect(headings(screen.getByTestId(`${S26}-course-6-enrollment`))).toEqual(
+      SIX,
+    );
+    expect(
+      screen.getByTestId(`${S26}-course-6-enrollment-estimate`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${S26}-course-6-ta-allocation`).textContent,
+    ).toBe("TBD");
   });
 
-  test("ULA allocations released: Enrollment Estimate and ULA Allocation (5 columns), estimate from the ULA row", () => {
+  test("ULA allocations released: Enrollment Estimate from the ULA row, ULA Allocation the number, TA Allocation still TBD", () => {
     renderCards(ulaReleased);
 
-    expect(headings(screen.getByTestId(`${W26}-course-2-enrollment`))).toEqual([
-      "Section",
-      "Enrolled",
-      "Max",
-      "EnrollmentEstimate",
-      "ULAAllocation",
-    ]);
+    expect(headings(screen.getByTestId(`${W26}-course-2-enrollment`))).toEqual(
+      SIX,
+    );
     // The TA row's estimate is blanked (withheld); the ULA row carries the quarter's estimate.
     expect(w26Ta.courses[0].enrollmentEstimate).toBeNull();
     expect(
@@ -215,33 +274,42 @@ describe("InstructorRecruitmentCards tests", () => {
     expect(
       screen.getByTestId(`${W26}-course-2-ula-allocation`),
     ).toHaveTextContent("1");
-    expect(screen.queryByTestId(`${W26}-course-2-ta-allocation`)).toBeNull();
     expect(
-      headings(screen.getByTestId(`${W26}-course-1-enrollment`)),
-    ).toHaveLength(5);
+      screen.getByTestId(`${W26}-course-2-ta-allocation`).textContent,
+    ).toBe("TBD");
+    expect(headings(screen.getByTestId(`${W26}-course-1-enrollment`))).toEqual(
+      SIX,
+    );
     expect(
       screen.getByTestId(`${W26}-course-1-enrollment-estimate`),
     ).toHaveTextContent("220");
     expect(
       screen.getByTestId(`${W26}-course-1-ula-allocation`),
     ).toHaveTextContent("4");
-    // The sectionless lecture is only in the TA recruitment: still three.
     expect(
-      headings(screen.getByTestId(`${W26}-course-3-enrollment`)),
-    ).toHaveLength(3);
+      screen.getByTestId(`${W26}-course-1-ta-allocation`).textContent,
+    ).toBe("N/A");
+    // The sectionless lecture is only in the TA recruitment: TBD, TBD and N/A.
+    expect(headings(screen.getByTestId(`${W26}-course-3-enrollment`))).toEqual(
+      SIX,
+    );
+    expect(
+      screen.getByTestId(`${W26}-course-3-enrollment-estimate`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-3-ta-allocation`).textContent,
+    ).toBe("TBD");
+    expect(
+      screen.getByTestId(`${W26}-course-3-ula-allocation`).textContent,
+    ).toBe("N/A");
   });
 
-  test("both released: all six columns for a course in both recruitments", () => {
+  test("both released: all six columns, with N/A for the side a course is not in", () => {
     renderCards(bothReleased);
 
-    expect(headings(screen.getByTestId(`${W26}-course-2-enrollment`))).toEqual([
-      "Section",
-      "Enrolled",
-      "Max",
-      "EnrollmentEstimate",
-      "TAAllocation",
-      "ULAAllocation",
-    ]);
+    expect(headings(screen.getByTestId(`${W26}-course-2-enrollment`))).toEqual(
+      SIX,
+    );
     expect(
       screen.getByTestId(`${W26}-course-2-enrollment-estimate`),
     ).toHaveTextContent("130");
@@ -251,20 +319,26 @@ describe("InstructorRecruitmentCards tests", () => {
     expect(
       screen.getByTestId(`${W26}-course-2-ula-allocation`),
     ).toHaveTextContent("1");
-    expect(headings(screen.getByTestId(`${W26}-course-3-enrollment`))).toEqual([
-      "Section",
-      "Enrolled",
-      "Max",
-      "EnrollmentEstimate",
-      "TAAllocation",
-    ]);
-    expect(headings(screen.getByTestId(`${W26}-course-1-enrollment`))).toEqual([
-      "Section",
-      "Enrolled",
-      "Max",
-      "EnrollmentEstimate",
-      "ULAAllocation",
-    ]);
+    expect(headings(screen.getByTestId(`${W26}-course-3-enrollment`))).toEqual(
+      SIX,
+    );
+    expect(
+      screen.getByTestId(`${W26}-course-3-ta-allocation`),
+    ).toHaveTextContent("3");
+    expect(
+      screen.getByTestId(`${W26}-course-3-ula-allocation`).textContent,
+    ).toBe("N/A");
+    expect(headings(screen.getByTestId(`${W26}-course-1-enrollment`))).toEqual(
+      SIX,
+    );
+    expect(
+      screen.getByTestId(`${W26}-course-1-ta-allocation`).textContent,
+    ).toBe("N/A");
+    expect(
+      screen.getByTestId(`${W26}-course-1-ula-allocation`),
+    ).toHaveTextContent("4");
+    // Nowhere does a cell say "undefined" or "null".
+    expect(screen.queryByText(/undefined|null/)).toBeNull();
   });
 
   test("a released allocation that is missing shows as blank", () => {
@@ -386,42 +460,45 @@ describe("InstructorRecruitmentCards tests", () => {
       screen.getByTestId(`${S26}-course-6-TA-reviewStatus`),
     ).toHaveTextContent("Faculty Reviews: NotStarted");
 
+    // Issue #410: only the two faculty review dates, in one list; the application dates are gone.
     const body = screen
       .getByTestId(`${W26}-course-2-TA-card`)
       .querySelector(".card-body");
-    expect(body.querySelectorAll("dl")).toHaveLength(2);
-    expect(body.querySelectorAll("dl")[0]).toHaveClass("row", "mb-0");
-    expect(body.querySelectorAll("dl")[1]).toHaveClass("row", "mb-0", "mt-2");
-    expect(body.querySelectorAll("dl > div")[0]).toHaveClass(
-      "col-sm-6",
-      "d-flex",
-    );
+    expect(body.querySelectorAll("dl")).toHaveLength(1);
+    const dl = body.querySelector("dl");
+    expect(dl).toHaveClass("row", "mb-0");
+    expect(dl).not.toHaveClass("mt-2");
+    expect(dl.children).toHaveLength(2);
+    expect(dl.children[0]).toHaveClass("col-sm-6", "d-flex");
+    expect(dl.children[1]).toHaveClass("col-sm-6", "d-flex");
     expect(body.querySelectorAll("dt")[0]).toHaveClass("me-2");
     expect(body.querySelectorAll("dd")[0]).toHaveClass("mb-1");
     expect(
-      screen.getByTestId(`${W26}-course-2-TA-tentativeOpeningDate`),
-    ).toHaveTextContent("2026-01-05");
+      [...body.querySelectorAll("dt")].map((dt) => dt.textContent),
+    ).toEqual(["Faculty Reviews Opened:", "Faculty Ranking Deadline:"]);
+    for (const key of [
+      "tentativeOpeningDate",
+      "primaryConsiderationDate",
+      "actualOpeningDate",
+      "actualClosingDate",
+    ]) {
+      expect(screen.queryByTestId(`${W26}-course-2-TA-${key}`)).toBeNull();
+      expect(screen.queryByTestId(`${W26}-course-2-ULA-${key}`)).toBeNull();
+    }
+    expect(screen.queryByText(/Tentative Opening/)).toBeNull();
+    expect(screen.queryByText(/Primary Consideration/)).toBeNull();
+    expect(screen.queryByText(/Actually Opened/)).toBeNull();
+    expect(screen.queryByText(/Actually Closed/)).toBeNull();
+    // The tentative opening, primary consideration and actual opening dates appear nowhere.
+    expect(screen.queryByText("2026-01-05")).toBeNull();
+    expect(screen.queryByText("2026-01-20")).toBeNull();
+    expect(screen.queryByText("2026-01-06")).toBeNull();
     expect(
-      screen.getByTestId(`${W26}-course-2-TA-primaryConsiderationDate`),
-    ).toHaveTextContent("2026-01-20");
+      screen.getByTestId(`${W26}-course-2-TA-facultyReviewOpeningDate`),
+    ).toHaveTextContent("2026-01-10");
     expect(
-      screen.getByTestId(`${W26}-course-2-TA-actualOpeningDate`),
-    ).toHaveTextContent("2026-01-06");
-    expect(
-      screen.getByTestId(`${W26}-course-2-TA-actualClosingDate`),
+      screen.getByTestId(`${W26}-course-2-TA-facultyRankingDeadline`),
     ).toHaveTextContent("2026-02-01");
-    // A blank date reads as nothing, not "null".
-    expect(
-      screen.getByTestId(`${W26}-course-2-ULA-actualClosingDate`).textContent,
-    ).toBe("");
-    expect(within(body).getByText("Tentative Opening:")).toBeInTheDocument();
-    expect(within(body).getByText("Actually Closed:")).toBeInTheDocument();
-    expect(
-      within(body).getByText("Faculty Reviews Opened:"),
-    ).toBeInTheDocument();
-    expect(
-      within(body).getByText("Faculty Ranking Deadline:"),
-    ).toBeInTheDocument();
     expect(
       screen.getByTestId(`${W26}-course-2-ULA-facultyReviewOpeningDate`),
     ).toHaveTextContent("2026-01-08");
@@ -459,14 +536,17 @@ describe("InstructorRecruitmentCards tests", () => {
       "href",
       "/recruitments/2/courses/1/ranking",
     );
-    // Not started: the note instead, wrapping within a narrow width.
+    // Not started: the note instead, at the natural width of its holder (issue #410): no
+    // max-width, not an inline block, but still allowed to wrap inside a no-wrap table cell.
     const note = screen.getByTestId(`${S26}-course-6-TA-not-open`);
+    expect(note.tagName).toBe("SPAN");
     expect(note).toHaveTextContent(
       "Candidate rankings will be available when faculty reviews open.",
     );
-    expect(note).toHaveClass("d-inline-block");
+    expect(note.getAttribute("class")).toBeNull();
     expect(note.style.whiteSpace).toBe("normal");
-    expect(note.style.maxWidth).toBe("16rem");
+    expect(note.style.maxWidth).toBe("");
+    expect(note.getAttribute("style")).toBe("white-space: normal;");
     expect(note.closest(".card-footer")).not.toBeNull();
     expect(screen.queryByTestId(`${S26}-course-6-TA-rank`)).toBeNull();
     expect(screen.queryByTestId(`${S26}-course-6-TA-view-rankings`)).toBeNull();

@@ -21,12 +21,16 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           ULA recruitment. The card&apos;s header is the quarter; under it is a
           drop-down for each of your courses in that quarter&apos;s recruitments
           (a course in both the TA and the ULA recruitment appears once). Open a
-          course to see its enrollment table (Section, Enrolled and Max, plus
-          the Enrollment Estimate and the TA and ULA Allocation once an admin
-          releases them), a note where you will one day be able to comment on
-          your allocations, and then a <strong>TA</strong> card and/or a{" "}
-          <strong>ULA</strong> card: one for each recruitment the course is in,
-          with that recruitment&apos;s status and dates.
+          course to see its enrollment table (Section, Enrolled, Max, Enrollment
+          Estimate, TA Allocation and ULA Allocation, always all six; the
+          Enrollment Estimate reads <strong>TBD</strong> until an admin releases
+          the allocations of either recruitment, an Allocation cell reads{" "}
+          <strong>TBD</strong> until that recruitment&apos;s allocations are
+          released, and <strong>N/A</strong> when the course is not in a
+          recruitment of that type), a note where you will one day be able to
+          comment on your allocations, and then a <strong>TA</strong> card
+          and/or a <strong>ULA</strong> card: one for each recruitment the
+          course is in, with that recruitment&apos;s status and dates.
         </p>
         <p data-testid="HelpInstructorsPage-steps-link">
           Where your part fits in a recruitment, and what the admin does before
@@ -40,21 +44,23 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           says no recruitment includes a course you teach, ask an admin to check
           the catalog name on your account.
         </p>
-        <p>
+        <p data-testid="HelpInstructorsPage-card-dates">
           Each TA or ULA card shows whether applications are open, whether
-          faculty reviews are NotStarted, Open, or Closed, the application
-          dates, the date reviews were first opened, and the faculty ranking
-          deadline. These review dates and status are separate from the
-          application dates.
+          faculty reviews are NotStarted, Open, or Closed, the date reviews were
+          first opened, and the faculty ranking deadline. The application dates
+          themselves (tentative opening, primary consideration, actual opening
+          and closing) are not shown on the card; they are separate from the
+          review dates and status.
         </p>
         <p data-testid="HelpInstructorsPage-allocations">
           Once an admin lets faculty see a recruitment&apos;s allocations, the
-          course&apos;s enrollment table gains the quarter&apos;s{" "}
-          <strong>Enrollment Estimate</strong> and that recruitment&apos;s{" "}
-          <strong>TA Allocation</strong> or <strong>ULA Allocation</strong>, and
-          the TA or ULA card gains a small table, also shown at the top of the
-          ranking page: the <strong>Hiring Target</strong> (how many TAs or ULAs
-          were allocated to the course; the same number as the allocation), the{" "}
+          quarter&apos;s <strong>Enrollment Estimate</strong> and that
+          recruitment&apos;s <strong>TA Allocation</strong> or{" "}
+          <strong>ULA Allocation</strong> in the course&apos;s enrollment table
+          change from TBD to the number, and the TA or ULA card gains a small
+          table, also shown at the top of the ranking page: the{" "}
+          <strong>Hiring Target</strong> (how many TAs or ULAs were allocated to
+          the course; the same number as the allocation), the{" "}
           <strong>Ranking Target</strong> (how many candidates you are asked to
           rank: twice the hiring target, or every interested candidate if there
           are fewer), <strong>Candidates Ranked</strong> so far and{" "}
