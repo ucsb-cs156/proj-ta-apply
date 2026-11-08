@@ -181,4 +181,17 @@ applicationsFixtures.oneCancelledApplication = {
   cancelledAt: "2026-02-03T04:05:00",
 };
 
+/** Issue #322: a TA application cancelled by the applicant, for the admin's table and its badge. */
+applicationsFixtures.oneCancelledTaApplication = {
+  ...applicationsFixtures.oneTaApplication,
+  id: 5,
+  email: "withdrawn@ucsb.edu",
+  firstName: "Edsger",
+  middleName: null,
+  lastName: "Dijkstra",
+  status: "CANCELLED",
+  cancellationReason: "Accepted a research position",
+  cancelledAt: "2026-02-04T09:30:00",
+};
+
 export default applicationsFixtures;

@@ -22,7 +22,10 @@ Empty.args = {
   hiddenColumns: defaultHiddenColumns("TA"),
 };
 
-/** A TA round with the default columns: Level, and a test application marked beside its id. */
+/**
+ * A TA round with the default columns: Level, a test application marked beside its id, and one
+ * the applicant cancelled, marked in red (issue #322).
+ */
 export const TaApplications = Template.bind({});
 TaApplications.args = {
   applications: [
@@ -35,6 +38,7 @@ TaApplications.args = {
       classLevel: "MS",
     },
     applicationsFixtures.oneTestApplication,
+    applicationsFixtures.oneCancelledTaApplication,
   ],
   type: "TA",
   hiddenColumns: defaultHiddenColumns("TA"),
