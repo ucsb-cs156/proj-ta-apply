@@ -15,6 +15,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -42,6 +43,7 @@ public class AdminAssignmentsWebIT extends WebTestCase {
 
   private static final String BANNER = "AdminAssignmentsPage-multiple-tabs";
   private static final String SELECT = "AdminAssignmentsPage-table-cell-row-0-tentative-select";
+  private static final String THERMOMETER = "AdminAssignmentsPage-progress";
 
   private void goTo(String path) {
     openPage(page, path);
@@ -170,6 +172,12 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
     assertThat(page.getByTestId(SELECT)).isVisible();
 
+    // Issue #315: the progress thermometer under the heading, against the default hiring target of
+    // 1, before anything is assigned.
+    assertThat(page.getByTestId(THERMOMETER + "-text")).hasText("Assignments made: 0 of 1 (0%)");
+    assertThat(page.getByTestId(THERMOMETER + "-bar")).hasAttribute("role", "progressbar");
+    assertThat(page.getByTestId(THERMOMETER + "-bar")).hasAttribute("aria-valuenow", "0");
+
     // Something else changes the assignments (a publish, a cancellation, another tab).
     recruitmentRepository.bumpAssignmentsVersion(recruitment.getId());
 
@@ -186,6 +194,10 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     // The page now carries the current version, so the same move goes through.
     page.getByTestId(SELECT).selectOption(new SelectOption().setIndex(1));
     assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("1 assigned so far");
+    // The thermometer follows: the one assignment meets the target of 1, so the bar is full.
+    assertThat(page.getByTestId(THERMOMETER + "-text")).hasText("Assignments made: 1 of 1 (100%)");
+    assertThat(page.getByTestId(THERMOMETER + "-bar")).hasAttribute("aria-valuenow", "100");
+    assertThat(page.getByTestId(THERMOMETER + "-fill")).hasClass(Pattern.compile("bg-success"));
     assertNotNull(
         applicationRepository.findById(applicant.getId()).orElseThrow().getTentativeAssignmentId());
     assertEquals(

@@ -1007,6 +1007,185 @@ describe("AdminAssignmentsPage: publishing the assignments (issue #358)", () => 
   });
 });
 
+/** Issue #315: the progress thermometer under the heading, assignments made against the hiring target. */
+describe("AdminAssignmentsPage: the progress thermometer (issue #315)", () => {
+  const PROGRESS = "AdminAssignmentsPage-progress";
+  // The fixture's lectures have 1 + 2 + 0 = 3 applicants assigned.
+  const withTarget = (totalHiringTarget) => ({
+    ...recruitmentsFixtures.threeRecruitments[0],
+    id: 7,
+    totalHiringTarget,
+  });
+
+  beforeEach(() => {
+    mockToast.mockClear();
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.adminUser);
+    axiosMock
+      .onGet("/api/systemInfo")
+      .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [withTarget(6)]);
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, assignmentsFixtures.taPage);
+    axiosMock.onGet("/api/admin/assignments/cancelled").reply(200, []);
+    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
+  });
+
+  test("shows the assignments made against the hiring target, between the heading and the publish panel", async () => {
+    renderPage();
+    await screen.findByRole("heading", {
+      name: "Assignments: TA positions, S26",
+    });
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId(`${PROGRESS}-text`)).toHaveTextContent(
+        "Assignments made: 3 of 6 (50%)",
+      ),
+    );
+    const bar = screen.getByRole("progressbar", {
+      name: "Assignments made: 3 of 6 (50%)",
+    });
+    expect(bar).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByTestId(`${PROGRESS}-fill`)).toHaveStyle({
+      width: "50%",
+    });
+    expect(screen.getByTestId(`${PROGRESS}-fill`)).toHaveTextContent("50%");
+    expect(screen.getByTestId(PROGRESS)).toHaveStyle({
+      width: "80%",
+      maxWidth: "600px",
+    });
+    // Directly under the heading, above the Publish panel and the table.
+    const heading = screen.getByRole("heading", { level: 1 });
+    const thermometer = screen.getByTestId(PROGRESS);
+    expect(
+      heading.compareDocumentPosition(thermometer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      thermometer.compareDocumentPosition(
+        screen.getByTestId("AdminAssignmentsPage-publish"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      thermometer.compareDocumentPosition(
+        screen.getByTestId("AdminAssignmentsPage-table"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // It agrees with the count line.
+    expect(screen.getByTestId("AdminAssignmentsPage-count")).toHaveTextContent(
+      "3 assigned so far",
+    );
+  });
+
+  test("the fixture recruitment's target of 1 is over-assigned: a full red bar with the real numbers", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [withTarget(1)]);
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByTestId(`${PROGRESS}-text`)).toHaveTextContent(
+        "Assignments made: 3 of 1 (300%)",
+      ),
+    );
+    expect(screen.getByTestId(`${PROGRESS}-fill`)).toHaveStyle({
+      width: "100%",
+    });
+    expect(screen.getByTestId(`${PROGRESS}-fill`)).toHaveClass("bg-danger");
+  });
+
+  test("a target met exactly is green", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [withTarget(3)]);
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByTestId(`${PROGRESS}-text`)).toHaveTextContent(
+        "Assignments made: 3 of 3 (100%)",
+      ),
+    );
+    expect(screen.getByTestId(`${PROGRESS}-fill`)).toHaveClass("bg-success");
+  });
+
+  test("a ULA recruitment with nothing assigned yet: 0 of its target", async () => {
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [recruitmentsFixtures.threeRecruitments[1]]);
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, assignmentsFixtures.ulaPage);
+    renderPage(2);
+    await waitFor(() =>
+      expect(screen.getByTestId(`${PROGRESS}-text`)).toHaveTextContent(
+        "Assignments made: 0 of 6 (0%)",
+      ),
+    );
+    expect(screen.getByTestId(`${PROGRESS}-fill`)).toHaveStyle({
+      width: "0%",
+    });
+    expect(screen.getByTestId(`${PROGRESS}-beside`)).toHaveTextContent("0%");
+  });
+
+  test("while the recruitment (and so its target) is not known, the bar is empty and says so", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ).length,
+      ).toBeGreaterThan(0),
+    );
+    expect(screen.getByTestId(`${PROGRESS}-text`).textContent).toBe(
+      "Assignments made: 3 so far, no hiring target set yet",
+    );
+    expect(screen.getByTestId(`${PROGRESS}-fill`)).toHaveStyle({
+      width: "0%",
+    });
+    expect(screen.getByTestId(`${PROGRESS}-bar`)).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
+    expect(screen.getByTestId(`${PROGRESS}-text`)).not.toHaveTextContent("NaN");
+  });
+
+  test("the thermometer follows the counts a move comes back with", async () => {
+    // The move's answer clears every lecture's count, so the bar goes from 3 of 6 to 0 of 6.
+    axiosMock.onPut("/api/admin/assignments/tentative").reply(200, {
+      ...assignmentsFixtures.taPageAfterMove,
+      courses: assignmentsFixtures.taPageAfterMove.courses.map((course) => ({
+        ...course,
+        assigned: 0,
+        left: course.allocation,
+      })),
+    });
+    renderPage();
+    const select = await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId(`${PROGRESS}-text`)).toHaveTextContent(
+        "Assignments made: 3 of 6 (50%)",
+      ),
+    );
+
+    await userEvent.selectOptions(select, "30");
+
+    await waitFor(() =>
+      expect(screen.getByTestId(`${PROGRESS}-text`)).toHaveTextContent(
+        "Assignments made: 0 of 6 (0%)",
+      ),
+    );
+    expect(screen.getByTestId("AdminAssignmentsPage-count")).toHaveTextContent(
+      "0 assigned so far",
+    );
+  });
+});
+
 /** Issue #385: Developer Mode's Create Fake Rankings, in this page's footer since the Courses edit page lost it. */
 describe("AdminAssignmentsPage: Create Fake Rankings (issue #385)", () => {
   const withReview = (reviewStatus) => ({

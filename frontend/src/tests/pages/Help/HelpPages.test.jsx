@@ -1709,6 +1709,17 @@ describe("Help pages (issue #140)", () => {
     expect(assignments).toHaveTextContent(
       "A lecture is named by its course number alone (16, 5A), with the section added only when the recruitment has more than one section of that course (8 (0100), 8 (0200)), as in the rankings CSV; the headings, the dropdown and the Columns menu all use these names, in a fixed-width font with the numbers lined up.",
     );
+    // The spaces around the bold words are real (a mutant that drops one joins the words).
+    expect(assignments).toHaveTextContent(
+      "who each applicant is, a Tentative Assignment dropdown, then one column per lecture",
+    );
+    expect(assignments).toHaveTextContent(
+      "Under each lecture's name the heading shows its Allocation, how many applicants are Assigned to it so far",
+    );
+    // Issue #315: the progress thermometer.
+    expect(assignments).toHaveTextContent(
+      "A progress thermometer under the page heading shows how many assignments have been made against the recruitment's hiring target (entered on the Budget page), as a filled bar with the numbers and percentage: green when the target is met, red when more have been assigned than the target, and an empty bar saying so when no target is set yet.",
+    );
     const assignmentColumns = screen.getByTestId(
       "HelpAdminsPage-assignment-columns",
     );
