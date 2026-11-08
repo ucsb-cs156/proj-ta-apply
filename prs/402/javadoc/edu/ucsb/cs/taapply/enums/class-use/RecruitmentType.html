@@ -263,9 +263,17 @@ the order they are declared.</div>
 <div class="col-second even-row-color"><span class="type-name-label">RecruitmentRepository.</span><code><a href="../../repository/RecruitmentRepository.html#findByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findByQuarterAndType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">NoticeVersionRepository.</span><code><a href="../../repository/NoticeVersionRepository.html#findFirstByTypeOrderByIdDesc(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findFirstByTypeOrderByIdDesc</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentRepository.</span><code><a href="../../repository/RecruitmentRepository.html#findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findFirstByQuarterLessThanAndTypeOrderByQuarterDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last odd-row-color">
+<div class="block">The recruitment of the given type in the most recent quarter before the given one (issue #384):
+the one with the largest YYYYQ smaller than <code>quarter</code>, which the fixed width of YYYYQ
+makes a plain string comparison.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">NoticeVersionRepository.</span><code><a href="../../repository/NoticeVersionRepository.html#findFirstByTypeOrderByIdDesc(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findFirstByTypeOrderByIdDesc</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-last even-row-color">
 <div class="block">The version currently shown to applicants of this type: the most recently saved one.</div>
 </div>
 </div>

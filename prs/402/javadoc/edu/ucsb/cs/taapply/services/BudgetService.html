@@ -150,8 +150,8 @@ enrollment totals, the estimated cost per ULA computed from the budget's rate an
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#budgetFor(java.lang.String)" class="member-name-link">budgetFor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">The quarter's budget row, created with every line at zero if this is the first time it is asked
-for.</div>
+<div class="block">The quarter's budget row, created if this is the first time it is asked for, as a copy of the
+most recent earlier quarter's (issue #384; see <a href="BudgetCreationService.html" title="class in edu.ucsb.cs.taapply.services"><code>BudgetCreationService</code></a>).</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#estimatedCostPerUla(edu.ucsb.cs.taapply.entity.Budget)" class="member-name-link">estimatedCostPerUla</a><wbr>(<a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&nbsp;budget)</code></div>
@@ -221,8 +221,9 @@ estimated hours per ULA, to the cent; null while either has not been entered.</d
 <h3>budgetFor</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a></span>&nbsp;<span class="element-name">budgetFor</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</span></div>
-<div class="block">The quarter's budget row, created with every line at zero if this is the first time it is asked
-for. Only quarters with at least one recruitment have a budget.</div>
+<div class="block">The quarter's budget row, created if this is the first time it is asked for, as a copy of the
+most recent earlier quarter's (issue #384; see <a href="BudgetCreationService.html" title="class in edu.ucsb.cs.taapply.services"><code>BudgetCreationService</code></a>). Only quarters
+with at least one recruitment have a budget.</div>
 <dl class="notes">
 <dt>Throws:</dt>
 <dd><code><a href="../errors/EntityNotFoundException.html" title="class in edu.ucsb.cs.taapply.errors">EntityNotFoundException</a></code> - when the quarter has no recruitment</dd>
