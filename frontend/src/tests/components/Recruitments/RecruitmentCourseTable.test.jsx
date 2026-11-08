@@ -598,7 +598,7 @@ describe("RecruitmentCourseTable tests", () => {
 
     expect(
       screen.getByTestId("RecruitmentCourseTable-header-rankingCount"),
-    ).toHaveTextContent(/^Rankings$/);
+    ).toHaveTextContent(/^Faculty Rankings$/);
     expect(
       screen.getByTestId("RecruitmentCourseTable-header-instructorEmail"),
     ).toHaveTextContent(/^Email$/);
@@ -744,6 +744,58 @@ describe("RecruitmentCourseTable tests", () => {
       screen.getByTestId("RecruitmentCourseTable-header-enrollment").style
         .textAlign,
     ).toBe("center");
+  });
+
+  // Issue #386: the two leftmost headings, and the width of the Course Number column.
+  test("Faculty Rankings and Course Number are stacked headings in the smaller font", () => {
+    renderWith({
+      rankingSummaries: recruitmentCoursesFixtures.rankingSummaries,
+      showRankings: true,
+    });
+
+    [
+      ["rankingCount", "Faculty Rankings", "Faculty", "Rankings"],
+      ["courseId", "Course Number", "Course", "Number"],
+    ].forEach(([id, text, top, bottom]) => {
+      const heading = screen.getByTestId(`RecruitmentCourseTable-header-${id}`);
+      expect(heading).toHaveTextContent(new RegExp(`^${text}$`));
+      const small = [...heading.querySelectorAll("span")].find(
+        (span) => span.style.fontSize !== "",
+      );
+      expect(small.style.fontSize).toBe("80%");
+      // The break is between the two words, with the space before it.
+      expect(small.innerHTML).toBe(`${top} <br>${bottom}`);
+    });
+    // The heading is not the sort caret's container: the whole heading is still the sort handle.
+    expect(
+      screen
+        .getByTestId("RecruitmentCourseTable-header-courseId-sort-header")
+        .querySelector("br"),
+    ).not.toBeNull();
+  });
+
+  test("the Course Number cell is 13 characters wide, and the totals footer is stacked too", () => {
+    renderWith({});
+
+    // The widest thing in the column sets its width, so the cell is as wide as the widest
+    // possible course number, not as wide as the data happens to be, and the one-line footer no
+    // longer forces the column wider than that.
+    const cellText = screen
+      .getByTestId("RecruitmentCourseTable-cell-row-0-col-courseId")
+      .querySelector("span");
+    expect(cellText).toHaveTextContent("CMPSC     1A", {
+      normalizeWhitespace: false,
+    });
+    expect(cellText.style.display).toBe("inline-block");
+    expect(cellText.style.minWidth).toBe("13ch");
+    expect(cellText.style.whiteSpace).toBe("pre");
+    expect(cellText.style.fontFamily).toBe("monospace");
+
+    const footer = screen.getByTestId("RecruitmentCourseTable-footer-courseId");
+    expect(footer).toHaveTextContent(/^Total Course Count: 3$/);
+    const small = footer.querySelector("span");
+    expect(small.style.fontSize).toBe("80%");
+    expect(small.innerHTML).toBe("Total Course Count: <br>3");
   });
 
   test("numeric columns are right-aligned, the ratio left-aligned", () => {
