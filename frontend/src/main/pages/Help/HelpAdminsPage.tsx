@@ -688,8 +688,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Make Assignments</strong> opens the page where candidates are
           assigned to slots, and <strong>View Assignments</strong> the read-only
           assignments page that admins and faculty share (it says the
-          assignments are not published yet until they are). In the diagram,
-          step 3&apos;s <em>Allocations</em> and step 5&apos;s{" "}
+          assignments are not published yet until they are). Apart from them, at
+          the right end of the same row, <strong>Change History</strong> opens
+          the list of every change made to the recruitment itself (see{" "}
+          <a href="#audit-trail">Audit Trail</a> below). In the diagram, step
+          3&apos;s <em>Allocations</em> and step 5&apos;s{" "}
           <em>(see allocations)</em> links open the quarter&apos;s{" "}
           <Link to="#combined-allocations">Combined Allocation page</Link>, and
           the same two assignment pages are under steps 8 and 9 as{" "}
@@ -841,6 +844,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
             clicked at the top of the Assignments page it says the assignments
             are not published yet.
           </li>
+          <li id="change-history" data-testid="HelpAdminsPage-change-history">
+            <strong>Change History.</strong> Every change to the recruitment
+            itself, newest first: when it was created, each time applications or
+            faculty reviews were opened or closed, each date or setting that
+            changed, and (<em>Changed By</em>) who made the change. The button
+            is at the right end of the card&apos;s row of buttons, apart from
+            the others, and opens the recruitment&apos;s own Change History
+            page, which shows the recruitment&apos;s row above the list and has
+            a page-size control and Previous and Next buttons. Changes to
+            individual applications are not here but in the{" "}
+            <a href="#audit-trail">Audit Trail</a>.
+          </li>
           <li>
             <strong>Delete.</strong> Removes the recruitment, its course list
             and every application to it, after a warning that says how many
@@ -954,10 +969,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           with a <em>[See value]</em> link that shows the whole thing. The trail
           for one application is also shown on that application&apos;s View
           page. A recruitment&apos;s own changes (its creation, opening, closing
-          and dates) are listed on its Applications page under Change History,
-          with the same <em>Changed By</em> column. Changes made before the
-          email was recorded show that column blank. Its times, like every date
-          and time on this site, are Pacific Time.
+          and dates) are not here: they are on its own Change History page,
+          opened by the <strong>Change History</strong> button at the right end
+          of its card&apos;s row of buttons on the home page, with the same{" "}
+          <em>Changed By</em> column. Changes made before the email was recorded
+          show that column blank. Its times, like every date and time on this
+          site, are Pacific Time.
         </p>
 
         <h2

@@ -322,7 +322,16 @@ The card becomes much wider to hold the diagram. From top to bottom:
    the page where candidates are assigned to slots) and **View Assignments** (→
    `/recruitments/:id/assignments`, the read-only page; shown whether or not the assignments are
    published, and the page says so until they are). Issue #390 adds a right-aligned **Change
-   History** button after them. Everything else the card offered moves:
+   History** button after them (`ms-auto`, so it sits at the right edge of the row, apart from the
+   workflow buttons, and after Download Rankings CSV when that is shown); it opens the
+   recruitment's own Change History page, `/admin/recruitments/:id/history` (admin only): the
+   recruitment's row, the intro sentence (with "Audit Trail page" linking to `/admin/audittrail`),
+   the page-size control, Previous and Next, "n changes recorded." and the
+   `RecruitmentAuditTrailTable`, newest first, paged on the server by
+   `GET /api/admin/recruitmentaudittrail/all`. Until #390 the same content was a collapsible
+   **Change History** card at the bottom of the Applications page (issues #139, #255, #337), which
+   nothing pointed to; that card is gone and the Applications page is otherwise unchanged. Everything
+   else the card offered moves:
    - **Test Application** moves to the Applications page.
    - **Download CSV** moves to near the top of the Applications page and is renamed
      **Download Applications as CSV**.
