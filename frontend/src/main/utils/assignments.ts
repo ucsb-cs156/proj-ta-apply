@@ -39,6 +39,15 @@ export type Assignments = {
   version: number;
 };
 
+/**
+ * How many applicants are pencilled into a lecture of the page, in all: the sum of the lectures'
+ * assigned counts, which the backend works out from the real, uncancelled applications (so an
+ * assignee of a lecture no longer offered is still counted). The page's count line and its
+ * progress thermometer (issue #315) both read it.
+ */
+export const totalAssigned = (page: Pick<Assignments, "courses">): number =>
+  page.courses.reduce((sum, course) => sum + course.assigned, 0);
+
 /** The column headings for the rankings CSV's identity fields. */
 export const IDENTITY_LABELS: Record<string, string> = {
   firstName: "First Name",

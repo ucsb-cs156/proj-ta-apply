@@ -25,7 +25,8 @@ import {
   courseColumnStatus,
 } from "main/utils/assignmentColumns";
 import InterestLegend from "main/components/Common/InterestLegend";
-import type { Assignments } from "main/utils/assignments";
+import ProgressThermometer from "main/components/Common/ProgressThermometer";
+import { totalAssigned, type Assignments } from "main/utils/assignments";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { apiErrorMessage, shouldToastBackendError } from "main/utils/apiError";
 import { isConflict } from "main/utils/useDraftSaving";
@@ -225,6 +226,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
 
   const columnChoices = assignmentColumnChoices(page);
   const positions = `${page.type}s`;
+  const assigned = totalAssigned(page);
   return (
     <BasicLayout>
       <DeveloperFooterControls controls={developerButtons} />
@@ -234,6 +236,15 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           {recruitment &&
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
+        {/* Issue #315: how far the assignments have got towards the recruitment's hiring target
+            (totalHiringTarget, entered on the Budget page), from the counts the table shows. */}
+        <ProgressThermometer
+          numerator={assigned}
+          denominator={recruitment?.totalHiringTarget}
+          label="Assignments made"
+          noTargetText="no hiring target set yet"
+          testIdPrefix="AdminAssignmentsPage-progress"
+        />
         {/* Issue #358: publishing is done where the assignments are made (the panel used to be at
             the bottom of the Courses edit page): the button until published, then the line. */}
         {recruitment && (
@@ -278,9 +289,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           {page.rows.length} applicant{page.rows.length === 1 ? "" : "s"},{" "}
           {page.courses.length} lecture{page.courses.length === 1 ? "" : "s"},{" "}
           {page.courses.reduce((sum, course) => sum + course.allocation, 0)}{" "}
-          {positions} allocated,{" "}
-          {page.courses.reduce((sum, course) => sum + course.assigned, 0)}{" "}
-          assigned so far.
+          {positions} allocated, {assigned} assigned so far.
         </p>
         <InterestLegend testIdPrefix="AdminAssignmentsPage-legend" />
         <div className="mb-2">

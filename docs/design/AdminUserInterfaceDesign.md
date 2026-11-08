@@ -332,6 +332,17 @@ page before); issue #317 then replaced them with "Make Assignments" under step 8
 `/admin/recruitments/:id/assignments`) and "View Assignments" under step 9 (to
 `/recruitments/:id/assignments`).
 
+Issue #315 put a progress thermometer at the top of `/admin/recruitments/:id/assignments`, directly
+under the heading: "Assignments made: n of m (p%)" over a bar filled to that share. The numerator is
+the sum of the lectures' `assigned` counts from `GET /api/admin/assignments` (`totalAssigned` in
+`frontend/src/main/utils/assignments.ts`, the same number as the count line's "assigned so far"); the
+denominator is the recruitment's `totalHiringTarget` (entered on the Budget page). Over the target
+the bar is full and red with the real numbers; exactly at it, green; when the recruitment (and so its
+target) is not known yet, the bar is empty and says "no hiring target set yet". The thermometer is a
+reusable component, `frontend/src/main/components/Common/ProgressThermometer.tsx` (props: numerator,
+denominator, label, an optional no-target text and a test-id prefix), 80% of its container up to
+600px wide so it suits phones and desktops alike; future issues will put it on other pages.
+
 ### The leftmost headings of the Recruitment Courses table (issue #386)
 
 On both Recruitment Courses pages (and on the faculty Courses page, which uses the same

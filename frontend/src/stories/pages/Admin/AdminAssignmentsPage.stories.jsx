@@ -111,6 +111,46 @@ ManyCourses.parameters = {
   },
 };
 
+/**
+ * Issue #315: the progress thermometer under the heading. The default fixture's recruitment has a
+ * hiring target of 1 with 3 assigned (over the target, red); here the target is 6, so the bar is
+ * half full.
+ */
+export const HalfAssigned = Template.bind({});
+HalfAssigned.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/admin/recruitments/all", () =>
+        HttpResponse.json([
+          {
+            ...recruitmentsFixtures.threeRecruitments[0],
+            id: 7,
+            totalHiringTarget: 6,
+          },
+        ]),
+      ),
+      ...handlers(
+        assignmentsFixtures.taPage,
+        assignmentsFixtures.taPageAfterMove,
+      ),
+    ],
+  },
+};
+
+/** Issue #315: the recruitment is not known (so no hiring target): the thermometer says so. */
+export const NoHiringTarget = Template.bind({});
+NoHiringTarget.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/admin/recruitments/all", () => HttpResponse.json([])),
+      ...handlers(
+        assignmentsFixtures.taPage,
+        assignmentsFixtures.taPageAfterMove,
+      ),
+    ],
+  },
+};
+
 export const NoApplicants = Template.bind({});
 NoApplicants.parameters = {
   reactRouter: { initialEntries: ["/admin/recruitments/7/assignments"] },
