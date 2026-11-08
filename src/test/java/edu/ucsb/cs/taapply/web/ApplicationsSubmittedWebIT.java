@@ -9,6 +9,7 @@ import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -211,18 +212,44 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
             .languageExam(edu.ucsb.cs.taapply.enums.LanguageExamStatus.EXEMPT_US_CITIZEN)
             .firstChoiceCourse("CMPSC   156")
             .build());
+    // Issue #322: an application the applicant cancelled is listed too, marked in red.
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email("withdrawn@ucsb.edu")
+            .firstName("Edsger")
+            .lastName("Dijkstra")
+            .status(ApplicationReviewStatus.CANCELLED)
+            .cancellationReason("Accepted a research position")
+            .cancelledAt(LocalDateTime.now())
+            .build());
 
     setupAdminUser();
     goTo("/");
     page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
 
-    // The one recruitment repeated at the top, the count, and the application listed.
+    // The one recruitment repeated at the top, the count, and the applications listed.
     assertThat(page.getByTestId("RecruitmentApplicationsPage-recruitment-cell-row-0-col-type"))
         .containsText("TA");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-count"))
-        .containsText("1 Application Received");
+        .containsText("2 Applications Received");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-name"))
         .containsText("Ada Lovelace");
+    // The live application has no badge beside its id; the cancelled one has a red "cancelled".
+    assertThat(
+            page.getByTestId(
+                "RecruitmentApplicationsPage-applications-cell-row-0-col-id-cancelled"))
+        .hasCount(0);
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-1-col-name"))
+        .containsText("Edsger Dijkstra");
+    assertThat(
+            page.getByTestId(
+                "RecruitmentApplicationsPage-applications-cell-row-1-col-id-cancelled"))
+        .hasText("cancelled");
+    assertThat(
+            page.getByTestId(
+                "RecruitmentApplicationsPage-applications-cell-row-1-col-id-cancelled"))
+        .hasClass(java.util.regex.Pattern.compile("text-bg-danger"));
     assertThat(
             page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-classLevel"))
         .containsText("PhD");
@@ -238,7 +265,7 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
     page.getByTestId("AdminApplicationPage-adminComments").fill("Interview on Tuesday");
     page.getByTestId("AdminApplicationPage-save").click();
     assertThat(page.getByTestId("RecruitmentApplicationsPage-count"))
-        .containsText("1 Application Received");
+        .containsText("2 Applications Received");
 
     page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
     assertThat(page.getByTestId("AdminApplicationPage-adminComments"))

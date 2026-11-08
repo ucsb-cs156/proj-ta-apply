@@ -20,7 +20,11 @@ const ulaRecruitment = recruitmentsFixtures.threeRecruitments[1];
 
 const Template = (args) => <RecruitmentCardLayout {...args} />;
 
-/** The most recent TA recruitment: its steps panel opens expanded. */
+/**
+ * The most recent TA recruitment: its steps panel opens expanded. The footer has Courses, Draft
+ * Applications, Applications, Make Assignments and View Assignments (issue #317), then Download
+ * Rankings CSV since reviews are open.
+ */
 export const ExpandedTA = Template.bind({});
 ExpandedTA.args = {
   recruitment: taRecruitment,
@@ -58,7 +62,10 @@ export const TwoRecruitments = (args) => (
   </>
 );
 
-/** Faculty reviews not started: there are no rankings yet, so no Download Rankings CSV. */
+/**
+ * Faculty reviews not started: there are no rankings yet, so no Download Rankings CSV; the footer
+ * is exactly the five buttons.
+ */
 export const NoRankingsYet = Template.bind({});
 NoRankingsYet.args = {
   recruitment: { ...taRecruitment, reviewStatus: "NotStarted" },

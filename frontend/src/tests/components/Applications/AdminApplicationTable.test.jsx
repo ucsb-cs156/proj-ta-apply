@@ -15,6 +15,7 @@ import {
 const ta = applicationsFixtures.oneTaApplication;
 const ula = applicationsFixtures.oneUlaApplication;
 const testApp = applicationsFixtures.oneTestApplication;
+const cancelledTa = applicationsFixtures.oneCancelledTaApplication;
 
 function renderTable(props = {}) {
   render(
@@ -501,6 +502,66 @@ describe("AdminApplicationTable tests", () => {
     ).toHaveAttribute("href", `/admin/applications/${testApp.id}`);
   });
 
+  // Issue #322: an application the applicant cancelled is marked in red beside its id.
+  test("a cancelled application gets a red cancelled badge beside its id, and a live one none", () => {
+    renderTable({ applications: [ta, cancelledTa] });
+
+    expect(
+      screen.queryByTestId("AdminApplicationTable-cell-row-0-col-id-cancelled"),
+    ).toBeNull();
+    const badge = screen.getByTestId(
+      "AdminApplicationTable-cell-row-1-col-id-cancelled",
+    );
+    expect(badge).toHaveTextContent(/^cancelled$/);
+    expect(badge).toHaveClass("badge", "ms-2", "text-bg-danger");
+    expect(badge).not.toHaveClass("text-bg-warning");
+    // A real applicant's application, cancelled or not, carries no origin badge.
+    expect(
+      screen.queryByTestId("AdminApplicationTable-cell-row-1-col-id-test"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-1-col-id-link"),
+    ).toHaveTextContent(String(cancelledTa.id));
+  });
+
+  test.each(["PENDING", "HIRED", "NOT_HIRED"])(
+    "a %s application has no cancelled badge",
+    (status) => {
+      renderTable({ applications: [{ ...ta, status }] });
+
+      expect(
+        screen.queryByTestId(
+          "AdminApplicationTable-cell-row-0-col-id-cancelled",
+        ),
+      ).toBeNull();
+    },
+  );
+
+  test("a cancelled test application carries the test badge and then the cancelled badge", () => {
+    renderTable({
+      applications: [
+        { ...testApp, status: "CANCELLED", cancelledAt: "2026-02-03T04:05:00" },
+      ],
+    });
+
+    const test = screen.getByTestId(
+      "AdminApplicationTable-cell-row-0-col-id-test",
+    );
+    const cancelled = screen.getByTestId(
+      "AdminApplicationTable-cell-row-0-col-id-cancelled",
+    );
+    expect(test).toHaveTextContent(/^test$/);
+    expect(test).toHaveClass("text-bg-warning");
+    expect(cancelled).toHaveTextContent(/^cancelled$/);
+    expect(cancelled).toHaveClass("text-bg-danger");
+    // Both in the id cell, the test badge first.
+    expect(test.parentElement).toBe(cancelled.parentElement);
+    expect(
+      test.compareDocumentPosition(cancelled) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("renders an empty table, and tolerates a non-array prop", () => {
     renderTable({
       applications: null,
@@ -576,7 +637,7 @@ describe("AdminApplicationTable tests", () => {
     ).toHaveTextContent("1/12/2026, 8:15:00 AM");
   });
 
-  test("the id and View lead to the draft's own page, and a draft has no origin badge", () => {
+  test("the id and View lead to the draft's own page, and a draft has no origin or cancelled badge", () => {
     renderTable({ applications: [taDraft], draft: true });
 
     expect(
@@ -587,6 +648,9 @@ describe("AdminApplicationTable tests", () => {
     ).toHaveAttribute("href", `/admin/draft-applications/${taDraft.id}`);
     expect(
       screen.queryByTestId("AdminApplicationTable-cell-row-0-col-id-test"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("AdminApplicationTable-cell-row-0-col-id-cancelled"),
     ).toBeNull();
   });
 

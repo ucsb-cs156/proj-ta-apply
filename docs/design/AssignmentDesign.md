@@ -253,6 +253,26 @@ As tentativeAssignments are made, the values at the top of each course column sh
 
 Once these features are in place, the CSV download should be modified to include these extra rows and columns.
 
+## How the page names a lecture (issue #355)
+
+The lecture headings, the Tentative Assignment dropdown and the Columns menu all name a lecture
+the same way, built by `labelCourses` in `frontend/src/main/utils/assignments.ts`:
+
+* the course number alone, without the subject (`CMPSC     8` is `8`), as the rankings CSV heads
+  its columns (`AssignmentsService.headings` on the backend);
+* the digits right-aligned in a field of three, so the letters line up as in the UCSB listing
+  (`  5A`, `  8`, ` 16`, `130A`, `190DD`);
+* the section in parentheses only when the recruitment has more than one section of that course
+  (the CSV's rule), with the number padded to five so the parentheses line up too
+  (`  8   (0100)`, `  8   (0200)`, `190DD (0100)`).
+
+The labels are shown in a monospace font with their spaces kept (`white-space: pre`); the
+dropdown's options use non-breaking spaces, because browsers collapse an option's ASCII whitespace
+whatever its CSS. The Tentative Assignment column, its dropdown and every lecture column are sized
+to the longest label the rule can produce, `190DD (0100)` (12 characters), not to the longest
+label present, so the columns are the same width on every recruitment. The three count lines under
+a lecture's name are padded so the numbers line up (`Allocation 1`, `  Assigned 1`, `      Left 0`).
+
 # Increment 7: Allow Admin to publish assignments
 
 When the admin is satisfied that the tentative assignments are final, there should be a button on the RecruitmentCourses page at the very bottom that says: "Publish Assignments".

@@ -62,7 +62,8 @@ const toLegacyColumn = (column: ApplicationColumn): LegacyColumn => ({
  * An admin's overview of the applications to one recruitment (issue #189): the id, View and Edit
  * buttons and the name first, then the submission time and every answer on the form, each a
  * column the admin can hide or show. The table takes its natural width. Test applications an
- * admin entered are listed too, marked as such, so the admin can tell them from the real ones.
+ * admin entered are listed too, marked as such, so the admin can tell them from the real ones; an
+ * application the applicant cancelled is marked beside its id too (issue #322).
  */
 export default function AdminApplicationTable({
   applications,
@@ -109,6 +110,15 @@ export default function AdminApplicationTable({
                 short
                 testId={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-test`}
               />
+            )}
+            {/* Red, beside the test badge if any, so nobody reads a cancelled application as live (issue #322). */}
+            {application.status === "CANCELLED" && (
+              <span
+                className="badge ms-2 text-bg-danger"
+                data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-cancelled`}
+              >
+                cancelled
+              </span>
             )}
           </>
         );

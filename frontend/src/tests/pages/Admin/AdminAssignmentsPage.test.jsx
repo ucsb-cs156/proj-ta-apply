@@ -107,9 +107,29 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
         name: "Assignments: TA positions, S26",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("AdminAssignmentsPage-intro")).toHaveTextContent(
-      "Every real applicant with each lecture's ranking of them. Choose a lecture under Tentative Assignment to pencil an applicant in; the counts under each lecture update at once. Tentative assignments are not shown to applicants or faculty at this stage.",
+    // Issue #355: the issue's two paragraphs, word for word.
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-intro-purpose").textContent,
+    ).toBe(
+      "On this page, the admin can assign TAs/ULA applicants to specific courses.",
     );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-intro-tentative").textContent,
+    ).toBe(
+      "These assignments are not visible to faculty or applicants until released by the admin, so all assignments are tentative at this stage.",
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-intro-purpose").tagName,
+    ).toBe("P");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-intro-tentative").tagName,
+    ).toBe("P");
+    expect(screen.getByTestId("AdminAssignmentsPage-intro")).toContainElement(
+      screen.getByTestId("AdminAssignmentsPage-intro-tentative"),
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-intro"),
+    ).not.toHaveTextContent("Every real applicant");
     await waitFor(() => expect(assignmentsGets()).toHaveLength(1));
     expect(assignmentsGets()[0].params).toEqual({ recruitmentId: "7" });
     expect(
@@ -623,6 +643,55 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       screen.queryByTestId("AdminAssignmentsPage-columns-tentativeAssignment"),
     ).not.toBeInTheDocument();
+    // Issue #355: the lectures are named as the table heads them, in monospace.
+    const label = screen.getByTestId(
+      "AdminAssignmentsPage-columns-course-10-label",
+    );
+    expect(label.textContent).toBe("  8");
+    expect(label).toHaveClass("font-monospace");
+    expect(
+      screen.queryByTestId("AdminAssignmentsPage-columns-email-label"),
+    ).toBeNull();
+  });
+
+  test("with two sections of a course, the Columns menu and the headings name them by section (issue #355)", async () => {
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, assignmentsFixtures.taPageManyCourses);
+    renderPage();
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-103-label")
+        .textContent,
+    ).toBe("  8   (0100)");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-109-label")
+        .textContent,
+    ).toBe("190DD (0200)");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-101-label")
+        .textContent,
+    ).toBe("  5A");
+    await userEvent.click(
+      screen.getByTestId("AdminAssignmentsPage-columns-toggle"),
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-columns-course-104-label")
+        .textContent,
+    ).toBe("  8   (0200)");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-columns-course-108-label")
+        .textContent,
+    ).toBe("190DD (0100)");
+    // The hide link's name is the same label (spaces collapsed in an accessible name).
+    expect(
+      screen.getByRole("button", { name: "Hide 190DD (0100) column" }),
+    ).toHaveAttribute(
+      "data-testid",
+      "AdminAssignmentsPage-table-header-course-108-hide",
+    );
   });
 
   test("unticking a column hides it on the backend and re-reads the list", async () => {
@@ -666,7 +735,7 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     ).not.toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Hide CMPSC 16 (0100) column" }),
+      screen.getByRole("button", { name: "Hide 16 column" }),
     );
 
     await waitFor(() => expect(hiddenColumnPuts()).toHaveLength(1));

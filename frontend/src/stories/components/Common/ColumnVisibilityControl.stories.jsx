@@ -46,16 +46,20 @@ export const AllHidden = () => (
 
 // Issue #343: on the Assignments page the menu also offers Show All Courses and Show Only
 // Incomplete Courses. course-1 is incomplete; course-2 is exactly at its target; course-3 is over.
+// The lectures are named as the Assignments table heads them (issue #355): no CMPSC, the digits
+// aligned in a monospace font, the section only where a course has two.
 const assignmentChoices = [
   { id: "email", label: "Email" },
-  { id: "course-1", label: "CMPSC 8 (0100)" },
-  { id: "course-2", label: "CMPSC 16 (0100)" },
-  { id: "course-3", label: "CMPSC 24 (0100)" },
+  { id: "course-1", label: "  8   (0100)", monospace: true },
+  { id: "course-2", label: "  8   (0200)", monospace: true },
+  { id: "course-3", label: " 16", monospace: true },
+  { id: "course-4", label: "190DD", monospace: true },
 ];
 const courseColumns = [
   { id: "course-1", complete: false },
   { id: "course-2", complete: true },
   { id: "course-3", complete: true },
+  { id: "course-4", complete: false },
 ];
 
 const AssignmentsInteractive = ({ initiallyHidden }) => {

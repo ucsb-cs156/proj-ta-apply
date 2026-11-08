@@ -72,8 +72,13 @@ with three additions:
 | 5 | `Released: {date}` or `Not released yet` | visibility is not "admins only" | the Allocation Visibility modal (three radio options); and a separate link **(see allocations)** → the quarter's Combined Allocation page (issue #358; it was the Courses page) |
 | 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page, the same as under step 7 |
 | 7 | `Closed: {date faculty rankings closed}`; before that `Deadline: {facultyRankingDeadline}` if a deadline is set, else `Not closed yet` | reviews closed after having been open | the Close Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page |
-| 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page; and a separate link **(see assignments)** → the recruitment's assignments page, `/recruitments/:id/assignments` (issue #358; it was the Courses page), the same as under step 9 |
-| 9 | `Released: {date hiring decisions released}` or `Not released yet`, followed by the reopening note below when it applies | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the published Assignments page; and a separate link **(see assignments)** → the recruitment's assignments page (issue #358) |
+| 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the admin Assignments page, `/admin/recruitments/:id/assignments`, where the assignments are made; and a separate link **Make Assignments** → the same page (issue #317; until then the link read **(see assignments)** and went to the read-only page, the same as under step 9) |
+| 9 | `Released: {date hiring decisions released}` or `Not released yet`, followed by the reopening note below when it applies | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the read-only assignments page, `/recruitments/:id/assignments`; and, published or not, a separate link **View Assignments** → that read-only page (issue #358 sent it there; issue #317 named it; before publishing the page says the assignments are not published yet) |
+
+Steps 8 and 9 both concern assignments, so their links are worded to tell the two pages apart
+(issue #317): **Make Assignments** is the admin page where candidates are assigned to slots, **View
+Assignments** the read-only page with the two layouts that admins and faculty share. The same two
+words label the card's two assignment buttons, so the diagram and the button row agree.
 
 The counts and links under the boxes come from the same steps endpoint as the labels. **n courses**
 counts the recruitment's courses that have not been removed. **n draft applications** (step 2) counts the recruitment's draft applications, the same number as the card's draft button. **n applications** (step 4) counts the real,
@@ -97,8 +102,10 @@ note **"Tentative; part of the hiring process has been reopened"** under its dat
 closed there is no note; the box also never says "Final", because a later reopening is always
 possible.
 
-The hiring target keeps its default of 1 (it is a divisor in the budget and ratio figures, so it is
-never null); the diagram therefore always shows `Hiring Target: n`.
+The hiring target is never null (it is a divisor in the budget and ratio figures), so the diagram
+always shows `Hiring Target: n`. It starts at 1, or, since issue #384, at the target of the same
+type's recruitment in the most recent earlier quarter when there is one (see "The budget of a new
+quarter" below).
 
 The dates for steps 1, 5, 7 and 9 are not stored today; the backend will store them (created
 at, allocations released at = the first time visibility left "admins only", faculty review
@@ -121,6 +128,25 @@ quarter has neither, which the home page never shows). The cards are grouped by
 quarter, in the order each quarter first appears in the sorted list, so the budget card moves with
 its quarter; sorting by anything other than Quarter therefore keeps a quarter's cards together
 instead of interleaving them.
+
+## The budget of a new quarter (issue #384)
+
+A quarter's `budgets` row is created the first time anything needs it, which since issue #363 is
+usually when a recruitment of the quarter first gets a course (Populate, Add by enroll code, or a
+removed course coming back), and otherwise when an admin first opens `/admin/budget/QXX`. Both
+paths go through one method, `BudgetCreationService.findOrCreate(quarter)`, so the row is built
+the same way whichever comes first: as a copy of the most recent earlier quarter's budget, the one
+with the largest `YYYYQ` smaller than the new quarter's (a summer with no budget is skipped). Copied
+are the three fund lines, the four cost and fund figures of #388 (`taCostPerQuarter`,
+`ulaRateDollarsPerHour`, `estimatedHoursPerULAPerQuarter`, `giftFundsForASEs`) and the conversion
+factor `conversionTAtoULA`; the two version counters are not, so the new row starts at 0 like any
+other. With no earlier budget on file the row has the defaults (zero lines, empty costs, factor 3).
+
+The hiring targets stay on the recruitments, so they are copied when a recruitment is created
+(`RecruitmentsController.postRecruitment`, which both the Create Recruitment form and Developer
+Mode's auto-create post to): the new TA recruitment's target is the TA recruitment's in the most
+recent earlier quarter that has one, the ULA's the ULA's, and 1 when there is none. Changing a
+later quarter's figures never touches the earlier quarter's.
 
 ## The Combined Allocation page (issue #358)
 
@@ -151,8 +177,17 @@ Courses pages" below).
   Allocation. A column starting with TA exists only when the quarter has a TA
   recruitment, and likewise ULA. The descriptive columns are the same course for a section in both
   recruitments: the TA row is used, the ULA row when there is no TA row. **Course Number** has a
-  stacked heading ("Course" over "Number") and a cell 13 characters wide (`13ch`, monospaced), the
-  width of the widest UCSB course number, `XXXXXXX 999XX`.
+  stacked heading ("Course" over "Number") and a cell 11 characters wide (`11ch`, monospaced), the
+  width of the widest CMPSC course number, `CMPSC 190DD` (issue #383; it was `13ch` for the API's
+  padded `XXXXXXX 999XX`). The cell shows the number without the API's eight-column subject area
+  padding but with its digits still right-justified in three columns (`compactCourseNumber`), so
+  `CMPSC   8` and `CMPSC 190DD` line up.
+- **Stacked type headings** (issue #383): each type's Allocation, Unrounded Allocation and Delta
+  headings put the type (TA or ULA) at the headings' full size over the other words, each on its
+  own line at 70% (`stackedLead` in `columnStyles.tsx`: TA / Allocation; TA / Unrounded /
+  Allocation; TA / Delta), so each column is no wider than its one widest word. The whole phrase
+  stays the heading's text and its `title`, so sorting, hiding, screen readers and tests see
+  "TA Unrounded Allocation" as before.
 - **Showing and hiding columns**: every heading except Course Number has the small "hide" link, and
   a **Columns** menu has Show All, Show None and a box per column except Course Number, which is
   always shown. The choice is kept per quarter in local storage (key
@@ -231,9 +266,25 @@ under the same key and the two warn each other. The Budget page keeps its "TA/UL
 Courses page" links (shown when the allocations do not add up to the target) and its "Combined
 allocations" header link; the recruitment cards' "Courses" button is unchanged. In the Recruitment
 Steps diagram (`RecruitmentStepsService`), step 3's "Allocations" title link and step 5's "(see
-allocations)" link go to `/admin/allocations/QXX`, and steps 8 and 9's "(see assignments)" links go
+allocations)" link go to `/admin/allocations/QXX`, and steps 8 and 9's "(see assignments)" links went
 to `/recruitments/:id/assignments` (they went to the Courses edit page and the view-only Courses
-page before).
+page before); issue #317 then replaced them with "Make Assignments" under step 8 (to
+`/admin/recruitments/:id/assignments`) and "View Assignments" under step 9 (to
+`/recruitments/:id/assignments`).
+
+### The leftmost headings of the Recruitment Courses table (issue #386)
+
+On both Recruitment Courses pages (and on the faculty Courses page, which uses the same
+`RecruitmentCourseTable`), the ranking-count column's heading is **Faculty Rankings**, on two lines
+("Faculty" over "Rankings") in the smaller heading font that the other stacked headings use (80%,
+`stacked()` in `columnStyles.tsx`); the Columns menu and its "hide" link still call the column
+"Rankings". The **Course Number** heading is stacked the same way ("Course" over "Number"), as on
+the Combined Allocation page, and the column is about a fifth narrower than it was. Its width is set
+by the widest thing in it, which was its one-line totals footer, "Total Course Count: n", not the
+heading or any course number; so that footer is now stacked too ("Total Course Count:" over the
+number, in the same 80% font), and the cell holds the course number in an inline block exactly
+`COURSE_NUMBER_WIDTH` (`13ch`, monospaced) wide, the width of the widest UCSB course number, the same
+cell as the Combined Allocation table's. The course numbers themselves keep their full size.
 
 ## The new recruitment card layout
 
@@ -247,8 +298,12 @@ The card becomes much wider to hold the diagram. From top to bottom:
    recent TA recruitment and the most recent ULA recruitment are expanded by default; every
    other recruitment's panel starts collapsed.
 4. **A compressed set of buttons**: **Courses**, **Draft Applications** (added by issue #296; see
-   `DraftApplicationsDesign.md`) and **Applications** (renamed from "Review
-   Applications"). Everything else the card offered moves:
+   `DraftApplicationsDesign.md`), **Applications** (renamed from "Review
+   Applications"), and since issue #317 **Make Assignments** (→ `/admin/recruitments/:id/assignments`,
+   the page where candidates are assigned to slots) and **View Assignments** (→
+   `/recruitments/:id/assignments`, the read-only page; shown whether or not the assignments are
+   published, and the page says so until they are). Issue #390 adds a right-aligned **Change
+   History** button after them. Everything else the card offered moves:
    - **Test Application** moves to the Applications page.
    - **Download CSV** moves to near the top of the Applications page and is renamed
      **Download Applications as CSV**.
@@ -258,7 +313,8 @@ The card becomes much wider to hold the diagram. From top to bottom:
    - The lifecycle buttons (Open/Close Applications, Open/Close Faculty Reviews, Publish
      Assignments) are reached through the diagram's links; their confirmation modals are
      unchanged.
-   - **Assignments** and **Published Assignments** are reached through steps 8 and 9.
+   - **Assignments** and **Published Assignments** are reached through steps 8 and 9 (and, since
+     issue #317, through the **Make Assignments** and **View Assignments** buttons as well).
 
 ## Increments
 

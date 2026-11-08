@@ -515,7 +515,12 @@ describe("Help pages (issue #140)", () => {
     );
     // Issue #358 follow-up: the panel moved from the bottom of the Courses edit page.
     expect(publish).toHaveTextContent(
-      "Once published, the top of the Assignments page says so instead, with a link to the published page; the recruitment card shows an Assignments Published badge",
+      "Once published, the top of the Assignments page says so instead, with a link to the published page; the recruitment card shows an Assignments Published badge beside its View Assignments button",
+    );
+    // Issue #317: the button is View Assignments, and it is there before publishing too.
+    expect(publish).not.toHaveTextContent("Published Assignments button");
+    expect(publish).toHaveTextContent(
+      "button (instructors see an Assignments button on their card), and publishing is written to the recruitment's change history.",
     );
     expect(publish).not.toHaveTextContent("Courses page");
     expect(publish).toHaveTextContent(
@@ -528,14 +533,19 @@ describe("Help pages (issue #140)", () => {
     ).toBeTruthy();
     const buttons = screen.getByTestId("HelpAdminsPage-recruitment-buttons");
     const published = [...buttons.querySelectorAll("li")].find((li) =>
-      li.textContent.startsWith("Published Assignments."),
+      li.textContent.startsWith("View Assignments."),
     );
     expect(published).toHaveTextContent(
-      "Shown once Publish Assignments has been clicked at the top of the Assignments page",
+      "until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet",
     );
     expect(
       within(published).getByRole("link", { name: "publishing" }),
     ).toHaveAttribute("href", "#publish-assignments");
+    expect(
+      [...buttons.querySelectorAll("li")].some((li) =>
+        li.textContent.startsWith("Published Assignments."),
+      ),
+    ).toBe(false);
   });
 
   test("the admins page explains the Budget for Quarter page and its three lines", async () => {
@@ -575,6 +585,10 @@ describe("Help pages (issue #140)", () => {
     // Issue #388: the cost per ULA is computed, and the other funds count in the total.
     expect(heading.nextElementSibling).toHaveTextContent(
       "the estimated cost per ULA per quarter, which is not entered but computed, the rate times the hours",
+    );
+    // Issue #384: a new quarter's budget is copied from the most recent earlier quarter's.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "A new quarter's budget starts as a copy of the most recent earlier quarter's: its costs, funds and conversion factor, and each recruitment's hiring target from the same type of recruitment in that quarter; change whatever differs.",
     );
     expect(lines).toHaveTextContent(
       "its estimated cost per position (for ULAs, the computed rate times hours), the funds are the four lines added",
@@ -638,7 +652,10 @@ describe("Help pages (issue #140)", () => {
       "A column that starts with TA is not shown when the quarter has no TA recruitment, and one that starts with ULA is not shown when it has no ULA recruitment.",
     );
     expect(columns).toHaveTextContent(
-      "just wide enough for the longest UCSB course number, 13 characters",
+      "just wide enough for the longest CMPSC course number, 11 characters (such as CMPSC 190DD)",
+    );
+    expect(columns).toHaveTextContent(
+      "Each type's Allocation, Unrounded Allocation and Delta headings are stacked, TA or ULA over the other words in smaller type",
     );
     expect(columns).toHaveTextContent("Summer Session");
     expect(columns).toHaveTextContent("Total Course Count");
@@ -1672,6 +1689,10 @@ describe("Help pages (issue #140)", () => {
     expect(assignments).toHaveTextContent(
       "Assignments on a recruitment card opens a table with the same fields as the rankings CSV",
     );
+    // Issue #355: how the page names a lecture.
+    expect(assignments).toHaveTextContent(
+      "A lecture is named by its course number alone (16, 5A), with the section added only when the recruitment has more than one section of that course (8 (0100), 8 (0200)), as in the rankings CSV; the headings, the dropdown and the Columns menu all use these names, in a fixed-width font with the numbers lined up.",
+    );
     const assignmentColumns = screen.getByTestId(
       "HelpAdminsPage-assignment-columns",
     );
@@ -1937,8 +1958,12 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[7]).toMatch(
       /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
     );
+    // Issue #317: the card's Make Assignments and View Assignments buttons.
+    expect(buttons[7]).toMatch(
+      /The card's Make Assignments button opens it, as does step 8 of the diagram\.$/,
+    );
     expect(buttons[8]).toMatch(
-      /^Published Assignments\. Shown once Publish Assignments has been clicked at the top of the Assignments page: the read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\./,
+      /^View Assignments\. The read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\. The card's View Assignments button and step 9 of the diagram open it; until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet\.$/,
     );
     expect(buttons[9]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
@@ -2235,6 +2260,29 @@ describe("Help pages (issue #140)", () => {
     await screen.findByRole("heading", { level: 1, name: "For TA Applicants" });
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
+
+  // Where the Combined Allocation columns paragraph (issue #383) runs into an emphasised word on
+  // the next line of the source, the two are kept apart by an explicit space; without it the words
+  // would run together ("Course Numberis"). Each phrase here straddles one of those spaces. Only
+  // this paragraph is checked, so an edit elsewhere on the page cannot break the test.
+  test("the Combined Allocation columns paragraph keeps its spaces around emphasised words", async () => {
+    renderPage(<HelpAdminsPage />);
+    const columns = await screen.findByTestId(
+      "HelpAdminsPage-combined-allocations-columns",
+    );
+
+    [
+      "Courses pages: TA Rankings and ULA Rankings",
+      "have been opened), Section, Title,",
+      "Section, Title, Instructor, Email (with",
+      "button), Days, Time, Room, Enrolled, Max",
+      "Room, Enrolled, Max and Status, and,",
+      "a summer quarter, Summer Session. A",
+      "the table shows Total Course Count",
+      "none. Course Number is on two",
+      "Columns menu has Show All, Show None",
+    ].forEach((phrase) => expect(columns).toHaveTextContent(phrase));
+  });
 });
 
 describe("admin Help: the QXX Budget card (issue #357)", () => {
@@ -2249,8 +2297,13 @@ describe("admin Help: the QXX Budget card (issue #357)", () => {
     expect(card).not.toHaveTextContent("greyed out");
     // The diagram's links, described in the same paragraph.
     expect(card).toHaveTextContent(
-      "In the diagram, step 3's Allocations and step 5's (see allocations) links open the quarter's Combined Allocation page, and the (see assignments) links of steps 8 and 9 open the recruitment's assignments page.",
+      "In the diagram, step 3's Allocations and step 5's (see allocations) links open the quarter's Combined Allocation page, and the same two assignment pages are under steps 8 and 9 as Make Assignments and View Assignments.",
     );
+    // Issue #317: the card's two assignment buttons, told apart.
+    expect(card).toHaveTextContent(
+      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (it says the assignments are not published yet until they are).",
+    );
+    expect(card).not.toHaveTextContent("(see assignments)");
     expect(
       within(card).getAllByRole("link", {
         name: "Combined Allocation page",

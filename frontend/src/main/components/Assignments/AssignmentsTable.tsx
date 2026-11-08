@@ -2,6 +2,7 @@ import { Badge, Form } from "react-bootstrap";
 import type { Cell, Row } from "@tanstack/react-table";
 import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import InterestMark from "main/components/Common/InterestMark";
+import { shrinkToContent, stacked } from "main/components/Common/columnStyles";
 import { compareByRankThenPreference } from "main/utils/candidateOrder";
 import { interestDisplay } from "main/utils/interestDisplay";
 import { wideColumnProps } from "main/utils/columnWidths";
@@ -13,23 +14,41 @@ import {
 } from "main/utils/assignmentColumns";
 import {
   assignedCourse,
-  courseLabel,
+  COURSE_LABEL_WIDTH,
   courseOptionLabel,
   identityLabel,
+  labelCourses,
   preferenceFor,
   rankFor,
   type AssignmentCourse,
   type AssignmentRow,
   type Assignments,
+  type LabelledCourse,
 } from "main/utils/assignments";
+
+/** A lecture of the page with the label the page shows for it. */
+type Course = LabelledCourse<AssignmentCourse>;
+
+/** A monospace font with the spaces kept, so the padded labels line up (issue #355). */
+const alignedText = {
+  className: "font-monospace",
+  style: { whiteSpace: "pre" as const },
+};
+
+/**
+ * The dropdown's width: the longest label, plus its two 1px borders, the small select's left
+ * padding (0.5rem) and the room Bootstrap keeps on the right for the arrow (2.25rem). The `ch` is
+ * the dropdown's own monospace font, so the longest label fits exactly (issue #355).
+ */
+const TENTATIVE_SELECT_WIDTH = `calc(${COURSE_LABEL_WIDTH} + 2px + 2.75rem)`;
 
 /** What the Tentative Assignment column's cells need, handed to them through the column's meta. */
 type TentativeColumnMeta = {
   testIdPrefix: string;
-  courses: AssignmentCourse[];
+  courses: Course[];
   onAssign: (applicationId: number, recruitmentCourseId: number | null) => void;
-  /** Wide enough for "CMPSC 156 (0100) - no longer offered" without wrapping (issue #314). */
-  style: { minWidth: string };
+  /** No wider than its dropdown (issue #355): the slack goes to the applicant's columns. */
+  style: { width: string; whiteSpace: "nowrap" };
 };
 
 /**
@@ -47,6 +66,8 @@ function TentativeAssignmentCell({
   return (
     <Form.Select
       size="sm"
+      className={alignedText.className}
+      style={{ ...alignedText.style, width: TENTATIVE_SELECT_WIDTH }}
       aria-label={`Tentative assignment for ${row.identity.email}`}
       // Stryker disable all : a select shows a value with no matching option as blank anyway
       value={
@@ -71,23 +92,35 @@ function TentativeAssignmentCell({
   );
 }
 
+/** The widest of the three count labels; the other two are padded to it so the counts line up. */
+const COUNT_LABEL_WIDTH = "Allocation".length;
+
+/** "  Assigned 1": a count line of a lecture's heading, its label right-aligned under "Allocation". */
+const countLine = (label: string, count: number): string =>
+  `${label.padStart(COUNT_LABEL_WIDTH)} ${count}`;
+
 /**
  * A lecture's column heading: its name, then three lines that stay put whatever the sort order:
  * the allocation, how many applicants are pencilled into it, and how many places are left (in red
- * when more are assigned than allocated).
+ * when more are assigned than allocated). Monospace, as wide as the longest possible name (issue
+ * #355), so every lecture column is the same width and the counts line up under the name.
  */
 function CourseHeader({
   course,
   testIdPrefix,
 }: {
-  course: AssignmentCourse;
+  course: Course;
   testIdPrefix: string;
 }): React.JSX.Element {
   const id = `${testIdPrefix}-course-${course.id}`;
   return (
-    <div style={{ minWidth: "9em" }} data-testid={`${id}-header`}>
+    <div
+      className={alignedText.className}
+      style={{ ...alignedText.style, minWidth: COURSE_LABEL_WIDTH }}
+      data-testid={`${id}-header`}
+    >
       <div data-testid={`${id}-label`}>
-        {courseLabel(course)}
+        {course.label}
         {course.historical && (
           <Badge
             bg="secondary"
@@ -99,16 +132,16 @@ function CourseHeader({
         )}
       </div>
       <div className="small fw-normal" data-testid={`${id}-allocation`}>
-        Allocation {course.allocation}
+        {countLine("Allocation", course.allocation)}
       </div>
       <div className="small fw-normal" data-testid={`${id}-assigned`}>
-        Assigned {course.assigned}
+        {countLine("Assigned", course.assigned)}
       </div>
       <div
         className={`small fw-normal${course.left < 0 ? " text-danger" : ""}`}
         data-testid={`${id}-left`}
       >
-        Left {course.left}
+        {countLine("Left", course.left)}
       </div>
     </div>
   );
@@ -116,9 +149,10 @@ function CourseHeader({
 
 /** What a lecture column's cells need, handed to them through the column's meta. */
 type CourseColumnMeta = {
-  course: AssignmentCourse;
+  course: Course;
   testIdPrefix: string;
-  style: { textAlign: "right" };
+  /** Right-aligned ranks, in a column no wider than its heading (issue #355). */
+  style: { textAlign: "right"; width: string; whiteSpace: "nowrap" };
 };
 
 /**
@@ -173,11 +207,12 @@ export default function AssignmentsTable({
   hideLinks,
   testIdPrefix = "AssignmentsTable",
 }: AssignmentsTableProps): React.JSX.Element {
+  const courses = labelCourses(data.courses);
   const tentativeMeta: TentativeColumnMeta = {
     testIdPrefix,
-    courses: data.courses,
+    courses,
     onAssign,
-    style: { minWidth: "20em" },
+    style: shrinkToContent.style,
   };
   const columns: LegacyColumn[] = [
     ...data.identityHeaders.map((header): LegacyColumn => ({
@@ -189,10 +224,13 @@ export default function AssignmentsTable({
     })),
     {
       id: TENTATIVE_COLUMN_ID,
-      header: "Tentative Assignment",
+      header: stacked("Tentative", "Assignment"),
       accessorFn: (row: AssignmentRow) => {
-        const course = assignedCourse(row, data.courses);
-        return course === null ? "" : courseLabel(course);
+        const course = assignedCourse(row, courses);
+        // Stryker disable next-line StringLiteral : the value is only ever sorted, by the comparison
+        // below, where any other text would also come after every label (they start with a space
+        // or a digit) and tie with itself, so no test can tell a blank from other text
+        return course === null ? "" : course.label;
       },
       // Blank rows last ascending, first descending (issue #348).
       sortingFn: (a: Row<AssignmentRow>, b: Row<AssignmentRow>) =>
@@ -203,7 +241,7 @@ export default function AssignmentsTable({
       cell: TentativeAssignmentCell,
       meta: tentativeMeta,
     },
-    ...data.courses.map((course): LegacyColumn => ({
+    ...courses.map((course): LegacyColumn => ({
       id: courseColumnId(course.id),
       header: <CourseHeader course={course} testIdPrefix={testIdPrefix} />,
       // Stryker disable next-line all : the cell and the sortingFn below read the row, not this
@@ -228,7 +266,7 @@ export default function AssignmentsTable({
       meta: {
         course,
         testIdPrefix,
-        style: { textAlign: "right" },
+        style: { ...shrinkToContent.style, textAlign: "right" },
       } satisfies CourseColumnMeta,
     })),
   ];

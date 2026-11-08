@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,7 +21,6 @@ import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.BudgetCourseRepository;
-import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.time.AppTime;
@@ -32,6 +32,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -44,7 +45,7 @@ public class BudgetCourseServiceTests {
 
   @Autowired BudgetCourseService service;
   @MockitoBean BudgetCourseRepository budgetCourseRepository;
-  @MockitoBean BudgetRepository budgetRepository;
+  @MockitoBean BudgetCreationService budgetCreationService;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
 
@@ -85,7 +86,9 @@ public class BudgetCourseServiceTests {
   @BeforeEach
   public void savesReturnTheirArgument() {
     when(budgetCourseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(budgetRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    // The quarter's budget is the creation service's to find or create (issue #384).
+    when(budgetCreationService.findOrCreate(any()))
+        .thenAnswer(inv -> Budget.builder().quarter(inv.getArgument(0)).build());
     when(budgetCourseRepository.findByQuarterAndEnrollCode(any(), any()))
         .thenReturn(Optional.empty());
     when(recruitmentRepository.findByQuarterAndType(any(), any())).thenReturn(Optional.empty());
@@ -152,13 +155,15 @@ public class BudgetCourseServiceTests {
     assertSame(onFile, service.ensure(Q, row(1L, "07492", false)));
 
     verify(budgetCourseRepository, never()).save(any());
-    verify(budgetRepository, never()).save(any());
+    verify(budgetCreationService, never()).findOrCreate(any());
   }
 
+  /**
+   * The quarter's budget is the row's parent, so a new row first makes sure of it, through the one
+   * place that creates budgets (issue #384: as a copy of the most recent earlier quarter's).
+   */
   @Test
-  public void ensure_creates_the_row_and_the_quarters_budget_when_both_are_missing() {
-    when(budgetRepository.findById(Q)).thenReturn(Optional.empty());
-
+  public void ensure_creates_the_row_and_asks_for_the_quarters_budget_first() {
     BudgetCourse created = service.ensure(Q, row(1L, "07492", false));
 
     assertEquals(Q, created.getQuarter());
@@ -170,20 +175,9 @@ public class BudgetCourseServiceTests {
     assertNull(created.getEnrollmentRefreshedAt());
     assertNull(created.getEnrollmentEstimate());
     assertNull(created.getEnrollmentEstimateSource());
-    verify(budgetCourseRepository).save(created);
-    ArgumentCaptor<Budget> budget = ArgumentCaptor.forClass(Budget.class);
-    verify(budgetRepository).save(budget.capture());
-    assertEquals(Q, budget.getValue().getQuarter());
-  }
-
-  @Test
-  public void ensure_leaves_a_budget_on_file_alone() {
-    when(budgetRepository.findById(Q)).thenReturn(Optional.of(Budget.builder().quarter(Q).build()));
-
-    service.ensure(Q, row(1L, "07492", false));
-
-    verify(budgetCourseRepository).save(any());
-    verify(budgetRepository, never()).save(any());
+    InOrder inOrder = inOrder(budgetCreationService, budgetCourseRepository);
+    inOrder.verify(budgetCreationService).findOrCreate(Q);
+    inOrder.verify(budgetCourseRepository).save(created);
   }
 
   // ---- cache ----
@@ -208,8 +202,6 @@ public class BudgetCourseServiceTests {
 
   @Test
   public void cache_creates_the_row_for_a_section_the_quarter_did_not_have() {
-    when(budgetRepository.findById(Q)).thenReturn(Optional.of(Budget.builder().quarter(Q).build()));
-
     BudgetCourse cached = service.cache(Q, row(1L, "07492", false), section("07492", 100, 150));
 
     assertEquals("07492", cached.getEnrollCode());
@@ -225,7 +217,6 @@ public class BudgetCourseServiceTests {
     BudgetCourse found = figures(1L, "07492", 1, 2, 120);
     BudgetCourse gone = figures(2L, "09999", 3, 4, 50);
     when(budgetCourseRepository.findByQuarter(Q)).thenReturn(List.of(found, gone));
-    when(budgetRepository.findById(Q)).thenReturn(Optional.of(Budget.builder().quarter(Q).build()));
     RecruitmentCourse known = row(1L, "07492", false);
     RecruitmentCourse added = row(3L, "07600", false);
     LocalDateTime before = AppTime.now();
@@ -259,6 +250,8 @@ public class BudgetCourseServiceTests {
     assertFalse(created.getEnrollmentRefreshedAt().isBefore(before));
     assertTrue(saved.getAllValues().contains(found));
     assertTrue(saved.getAllValues().contains(gone));
+    // The one new row made sure of the quarter's budget (issue #384).
+    verify(budgetCreationService, times(1)).findOrCreate(Q);
   }
 
   @Test
@@ -280,7 +273,7 @@ public class BudgetCourseServiceTests {
     assertEquals(0, cached);
     assertEquals(1, found.getEnrollment());
     verify(budgetCourseRepository, times(1)).save(found);
-    verify(budgetRepository, never()).save(any());
+    verify(budgetCreationService, never()).findOrCreate(any());
   }
 
   // ---- isFresh ----
@@ -353,8 +346,6 @@ public class BudgetCourseServiceTests {
 
   @Test
   public void setEstimate_with_null_clears_it_and_creates_the_row_if_need_be() {
-    when(budgetRepository.findById(Q)).thenReturn(Optional.of(Budget.builder().quarter(Q).build()));
-
     BudgetCourse saved = service.setEstimate(Q, row(1L, "07492", false), null);
 
     assertEquals("07492", saved.getEnrollCode());

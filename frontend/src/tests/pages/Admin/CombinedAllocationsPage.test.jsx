@@ -282,8 +282,8 @@ describe("CombinedAllocationsPage tests", () => {
       screen.queryByTestId("CombinedAllocationsPage-conversionTAtoULA"),
     ).toBeNull();
     expect(screen.queryByText("Cost per TA")).toBeNull();
-    expect(screen.getByText("ULA Allocation")).toBeInTheDocument();
-    expect(screen.queryByText("TA Allocation")).toBeNull();
+    expect(screen.getByTitle("ULA Allocation")).toBeInTheDocument();
+    expect(screen.queryByTitle("TA Allocation")).toBeNull();
     expect(
       screen.queryByTestId("CombinedAllocationTable-header-aseRatio"),
     ).toBeNull();
@@ -306,8 +306,8 @@ describe("CombinedAllocationsPage tests", () => {
     expect(
       screen.queryByTestId("CombinedAllocationsPage-conversionTAtoULA"),
     ).toBeNull();
-    expect(screen.getByText("TA Allocation")).toBeInTheDocument();
-    expect(screen.queryByText("ULA Allocation")).toBeNull();
+    expect(screen.getByTitle("TA Allocation")).toBeInTheDocument();
+    expect(screen.queryByTitle("ULA Allocation")).toBeNull();
     expect(
       screen.queryByTestId("CombinedAllocationTable-header-aseRatio"),
     ).toBeNull();

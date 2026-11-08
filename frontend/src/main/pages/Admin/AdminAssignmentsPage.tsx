@@ -202,12 +202,18 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           }}
           testId="AdminAssignmentsPage-multiple-tabs-modal"
         />
-        <p data-testid="AdminAssignmentsPage-intro">
-          Every real applicant with each lecture&apos;s ranking of them. Choose
-          a lecture under <strong>Tentative Assignment</strong> to pencil an
-          applicant in; the counts under each lecture update at once. Tentative
-          assignments are not shown to applicants or faculty at this stage.
-        </p>
+        {/* Issue #355: the wording is the issue's. */}
+        <div data-testid="AdminAssignmentsPage-intro">
+          <p data-testid="AdminAssignmentsPage-intro-purpose">
+            On this page, the admin can assign TAs/ULA applicants to specific
+            courses.
+          </p>
+          <p data-testid="AdminAssignmentsPage-intro-tentative">
+            These assignments are not visible to faculty or applicants until
+            released by the admin, so all assignments are tentative at this
+            stage.
+          </p>
+        </div>
         <p data-testid="AdminAssignmentsPage-count">
           {page.rows.length} applicant{page.rows.length === 1 ? "" : "s"},{" "}
           {page.courses.length} lecture{page.courses.length === 1 ? "" : "s"},{" "}

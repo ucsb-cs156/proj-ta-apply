@@ -308,4 +308,40 @@ describe("ColumnVisibilityControl tests", () => {
       expect(onToggle).toHaveBeenCalledWith("course-2", true);
     });
   });
+
+  describe("monospace labels (issue #355)", () => {
+    test("a monospace choice keeps its spaces in a monospace span; a plain one is plain text", async () => {
+      const onToggle = vi.fn();
+      render(
+        <ColumnVisibilityControl
+          choices={[
+            { id: "email", label: "Email" },
+            { id: "course-1", label: "  8   (0100)", monospace: true },
+            { id: "course-2", label: "190DD (0100)", monospace: false },
+          ]}
+          hidden={[]}
+          onToggle={onToggle}
+          testIdPrefix="Cols"
+        />,
+      );
+      await userEvent.click(screen.getByTestId("Cols-toggle"));
+
+      const aligned = screen.getByTestId("Cols-course-1-label");
+      expect(aligned.textContent).toBe("  8   (0100)");
+      expect(aligned).toHaveClass("font-monospace");
+      expect(aligned.style.whiteSpace).toBe("pre");
+      expect(aligned.closest("label")).toHaveAttribute("for", "Cols-course-1");
+      expect(screen.queryByTestId("Cols-email-label")).toBeNull();
+      expect(screen.queryByTestId("Cols-course-2-label")).toBeNull();
+      expect(screen.getByLabelText("Email")).toBe(
+        screen.getByTestId("Cols-email"),
+      );
+      expect(screen.getByLabelText("190DD (0100)")).toBe(
+        screen.getByTestId("Cols-course-2"),
+      );
+      // The box is still the label's: clicking the aligned text toggles the column.
+      await userEvent.click(aligned);
+      expect(onToggle).toHaveBeenCalledWith("course-1", true);
+    });
+  });
 });

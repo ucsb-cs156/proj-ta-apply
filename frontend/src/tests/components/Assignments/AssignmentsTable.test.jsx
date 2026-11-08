@@ -78,24 +78,28 @@ describe("AssignmentsTable tests (issue #179)", () => {
     expect(screen.getByTestId("T-header-classLevel")).toHaveTextContent(
       "Class Level",
     );
-    expect(
-      screen.getByTestId("T-header-tentativeAssignment"),
-    ).toHaveTextContent("Tentative Assignment");
+    // Issue #355: "Tentative" stacked over "Assignment".
+    const tentative = screen.getByTestId("T-header-tentativeAssignment");
+    expect(tentative).toHaveTextContent("Tentative Assignment");
+    const stackedHeading = tentative.querySelector("br").parentElement;
+    expect(stackedHeading.innerHTML).toBe("Tentative <br>Assignment");
+    expect(stackedHeading.style.fontSize).toBe("80%");
 
-    expect(screen.getByTestId("T-course-10-header").style.minWidth).toBe("9em");
     expect(screen.getByTestId("T-course-10-header")).toContainElement(
       screen.getByTestId("T-course-10-left"),
     );
-    expect(screen.getByTestId("T-course-10-label")).toHaveTextContent(
-      "CMPSC 8 (0100)",
-    );
-    expect(screen.getByTestId("T-course-10-allocation")).toHaveTextContent(
+    // Issue #355: no CMPSC, and no section when the course has only one.
+    expect(screen.getByTestId("T-course-10-label").textContent).toBe("  8");
+    expect(screen.getByTestId("T-course-20-label").textContent).toBe(" 16");
+    expect(screen.getByTestId("T-course-10-allocation").textContent).toBe(
       "Allocation 2",
     );
-    expect(screen.getByTestId("T-course-10-assigned")).toHaveTextContent(
-      "Assigned 1",
+    expect(screen.getByTestId("T-course-10-assigned").textContent).toBe(
+      "  Assigned 1",
     );
-    expect(screen.getByTestId("T-course-10-left")).toHaveTextContent("Left 1");
+    expect(screen.getByTestId("T-course-10-left").textContent).toBe(
+      "      Left 1",
+    );
     expect(screen.getByTestId("T-course-10-left")).not.toHaveClass(
       "text-danger",
     );
@@ -122,9 +126,143 @@ describe("AssignmentsTable tests (issue #179)", () => {
     );
     expect(screen.queryByTestId("T-course-10-historical")).toBeNull();
     expect(screen.queryByTestId("T-course-20-historical")).toBeNull();
-    expect(screen.getByTestId("T-course-30-label")).toHaveTextContent(
-      "CMPSC 24 (0100)not offered",
+    expect(screen.getByTestId("T-course-30-label").textContent).toBe(
+      " 24not offered",
     );
+  });
+
+  // ---- issue #355: compact, aligned lecture names and narrower columns ----
+
+  const manyCourses = assignmentsFixtures.taPageManyCourses;
+
+  test("lecture headings carry the section only where a course has two, padded so the parentheses line up", () => {
+    render(
+      <AssignmentsTable
+        data={manyCourses}
+        onAssign={vi.fn()}
+        testIdPrefix="M"
+      />,
+    );
+    expect(
+      manyCourses.courses.map(
+        (course) =>
+          screen.getByTestId(`M-course-${course.id}-label`).textContent,
+      ),
+    ).toEqual([
+      "  5A",
+      "  5B",
+      "  8   (0100)",
+      "  8   (0200)",
+      " 16",
+      "130A",
+      "130B",
+      "190DD (0100)",
+      "190DD (0200)",
+    ]);
+    // The counts line up under the name, their labels right-aligned to "Allocation".
+    expect(screen.getByTestId("M-course-105-allocation").textContent).toBe(
+      "Allocation 1",
+    );
+    expect(screen.getByTestId("M-course-105-assigned").textContent).toBe(
+      "  Assigned 2",
+    );
+    expect(screen.getByTestId("M-course-105-left").textContent).toBe(
+      "      Left -1",
+    );
+  });
+
+  test("a lecture heading is monospace with its spaces kept, and as wide as the longest possible name", () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    const header = screen.getByTestId("T-course-10-header");
+    expect(header).toHaveClass("font-monospace");
+    expect(header.style.whiteSpace).toBe("pre");
+    expect(header.style.minWidth).toBe("12ch");
+    // The column itself is no wider than its heading: the slack goes to the applicant's columns.
+    const th = screen.getByTestId("T-header-course-10");
+    expect(th.style.width).toBe("1%");
+    expect(th.style.whiteSpace).toBe("nowrap");
+    expect(th.style.textAlign).toBe("right");
+    const td = screen.getByTestId("T-cell-row-0-col-course-10");
+    expect(td.style.width).toBe("1%");
+    expect(td.style.whiteSpace).toBe("nowrap");
+    expect(td.style.textAlign).toBe("right");
+  });
+
+  test("the dropdown lists the same names, their spaces non-breaking, in a monospace select just wide enough for the longest", () => {
+    render(
+      <AssignmentsTable
+        data={manyCourses}
+        onAssign={vi.fn()}
+        testIdPrefix="M"
+      />,
+    );
+    const select = screen.getByTestId("M-cell-row-0-tentative-select");
+    const nbsp = (text) => text.replaceAll(" ", "\u00a0");
+    expect(
+      [...select.querySelectorAll("option")].map(
+        (option) => option.textContent,
+      ),
+    ).toEqual([
+      "",
+      nbsp("  5A"),
+      nbsp("  5B"),
+      nbsp("  8   (0100)"),
+      nbsp("  8   (0200)"),
+      nbsp(" 16"),
+      nbsp("130A"),
+      nbsp("130B"),
+      nbsp("190DD (0100)"),
+      nbsp("190DD (0200)"),
+    ]);
+    expect(select).toHaveClass("font-monospace", "form-select-sm");
+    expect(select.style.whiteSpace).toBe("pre");
+    expect(select.style.width).toBe("calc(12ch + 2px + 2.75rem)");
+    expect(select).toHaveValue("101");
+  });
+
+  test("the Tentative Assignment column is no wider than its dropdown (issue #355 replaces the 20em of issue #314)", () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    const th = screen.getByTestId("T-header-tentativeAssignment");
+    expect(th.style.width).toBe("1%");
+    expect(th.style.whiteSpace).toBe("nowrap");
+    expect(th.style.minWidth).toBe("");
+    const td = screen.getByTestId("T-cell-row-0-col-tentativeAssignment");
+    expect(td.style.width).toBe("1%");
+    expect(td.style.whiteSpace).toBe("nowrap");
+    expect(td.style.minWidth).toBe("");
+  });
+
+  test("sorting by Tentative Assignment with the aligned names: course order, two sections in section order, blanks last", async () => {
+    render(
+      <AssignmentsTable
+        data={manyCourses}
+        onAssign={vi.fn()}
+        testIdPrefix="M"
+      />,
+    );
+    // Ada is in 5A, Grace and Alan in 16, the blank applicant in 8 (0100).
+    await userEvent.click(
+      screen.getByTestId("M-header-tentativeAssignment-sort-header"),
+    );
+    expect(emailsInOrder("M")).toEqual([
+      "ada@ucsb.edu",
+      "blank@ucsb.edu",
+      "grace@ucsb.edu",
+      "alan@ucsb.edu",
+    ]);
+    await userEvent.click(
+      screen.getByTestId("M-header-tentativeAssignment-sort-header"),
+    );
+    expect(emailsInOrder("M")).toEqual([
+      "grace@ucsb.edu",
+      "alan@ucsb.edu",
+      "blank@ucsb.edu",
+      "ada@ucsb.edu",
+    ]);
   });
 
   test("cells: identity text, each lecture's rank or blank, centred ranks", () => {
@@ -202,9 +340,9 @@ describe("AssignmentsTable tests (issue #179)", () => {
       ]),
     ).toEqual([
       ["", ""],
-      ["10", "CMPSC 8 (0100)"],
-      ["20", "CMPSC 16 (0100)"],
-      ["30", "CMPSC 24 (0100) - no longer offered"],
+      ["10", "\u00a0\u00a08"],
+      ["20", "\u00a016"],
+      ["30", "\u00a024\u00a0-\u00a0no\u00a0longer\u00a0offered"],
     ]);
     expect(select).toHaveValue("10");
     expect(screen.getByTestId("T-cell-row-1-tentative-select")).toHaveValue(
@@ -245,7 +383,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "blank@ucsb.edu",
     ]);
     expect(screen.getByTestId("T-header-course-10")).toHaveTextContent(
-      "CMPSC 8 (0100)Allocation 2Assigned 1Left 1",
+      "8Allocation 2 Assigned 1 Left 1",
     );
 
     // The second click reverses the order; applicants who tie (Grace and the blank applicant,
@@ -258,7 +396,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "ada@ucsb.edu",
     ]);
     expect(screen.getByTestId("T-header-course-10")).toHaveTextContent(
-      "CMPSC 8 (0100)Allocation 2Assigned 1Left 1",
+      "8Allocation 2 Assigned 1 Left 1",
     );
 
     // A third click clears the sort.
@@ -408,7 +546,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
     await userEvent.click(
       screen.getByTestId("T-header-tentativeAssignment-sort-header"),
     );
-    // Descending: the blank first, then Ada's "CMPSC 8 (0100)".
+    // Descending: the blank first, then Ada's "  8".
     expect(emailsInOrder("T")).toEqual(["blank@ucsb.edu", "ada@ucsb.edu"]);
     // A choice no longer among the options shows as blank in the dropdown.
     expect(selectValuesInOrder("T")).toEqual(["", "10"]);
@@ -438,7 +576,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "GPA (Overall)",
       "Previous ULA Quarters",
       "Tentative Assignment",
-      "CMPSC 156 (0100)Allocation 3Assigned 0Left 3",
+      "156Allocation 3  Assigned 0      Left 3",
     ]);
     expect(
       screen.getByTestId("AssignmentsTable-cell-row-0-col-gpaMajor"),
@@ -505,19 +643,6 @@ describe("AssignmentsTable tests (issue #179)", () => {
       textAlign: "right",
     });
     expect(mark(0, 10)).toHaveAttribute("title", "Applicant's 1st choice");
-  });
-
-  test("the Tentative Assignment column is wide enough for a full lecture name (issue #314)", () => {
-    render(
-      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
-    );
-    // jsdom's computed style does not know min-width, so the style attribute is read directly.
-    expect(
-      screen.getByTestId("T-header-tentativeAssignment").style.minWidth,
-    ).toBe("20em");
-    expect(
-      screen.getByTestId("T-cell-row-0-col-tentativeAssignment").style.minWidth,
-    ).toBe("20em");
   });
 
   test("hidden columns leave out heading and cells and nothing else (issue #314)", () => {

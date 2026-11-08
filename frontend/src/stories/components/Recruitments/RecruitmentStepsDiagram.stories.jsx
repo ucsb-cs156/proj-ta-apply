@@ -53,10 +53,18 @@ LiveRankingsClosed.args = {
   steps: recruitmentStepsFixtures.rankingsClosed,
 };
 
+/**
+ * Assigning, not yet published: under step 8 "Make Assignments" opens the admin page where the
+ * assignments are made (so does the title); under step 9 "View Assignments" opens the read-only
+ * page, while the title opens the publish dialog (issue #317).
+ */
 export const LiveAssigning = Template.bind({});
 LiveAssigning.args = { type: "TA", steps: recruitmentStepsFixtures.assigning };
 
-/** Every step done; step 9 links to the published Assignments page. */
+/**
+ * Every step done; step 9's title now links to the published Assignments page, the same page as
+ * its "View Assignments" link.
+ */
 export const LivePublished = Template.bind({});
 LivePublished.args = { type: "TA", steps: recruitmentStepsFixtures.published };
 

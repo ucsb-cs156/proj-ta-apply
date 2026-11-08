@@ -30,8 +30,12 @@ const withUnderBoxLines = (id, steps, qyy = "W26") => {
     },
   ];
   const seeCourses = (text) => [{ text, href: courses(id) }];
-  const seeAssignments = [
-    { text: "(see assignments)", href: `/recruitments/${id}/assignments` },
+  // Issue #317: step 8 names the admin page where assignments are made, step 9 the read-only page.
+  const makeAssignments = [
+    { text: "Make Assignments", href: `/admin/recruitments/${id}/assignments` },
+  ];
+  const viewAssignments = [
+    { text: "View Assignments", href: `/recruitments/${id}/assignments` },
   ];
   const underBox = {
     1: { detail: "4 courses", links: seeCourses("(see courses)") },
@@ -44,8 +48,8 @@ const withUnderBoxLines = (id, steps, qyy = "W26") => {
     },
     6: { links: seeCourses("(see rankings)") },
     7: { links: seeCourses("(see rankings)") },
-    8: { links: seeAssignments },
-    9: { links: seeAssignments },
+    8: { links: makeAssignments },
+    9: { links: viewAssignments },
   };
   return steps.map((step) => ({ ...step, ...underBox[step.number] }));
 };

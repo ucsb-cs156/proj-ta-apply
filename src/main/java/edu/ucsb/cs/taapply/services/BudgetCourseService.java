@@ -1,6 +1,5 @@
 package edu.ucsb.cs.taapply.services;
 
-import edu.ucsb.cs.taapply.entity.Budget;
 import edu.ucsb.cs.taapply.entity.BudgetCourse;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
@@ -8,7 +7,6 @@ import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.BudgetCourseRepository;
-import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.time.AppTime;
@@ -41,7 +39,7 @@ public class BudgetCourseService {
   public static final Duration TTL = Duration.ofHours(24);
 
   @Autowired BudgetCourseRepository budgetCourseRepository;
-  @Autowired BudgetRepository budgetRepository;
+  @Autowired BudgetCreationService budgetCreationService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
 
@@ -87,20 +85,15 @@ public class BudgetCourseService {
   }
 
   private BudgetCourse fresh(String quarter, RecruitmentCourse row) {
-    ensureBudget(quarter);
+    // The quarter's budget is the row's parent: created, as a copy of the most recent earlier
+    // quarter's (issue #384), if this is the first time anything needs it.
+    budgetCreationService.findOrCreate(quarter);
     return BudgetCourse.builder()
         .quarter(quarter)
         .enrollCode(row.getEnrollCode())
         .courseId(row.getCourseId())
         .section(row.getSection())
         .build();
-  }
-
-  /** Creates the quarter's budget, at zero, if this is the first time anything needs it. */
-  private void ensureBudget(String quarter) {
-    if (budgetRepository.findById(quarter).isEmpty()) {
-      budgetRepository.save(Budget.builder().quarter(quarter).build());
-    }
   }
 
   /**

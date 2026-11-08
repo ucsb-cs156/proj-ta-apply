@@ -378,21 +378,82 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(text).toHaveAttribute("fill", "#0d6efd");
       expect(text).toHaveAttribute("font-size", "11");
       expect(text.style.textDecoration).toBe("underline");
-      // Step 6 has the same link as step 7, and step 8 the same as step 9 (issue #249).
+      // Step 6 has the same link as step 7 (issue #249).
       expect(screen.getByTestId("D-step-6-link-0")).toHaveTextContent(
         "(see rankings)",
       );
-      expect(screen.getByTestId("D-step-8-link-0")).toHaveTextContent(
-        "(see assignments)",
+      // Issue #317: steps 8 and 9 name their two different assignment pages.
+      const make = screen.getByTestId("D-step-8-link-0");
+      expect(make).toHaveTextContent("Make Assignments");
+      expect(make).toHaveAttribute("href", "/admin/recruitments/1/assignments");
+      await userEvent.click(make);
+      expect(onNavigate).toHaveBeenLastCalledWith(
+        "/admin/recruitments/1/assignments",
       );
-      const assignments = screen.getByTestId("D-step-9-link-0");
-      expect(assignments).toHaveTextContent("(see assignments)");
+      const view = screen.getByTestId("D-step-9-link-0");
+      expect(view).toHaveTextContent("View Assignments");
+      expect(view).toHaveAttribute("href", "/recruitments/1/assignments");
       // Issue #358: the assignments are on the assignments page.
-      await userEvent.click(assignments);
+      await userEvent.click(view);
       expect(onNavigate).toHaveBeenLastCalledWith(
         "/recruitments/1/assignments",
       );
+      expect(svg().textContent).not.toContain("(see assignments)");
     });
+
+    test.each([
+      ["before publishing", recruitmentStepsFixtures.assigning, false],
+      ["after publishing", recruitmentStepsFixtures.published, true],
+    ])(
+      "steps 8 and 9 read Make Assignments and View Assignments %s (issue #317)",
+      (_, steps, published) => {
+        renderLive(steps);
+
+        // Step 8's title and its link both open the admin page where assignments are made.
+        expect(screen.getByTestId("D-step-8-title")).toHaveTextContent(
+          "8. Assign Candidates to Slots",
+        );
+        expect(screen.getByTestId("D-step-8-link")).toHaveAttribute(
+          "href",
+          "/admin/recruitments/1/assignments",
+        );
+        expect(screen.getByTestId("D-step-8-link-0")).toHaveTextContent(
+          "Make Assignments",
+        );
+        expect(screen.getByTestId("D-step-8-link-0")).toHaveAttribute(
+          "href",
+          "/admin/recruitments/1/assignments",
+        );
+        // Step 9's link is always to the read-only page; its title joins it once published and
+        // opens the publish dialog before that.
+        expect(screen.getByTestId("D-step-9-title")).toHaveTextContent(
+          "9. Release Hiring Decisions",
+        );
+        expect(screen.getByTestId("D-step-9-link-0")).toHaveTextContent(
+          "View Assignments",
+        );
+        expect(screen.getByTestId("D-step-9-link-0")).toHaveAttribute(
+          "href",
+          "/recruitments/1/assignments",
+        );
+        if (published) {
+          expect(screen.getByTestId("D-step-9-link")).toHaveAttribute(
+            "href",
+            "/recruitments/1/assignments",
+          );
+          expect(
+            screen.queryByTestId("D-step-9-action"),
+          ).not.toBeInTheDocument();
+        } else {
+          expect(screen.getByTestId("D-step-9-action")).toHaveAttribute(
+            "aria-label",
+            "Release Hiring Decisions: open the publishAssignments dialog",
+          );
+          expect(screen.queryByTestId("D-step-9-link")).not.toBeInTheDocument();
+        }
+        expect(screen.queryByText("(see assignments)")).not.toBeInTheDocument();
+      },
+    );
 
     test("step 1 has its course count, then the (see courses) link beneath it", async () => {
       const { onNavigate } = renderLive(recruitmentStepsFixtures.fresh);

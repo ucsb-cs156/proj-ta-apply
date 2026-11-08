@@ -5,17 +5,27 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.AriaRole;
 import edu.ucsb.cs.taapply.WebTestCase;
+import edu.ucsb.cs.taapply.entity.Budget;
 import edu.ucsb.cs.taapply.entity.Course;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
@@ -33,6 +43,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ResourceLock("port-8080")
 @Import(IntegrationConfig.class)
 public class RecruitmentsWebIT extends WebTestCase {
+
+  @Autowired BudgetRepository budgetRepository;
 
   /** The recruitments are on the admin's home page (issue #141). */
   private void goToRecruitments() {
@@ -126,6 +138,11 @@ public class RecruitmentsWebIT extends WebTestCase {
     }
   }
 
+  /** YYYYQ to the QYY the pages use in their URLs, as the frontend's yyyyqToQyy: 20271 is W27. */
+  private static String qyy(String yyyyq) {
+    return "WSMF".charAt(yyyyq.charAt(4) - '1') + yyyyq.substring(2, 4);
+  }
+
   @Test
   public void creating_a_recruitment_fills_it_with_only_the_matching_courses() throws Exception {
     // 156 wants a TA; 130A wants only a ULA.
@@ -173,6 +190,86 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-2-col-courseId"))
         .not()
         .isVisible();
+  }
+
+  /**
+   * Issue #384: a new quarter's budget, created when the first recruitment of the quarter gets a
+   * course, starts as a copy of the most recent earlier quarter's, and the new recruitment's hiring
+   * target as the one of the same type's recruitment in that quarter.
+   */
+  @Test
+  public void a_new_quarters_budget_and_hiring_target_start_as_a_copy_of_the_last_quarters()
+      throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").needsTa(true).build());
+    // A quarter long past, planned in full: 12 TAs and every figure of the budget entered.
+    recruitmentRepository.save(
+        Recruitment.builder()
+            .quarter("20232")
+            .type(RecruitmentType.TA)
+            .applicationStatus(ApplicationStatus.CLOSED)
+            .tentativeOpeningDate(LocalDate.of(2023, 1, 5))
+            .primaryConsiderationDate(LocalDate.of(2023, 1, 20))
+            .totalHiringTarget(12)
+            .build());
+    budgetRepository.save(
+        Budget.builder()
+            .quarter("20232")
+            .unrestrictedBudget(new BigDecimal("699315.00"))
+            .tasOnlyBudget(new BigDecimal("0.00"))
+            .ulasOnlyBudget(new BigDecimal("166667.00"))
+            .taCostPerQuarter(new BigDecimal("13110.00"))
+            .ulaRateDollarsPerHour(new BigDecimal("29.38"))
+            .estimatedHoursPerULAPerQuarter(new BigDecimal("110.00"))
+            .giftFundsForASEs(new BigDecimal("32200.00"))
+            .conversionTAtoULA(2.5)
+            .version(7)
+            .conversionVersion(3)
+            .build());
+
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    // The form proposes an upcoming quarter, so the new recruitment is later than 20232.
+    createTaRecruitment();
+    // The form's POST is asynchronous: wait for the new recruitment to be on file.
+    Recruitment created = null;
+    for (int i = 0; i < 40 && created == null; i++) {
+      page.waitForTimeout(250);
+      created =
+          recruitmentRepository.findAllByOrderByQuarterDescTypeAsc().stream()
+              .filter(r -> !"20232".equals(r.getQuarter()))
+              .findFirst()
+              .orElse(null);
+    }
+    assertNotNull(created, "the form created the recruitment");
+    assertEquals(12, created.getTotalHiringTarget(), "the TA target is the earlier TA's");
+
+    // Populate fills its courses, which is what creates the quarter's budget (issue #363).
+    openPage(page, "/admin/recruitments/" + created.getId() + "/courses");
+    waitFor(page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId"));
+    Budget copy = budgetRepository.findById(created.getQuarter()).orElseThrow();
+    assertEquals(2.5, copy.getConversionTAtoULA());
+    assertEquals(new BigDecimal("13110.00"), copy.getTaCostPerQuarter());
+    // The counters are the new row's own.
+    assertEquals(0, copy.getVersion());
+    assertEquals(0, copy.getConversionVersion());
+
+    // The Budget page of the new quarter shows the copied figures and the copied target.
+    openPage(page, "/admin/budget/" + qyy(created.getQuarter()));
+    assertThat(page.getByTestId("BudgetPage-bottom-line")).isVisible();
+    assertThat(page.getByTestId("BudgetPage-taCostPerQuarter")).hasValue("13110");
+    assertThat(page.getByTestId("BudgetPage-ulaRateDollarsPerHour")).hasValue("29.38");
+    assertThat(page.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter")).hasValue("110");
+    assertThat(page.getByTestId("BudgetPage-giftFundsForASEs")).hasValue("32200");
+    assertThat(page.getByTestId("BudgetPage-unrestrictedBudget")).hasValue("699315");
+    assertThat(page.getByTestId("BudgetPage-tasOnlyBudget")).hasValue("0");
+    assertThat(page.getByTestId("BudgetPage-ulasOnlyBudget")).hasValue("166667");
+    assertThat(page.getByTestId("BudgetPage-ulaCost")).hasText("$3,231.80");
+    assertThat(page.getByTestId("BudgetPage-target-ta-input")).hasValue("12");
+    assertThat(page.getByTestId("BudgetPage-target-ula-none")).isVisible();
+    // The earlier quarter's budget is untouched.
+    assertEquals(7, budgetRepository.findById("20232").orElseThrow().getVersion());
   }
 
   /** Issue #125: an admin can add an unflagged course's lecture by its enroll code. */
@@ -508,6 +605,78 @@ public class RecruitmentsWebIT extends WebTestCase {
         download.suggestedFilename().matches("rankings-\\d+\\.csv"), download.suggestedFilename());
     org.junit.jupiter.api.Assertions.assertTrue(
         firstLine.startsWith("\"firstName\",\"lastName\",\"email\""), firstLine);
+  }
+
+  /**
+   * Issue #317: the card's button row is Courses, Draft Applications, Applications, Make
+   * Assignments and View Assignments, and steps 8 and 9 of the diagram carry the same two names,
+   * each to its own page: the admin page where assignments are made, and the read-only page.
+   */
+  @Test
+  public void the_card_and_steps_8_and_9_tell_make_assignments_from_view_assignments()
+      throws Exception {
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    String card = "HomePageLoggedIn-admin-card-0-";
+    waitFor(page.getByTestId(card + "courses-button"));
+    Long id = recruitmentRepository.findAll().iterator().next().getId();
+
+    // The five buttons, in order, in one footer; reviews have not started, so no CSV button.
+    Locator footer = page.getByTestId(card + "courses-button").locator("..");
+    assertThat(footer.getByRole(AriaRole.LINK))
+        .hasText(
+            new String[] {
+              "Courses",
+              "Draft Applications",
+              "Applications",
+              "Make Assignments",
+              "View Assignments"
+            });
+    assertThat(page.getByTestId(card + "make-assignments-button"))
+        .hasAttribute("href", "/admin/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(card + "view-assignments-button"))
+        .hasAttribute("href", "/recruitments/" + id + "/assignments");
+
+    // The diagram (expanded on the latest TA recruitment): step 8's title and link both open the
+    // admin page; step 9's link opens the read-only page while its title, before publishing, is
+    // the publish dialog.
+    String steps = card + "steps-steps-step-";
+    assertThat(page.getByTestId(steps + "8-link"))
+        .hasAttribute("href", "/admin/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(steps + "8-link-0")).hasText("Make Assignments");
+    assertThat(page.getByTestId(steps + "8-link-0"))
+        .hasAttribute("href", "/admin/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(steps + "9-link-0")).hasText("View Assignments");
+    assertThat(page.getByTestId(steps + "9-link-0"))
+        .hasAttribute("href", "/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(steps + "9-action")).isVisible();
+    org.junit.jupiter.api.Assertions.assertEquals(0, page.getByTestId(steps + "9-link").count());
+    org.junit.jupiter.api.Assertions.assertEquals(0, page.getByText("(see assignments)").count());
+
+    // Make Assignments lands on the admin assignments page.
+    page.getByTestId(card + "make-assignments-button").click();
+    waitFor(page.getByTestId("AdminAssignmentsPage-count"));
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).isVisible();
+    org.junit.jupiter.api.Assertions.assertTrue(
+        page.url().endsWith("/admin/recruitments/" + id + "/assignments"), page.url());
+
+    // View Assignments lands on the read-only page, which says they are not published yet.
+    goToRecruitments();
+    waitFor(page.getByTestId(card + "view-assignments-button"));
+    page.getByTestId(card + "view-assignments-button").click();
+    waitFor(page.getByTestId("PublishedAssignmentsPage"));
+    assertThat(page.getByTestId("PublishedAssignmentsPage")).isVisible();
+    org.junit.jupiter.api.Assertions.assertTrue(
+        page.url().endsWith("/recruitments/" + id + "/assignments"), page.url());
+    // The page's query retries the 400 a few times before it shows the error, so allow for that.
+    assertThat(page.getByTestId("PublishedAssignmentsPage-error"))
+        .containsText(
+            "have not been published",
+            new com.microsoft.playwright.assertions.LocatorAssertions.ContainsTextOptions()
+                .setTimeout(30000));
   }
 
   /** Issue #141: the recruitments live on the admin's home page, and the old page is gone. */

@@ -14,7 +14,6 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
-import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.BudgetService.QuarterSummary;
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -36,7 +34,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 public class BudgetServiceTests {
 
   @Autowired BudgetService service;
-  @MockitoBean BudgetRepository budgetRepository;
+  @MockitoBean BudgetCreationService budgetCreationService;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean BudgetCourseService budgetCourseService;
@@ -94,8 +92,9 @@ public class BudgetServiceTests {
   @BeforeEach
   public void nothingOnFile() {
     when(recruitmentRepository.findByQuarterAndType(any(), any())).thenReturn(Optional.empty());
-    when(budgetRepository.findById(any())).thenReturn(Optional.empty());
-    when(budgetRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    // No budget on file and none to copy: the creation service hands out a fresh one (issue #384).
+    when(budgetCreationService.findOrCreate(any()))
+        .thenAnswer(inv -> Budget.builder().quarter(inv.getArgument(0)).build());
   }
 
   // ---- quarters ----
@@ -131,11 +130,12 @@ public class BudgetServiceTests {
     EntityNotFoundException e =
         assertThrows(EntityNotFoundException.class, () -> service.budgetFor(Q));
     assertEquals("No recruitment for quarter 20264", e.getMessage());
-    verify(budgetRepository, never()).save(any());
+    verify(budgetCreationService, never()).findOrCreate(any());
   }
 
+  /** The row is the creation service's to find or create (issue #384); this only asks for it. */
   @Test
-  public void a_quarter_with_only_a_ta_recruitment_gets_a_budget_created_at_zero() {
+  public void a_quarter_with_only_a_ta_recruitment_gets_its_budget_from_the_creation_service() {
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
         .thenReturn(Optional.of(recruitment(5L, Q, RecruitmentType.TA, 1)));
 
@@ -143,9 +143,7 @@ public class BudgetServiceTests {
 
     assertEquals(Q, budget.getQuarter());
     assertEquals(BigDecimal.ZERO, budget.getUnrestrictedBudget());
-    assertEquals(BigDecimal.ZERO, budget.getTasOnlyBudget());
-    assertEquals(BigDecimal.ZERO, budget.getUlasOnlyBudget());
-    verify(budgetRepository).save(budget);
+    verify(budgetCreationService).findOrCreate(Q);
   }
 
   @Test
@@ -153,10 +151,9 @@ public class BudgetServiceTests {
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.ULA))
         .thenReturn(Optional.of(recruitment(6L, Q, RecruitmentType.ULA, 1)));
     Budget onFile = budget("1000.00", "0", "250.50");
-    when(budgetRepository.findById(Q)).thenReturn(Optional.of(onFile));
+    when(budgetCreationService.findOrCreate(Q)).thenReturn(onFile);
 
     assertSame(onFile, service.budgetFor(Q));
-    verify(budgetRepository, never()).save(any());
   }
 
   // ---- summary ----
@@ -169,10 +166,8 @@ public class BudgetServiceTests {
         .thenReturn(Optional.of(ta));
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.ULA))
         .thenReturn(Optional.of(ula));
-    when(budgetRepository.findById(Q))
-        .thenReturn(
-            Optional.of(
-                budget("100000", "20000.25", "5000", "12000.00", "29.38", "110", "32200.00")));
+    when(budgetCreationService.findOrCreate(Q))
+        .thenReturn(budget("100000", "20000.25", "5000", "12000.00", "29.38", "110", "32200.00"));
     // Removed rows and missing estimates: neither counts.
     when(recruitmentCourseRepository.findByRecruitmentId(5L))
         .thenReturn(
@@ -231,8 +226,8 @@ public class BudgetServiceTests {
     Recruitment ula = recruitment(6L, Q, RecruitmentType.ULA, 4);
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.ULA))
         .thenReturn(Optional.of(ula));
-    when(budgetRepository.findById(Q))
-        .thenReturn(Optional.of(budget("10", "20.5", "30.25", null, "29.38", null, "100")));
+    when(budgetCreationService.findOrCreate(Q))
+        .thenReturn(budget("10", "20.5", "30.25", null, "29.38", null, "100"));
     when(recruitmentCourseRepository.findByRecruitmentId(6L)).thenReturn(List.of());
 
     Summary summary = service.summary(Q);
@@ -250,8 +245,8 @@ public class BudgetServiceTests {
     Recruitment ta = recruitment(5L, Q, RecruitmentType.TA, 3);
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
         .thenReturn(Optional.of(ta));
-    when(budgetRepository.findById(Q))
-        .thenReturn(Optional.of(budget("0", "0", "0", "1000", "29.38", "110", null)));
+    when(budgetCreationService.findOrCreate(Q))
+        .thenReturn(budget("0", "0", "0", "1000", "29.38", "110", null));
     when(recruitmentCourseRepository.findByRecruitmentId(5L)).thenReturn(List.of());
 
     Summary summary = service.summary(Q);
@@ -277,7 +272,7 @@ public class BudgetServiceTests {
     when(recruitmentCourseRepository.findByRecruitmentId(5L)).thenReturn(List.of());
     when(recruitmentCourseRepository.findByRecruitmentId(6L)).thenReturn(List.of());
     Budget budget = budget("0", "0", "0", null, "10", "5", null);
-    when(budgetRepository.findById(Q)).thenReturn(Optional.of(budget));
+    when(budgetCreationService.findOrCreate(Q)).thenReturn(budget);
 
     Summary before = service.summary(Q);
     assertNull(before.ta().avgCostPerPosition());
@@ -299,8 +294,8 @@ public class BudgetServiceTests {
     Recruitment ta = recruitment(5L, Q, RecruitmentType.TA, 1);
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
         .thenReturn(Optional.of(ta));
-    when(budgetRepository.findById(Q))
-        .thenReturn(Optional.of(budget("1", "2", "3", null, null, null, "0.005")));
+    when(budgetCreationService.findOrCreate(Q))
+        .thenReturn(budget("1", "2", "3", null, null, null, "0.005"));
     when(recruitmentCourseRepository.findByRecruitmentId(5L)).thenReturn(List.of());
 
     assertEquals(new BigDecimal("6.01"), service.summary(Q).totalFunds());
@@ -347,11 +342,9 @@ public class BudgetServiceTests {
     assertEquals(new BigDecimal("0.00"), summary.totalExpenses());
     assertEquals(new BigDecimal("0.00"), summary.totalFunds());
     assertEquals(new BigDecimal("0.00"), summary.bottomLine());
-    // The budget was created for the first read.
-    ArgumentCaptor<Budget> saved = ArgumentCaptor.forClass(Budget.class);
-    verify(budgetRepository).save(saved.capture());
-    assertEquals(Q, saved.getValue().getQuarter());
-    assertSame(saved.getValue(), summary.budget());
+    // The budget is the one the creation service found or created for the first read.
+    verify(budgetCreationService).findOrCreate(Q);
+    assertEquals(Q, summary.budget().getQuarter());
   }
 
   @Test
@@ -359,7 +352,7 @@ public class BudgetServiceTests {
     Recruitment ula = recruitment(6L, Q, RecruitmentType.ULA, 4);
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.ULA))
         .thenReturn(Optional.of(ula));
-    when(budgetRepository.findById(Q)).thenReturn(Optional.of(budget("10", "20.5", "30.25")));
+    when(budgetCreationService.findOrCreate(Q)).thenReturn(budget("10", "20.5", "30.25"));
     when(recruitmentCourseRepository.findByRecruitmentId(6L)).thenReturn(List.of());
 
     Summary summary = service.summary(Q);
@@ -377,8 +370,8 @@ public class BudgetServiceTests {
     Recruitment ta = recruitment(5L, Q, RecruitmentType.TA, 4);
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
         .thenReturn(Optional.of(ta));
-    when(budgetRepository.findById(Q))
-        .thenReturn(Optional.of(budget("0", "0", "0", "0.005", null, null, null)));
+    when(budgetCreationService.findOrCreate(Q))
+        .thenReturn(budget("0", "0", "0", "0.005", null, null, null));
     when(recruitmentCourseRepository.findByRecruitmentId(5L))
         .thenReturn(List.of(row(1L, 0, 1, false), row(2L, null, 0, false)));
     assertNull(service.summary(Q).ta().studentsPerPosition());

@@ -82,16 +82,21 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the same fields as the rankings CSV: who each applicant is, a{" "}
           <strong>Tentative Assignment</strong> dropdown, then one column per
           lecture holding that lecture&apos;s faculty ranking of the applicant.
-          Test applications and applications the student cancelled are left out.
-          Every column sorts. Sorting by a lecture uses the same order as the
-          faculty ranking page: the ranked applicants first, from rank 1 down,
-          then the unranked ones by the student&apos;s preference (1st choice,
-          2nd choice, Enthusiastic, Would Consider, then Not Interested/Not
-          Applicable); applicants who tie stay in the order they applied.
-          Clicking the heading again reverses that order. Each lecture column is
-          ordered by that lecture&apos;s own rank and preference, so an
-          applicant ranked for one lecture but not another is placed separately
-          in each. Under each lecture&apos;s name the heading shows its{" "}
+          A lecture is named by its course number alone (16, 5A), with the
+          section added only when the recruitment has more than one section of
+          that course (8 (0100), 8 (0200)), as in the rankings CSV; the
+          headings, the dropdown and the Columns menu all use these names, in a
+          fixed-width font with the numbers lined up. Test applications and
+          applications the student cancelled are left out. Every column sorts.
+          Sorting by a lecture uses the same order as the faculty ranking page:
+          the ranked applicants first, from rank 1 down, then the unranked ones
+          by the student&apos;s preference (1st choice, 2nd choice,
+          Enthusiastic, Would Consider, then Not Interested/Not Applicable);
+          applicants who tie stay in the order they applied. Clicking the
+          heading again reverses that order. Each lecture column is ordered by
+          that lecture&apos;s own rank and preference, so an applicant ranked
+          for one lecture but not another is placed separately in each. Under
+          each lecture&apos;s name the heading shows its{" "}
           <strong>Allocation</strong>, how many applicants are{" "}
           <strong>Assigned</strong> to it so far, and how many places are{" "}
           <strong>Left</strong>, in red when more have been assigned than
@@ -148,8 +153,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           always shows the current ones, but it is best to wait until most are
           settled. Once published, the top of the Assignments page says so
           instead, with a link to the published page; the recruitment card shows
-          an <strong>Assignments Published</strong> badge and a{" "}
-          <strong>Published Assignments</strong> button (instructors see an{" "}
+          an <strong>Assignments Published</strong> badge beside its{" "}
+          <strong>View Assignments</strong> button (instructors see an{" "}
           <strong>Assignments</strong> button on their card), and publishing is
           written to the recruitment&apos;s change history. The page offers{" "}
           <em>One Row per course</em> (course number, instructor, instructor
@@ -326,18 +331,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
         </p>
         <p>
           On a recruitment&apos;s own <strong>Courses</strong> page, after
-          faculty reviews have started, the leftmost <strong>Rankings</strong>{" "}
-          column shows how many eligible applications have an entered ranking
-          for each section. The number links to the ranking page, read-only for
-          you unless you are that course&apos;s instructor of record; sections
-          with no entered rankings link with a zero. The <strong>Email</strong>{" "}
-          column uses the instructor&apos;s catalog-name mapping from the
-          Instructors page. Use its <em>Copy</em> control for one address, or{" "}
-          <em>Copy emails of faculty with zero rankings</em> to prepare a
-          reminder. Bulk reminders include only mapped addresses for the courses
-          currently visible, deduplicated when an instructor has multiple
-          sections. Turn on <em>Show removed courses</em> to include removed
-          sections in both the table and reminder list.
+          faculty reviews have started, the leftmost{" "}
+          <strong>Faculty Rankings</strong> column (<em>Rankings</em> in the
+          Columns menu) shows how many eligible applications have an entered
+          ranking for each section. The number links to the ranking page,
+          read-only for you unless you are that course&apos;s instructor of
+          record; sections with no entered rankings link with a zero. The{" "}
+          <strong>Email</strong> column uses the instructor&apos;s catalog-name
+          mapping from the Instructors page. Use its <em>Copy</em> control for
+          one address, or <em>Copy emails of faculty with zero rankings</em> to
+          prepare a reminder. Bulk reminders include only mapped addresses for
+          the courses currently visible, deduplicated when an instructor has
+          multiple sections. Turn on <em>Show removed courses</em> to include
+          removed sections in both the table and reminder list.
         </p>
         <p id="course-columns" data-testid="HelpAdminsPage-course-columns">
           The table can be trimmed to what you need: the{" "}
@@ -496,6 +502,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
           which the <em>Combined allocations</em> link at the top of the Budget
           page opens. The enrollment totals and ratios are over each
           recruitment&apos;s own courses, which may differ between TAs and ULAs.
+          A new quarter&apos;s budget starts as a copy of the most recent
+          earlier quarter&apos;s: its costs, funds and conversion factor, and
+          each recruitment&apos;s hiring target from the same type of
+          recruitment in that quarter; change whatever differs.
         </p>
         <p id="budget-lines" data-testid="HelpAdminsPage-budget-lines">
           The three budget lines are the <strong>unrestricted</strong> temp
@@ -583,9 +593,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           recruitment. For a section in both recruitments these describe the
           same course, and the TA recruitment&apos;s row is used, or the ULA
           recruitment&apos;s when there is none. <strong>Course Number</strong>{" "}
-          is on two lines and just wide enough for the longest UCSB course
-          number, 13 characters. Every heading except Course Number has a small{" "}
-          <em>hide</em> link, and the <strong>Columns</strong> menu has{" "}
+          is on two lines and just wide enough for the longest CMPSC course
+          number, 11 characters (such as CMPSC 190DD); the digits of the numbers
+          line up. Each type&apos;s Allocation, Unrounded Allocation and Delta
+          headings are stacked, TA or ULA over the other words in smaller type,
+          so the columns are narrow. Every heading except Course Number has a
+          small <em>hide</em> link, and the <strong>Columns</strong> menu has{" "}
           <em>Show All</em>, <em>Show None</em> and a box for each column except
           Course Number, which is always shown. Your choice is remembered in
           this browser, separately for each quarter; until you make one,
@@ -670,15 +683,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
           (collapsed to a one-line summary on older cards, expanded on the
           latest TA and ULA recruitments). Its boxes carry the lifecycle
-          actions, and the card has Courses, Draft Applications and Applications
-          buttons. In the diagram, step 3&apos;s <em>Allocations</em> and step
-          5&apos;s <em>(see allocations)</em> links open the quarter&apos;s{" "}
+          actions, and the card has Courses, Draft Applications, Applications,
+          Make Assignments and View Assignments buttons:{" "}
+          <strong>Make Assignments</strong> opens the page where candidates are
+          assigned to slots, and <strong>View Assignments</strong> the read-only
+          assignments page that admins and faculty share (it says the
+          assignments are not published yet until they are). In the diagram,
+          step 3&apos;s <em>Allocations</em> and step 5&apos;s{" "}
+          <em>(see allocations)</em> links open the quarter&apos;s{" "}
           <Link to="#combined-allocations">Combined Allocation page</Link>, and
-          the <em>(see assignments)</em> links of steps 8 and 9 open the
-          recruitment&apos;s assignments page. Above each quarter&apos;s
-          recruitment card, or pair of cards when the quarter has both a TA and
-          a ULA recruitment, is a <strong>QXX Budget</strong> card (for example{" "}
-          <em>W26 Budget</em>) with two buttons:{" "}
+          the same two assignment pages are under steps 8 and 9 as{" "}
+          <em>Make Assignments</em> and <em>View Assignments</em>. Above each
+          quarter&apos;s recruitment card, or pair of cards when the quarter has
+          both a TA and a ULA recruitment, is a <strong>QXX Budget</strong> card
+          (for example <em>W26 Budget</em>) with two buttons:{" "}
           <strong>Budget Planning</strong> opens that quarter&apos;s Budget for
           Quarter page, and one allocation button opens the quarter&apos;s
           Combined Allocation page, where the TA and ULA allocations are edited
@@ -811,14 +829,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <em>Tentative Assignment</em> dropdown on each row for pencilling
             the applicant into a lecture; the{" "}
             <a href="#assignments">Assignments</a> section below has the
-            details. The card reaches it from step 8 of the diagram.
+            details. The card&apos;s <strong>Make Assignments</strong> button
+            opens it, as does step 8 of the diagram.
           </li>
           <li>
-            <strong>Published Assignments.</strong> Shown once{" "}
-            <em>Publish Assignments</em> has been clicked at the top of the
-            Assignments page: the read-only assignments page that admins and
-            faculty share, with its two CSV downloads (see{" "}
-            <a href="#publish-assignments">publishing</a> above).
+            <strong>View Assignments.</strong> The read-only assignments page
+            that admins and faculty share, with its two CSV downloads (see{" "}
+            <a href="#publish-assignments">publishing</a> above). The
+            card&apos;s <strong>View Assignments</strong> button and step 9 of
+            the diagram open it; until <em>Publish Assignments</em> has been
+            clicked at the top of the Assignments page it says the assignments
+            are not published yet.
           </li>
           <li>
             <strong>Delete.</strong> Removes the recruitment, its course list

@@ -15,6 +15,7 @@ import { afterEach, describe, expect, test, vi, beforeEach } from "vitest";
 import CombinedAllocationTable from "main/components/Allocations/CombinedAllocationTable";
 import { combineCourses } from "main/utils/combinedAllocations";
 import { combinedColumnChoices } from "main/utils/combinedColumns";
+import { compactCourseNumber } from "main/utils/columnWidths";
 import fixtures from "fixtures/combinedAllocationsFixtures";
 import { MemoryRouter } from "react-router";
 
@@ -185,10 +186,10 @@ describe("CombinedAllocationTable tests", () => {
       "aseRatio",
       "status",
     ]);
-    expect(screen.getByText("TA Allocation")).toBeInTheDocument();
-    expect(screen.getByText("TA Delta")).toBeInTheDocument();
-    expect(screen.getByText("ULA Allocation")).toBeInTheDocument();
-    expect(screen.getByText("ULA Delta")).toBeInTheDocument();
+    expect(screen.getByTitle("TA Allocation")).toBeInTheDocument();
+    expect(screen.getByTitle("TA Delta")).toBeInTheDocument();
+    expect(screen.getByTitle("ULA Allocation")).toBeInTheDocument();
+    expect(screen.getByTitle("ULA Delta")).toBeInTheDocument();
     expect(
       screen.getByTestId("CombinedAllocationTable-header-taRatio"),
     ).toHaveTextContent("TA:student ratio");
@@ -479,6 +480,54 @@ describe("CombinedAllocationTable tests", () => {
     expect(heading("aseRatio").querySelector("br")).not.toBeNull();
   });
 
+  // Issue #383: the type columns' headings are the type at full size over the rest of the words,
+  // each on its own line in a smaller font, so the columns are no wider than one word.
+  test.each([
+    ["taAllocation", "TA", ["Allocation"]],
+    ["taUnroundedAllocation", "TA", ["Unrounded", "Allocation"]],
+    ["taDelta", "TA", ["Delta"]],
+    ["ulaAllocation", "ULA", ["Allocation"]],
+    ["ulaUnroundedAllocation", "ULA", ["Unrounded", "Allocation"]],
+    ["ulaDelta", "ULA", ["Delta"]],
+  ])(
+    "the %s heading is %s at full size over %s in a smaller font",
+    (id, lead, rest) => {
+      renderTable();
+      const heading = screen.getByTestId(
+        `CombinedAllocationTable-header-${id}`,
+      );
+      const phrase = [lead, ...rest].join(" ");
+
+      expect(heading).toHaveTextContent(phrase);
+      expect(screen.getByRole("columnheader", { name: phrase })).toBe(heading);
+      const stack = heading.querySelector(`[title="${phrase}"]`);
+      expect(stack.style.display).toBe("inline-block");
+      expect(stack.style.fontSize).toBe("");
+      expect(stack.firstChild.nodeType).toBe(Node.TEXT_NODE);
+      expect(stack.firstChild.textContent).toBe(lead);
+      const lines = [...stack.querySelectorAll("span")];
+      expect(lines.map((line) => line.textContent)).toEqual(rest);
+      lines.forEach((line) => {
+        expect(line.style.display).toBe("block");
+        expect(line.style.fontSize).toBe("70%");
+      });
+      expect(heading.querySelector("br")).toBeNull();
+    },
+  );
+
+  test("a stacked type heading still sorts its column, and hides with it", async () => {
+    renderTable({ hiddenColumns: ["ulaDelta"] });
+    expect(headerIds()).not.toContain("ulaDelta");
+    expect(screen.queryByTitle("ULA Delta")).toBeNull();
+
+    await userEvent.click(screen.getByTitle("TA Allocation"));
+
+    expect(
+      screen.getByTestId("CombinedAllocationTable-header-taAllocation"),
+    ).toHaveTextContent("TA Allocation");
+    expect(courseOrder()).toEqual(["CMPSC 156", "CMPSC 8", "CMPSC 24"]);
+  });
+
   test("the cells are laid out like the Recruitment Courses table's", () => {
     renderTable();
 
@@ -745,7 +794,7 @@ describe("CombinedAllocationTable: the columns of the allocations pages (issue #
     expect(ids).toContain("instructor");
   });
 
-  test("the Course Number heading is stacked and its cell is 13 characters wide", () => {
+  test("the Course Number heading is stacked and its cell is 11 characters wide (issue #383)", () => {
     renderFull();
 
     const heading = screen.getByTestId(
@@ -758,9 +807,27 @@ describe("CombinedAllocationTable: the columns of the allocations pages (issue #
     );
     const cellText = td(2, "courseId").querySelector("span");
     const style = cellText.getAttribute("style");
-    expect(style).toContain("min-width: 13ch");
+    expect(style).toContain("min-width: 11ch");
     expect(style).toContain("font-family: monospace");
     expect(style).toContain("display: inline-block");
+    expect(style).toContain("white-space: pre");
+  });
+
+  test("the course numbers lose the API's subject area padding but keep their digits lined up", () => {
+    renderFull();
+
+    const shown = screen
+      .getAllByTestId(/^CombinedAllocationTable-cell-row-\d+-col-courseId$/)
+      .map((e) => e.querySelector("span").textContent);
+    expect(shown).toEqual(
+      combineCourses(fx.taCourses, fx.ulaCourses).map((course) =>
+        compactCourseNumber(course.courseId),
+      ),
+    );
+    expect(shown).toContain("CMPSC   8");
+    expect(shown).toContain("CMPSC 156");
+    expect(shown.some((text) => text.includes("  8"))).toBe(true);
+    shown.forEach((text) => expect(text.length).toBeLessThanOrEqual(11));
   });
 
   test("with the hide links, every heading but Course Number has one that hides it", async () => {

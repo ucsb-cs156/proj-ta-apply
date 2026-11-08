@@ -21,6 +21,14 @@ public interface RecruitmentRepository extends CrudRepository<Recruitment, Long>
   List<Recruitment> findAllByOrderByQuarterDescTypeAsc();
 
   /**
+   * The recruitment of the given type in the most recent quarter before the given one (issue #384):
+   * the one with the largest YYYYQ smaller than {@code quarter}, which the fixed width of YYYYQ
+   * makes a plain string comparison. Empty when no earlier quarter has one of that type.
+   */
+  Optional<Recruitment> findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(
+      String quarter, RecruitmentType type);
+
+  /**
    * Counts the recruitment's assignments version up by one, but only if it is still {@code
    * expected} (issue #280). The comparison and the increment are one statement, so two saves cannot
    * both pass. Returns 1 if it did, 0 if the version had moved (or there is no such recruitment).

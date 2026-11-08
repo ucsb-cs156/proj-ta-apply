@@ -1,6 +1,7 @@
+import type { ColumnChoice } from "main/components/Common/ColumnVisibilityControl";
 import {
-  courseLabel,
   identityLabel,
+  labelCourses,
   type Assignments,
 } from "main/utils/assignments";
 
@@ -16,19 +17,21 @@ export const courseColumnId = (courseId: number): string =>
 
 /**
  * Every column an admin may hide on the Assignments page, in table order, with the label the
- * Columns menu shows (issue #314): each of the applicant's identity columns and each lecture. The
- * Tentative Assignment column is the point of the page, so it is not listed.
+ * Columns menu shows (issue #314): each of the applicant's identity columns and each lecture, the
+ * lectures named as the table heads them and the dropdown lists them, in a monospace font (issue
+ * #355). The Tentative Assignment column is the point of the page, so it is not listed.
  */
 export const assignmentColumnChoices = (
   data: Pick<Assignments, "identityHeaders" | "courses">,
-): { id: string; label: string }[] => [
+): ColumnChoice[] => [
   ...data.identityHeaders.map((header) => ({
     id: header,
     label: identityLabel(header),
   })),
-  ...data.courses.map((course) => ({
+  ...labelCourses(data.courses).map((course) => ({
     id: courseColumnId(course.id),
-    label: courseLabel(course),
+    label: course.label,
+    monospace: true,
   })),
 ];
 
@@ -48,7 +51,8 @@ export const courseColumnStatus = (
 /**
  * The Tentative Assignment column's order (issue #348), on the text its cells show: a blank (no
  * tentative assignment) counts as greater than every assignment, and the assignments are in
- * natural order, so "CMPSC 8" comes before "CMPSC 16". Ascending therefore lists the assigned rows
+ * natural order, so "  8" comes before " 16" and "130A" (the padding that aligns the labels sorts
+ * before a digit, as the numbers would anyway). Ascending therefore lists the assigned rows
  * first and the blank rows last; TanStack inverts this for descending, which lists the blank rows
  * first and the assigned rows after them, in reverse. Rows that tie keep the order they came in.
  */
