@@ -61,6 +61,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
 <li><a href="#SORTABLE" tabindex="0">SORTABLE</a></li>
+<li><a href="#HIRING_TARGET" tabindex="0">HIRING_TARGET</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -71,6 +72,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#forRecruitment(java.lang.Long,int,int,java.lang.String,java.lang.String)" tabindex="0">forRecruitment(Long, int, int, String, String)</a></li>
+<li><a href="#hiringTargetsForQuarter(java.lang.String,int,int,java.lang.String,java.lang.String)" tabindex="0">hiringTargetsForQuarter(String, int, int, String, String)</a></li>
 </ol>
 </li>
 </ol>
@@ -92,8 +94,10 @@ loadScripts(document, 'script');</script>
 @RestController
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">RecruitmentAuditTrailController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
-<div class="block">The audit trail of changes to recruitments themselves, read-only, one recruitment at a time
-(issue #139). The trail of an admin's changes to individual applications is <a href="AuditTrailController.html" title="class in edu.ucsb.cs.taapply.controller"><code>AuditTrailController</code></a>.</div>
+<div class="block">The audit trail of changes to recruitments themselves, read-only: one recruitment at a time
+(issue #139), or the hiring-target changes of a quarter's TA and ULA recruitments together, for
+the Budget page (issue #391). The trail of an admin's changes to individual applications is
+<a href="AuditTrailController.html" title="class in edu.ucsb.cs.taapply.controller"><code>AuditTrailController</code></a>.</div>
 </div>
 </section>
 <section class="summary">
@@ -107,6 +111,17 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Class</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="RecruitmentAuditTrailController.HiringTargetAuditTrailPageDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.HiringTargetAuditTrailPageDTO</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">One page of hiring-target changes, in the same shape as <a href="RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO.html" title="class in edu.ucsb.cs.taapply.controller"><code>RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO</code></a>.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="RecruitmentAuditTrailController.HiringTargetChangeDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.HiringTargetChangeDTO</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">One hiring-target change, as the Budget page's Audit Trail card shows it (issue #391): a row of
+the trail plus the type (TA or ULA) of the recruitment it belongs to.</div>
+</div>
 <div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO</a></code></div>
 <div class="col-last even-row-color">
@@ -124,9 +139,14 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#SORTABLE" class="member-name-link">SORTABLE</a></code></div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#HIRING_TARGET" class="member-name-link">HIRING_TARGET</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">The <code>whatChanged</code> of a change to a recruitment's hiring target (issue #391).</div>
+</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#SORTABLE" class="member-name-link">SORTABLE</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">The columns the page may sort by: every column of the table.</div>
 </div>
 </div>
@@ -163,6 +183,13 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sort,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;direction)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RecruitmentAuditTrailController.HiringTargetAuditTrailPageDTO.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.HiringTargetAuditTrailPageDTO</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hiringTargetsForQuarter(java.lang.String,int,int,java.lang.String,java.lang.String)" class="member-name-link">hiringTargetsForQuarter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ int&nbsp;page,
+ int&nbsp;size,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sort,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;direction)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -189,6 +216,23 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">SORTABLE</span></div>
 <div class="block">The columns the page may sort by: every column of the table.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="HIRING_TARGET">
+<h3>HIRING_TARGET</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">HIRING_TARGET</span></div>
+<div class="block">The <code>whatChanged</code> of a change to a recruitment's hiring target (issue #391).</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.RecruitmentAuditTrailController.HIRING_TARGET">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
 </div>
 </section>
 </li>
@@ -224,6 +268,25 @@ loadScripts(document, 'script');</script>
 @GetMapping("/all")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO</a></span>&nbsp;<span class="element-name">forRecruitment</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ @RequestParam(defaultValue="0")
+ int&nbsp;page,
+ @RequestParam(defaultValue="10")
+ int&nbsp;size,
+ @RequestParam(defaultValue="id")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sort,
+ @RequestParam(defaultValue="desc")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;direction)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="hiringTargetsForQuarter(java.lang.String,int,int,java.lang.String,java.lang.String)">
+<h3>hiringTargetsForQuarter</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@GetMapping("/hiringTargets")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RecruitmentAuditTrailController.HiringTargetAuditTrailPageDTO.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.HiringTargetAuditTrailPageDTO</a></span>&nbsp;<span class="element-name">hiringTargetsForQuarter</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  @RequestParam(defaultValue="0")
  int&nbsp;page,
  @RequestParam(defaultValue="10")
