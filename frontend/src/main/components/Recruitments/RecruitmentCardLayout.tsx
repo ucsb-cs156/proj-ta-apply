@@ -30,10 +30,12 @@ type RecruitmentCardLayoutProps = {
 /**
  * The admin recruitment card as docs/design/AdminUserInterfaceDesign.md lays it out: the header
  * with quarter, type and status badges; the dates panel with its Change button beside the Faculty
- * Ranking Deadline; the live Recruitment Steps diagram in its collapsible panel; and the two
- * remaining buttons, Courses, Draft Applications and Applications, and Download Rankings CSV once faculty rankings have been opened. Everything the old card footer offered is reached
- * through the diagram or has moved to the Courses and Applications pages. Designed in Storybook
- * first (issue #230); issue #233 puts it on the home page.
+ * Ranking Deadline; the live Recruitment Steps diagram in its collapsible panel; and the button
+ * row: Courses, Draft Applications, Applications, Make Assignments (the admin page where candidates
+ * are assigned to slots) and View Assignments (the read-only assignments page), and Download
+ * Rankings CSV once faculty rankings have been opened (issues #358, #317). Everything else the old
+ * card footer offered is reached through the diagram or has moved to the Courses and Applications
+ * pages. Designed in Storybook first (issue #230); issue #233 puts it on the home page.
  */
 export default function RecruitmentCardLayout({
   recruitment,
@@ -157,6 +159,21 @@ export default function RecruitmentCardLayout({
           data-testid={id("applications-button")}
         >
           Applications
+        </Link>
+        {/* Issue #317: the two assignment pages, named as steps 8 and 9 of the diagram name them. */}
+        <Link
+          className="btn btn-outline-success"
+          to={`/admin/recruitments/${recruitment.id}/assignments`}
+          data-testid={id("make-assignments-button")}
+        >
+          Make Assignments
+        </Link>
+        <Link
+          className="btn btn-success"
+          to={`/recruitments/${recruitment.id}/assignments`}
+          data-testid={id("view-assignments-button")}
+        >
+          View Assignments
         </Link>
         {/* The faculty rankings exist only once the review has been opened (issue #358). */}
         {recruitment.reviewStatus !== "NotStarted" && (

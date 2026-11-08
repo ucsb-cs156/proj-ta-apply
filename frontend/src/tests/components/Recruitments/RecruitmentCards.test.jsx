@@ -131,8 +131,8 @@ const stepsFor = (recruitment) => ({
       href: `/admin/recruitments/${recruitment.id}/assignments`,
       links: [
         {
-          text: "(see assignments)",
-          href: `/recruitments/${recruitment.id}/assignments`,
+          text: "Make Assignments",
+          href: `/admin/recruitments/${recruitment.id}/assignments`,
         },
       ],
     },
@@ -143,7 +143,7 @@ const stepsFor = (recruitment) => ({
       action: "publishAssignments",
       links: [
         {
-          text: "(see assignments)",
+          text: "View Assignments",
           href: `/recruitments/${recruitment.id}/assignments`,
         },
       ],
@@ -559,7 +559,7 @@ describe("RecruitmentCards tests", () => {
     );
   });
 
-  test("the footer has just the Courses, Draft Applications and Applications buttons, in that order, leading to that recruitment's pages", () => {
+  test("the footer has the Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons, in that order, leading to that recruitment's pages", () => {
     renderCards(three.map((r) => ({ ...r, reviewStatus: "NotStarted" })));
     // Card 2 is id 2.
     const courses = screen.getByTestId("Cards-card-2-courses-button");
@@ -583,6 +583,16 @@ describe("RecruitmentCards tests", () => {
     );
     expect(applications).toHaveClass("btn", "btn-info");
 
+    // Issue #317: the page where assignments are made, and the read-only one where they are seen.
+    const make = screen.getByTestId("Cards-card-2-make-assignments-button");
+    expect(make).toHaveTextContent("Make Assignments");
+    expect(make).toHaveAttribute("href", "/admin/recruitments/2/assignments");
+    expect(make).toHaveClass("btn", "btn-outline-success");
+    const view = screen.getByTestId("Cards-card-2-view-assignments-button");
+    expect(view).toHaveTextContent("View Assignments");
+    expect(view).toHaveAttribute("href", "/recruitments/2/assignments");
+    expect(view).toHaveClass("btn", "btn-success");
+
     // Everything else the footer once held is reached through the diagram or has moved (#234).
     const footer = screen
       .getByTestId("Cards-card-2-card")
@@ -592,6 +602,8 @@ describe("RecruitmentCards tests", () => {
       courses,
       drafts,
       applications,
+      make,
+      view,
     ]);
     expect(footer).not.toContainElement(
       screen.getByTestId("Cards-card-2-delete-button"),

@@ -52,8 +52,16 @@ public class RecruitmentStepsServiceTests {
 
   private static final List<Link> SEE_ALLOCATIONS =
       List.of(new Link("(see allocations)", ALLOCATIONS));
-  private static final List<Link> SEE_ASSIGNMENTS =
-      List.of(new Link("(see assignments)", "/recruitments/7/assignments"));
+
+  /**
+   * Issue #317: step 8's link is to the admin page where assignments are made, step 9's to the
+   * read-only page where they are seen, each named like the card's button.
+   */
+  private static final List<Link> MAKE_ASSIGNMENTS =
+      List.of(new Link("Make Assignments", "/admin/recruitments/7/assignments"));
+
+  private static final List<Link> VIEW_ASSIGNMENTS =
+      List.of(new Link("View Assignments", "/recruitments/7/assignments"));
 
   /** A recruitment that has only just been created: nothing done but step 1. */
   private static Recruitment fresh() {
@@ -499,7 +507,7 @@ public class RecruitmentStepsServiceTests {
             "/admin/recruitments/7/assignments",
             null,
             null,
-            SEE_ASSIGNMENTS,
+            MAKE_ASSIGNMENTS,
             null,
             null),
         step(r, 8));
@@ -537,7 +545,7 @@ public class RecruitmentStepsServiceTests {
             null,
             "publishAssignments",
             null,
-            SEE_ASSIGNMENTS,
+            VIEW_ASSIGNMENTS,
             false,
             "Close Faculty Ranking before releasing hiring decisions."),
         step(fresh(), 9));
@@ -560,7 +568,7 @@ public class RecruitmentStepsServiceTests {
             "/recruitments/7/assignments",
             null,
             null,
-            SEE_ASSIGNMENTS,
+            VIEW_ASSIGNMENTS,
             false,
             null),
         step(r, 9));
@@ -690,7 +698,28 @@ public class RecruitmentStepsServiceTests {
     assertEquals(SEE_ALLOCATIONS, step(fresh(), 5).links());
     assertEquals(SEE_RANKINGS, step(fresh(), 6).links());
     assertEquals(SEE_RANKINGS, step(fresh(), 7).links());
-    assertEquals(SEE_ASSIGNMENTS, step(fresh(), 8).links());
-    assertEquals(SEE_ASSIGNMENTS, step(fresh(), 9).links());
+    assertEquals(MAKE_ASSIGNMENTS, step(fresh(), 8).links());
+    assertEquals(VIEW_ASSIGNMENTS, step(fresh(), 9).links());
+  }
+
+  /**
+   * Issue #317: the two steps are told apart by their links' words and destinations, whether or not
+   * the assignments are published; step 9's title joins its link once they are.
+   */
+  @Test
+  public void steps_8_and_9_say_make_and_view_assignments_before_and_after_publishing() {
+    Recruitment r = fresh();
+    for (boolean published : new boolean[] {false, true}) {
+      r.setAssignmentsPublished(published);
+      Step make = step(r, 8);
+      Step view = step(r, 9);
+      assertEquals("Make Assignments", make.links().get(0).text());
+      assertEquals("/admin/recruitments/7/assignments", make.links().get(0).href());
+      assertEquals(make.href(), make.links().get(0).href());
+      assertEquals("View Assignments", view.links().get(0).text());
+      assertEquals("/recruitments/7/assignments", view.links().get(0).href());
+      assertEquals(published ? "/recruitments/7/assignments" : null, view.href());
+      assertEquals(published ? null : "publishAssignments", view.action());
+    }
   }
 }

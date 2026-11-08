@@ -43,7 +43,9 @@ public class RecruitmentStepsService {
    * @param action the card modal the title opens, instead of {@code href}
    * @param titleLinks step 3 only: the words "Budget" and "Allocations", each its own link
    * @param links the links under the box: "(see courses)", "(see draft applications)", "(see
-   *     applications)", "(see allocations)", "(see rankings)" and "(see assignments)", one per line
+   *     applications)", "(see allocations)" and "(see rankings)", one per line; under step 8 "Make
+   *     Assignments" and under step 9 "View Assignments" (issue #317), the same words as the two
+   *     buttons on the card
    * @param tentative step 9 only: hiring decisions are released but applications or faculty ranking
    *     have been reopened
    * @param blockedReason step 9 only, while not released: the message naming the first prerequisite
@@ -107,9 +109,13 @@ public class RecruitmentStepsService {
                 "(see draft applications)", "/admin/recruitments/" + id + "/draft-applications"));
     List<Link> seeApplications = List.of(new Link("(see applications)", applications));
     List<Link> seeRankings = List.of(new Link("(see rankings)", courses));
-    // The assignments themselves, published or not, are on the recruitment's assignments page.
-    List<Link> seeAssignments =
-        List.of(new Link("(see assignments)", "/recruitments/" + id + "/assignments"));
+    // Issue #317: the two assignment pages are told apart by name. Assignments are made on the
+    // admin page (step 8, the same page its title opens); they are read, published or not, on the
+    // recruitment's read-only assignments page (step 9).
+    String makeAssignments = "/admin/recruitments/" + id + "/assignments";
+    String viewAssignments = "/recruitments/" + id + "/assignments";
+    List<Link> makeAssignmentsLinks = List.of(new Link("Make Assignments", makeAssignments));
+    List<Link> viewAssignmentsLinks = List.of(new Link("View Assignments", viewAssignments));
 
     return new Steps(
         id,
@@ -215,10 +221,10 @@ public class RecruitmentStepsService {
                     ? "Assignment complete"
                     : "Still to assign: " + (target - assigned),
                 null,
-                "/admin/recruitments/" + id + "/assignments",
+                makeAssignments,
                 null,
                 null,
-                seeAssignments,
+                makeAssignmentsLinks,
                 null,
                 null),
             new Step(
@@ -228,10 +234,10 @@ public class RecruitmentStepsService {
                     ? "Released" + datedSuffix(recruitment.getAssignmentsPublishedAt())
                     : "Not released yet",
                 null,
-                published ? "/recruitments/" + id + "/assignments" : null,
+                published ? viewAssignments : null,
                 published ? null : "publishAssignments",
                 null,
-                seeAssignments,
+                viewAssignmentsLinks,
                 HiringDecisions.isTentative(recruitment),
                 published ? null : HiringDecisions.unmetPrerequisite(recruitment, assigned > 0))));
   }

@@ -515,7 +515,12 @@ describe("Help pages (issue #140)", () => {
     );
     // Issue #358 follow-up: the panel moved from the bottom of the Courses edit page.
     expect(publish).toHaveTextContent(
-      "Once published, the top of the Assignments page says so instead, with a link to the published page; the recruitment card shows an Assignments Published badge",
+      "Once published, the top of the Assignments page says so instead, with a link to the published page; the recruitment card shows an Assignments Published badge beside its View Assignments button",
+    );
+    // Issue #317: the button is View Assignments, and it is there before publishing too.
+    expect(publish).not.toHaveTextContent("Published Assignments button");
+    expect(publish).toHaveTextContent(
+      "button (instructors see an Assignments button on their card), and publishing is written to the recruitment's change history.",
     );
     expect(publish).not.toHaveTextContent("Courses page");
     expect(publish).toHaveTextContent(
@@ -528,14 +533,19 @@ describe("Help pages (issue #140)", () => {
     ).toBeTruthy();
     const buttons = screen.getByTestId("HelpAdminsPage-recruitment-buttons");
     const published = [...buttons.querySelectorAll("li")].find((li) =>
-      li.textContent.startsWith("Published Assignments."),
+      li.textContent.startsWith("View Assignments."),
     );
     expect(published).toHaveTextContent(
-      "Shown once Publish Assignments has been clicked at the top of the Assignments page",
+      "until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet",
     );
     expect(
       within(published).getByRole("link", { name: "publishing" }),
     ).toHaveAttribute("href", "#publish-assignments");
+    expect(
+      [...buttons.querySelectorAll("li")].some((li) =>
+        li.textContent.startsWith("Published Assignments."),
+      ),
+    ).toBe(false);
   });
 
   test("the admins page explains the Budget for Quarter page and its three lines", async () => {
@@ -1944,8 +1954,12 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[7]).toMatch(
       /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
     );
+    // Issue #317: the card's Make Assignments and View Assignments buttons.
+    expect(buttons[7]).toMatch(
+      /The card's Make Assignments button opens it, as does step 8 of the diagram\.$/,
+    );
     expect(buttons[8]).toMatch(
-      /^Published Assignments\. Shown once Publish Assignments has been clicked at the top of the Assignments page: the read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\./,
+      /^View Assignments\. The read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\. The card's View Assignments button and step 9 of the diagram open it; until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet\.$/,
     );
     expect(buttons[9]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
@@ -2279,8 +2293,13 @@ describe("admin Help: the QXX Budget card (issue #357)", () => {
     expect(card).not.toHaveTextContent("greyed out");
     // The diagram's links, described in the same paragraph.
     expect(card).toHaveTextContent(
-      "In the diagram, step 3's Allocations and step 5's (see allocations) links open the quarter's Combined Allocation page, and the (see assignments) links of steps 8 and 9 open the recruitment's assignments page.",
+      "In the diagram, step 3's Allocations and step 5's (see allocations) links open the quarter's Combined Allocation page, and the same two assignment pages are under steps 8 and 9 as Make Assignments and View Assignments.",
     );
+    // Issue #317: the card's two assignment buttons, told apart.
+    expect(card).toHaveTextContent(
+      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (it says the assignments are not published yet until they are).",
+    );
+    expect(card).not.toHaveTextContent("(see assignments)");
     expect(
       within(card).getAllByRole("link", {
         name: "Combined Allocation page",
