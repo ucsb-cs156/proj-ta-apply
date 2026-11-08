@@ -276,6 +276,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(LocalDate.of(2026, 4, 2), ir.facultyReviewOpeningDate());
     assertEquals(LocalDate.of(2026, 4, 20), ir.facultyRankingDeadline());
     assertEquals(List.of(course), ir.courses());
+    // Issue #364: OWN_COURSES means released.
+    assertTrue(ir.allocationsReleased());
     assertEquals(
         new InstructorRecruitment(
             3L,
@@ -290,7 +292,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             LocalDate.of(2026, 4, 2),
             LocalDate.of(2026, 4, 20),
             List.of(course),
-            null),
+            null,
+            true),
         ir);
   }
 
@@ -887,6 +890,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertNull(ir.courses().get(0).getAllocation());
     assertNull(ir.courses().get(1).getAllocation());
     assertEquals("0200", ir.courses().get(1).getSection());
+    assertFalse(ir.allocationsReleased());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
@@ -914,6 +918,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertFalse(body.contains("2.5"));
     // Issue #224: the hiring figures stay on the server too.
     assertTrue(mapper.readTree(body).get(0).get("targets").isNull());
+    // Issue #364: and the home page is told outright that nothing is released.
+    assertFalse(mapper.readTree(body).get(0).get("allocationsReleased").asBoolean());
     verify(courseTargetsService, never()).targetsFor(any(), any(java.util.List.class));
     assertEquals(
         mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course)))), body);
@@ -949,6 +955,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(6, targetsJson.get("rankingTarget").asInt());
     assertEquals(2, targetsJson.get("rankedCount").asInt());
     assertEquals(4, targetsJson.get("stillNeeded").asInt());
+    // Issue #364: the home page is told outright that this recruitment's allocations are released.
+    assertTrue(mapper.readTree(body).get(0).get("allocationsReleased").asBoolean());
     assertEquals(
         mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course), targets))),
         body);

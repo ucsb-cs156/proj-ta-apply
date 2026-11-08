@@ -61,7 +61,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * What an instructor sees on the home page (issue #127): the recruitments that include a course
- * they teach, each with its list of their courses.
+ * they teach, each with its list of their courses. The home page groups them by quarter itself
+ * (issue #364); the endpoint stays one entry per recruitment.
  *
  * <p>The match goes through the catalog: an instructor's email maps to the name the course catalog
  * uses for them (issue #120, set by an admin), and each recruitment course row records the catalog
@@ -95,6 +96,10 @@ public class InstructorRecruitmentsController extends ApiController {
    * so the numbers never leave the server, and has no entry in {@code targets}; a released course
    * goes out as stored and {@code targets} holds its {@link CourseTargets} under its course id.
    * {@code targets} is null when no course is released.
+   *
+   * <p>{@code allocationsReleased} says outright whether the admin has released this recruitment's
+   * allocations to faculty ({@link #allocationsVisible}), so the home page (issue #364) can decide
+   * which columns of a course's enrollment table to show without inferring it from the figures.
    */
   public static record InstructorRecruitment(
       Long id,
@@ -109,7 +114,8 @@ public class InstructorRecruitmentsController extends ApiController {
       LocalDate facultyReviewOpeningDate,
       LocalDate facultyRankingDeadline,
       List<RecruitmentCourse> courses,
-      Map<Long, CourseTargets> targets) {
+      Map<Long, CourseTargets> targets,
+      boolean allocationsReleased) {
     /** The recruitment with its targets withheld (or not yet computed). */
     public static InstructorRecruitment of(Recruitment r, List<RecruitmentCourse> courses) {
       return of(r, courses, null);
@@ -117,13 +123,10 @@ public class InstructorRecruitmentsController extends ApiController {
 
     public static InstructorRecruitment of(
         Recruitment r, List<RecruitmentCourse> courses, Map<Long, CourseTargets> targets) {
+      boolean released = allocationsVisible(r);
       List<RecruitmentCourse> shown =
           courses.stream()
-              .map(
-                  course ->
-                      allocationsVisible(r)
-                          ? course
-                          : InstructorRecruitment.withoutAllocation(course))
+              .map(course -> released ? course : InstructorRecruitment.withoutAllocation(course))
               .toList();
       return new InstructorRecruitment(
           r.getId(),
@@ -138,7 +141,8 @@ public class InstructorRecruitmentsController extends ApiController {
           r.getFacultyReviewOpeningDate(),
           r.getFacultyRankingDeadline(),
           shown,
-          targets);
+          targets,
+          released);
     }
 
     /** The row with the planning figures an instructor may not see yet blanked. */
