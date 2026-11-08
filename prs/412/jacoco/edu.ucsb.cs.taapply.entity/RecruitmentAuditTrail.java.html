@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentAuditTrail.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.entity</a> &gt; <span class="el_source">RecruitmentAuditTrail.java</span></div><h1>RecruitmentAuditTrail.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.entity;
+
+import edu.ucsb.cs.taapply.time.AppTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * One change to a recruitment itself (issue #139): its creation, its deletion, or one field going
+ * from one value to another, with the value before and after as strings. The admin's Applications
+ * page for the recruitment lists these rows; the Budget page lists the hiring-target rows of the
+ * quarter's two recruitments (issue #391).
+ *
+ * &lt;p&gt;This is the audit trail for &lt;em&gt;recruitments&lt;/em&gt;. Changes an admin makes to an individual
+ * student's application are a different table, {@link AuditTrail}.
+ *
+ * &lt;p&gt;{@code whatChanged} names the field ({@code applicationStatus}, {@code tentativeOpeningDate},
+ * {@code primaryConsiderationDate}, {@code actualOpeningDate}, {@code actualClosingDate}, {@code
+ * reviewStatus}, {@code facultyReviewOpeningDate}, {@code facultyRankingDeadline}, {@code
+ * allocationVisibility}, {@code assignmentsPublished}, {@code totalHiringTarget}), or is {@link
+ * #CREATED} or {@link #DELETED}, when both values are null. A change to several fields in one
+ * request is several rows. There is deliberately no foreign key to the recruitment: the rows about
+ * a deleted recruitment are the record that it existed.
+ *
+ * &lt;p&gt;{@code editorEmail} is the email of the admin who made the change (issue #337, changeset 066),
+ * as text rather than a user id: it reads directly in the table, survives the user row being
+ * deleted, and needs no join. It is null on the rows written before the column existed.
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@Entity(name = &quot;recruitment_audit_trail&quot;)
+public class RecruitmentAuditTrail {
+
+  /** The {@code whatChanged} of the row written when a recruitment is created. */
+  public static final String CREATED = &quot;created&quot;;
+
+  /** The {@code whatChanged} of the row written when a recruitment is deleted. */
+  public static final String DELETED = &quot;deleted&quot;;
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  /** When the change was recorded; stamped on insert, in Pacific time. */
+  @Column(name = &quot;changed_at&quot;, updatable = false)
+  private LocalDateTime changedAt;
+
+  @Column(name = &quot;recruitment_id&quot;, nullable = false)
+  private Long recruitmentId;
+
+  @Column(name = &quot;what_changed&quot;, nullable = false)
+  private String whatChanged;
+
+  @Column(name = &quot;old_value&quot;, length = 4000)
+  private String oldValue;
+
+  @Column(name = &quot;new_value&quot;, length = 4000)
+  private String newValue;
+
+  /** The email of the admin who made the change; null on rows older than the column. */
+  @Column(name = &quot;editor_email&quot;)
+  private String editorEmail;
+
+  /** Stamps the Pacific time at which the row is first saved (issue #293). */
+  @PrePersist
+  void stampChanged() {
+<span class="fc" id="L78">    changedAt = AppTime.now();</span>
+<span class="fc" id="L79">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

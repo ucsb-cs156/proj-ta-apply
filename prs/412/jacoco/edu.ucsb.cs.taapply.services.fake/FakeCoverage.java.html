@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FakeCoverage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services.fake</a> &gt; <span class="el_source">FakeCoverage.java</span></div><h1>FakeCoverage.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services.fake;
+
+/**
+ * How widely fake applicants' interest is spread over a recruitment's courses (issue #219).
+ *
+ * &lt;ul&gt;
+ *   &lt;li&gt;{@code ALL}: every course is some applicant's first choice and some applicant's second
+ *       choice, and every applicant answers for every course, so each course has candidates.
+ *   &lt;li&gt;{@code SPARSE}: interest is confined to a random few of the courses, so the others have no
+ *       interested candidates at all. Useful for seeing how the review pages show an uncovered
+ *       course.
+ * &lt;/ul&gt;
+ */
+<span class="fc" id="L14">public enum FakeCoverage {</span>
+<span class="fc" id="L15">  ALL,</span>
+<span class="fc" id="L16">  SPARSE</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
