@@ -96,7 +96,8 @@ loadScripts(document, 'script');</script>
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">InstructorRecruitmentsController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
 <div class="block">What an instructor sees on the home page (issue #127): the recruitments that include a course
-they teach, each with its list of their courses.
+they teach, each with its list of their courses. The home page groups them by quarter itself
+(issue #364); the endpoint stays one entry per recruitment.
 
 <p>The match goes through the catalog: an instructor's email maps to the name the course catalog
 uses for them (issue #120, set by an admin), and each recruitment course row records the catalog

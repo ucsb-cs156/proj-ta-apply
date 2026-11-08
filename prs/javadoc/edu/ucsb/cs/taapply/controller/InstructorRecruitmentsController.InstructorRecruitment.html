@@ -59,7 +59,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map)" tabindex="0">InstructorRecruitment(Long, String, RecruitmentType, ApplicationStatus, LocalDate, LocalDate, LocalDate, LocalDate, String, LocalDate, LocalDate, List, Map)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map,boolean)" tabindex="0">InstructorRecruitment(Long, String, RecruitmentType, ApplicationStatus, LocalDate, LocalDate, LocalDate, LocalDate, String, LocalDate, LocalDate, List, Map, boolean)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -82,6 +82,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#facultyRankingDeadline()" tabindex="0">facultyRankingDeadline()</a></li>
 <li><a href="#courses()" tabindex="0">courses()</a></li>
 <li><a href="#targets()" tabindex="0">targets()</a></li>
+<li><a href="#allocationsReleased()" tabindex="0">allocationsReleased()</a></li>
 </ol>
 </li>
 </ol>
@@ -103,7 +104,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">InstructorRecruitmentsController.InstructorRecruitment</span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter, <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type, <a href="../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;applicationStatus, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;tentativeOpeningDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualOpeningDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualClosingDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;reviewStatus, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyReviewOpeningDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets)
+<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">InstructorRecruitmentsController.InstructorRecruitment</span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter, <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type, <a href="../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;applicationStatus, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;tentativeOpeningDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualOpeningDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualClosingDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;reviewStatus, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyReviewOpeningDate, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets, boolean&nbsp;allocationsReleased)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">A recruitment as the admin's and student's cards know it, plus the instructor's courses (with
 the quarter's enrollment figures and estimate attached from <code>budget_courses</code>, issue
@@ -114,7 +115,11 @@ chosen to show all allocations to all faculty (issues #178 and #224). A course n
 goes out as a copy with its allocation, enrollment estimate and unrounded allocation blanked,
 so the numbers never leave the server, and has no entry in <code>targets</code>; a released course
 goes out as stored and <code>targets</code> holds its <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services"><code>CourseTargetsService.CourseTargets</code></a> under its course id.
-<code>targets</code> is null when no course is released.</div>
+<code>targets</code> is null when no course is released.
+
+<p><code>allocationsReleased</code> says outright whether the admin has released this recruitment's
+allocations to faculty (<code>InstructorRecruitmentsController.allocationsVisible(Recruitment)</code>), so the home page (issue #364) can decide
+which columns of a course's enrollment table to show without inferring it from the figures.</div>
 </div>
 </section>
 <section class="summary">
@@ -127,7 +132,7 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map)" class="member-name-link">InstructorRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map,boolean)" class="member-name-link">InstructorRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
  <a href="../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;applicationStatus,
@@ -139,7 +144,8 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyReviewOpeningDate,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets,
+ boolean&nbsp;allocationsReleased)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>InstructorRecruitment</code> record class.</div>
 </div>
@@ -167,85 +173,90 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>actualOpeningDate</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applicationStatus()" class="member-name-link">applicationStatus</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#allocationsReleased()" class="member-name-link">allocationsReleased</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <code>allocationsReleased</code> record component.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applicationStatus()" class="member-name-link">applicationStatus</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>applicationStatus</code> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#courses()" class="member-name-link">courses</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#courses()" class="member-name-link">courses</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>courses</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#facultyRankingDeadline()" class="member-name-link">facultyRankingDeadline</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#facultyRankingDeadline()" class="member-name-link">facultyRankingDeadline</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>facultyRankingDeadline</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#facultyReviewOpeningDate()" class="member-name-link">facultyReviewOpeningDate</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#facultyReviewOpeningDate()" class="member-name-link">facultyReviewOpeningDate</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>facultyReviewOpeningDate</code> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#id()" class="member-name-link">id</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#id()" class="member-name-link">id</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>id</code> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List)" class="member-name-link">of</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;r,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List)" class="member-name-link">of</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;r,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">The recruitment with its targets withheld (or not yet computed).</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List,java.util.Map)" class="member-name-link">of</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;r,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List,java.util.Map)" class="member-name-link">of</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;r,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#primaryConsiderationDate()" class="member-name-link">primaryConsiderationDate</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#primaryConsiderationDate()" class="member-name-link">primaryConsiderationDate</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>primaryConsiderationDate</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quarter()" class="member-name-link">quarter</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quarter()" class="member-name-link">quarter</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>quarter</code> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reviewStatus()" class="member-name-link">reviewStatus</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reviewStatus()" class="member-name-link">reviewStatus</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>reviewStatus</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#targets()" class="member-name-link">targets</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#targets()" class="member-name-link">targets</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>targets</code> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tentativeOpeningDate()" class="member-name-link">tentativeOpeningDate</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tentativeOpeningDate()" class="member-name-link">tentativeOpeningDate</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>tentativeOpeningDate</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#type()" class="member-name-link">type</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#type()" class="member-name-link">type</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>type</code> record component.</div>
 </div>
 </div>
@@ -266,7 +277,7 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map)">
+<section class="detail" id="&lt;init&gt;(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map,boolean)">
 <h3>InstructorRecruitment</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">InstructorRecruitment</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -281,7 +292,8 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyReviewOpeningDate,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets,
+ boolean&nbsp;allocationsReleased)</span></div>
 <div class="block">Creates an instance of a <code>InstructorRecruitment</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -298,6 +310,7 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
 <dd><code>facultyRankingDeadline</code> - the value for the <code>facultyRankingDeadline</code> record component</dd>
 <dd><code>courses</code> - the value for the <code>courses</code> record component</dd>
 <dd><code>targets</code> - the value for the <code>targets</code> record component</dd>
+<dd><code>allocationsReleased</code> - the value for the <code>allocationsReleased</code> record component</dd>
 </dl>
 </div>
 </section>
@@ -365,7 +378,7 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
 <h3>equals</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">equals</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</span></div>
-<div class="block">Indicates whether some other object is "equal to" this one. The objects are equal if the other object is of the same class and if all the record components are equal. All components in this record class are compared with <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)" title="class or interface in java.util" class="external-link"><code>Objects::equals(Object,Object)</code></a>.</div>
+<div class="block">Indicates whether some other object is "equal to" this one. The objects are equal if the other object is of the same class and if all the record components are equal. Reference components are compared with <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)" title="class or interface in java.util" class="external-link"><code>Objects::equals(Object,Object)</code></a>; primitive components are compared with the <code>compare</code> method from their corresponding wrapper classes.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a></code>&nbsp;in class&nbsp;<code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></code></dd>
@@ -542,6 +555,19 @@ goes out as stored and <code>targets</code> holds its <a href="../services/Cours
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <code>targets</code> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="allocationsReleased()">
+<h3>allocationsReleased</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">allocationsReleased</span>()</div>
+<div class="block">Returns the value of the <code>allocationsReleased</code> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <code>allocationsReleased</code> record component</dd>
 </dl>
 </div>
 </section>
