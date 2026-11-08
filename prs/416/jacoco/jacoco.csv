@@ -154,7 +154,7 @@ taapply,edu.ucsb.cs.taapply.services.fake,FakeCourseChoices,0,292,0,48,0,53,0,28
 taapply,edu.ucsb.cs.taapply.services.fake,FakeCoverage,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeApplicationGenerator,0,870,0,85,0,177,0,65,0,21
 taapply,edu.ucsb.cs.taapply.services.fake,FakeAllocationsService,0,112,0,14,0,27,0,11,0,4
-taapply,edu.ucsb.cs.taapply.services.fake,FakeRankingsGenerator,0,288,0,22,0,55,0,20,0,9
+taapply,edu.ucsb.cs.taapply.services.fake,FakeRankingsGenerator,0,285,0,22,0,54,0,20,0,9
 taapply,edu.ucsb.cs.taapply.services.fake,FakeNames,0,246,0,0,0,13,0,2,0,2
 taapply,edu.ucsb.cs.taapply.services.fake,FakeCoursework.OtherCourse,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeRankingScope,0,15,0,0,0,3,0,1,0,1

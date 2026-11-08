@@ -107,9 +107,9 @@ import org.springframework.stereotype.Service;
       boolean includeNotInterested,
       Random random) {
 <span class="fc" id="L109">    List&lt;List&lt;Application&gt;&gt; tiers = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L110" title="All 2 branches covered.">    for (String ignored : TIERS) {</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">    for (int i = 0; i &lt; TIERS.size(); i++) {</span>
 <span class="fc" id="L111">      tiers.add(new ArrayList&lt;&gt;());</span>
-<span class="fc" id="L112">    }</span>
+    }
 <span class="fc" id="L113">    List&lt;Application&gt; notInterested = new ArrayList&lt;&gt;();</span>
 <span class="fc bfc" id="L114" title="All 2 branches covered.">    for (Application application : applications) {</span>
 <span class="fc" id="L115">      int tier = tier(application, course.getCourseId());</span>
