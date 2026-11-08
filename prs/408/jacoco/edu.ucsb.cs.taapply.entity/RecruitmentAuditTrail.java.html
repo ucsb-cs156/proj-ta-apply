@@ -17,14 +17,16 @@ import lombok.NoArgsConstructor;
 /**
  * One change to a recruitment itself (issue #139): its creation, its deletion, or one field going
  * from one value to another, with the value before and after as strings. The admin's Applications
- * page for the recruitment lists these rows.
+ * page for the recruitment lists these rows; the Budget page lists the hiring-target rows of the
+ * quarter's two recruitments (issue #391).
  *
  * &lt;p&gt;This is the audit trail for &lt;em&gt;recruitments&lt;/em&gt;. Changes an admin makes to an individual
  * student's application are a different table, {@link AuditTrail}.
  *
  * &lt;p&gt;{@code whatChanged} names the field ({@code applicationStatus}, {@code tentativeOpeningDate},
  * {@code primaryConsiderationDate}, {@code actualOpeningDate}, {@code actualClosingDate}, {@code
- * reviewStatus}, {@code facultyReviewOpeningDate}, {@code facultyRankingDeadline}), or is {@link
+ * reviewStatus}, {@code facultyReviewOpeningDate}, {@code facultyRankingDeadline}, {@code
+ * allocationVisibility}, {@code assignmentsPublished}, {@code totalHiringTarget}), or is {@link
  * #CREATED} or {@link #DELETED}, when both values are null. A change to several fields in one
  * request is several rows. There is deliberately no foreign key to the recruitment: the rows about
  * a deleted recruitment are the record that it existed.
@@ -73,7 +75,7 @@ public class RecruitmentAuditTrail {
   /** Stamps the Pacific time at which the row is first saved (issue #293). */
   @PrePersist
   void stampChanged() {
-<span class="fc" id="L76">    changedAt = AppTime.now();</span>
-<span class="fc" id="L77">  }</span>
+<span class="fc" id="L78">    changedAt = AppTime.now();</span>
+<span class="fc" id="L79">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
