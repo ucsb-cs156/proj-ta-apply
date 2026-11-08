@@ -5,7 +5,6 @@ import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
 import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Application;
-import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
@@ -20,11 +19,10 @@ import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
-import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
-import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.DraftApplicationService;
 import edu.ucsb.cs.taapply.services.TaSeedFromUla;
 import edu.ucsb.cs.taapply.time.AppTime;
 import io.swagger.v3.oas.annotations.Operation;
@@ -70,8 +68,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApplicationsController extends ApiController {
 
   @Autowired ApplicationRepository applicationRepository;
-  @Autowired DraftApplicationRepository draftApplicationRepository;
-  @Autowired DraftAdminCommentRepository draftAdminCommentRepository;
+  @Autowired DraftApplicationService draftApplicationService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired ApplicationAccessService applicationAccessService;
@@ -284,10 +281,7 @@ public class ApplicationsController extends ApiController {
           "Applications are not currently open for this recruitment");
     }
     // A cancelled application does not block a new one while applications are open (issue #318).
-    if (applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
-        currentEmail(), recruitmentId, ApplicationReviewStatus.CANCELLED)) {
-      throw new IllegalArgumentException("You already have an application for this recruitment");
-    }
+    draftApplicationService.requireNoApplication(currentEmail(), recruitmentId);
 
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
@@ -308,20 +302,10 @@ public class ApplicationsController extends ApiController {
                     + 1)
             .build();
     apply(fields, application, recruitment.getType());
-    Optional<DraftApplication> draft =
-        draftApplicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);
-    // Whatever an admin wrote about the draft carries over to the application (issue #296).
-    draft
-        .flatMap(d -> draftAdminCommentRepository.findById(d.getId()))
-        .ifPresent(c -> application.setAdminComments(c.getComments()));
-    applicationRepository.save(application);
     // The application is complete now, so the draft it grew from has done its job (issue #270);
-    // the admin's comments on it go with it, now that the application has them.
-    draft.ifPresent(
-        d -> {
-          draftAdminCommentRepository.deleteById(d.getId());
-          draftApplicationRepository.delete(d);
-        });
+    // the admin's comments on it move to the application (issue #296). The save and the deletes
+    // are one transaction (issue #417).
+    draftApplicationService.submit(application);
     return forApplicant(application);
   }
 

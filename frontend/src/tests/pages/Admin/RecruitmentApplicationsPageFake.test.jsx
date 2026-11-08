@@ -58,6 +58,7 @@ describe("RecruitmentApplicationsPage fake application controls", () => {
       .onGet("/api/admin/recruitments/all")
       .reply(200, recruitmentsFixtures.threeRecruitments);
     axiosMock.onGet("/api/admin/applications/all").reply(200, []);
+    axiosMock.onGet("/api/admin/applications/draftConflicts").reply(200, []);
     axiosMock
       .onGet("/api/admin/recruitmentaudittrail/all")
       .reply(200, recruitmentAuditTrailFixtures.onePage);

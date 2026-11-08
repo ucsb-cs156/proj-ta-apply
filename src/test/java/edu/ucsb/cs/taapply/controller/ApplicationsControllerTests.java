@@ -43,6 +43,7 @@ import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.DraftApplicationService;
 import edu.ucsb.cs.taapply.services.TaSeedFromUla;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -69,6 +70,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @Import({
   edu.ucsb.cs.taapply.testconfig.TestConfig.class,
   ApplicationAccessService.class,
+  DraftApplicationService.class,
   DraftApplicationsControllerTests.DetectorConfig.class
 })
 public class ApplicationsControllerTests extends ControllerTestCase {

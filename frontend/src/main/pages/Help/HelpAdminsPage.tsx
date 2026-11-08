@@ -816,7 +816,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
             copies the email address of everyone with a draft, one per line, so
             that a day or two before applications close you can paste them into
             an email reminding those students to log in and submit before the
-            primary consideration date, since drafts are not considered.
+            primary consideration date, since drafts are not considered. A
+            student never has both a draft and a submitted application to the
+            same recruitment (one who cancelled may start a new draft). If one
+            ever does, which would be a bug, a red <strong>WARNING</strong> at
+            the top of this page and of the Applications page lists them, with
+            links to the draft and the application.
           </li>
           <li>
             <strong>Applications.</strong> The list of applications, with a

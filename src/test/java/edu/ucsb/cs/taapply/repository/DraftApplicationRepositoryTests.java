@@ -7,9 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
@@ -18,6 +21,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.models.DraftConflict;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +49,12 @@ public class DraftApplicationRepositoryTests {
   @Autowired private TestEntityManager entityManager;
   @Autowired private DraftApplicationRepository draftApplicationRepository;
   @Autowired private RecruitmentRepository recruitmentRepository;
+  @Autowired private ApplicationRepository applicationRepository;
 
   @BeforeEach
   void clean() {
     draftApplicationRepository.deleteAll();
+    applicationRepository.deleteAll();
     recruitmentRepository.deleteAll();
   }
 
@@ -322,5 +328,90 @@ public class DraftApplicationRepositoryTests {
     flushAndForget();
 
     assertEquals(0, draftApplicationRepository.count());
+  }
+
+  // ---- issue #417: students with both a draft and an application ----
+
+  private DraftApplication draftFor(Recruitment r, String email) {
+    return draftApplicationRepository.save(
+        DraftApplication.builder().recruitmentId(r.getId()).email(email).build());
+  }
+
+  private Application applicationFor(
+      Recruitment r,
+      String email,
+      int attempt,
+      ApplicationReviewStatus status,
+      ApplicationOrigin origin) {
+    return applicationRepository.save(
+        Application.builder()
+            .recruitmentId(r.getId())
+            .email(email)
+            .attemptNumber(attempt)
+            .status(status)
+            .origin(origin)
+            .build());
+  }
+
+  private List<DraftConflict> conflicts(Recruitment r) {
+    flushAndForget();
+    return draftApplicationRepository.findConflictsWithApplications(
+        r.getId(), ApplicationReviewStatus.CANCELLED);
+  }
+
+  @Test
+  public void a_draft_beside_an_application_is_a_conflict_and_nothing_else_is() {
+    Recruitment r = recruitment("20261");
+    Recruitment other = recruitment("20262");
+    // Bob: a draft and a pending application, the case the warning is for.
+    DraftApplication bobDraft = draftFor(r, "bob@ucsb.edu");
+    Application bobApplication =
+        applicationFor(
+            r, "bob@ucsb.edu", 1, ApplicationReviewStatus.PENDING, ApplicationOrigin.APPLICANT);
+    // Ada: an admin's test application counts like any other, as the Applications page lists it.
+    DraftApplication adaDraft = draftFor(r, "ada@ucsb.edu");
+    Application adaApplication =
+        applicationFor(
+            r, "ada@ucsb.edu", 1, ApplicationReviewStatus.HIRED, ApplicationOrigin.ADMIN_TEST);
+    // Cy cancelled and started again (issue #318): the cancelled one is history, not a conflict.
+    draftFor(r, "cy@ucsb.edu");
+    applicationFor(
+        r, "cy@ucsb.edu", 1, ApplicationReviewStatus.CANCELLED, ApplicationOrigin.APPLICANT);
+    // Dee has only an application, Eve only a draft.
+    applicationFor(
+        r, "dee@ucsb.edu", 1, ApplicationReviewStatus.PENDING, ApplicationOrigin.APPLICANT);
+    draftFor(r, "eve@ucsb.edu");
+    // Fay's draft and application are to different recruitments.
+    draftFor(r, "fay@ucsb.edu");
+    applicationFor(
+        other, "fay@ucsb.edu", 1, ApplicationReviewStatus.PENDING, ApplicationOrigin.APPLICANT);
+
+    // By email.
+    assertEquals(
+        List.of(
+            new DraftConflict("ada@ucsb.edu", adaDraft.getId(), adaApplication.getId()),
+            new DraftConflict("bob@ucsb.edu", bobDraft.getId(), bobApplication.getId())),
+        conflicts(r));
+    // Each recruitment by itself: the other one has no drafts.
+    assertEquals(List.of(), conflicts(other));
+  }
+
+  /** Several applications beside one draft (cancelled and started again, say) are one row each. */
+  @Test
+  public void each_application_beside_a_draft_is_its_own_row_by_application_id() {
+    Recruitment r = recruitment("20261");
+    DraftApplication draft = draftFor(r, "bob@ucsb.edu");
+    Application first =
+        applicationFor(
+            r, "bob@ucsb.edu", 1, ApplicationReviewStatus.PENDING, ApplicationOrigin.APPLICANT);
+    Application second =
+        applicationFor(
+            r, "bob@ucsb.edu", 2, ApplicationReviewStatus.PENDING, ApplicationOrigin.APPLICANT);
+
+    assertEquals(
+        List.of(
+            new DraftConflict("bob@ucsb.edu", draft.getId(), first.getId()),
+            new DraftConflict("bob@ucsb.edu", draft.getId(), second.getId())),
+        conflicts(r));
   }
 }

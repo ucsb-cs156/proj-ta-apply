@@ -3,16 +3,19 @@ package edu.ucsb.cs.taapply.web;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.AriaRole;
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end coverage of draft applications (issues #270, #292, #296) and of editing a draft in two
- * windows at once (issues #273, #284). Shared setup is in {@link ApplicationsWebTestCase}.
+ * End-to-end coverage of draft applications (issues #270, #292, #296, #417) and of editing a draft
+ * in two windows at once (issues #273, #284). Shared setup is in {@link ApplicationsWebTestCase}.
  */
 public class ApplicationsDraftsWebIT extends ApplicationsWebTestCase {
 
@@ -186,7 +189,12 @@ public class ApplicationsDraftsWebIT extends ApplicationsWebTestCase {
         .containsText("0 Draft Applications");
     assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-none")).isVisible();
     assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-copy-emails")).hasCount(0);
+    // Issue #417: submitting removed the draft in the same transaction, so neither page warns.
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-draft-conflicts")).hasCount(0);
     goTo("/admin/recruitments/" + recruitment.getId() + "/applications");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link"))
+        .isVisible();
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-draft-conflicts")).hasCount(0);
     page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
     assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
         .hasValue("Strong; ask about CMPSC 156");
@@ -452,6 +460,75 @@ public class ApplicationsDraftsWebIT extends ApplicationsWebTestCase {
             .setTimeout(15000);
     assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isHidden(gone);
     assertEquals(1, draftApplicationRepository.count());
+  }
+
+  /** The draft or application link in the one row of a page's warning (issue #417). */
+  private Locator conflictLink(String warningTestId, String which) {
+    return page.getByTestId(warningTestId + "-row")
+        .getByTestId(warningTestId + "-" + which + "-link");
+  }
+
+  /**
+   * Issue #417: a student with both a draft and an application cannot be made through the app, so
+   * one is put straight into the database. Both admin pages for the recruitment then warn about
+   * them at the top, with links to the draft and the application. A student who cancelled and
+   * started a new draft is not a conflict (issue #318) and is not listed.
+   */
+  @Test
+  public void both_admin_pages_warn_about_a_student_with_a_draft_and_an_application()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    Application application =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(recruitment.getId())
+                .email("both@ucsb.edu")
+                .firstName("Bo")
+                .lastName("Th")
+                .build());
+    DraftApplication draft =
+        draftApplicationRepository.save(
+            DraftApplication.builder()
+                .recruitmentId(recruitment.getId())
+                .email("both@ucsb.edu")
+                .build());
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email("again@ucsb.edu")
+            .status(ApplicationReviewStatus.CANCELLED)
+            .build());
+    draftApplicationRepository.save(
+        DraftApplication.builder()
+            .recruitmentId(recruitment.getId())
+            .email("again@ucsb.edu")
+            .build());
+
+    setupAdminUser();
+    for (String list : new String[] {"applications", "draft-applications"}) {
+      String prefix =
+          list.equals("applications")
+              ? "RecruitmentApplicationsPage"
+              : "RecruitmentDraftApplicationsPage";
+      goTo("/admin/recruitments/" + recruitment.getId() + "/" + list);
+      assertThat(page.getByTestId(prefix + "-draft-conflicts")).containsText("WARNING");
+      assertThat(page.getByTestId(prefix + "-draft-conflicts"))
+          .containsText(
+              "The following students have both a draft application and a regular application.");
+      assertThat(page.getByTestId(prefix + "-draft-conflicts-row")).hasCount(1);
+      assertThat(page.getByTestId(prefix + "-draft-conflicts-row")).containsText("both@ucsb.edu");
+      assertThat(conflictLink(prefix + "-draft-conflicts", "draft"))
+          .hasAttribute("href", "/admin/draft-applications/" + draft.getId());
+      assertThat(conflictLink(prefix + "-draft-conflicts", "application"))
+          .hasAttribute("href", "/admin/applications/" + application.getId());
+    }
+
+    // The links lead to the draft and the application.
+    conflictLink("RecruitmentDraftApplicationsPage-draft-conflicts", "draft").click();
+    assertThat(page.getByTestId("AdminApplicationPage-about")).containsText("has not submitted it");
+    goTo("/admin/recruitments/" + recruitment.getId() + "/applications");
+    conflictLink("RecruitmentApplicationsPage-draft-conflicts", "application").click();
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Name")).containsText("Bo Th");
   }
 
   /**

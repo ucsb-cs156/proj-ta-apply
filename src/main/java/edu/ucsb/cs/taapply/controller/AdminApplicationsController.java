@@ -6,9 +6,12 @@ import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.models.DraftConflict;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
@@ -48,6 +51,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class AdminApplicationsController extends ApiController {
 
   @Autowired ApplicationRepository applicationRepository;
+  @Autowired DraftApplicationRepository draftApplicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationCsvService applicationCsvService;
   @Autowired ApplicationAuditService applicationAuditService;
@@ -68,6 +72,28 @@ public class AdminApplicationsController extends ApiController {
       throw new EntityNotFoundException(Recruitment.class, recruitmentId);
     }
     return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);
+  }
+
+  @Operation(
+      summary = "Students with both a draft and an application to a recruitment (issue #417)",
+      description =
+          "One row per draft and application pair, by email: the email, the draft's id and the"
+              + " application's id. This is not supposed to be possible, since submitting deletes"
+              + " the draft and a draft cannot be opened or saved once there is an application, so"
+              + " the list is normally empty; the admin's Applications and Draft Applications pages"
+              + " show it as a warning. Cancelled applications are left out, since one who"
+              + " cancelled may start again (issue #318); test and fake applications are counted"
+              + " like any other, as the Applications page lists them. 404 for a recruitment that"
+              + " does not exist.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping("/draftConflicts")
+  public List<DraftConflict> draftConflicts(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+    if (!recruitmentRepository.existsById(recruitmentId)) {
+      throw new EntityNotFoundException(Recruitment.class, recruitmentId);
+    }
+    return draftApplicationRepository.findConflictsWithApplications(
+        recruitmentId, ApplicationReviewStatus.CANCELLED);
   }
 
   @Operation(
