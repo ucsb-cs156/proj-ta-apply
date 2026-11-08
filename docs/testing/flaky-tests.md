@@ -7,9 +7,9 @@ server. A flake makes the check untrustworthy and hides real failures behind "ju
 
 ## Policy
 
-1. **A flaky test gets an issue immediately.** The first time a test passes on a rerun (or on the
-   job's own retry, see below), open an issue titled with the test name. Put the failing run's link
-   and the message in it. Do not wait to see whether it happens again.
+1. **A flaky test gets an issue immediately.** The first time a test fails and then passes when the
+   job is re-run with no code change, open an issue titled with the test name. Put the failing
+   run's link and the message in it. Do not wait to see whether it happens again.
 2. **It is then fixed or quarantined, never silently rerun.** Fix the cause (below). If the fix is
    not quick, quarantine the test (`@Disabled("flaky: #<issue>")`) in the same PR that links the
    issue, so the check stays trustworthy and the gap is visible. A quarantine without an issue
@@ -22,27 +22,28 @@ server. A flake makes the check untrustworthy and hides real failures behind "ju
    until shown otherwise; issue #340 found one that way (a catalog response resetting an open
    dialog).
 
-## How the job reports flakes
+## How a flake shows up in the job
 
-The integration job re-runs a failing test once (`-Dfailsafe.rerunFailingTestsCount=1`). That
-keeps one unlucky run from costing a whole job, but it is **not** silent:
+The integration job does **not** re-run a failing test: a test that fails, fails its shard the first
+time, so a new flake is seen at once instead of being hidden behind a pass-on-retry. (PR #359 had
+added a one-shot retry, `-Dfailsafe.rerunFailingTestsCount=1`, with a report of the tests that
+needed it, as a safety net while the flakes found in #340 were being fixed; issue #376 removed it
+once the shards had stayed green.) If a failed shard passes when the run is re-run with no code
+change, the test that failed is a flake: open an issue for it.
 
-- `scripts/report-flaky-tests.sh` reads failsafe's reports, and for every test that failed and then
-  passed it writes a table to the job summary and a `warning` annotation on the run ("Flaky test
-  (passed on retry)"). The job is green, but the summary names the test: open an issue for it.
-- The `integration-artifacts-shard-N` artifact of the run's shard (kept 14 days, uploaded whether the job passed or
-  failed) holds, for every failed attempt, a Playwright trace (`*.trace.zip`), a full-page
-  screenshot (`*.png`), the page text and HTML, and the browser console and failed requests
-  (`*.browser-log.txt`), plus the failsafe reports.
+The `integration-artifacts-shard-N` artifact of the run's shard (kept 14 days, uploaded whether the
+job passed or failed) holds, for every failed test, a Playwright trace (`*.trace.zip`), a full-page
+screenshot (`*.png`), the page text and HTML, and the browser console and failed requests
+(`*.browser-log.txt`), plus the failsafe reports.
 
 Look at a trace with `npx playwright show-trace <file>.trace.zip` (or upload it to
 <https://trace.playwright.dev>). The same files are written to `target/playwright-artifacts/` when
 a test fails locally.
 
 The integration tests run in parallel shards ([integration-shards.md](integration-shards.md)), which must not make
-a flake harder to find: each shard uploads its own artifact (`integration-artifacts-shard-N`), the
-flake report names the shard, and a flake in one shard is reported as such, not merged into a
-single green check.
+a flake harder to find: each shard uploads its own artifact (`integration-artifacts-shard-N`), and
+a failure in one shard fails that shard and the aggregate check, not merged into a single green
+check.
 
 ## Finding the cause: reproduce, do not just rerun
 
