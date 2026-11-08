@@ -151,8 +151,17 @@ Courses pages" below).
   Allocation. A column starting with TA exists only when the quarter has a TA
   recruitment, and likewise ULA. The descriptive columns are the same course for a section in both
   recruitments: the TA row is used, the ULA row when there is no TA row. **Course Number** has a
-  stacked heading ("Course" over "Number") and a cell 13 characters wide (`13ch`, monospaced), the
-  width of the widest UCSB course number, `XXXXXXX 999XX`.
+  stacked heading ("Course" over "Number") and a cell 11 characters wide (`11ch`, monospaced), the
+  width of the widest CMPSC course number, `CMPSC 190DD` (issue #383; it was `13ch` for the API's
+  padded `XXXXXXX 999XX`). The cell shows the number without the API's eight-column subject area
+  padding but with its digits still right-justified in three columns (`compactCourseNumber`), so
+  `CMPSC   8` and `CMPSC 190DD` line up.
+- **Stacked type headings** (issue #383): each type's Allocation, Unrounded Allocation and Delta
+  headings put the type (TA or ULA) at the headings' full size over the other words, each on its
+  own line at 70% (`stackedLead` in `columnStyles.tsx`: TA / Allocation; TA / Unrounded /
+  Allocation; TA / Delta), so each column is no wider than its one widest word. The whole phrase
+  stays the heading's text and its `title`, so sorting, hiding, screen readers and tests see
+  "TA Unrounded Allocation" as before.
 - **Showing and hiding columns**: every heading except Course Number has the small "hide" link, and
   a **Columns** menu has Show All, Show None and a box per column except Course Number, which is
   always shown. The choice is kept per quarter in local storage (key

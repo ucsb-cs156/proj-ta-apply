@@ -6,6 +6,7 @@ import {
   WIDE_COLUMN_IDS,
   WIDE_COLUMN_MAX_WIDTH,
   WIDE_COLUMN_MIN_WIDTH,
+  compactCourseNumber,
   isWideColumnId,
   wideColumnProps,
 } from "main/utils/columnWidths";
@@ -45,10 +46,41 @@ describe("columnWidths (issue #342)", () => {
   });
 });
 
-describe("the course number column's width (issue #358)", () => {
-  test("is 13 characters, the width of the widest course number, XXXXXXX 999XX", () => {
-    expect("XXXXXXX 999XX").toHaveLength(13);
-    expect(COURSE_NUMBER_CHARACTERS).toBe(13);
-    expect(COURSE_NUMBER_WIDTH).toBe("13ch");
+describe("the course number column's width (issues #358, #383)", () => {
+  test("is 11 characters, the width of the widest compact course number, CMPSC 190DD", () => {
+    expect(compactCourseNumber("CMPSC   190DD")).toHaveLength(11);
+    expect(COURSE_NUMBER_CHARACTERS).toBe(11);
+    expect(COURSE_NUMBER_WIDTH).toBe("11ch");
+  });
+});
+
+describe("compactCourseNumber (issue #383)", () => {
+  test.each([
+    ["CMPSC     8", "CMPSC   8"],
+    ["CMPSC    24", "CMPSC  24"],
+    ["CMPSC   156", "CMPSC 156"],
+    ["CMPSC   130A", "CMPSC 130A"],
+    ["CMPSC   190DD", "CMPSC 190DD"],
+    ["CMPTGCS   1A", "CMPTGCS   1A"],
+  ])("drops the API's subject area padding: %j becomes %j", (padded, shown) => {
+    expect(compactCourseNumber(padded)).toBe(shown);
+  });
+
+  test("lines up the digits of an unpadded catalog number the same way", () => {
+    expect(compactCourseNumber("CMPSC 8")).toBe("CMPSC   8");
+    expect(compactCourseNumber("CMPSC 24")).toBe("CMPSC  24");
+    expect(compactCourseNumber(" CMPSC  156 ")).toBe("CMPSC 156");
+  });
+
+  test("a number of three or more digits, or none, is left as it is", () => {
+    expect(compactCourseNumber("CMPSC 1234")).toBe("CMPSC 1234");
+    expect(compactCourseNumber("CMPSC   X")).toBe("CMPSC X");
+    expect(compactCourseNumber("CMPSC")).toBe("CMPSC");
+    expect(compactCourseNumber("")).toBe("");
+  });
+
+  test("only digits at the start of the number are padded, and any further words stay a space apart", () => {
+    expect(compactCourseNumber("CMPSC   X1")).toBe("CMPSC X1");
+    expect(compactCourseNumber("CMPSC   8  B")).toBe("CMPSC   8 B");
   });
 });

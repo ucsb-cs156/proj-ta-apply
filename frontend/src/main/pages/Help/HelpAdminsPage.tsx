@@ -583,9 +583,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           recruitment. For a section in both recruitments these describe the
           same course, and the TA recruitment&apos;s row is used, or the ULA
           recruitment&apos;s when there is none. <strong>Course Number</strong>{" "}
-          is on two lines and just wide enough for the longest UCSB course
-          number, 13 characters. Every heading except Course Number has a small{" "}
-          <em>hide</em> link, and the <strong>Columns</strong> menu has{" "}
+          is on two lines and just wide enough for the longest CMPSC course
+          number, 11 characters (such as CMPSC 190DD); the digits of the numbers
+          line up. Each type&apos;s Allocation, Unrounded Allocation and Delta
+          headings are stacked, TA or ULA over the other words in smaller type,
+          so the columns are narrow. Every heading except Course Number has a
+          small <em>hide</em> link, and the <strong>Columns</strong> menu has{" "}
           <em>Show All</em>, <em>Show None</em> and a box for each column except
           Course Number, which is always shown. Your choice is remembered in
           this browser, separately for each quarter; until you make one,

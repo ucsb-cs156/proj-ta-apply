@@ -638,7 +638,10 @@ describe("Help pages (issue #140)", () => {
       "A column that starts with TA is not shown when the quarter has no TA recruitment, and one that starts with ULA is not shown when it has no ULA recruitment.",
     );
     expect(columns).toHaveTextContent(
-      "just wide enough for the longest UCSB course number, 13 characters",
+      "just wide enough for the longest CMPSC course number, 11 characters (such as CMPSC 190DD)",
+    );
+    expect(columns).toHaveTextContent(
+      "Each type's Allocation, Unrounded Allocation and Delta headings are stacked, TA or ULA over the other words in smaller type",
     );
     expect(columns).toHaveTextContent("Summer Session");
     expect(columns).toHaveTextContent("Total Course Count");
@@ -2234,6 +2237,29 @@ describe("Help pages (issue #140)", () => {
     renderPage(<HelpTaApplicantsPage />);
     await screen.findByRole("heading", { level: 1, name: "For TA Applicants" });
     expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  // Where the Combined Allocation columns paragraph (issue #383) runs into an emphasised word on
+  // the next line of the source, the two are kept apart by an explicit space; without it the words
+  // would run together ("Course Numberis"). Each phrase here straddles one of those spaces. Only
+  // this paragraph is checked, so an edit elsewhere on the page cannot break the test.
+  test("the Combined Allocation columns paragraph keeps its spaces around emphasised words", async () => {
+    renderPage(<HelpAdminsPage />);
+    const columns = await screen.findByTestId(
+      "HelpAdminsPage-combined-allocations-columns",
+    );
+
+    [
+      "Courses pages: TA Rankings and ULA Rankings",
+      "have been opened), Section, Title,",
+      "Section, Title, Instructor, Email (with",
+      "button), Days, Time, Room, Enrolled, Max",
+      "Room, Enrolled, Max and Status, and,",
+      "a summer quarter, Summer Session. A",
+      "the table shows Total Course Count",
+      "none. Course Number is on two",
+      "Columns menu has Show All, Show None",
+    ].forEach((phrase) => expect(columns).toHaveTextContent(phrase));
   });
 });
 
