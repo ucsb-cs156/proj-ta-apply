@@ -184,6 +184,42 @@ const assignmentsFixtures = {
     rows: [],
     version: 1,
   },
+  /**
+   * Issue #355: the lectures of the issue's example, two sections each of CMPSC 8 and CMPSC 190DD,
+   * so the labels show their alignment ("  5A", "  8   (0100)", " 16", "130A", "190DD (0200)").
+   */
+  taPageManyCourses: {
+    recruitmentId: 7,
+    type: "TA",
+    identityHeaders: taIdentityHeaders,
+    courses: [
+      ["CMPSC    5A", "0100", 1, 1, 0],
+      ["CMPSC    5B", "0100", 1, 0, 1],
+      ["CMPSC     8", "0100", 2, 1, 1],
+      ["CMPSC     8", "0200", 2, 0, 2],
+      ["CMPSC    16", "0100", 1, 2, -1],
+      ["CMPSC   130A", "0100", 1, 0, 1],
+      ["CMPSC   130B", "0100", 1, 0, 1],
+      ["CMPSC  190DD", "0100", 1, 0, 1],
+      ["CMPSC  190DD", "0200", 1, 0, 1],
+    ].map(([courseId, section, allocation, assigned, left], i) => ({
+      id: 101 + i,
+      courseId,
+      section,
+      enrollCode: String(7000 + i),
+      allocation,
+      assigned,
+      left,
+      historical: false,
+    })),
+    rows: [
+      { ...taRows[0], tentativeAssignment: 101, rankings: { 101: 1, 103: 2 } },
+      { ...taRows[1], tentativeAssignment: 105, rankings: { 105: 1 } },
+      { ...taRows[2], tentativeAssignment: 105, rankings: { 103: 1, 109: 1 } },
+      { ...taRows[3], tentativeAssignment: 103, rankings: {} },
+    ],
+    version: 5,
+  },
 };
 
 export default assignmentsFixtures;

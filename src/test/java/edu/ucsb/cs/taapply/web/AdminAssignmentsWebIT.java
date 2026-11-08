@@ -201,6 +201,16 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
     assertThat(page.getByTestId("AdminAssignmentsPage-table-header-major")).isVisible();
 
+    // Issue #355: the issue's wording, and the lecture named by its bare course number (no CMPSC,
+    // no section when the recruitment has only one section of it) in the heading and the dropdown.
+    assertThat(page.getByTestId("AdminAssignmentsPage-intro-purpose"))
+        .hasText("On this page, the admin can assign TAs/ULA applicants to specific courses.");
+    assertThat(page.getByTestId("AdminAssignmentsPage-table-header-group-0")).containsText("156");
+    assertThat(page.getByTestId("AdminAssignmentsPage-table-header-group-0"))
+        .not()
+        .containsText("CMPSC");
+    assertThat(page.getByTestId(SELECT).locator("option").nth(1)).hasText("156");
+
     // The small "hide" link over the Major heading, found by its accessible name.
     page.getByRole(
             com.microsoft.playwright.options.AriaRole.BUTTON,

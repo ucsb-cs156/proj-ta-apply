@@ -82,16 +82,21 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the same fields as the rankings CSV: who each applicant is, a{" "}
           <strong>Tentative Assignment</strong> dropdown, then one column per
           lecture holding that lecture&apos;s faculty ranking of the applicant.
-          Test applications and applications the student cancelled are left out.
-          Every column sorts. Sorting by a lecture uses the same order as the
-          faculty ranking page: the ranked applicants first, from rank 1 down,
-          then the unranked ones by the student&apos;s preference (1st choice,
-          2nd choice, Enthusiastic, Would Consider, then Not Interested/Not
-          Applicable); applicants who tie stay in the order they applied.
-          Clicking the heading again reverses that order. Each lecture column is
-          ordered by that lecture&apos;s own rank and preference, so an
-          applicant ranked for one lecture but not another is placed separately
-          in each. Under each lecture&apos;s name the heading shows its{" "}
+          A lecture is named by its course number alone (16, 5A), with the
+          section added only when the recruitment has more than one section of
+          that course (8 (0100), 8 (0200)), as in the rankings CSV; the
+          headings, the dropdown and the Columns menu all use these names, in a
+          fixed-width font with the numbers lined up. Test applications and
+          applications the student cancelled are left out. Every column sorts.
+          Sorting by a lecture uses the same order as the faculty ranking page:
+          the ranked applicants first, from rank 1 down, then the unranked ones
+          by the student&apos;s preference (1st choice, 2nd choice,
+          Enthusiastic, Would Consider, then Not Interested/Not Applicable);
+          applicants who tie stay in the order they applied. Clicking the
+          heading again reverses that order. Each lecture column is ordered by
+          that lecture&apos;s own rank and preference, so an applicant ranked
+          for one lecture but not another is placed separately in each. Under
+          each lecture&apos;s name the heading shows its{" "}
           <strong>Allocation</strong>, how many applicants are{" "}
           <strong>Assigned</strong> to it so far, and how many places are{" "}
           <strong>Left</strong>, in red when more have been assigned than
