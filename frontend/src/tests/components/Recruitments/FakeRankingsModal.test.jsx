@@ -16,7 +16,7 @@ vi.mock("react-toastify", async (importOriginal) => ({
 
 const axiosMock = new AxiosMockAdapter(axios);
 
-function renderModal(onHide = vi.fn(), recruitmentIds = [7], note) {
+function renderModal(onHide = vi.fn(), recruitmentId = 7, note) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -25,7 +25,7 @@ function renderModal(onHide = vi.fn(), recruitmentIds = [7], note) {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <FakeRankingsModal
-          recruitmentIds={recruitmentIds}
+          recruitmentId={recruitmentId}
           note={note}
           onHide={onHide}
           testIdPrefix="Fake"
@@ -80,42 +80,35 @@ describe("FakeRankingsModal tests", () => {
       expect(radio).toHaveAttribute("id", `Fake-scope-${value}`);
     }
     expect(screen.getByTestId("Fake-modal")).toBeInTheDocument();
-    // Nothing to note for one recruitment.
+    // Nothing to note unless the page says so.
     expect(screen.queryByTestId("Fake-note")).toBeNull();
   });
 
-  test("a note from the page is shown under the explanation (issue #358)", () => {
-    renderModal(vi.fn(), [5], "Only the TA recruitment gets rankings.");
+  test("a note from the page is shown under the explanation (issues #358, #385)", () => {
+    renderModal(vi.fn(), 5, "This recruitment has no applicants yet.");
     const note = screen.getByTestId("Fake-note");
-    expect(note).toHaveTextContent("Only the TA recruitment gets rankings.");
+    expect(note).toHaveTextContent("This recruitment has no applicants yet.");
     expect(note.previousElementSibling).toHaveTextContent(
       "Ranks candidates as the faculty would",
     );
     expect(note.nextElementSibling).toBe(screen.getByTestId("Fake-scope"));
   });
 
-  test("several recruitments are launched one job each in one click, and the notice says so (issue #358)", async () => {
-    const { invalidate } = renderModal(vi.fn(), [5, 6]);
+  test("the recruitment id is sent as given, a string from the route included (issue #385: one recruitment, one job)", async () => {
+    renderModal(vi.fn(), "5");
 
     await userEvent.click(screen.getByTestId("Fake-scope-SOME"));
     await userEvent.click(screen.getByTestId("Fake-create"));
 
-    await waitFor(() => expect(posts()).toHaveLength(2));
-    expect(posts().map((r) => r.params)).toEqual([
-      { recruitmentId: 5, scope: "SOME", includeNotInterested: false },
-      { recruitmentId: 6, scope: "SOME", includeNotInterested: false },
-    ]);
-    expect(
-      await screen.findByTestId("Fake-launched-modal"),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("Fake-jobs-link").parentElement.textContent).toBe(
-      "The fake rankings are being entered by background jobs, one per recruitment. See the Jobs page to follow them. The ranking counts update once they have finished.",
-    );
-    await waitFor(() =>
-      expect(invalidate).toHaveBeenCalledWith({
-        queryKey: ["/api/instructor/recruitments/admin-course-rankings"],
-      }),
-    );
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(posts()[0].params).toEqual({
+      recruitmentId: "5",
+      scope: "SOME",
+      includeNotInterested: false,
+    });
+    await screen.findByTestId("Fake-launched-modal");
+    // Exactly one job, however long the notice is open.
+    expect(posts()).toHaveLength(1);
   });
 
   test("Create sends the defaults, then says where to follow the job", async () => {

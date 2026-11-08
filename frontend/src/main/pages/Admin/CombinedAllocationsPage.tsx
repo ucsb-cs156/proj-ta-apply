@@ -35,11 +35,6 @@ import type {
 } from "main/components/Recruitments/RecruitmentCourseTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
-import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
-import {
-  canCreateFakeRankings,
-  fakeRankingsNote,
-} from "main/utils/fakeRankings";
 import { DeveloperFooterControls } from "main/utils/developerModeFooter";
 import {
   MultipleTabsBanner,
@@ -91,9 +86,9 @@ type Type = "TA" | "ULA";
  * does (issue #278's pattern). Its saves name the tab the same way. Leave this page goes to the
  * quarter's Budget page.
  *
- * In developer mode the footer has the Courses edit page's Fake Hiring Targets and Allocations and
- * Create Fake Rankings buttons, each acting on every recruitment of the quarter in one click
- * (rankings only for a recruitment whose faculty review is Open).
+ * In developer mode the footer has the Courses edit page's Fake Hiring Targets and Allocations
+ * button, acting on every recruitment of the quarter in one click. Create Fake Rankings is not
+ * here (issue #385): it is on each recruitment's own Assignments page, and nowhere else.
  */
 export default function CombinedAllocationsPage(): React.JSX.Element {
   const { qyy } = useParams();
@@ -309,11 +304,9 @@ function CombinedAllocationsForQuarter({
     NO_HEADERS,
   );
 
-  // Developer mode's fake data (issues #225, #220), for every recruitment of the quarter at once:
-  // a hiring target and allocations for each that has a course, and rankings for each whose
-  // faculty review is Open.
+  // Developer mode's fake data (issue #225), for every recruitment of the quarter at once: a
+  // hiring target and allocations for each that has a course.
   const [showFakeAllocations, setShowFakeAllocations] = useState(false);
-  const [showFakeRankings, setShowFakeRankings] = useState(false);
   const sides = (
     [
       ["TA", taId, taCourses],
@@ -328,34 +321,16 @@ function CombinedAllocationsForQuarter({
       courseCount: (list ?? []).length,
     }));
   const fakeAllocationTargets = sides.filter((side) => side.courseCount > 0);
-  const reviewStatusOf = (id: number) =>
-    // Stryker disable next-line OptionalChaining : the initial data is a list, never undefined
-    recruitments?.find((r) => r.id === id)?.reviewStatus;
-  const rankable = sides.filter((side) =>
-    canCreateFakeRankings(reviewStatusOf(side.recruitmentId), side.courseCount),
-  );
   const developerButtons = (
-    <>
-      <Button
-        variant="danger"
-        size="sm"
-        className="me-2"
-        disabled={fakeAllocationTargets.length === 0}
-        onClick={() => setShowFakeAllocations(true)}
-        data-testid="CombinedAllocationsPage-fake-allocations"
-      >
-        Fake Hiring Targets and Allocations
-      </Button>
-      <Button
-        variant="outline-secondary"
-        size="sm"
-        disabled={rankable.length === 0}
-        onClick={() => setShowFakeRankings(true)}
-        data-testid="CombinedAllocationsPage-fake-rankings"
-      >
-        Create Fake Rankings
-      </Button>
-    </>
+    <Button
+      variant="danger"
+      size="sm"
+      disabled={fakeAllocationTargets.length === 0}
+      onClick={() => setShowFakeAllocations(true)}
+      data-testid="CombinedAllocationsPage-fake-allocations"
+    >
+      Fake Hiring Targets and Allocations
+    </Button>
   );
 
   if (yyyyq === null) {
@@ -641,19 +616,6 @@ function CombinedAllocationsForQuarter({
             recruitments={fakeAllocationTargets}
             onHide={() => setShowFakeAllocations(false)}
             testIdPrefix="CombinedAllocationsPage-fake-allocations-modal"
-          />
-        )}
-        {showFakeRankings && (
-          <FakeRankingsModal
-            recruitmentIds={rankable.map((side) => side.recruitmentId)}
-            note={fakeRankingsNote(
-              rankable.map((side) => side.type),
-              sides
-                .filter((side) => !rankable.includes(side))
-                .map((side) => side.type),
-            )}
-            onHide={() => setShowFakeRankings(false)}
-            testIdPrefix="CombinedAllocationsPage-fake-rankings-modal"
           />
         )}
       </div>

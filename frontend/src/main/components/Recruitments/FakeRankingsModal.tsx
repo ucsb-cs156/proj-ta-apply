@@ -12,13 +12,12 @@ import {
 
 type FakeRankingsModalProps = {
   /**
-   * The recruitments whose courses get rankings, one job each in one click: one on a
-   * recruitment's own Assignments page (issue #385; the Courses edit page before that), the
-   * quarter's recruitments whose faculty review is Open on the Combined Allocation page (issue
-   * #358).
+   * The recruitment whose courses get rankings. Since issue #385 the modal is offered on one page
+   * only, the recruitment's own Assignments page; it used to take a list, for the Combined
+   * Allocation page's one-click job per recruitment of the quarter, which that issue removed.
    */
-  recruitmentIds: (number | string)[];
-  /** Something the page wants said about which recruitments are acted on, if anything. */
+  recruitmentId: number | string;
+  /** Something the page wants said about the recruitment, if anything (no applicants, say). */
   note?: string;
   onHide: () => void;
   testIdPrefix?: string;
@@ -31,7 +30,7 @@ type FakeRankingsModalProps = {
  * Mounted only while open.
  */
 export default function FakeRankingsModal({
-  recruitmentIds,
+  recruitmentId,
   note,
   onHide,
   // Stryker disable next-line all : only a default test id
@@ -41,19 +40,14 @@ export default function FakeRankingsModal({
   const [includeNotInterested, setIncludeNotInterested] = useState(false);
   const [launched, setLaunched] = useState(false);
   const queryClient = useQueryClient();
-  const several = recruitmentIds.length > 1;
 
   const launch = useMutation({
     mutationFn: () =>
-      Promise.all(
-        recruitmentIds.map((recruitmentId) =>
-          axios({
-            url: "/api/admin/developer/fakeRankings",
-            method: "POST",
-            params: { recruitmentId, scope, includeNotInterested },
-          }),
-        ),
-      ),
+      axios({
+        url: "/api/admin/developer/fakeRankings",
+        method: "POST",
+        params: { recruitmentId, scope, includeNotInterested },
+      }),
     onSuccess: () => setLaunched(true),
     onError: (error) => toast(apiErrorMessage(error)),
     // Stryker disable next-line all : cache invalidation is not observable from here
@@ -77,16 +71,11 @@ export default function FakeRankingsModal({
         </Modal.Header>
         <Modal.Body>
           <p>
-            The fake rankings are being entered by{" "}
-            {several
-              ? "background jobs, one per recruitment"
-              : "a background job"}
-            . See the{" "}
+            The fake rankings are being entered by a background job. See the{" "}
             <Link to="/admin/jobs" data-testid={`${testIdPrefix}-jobs-link`}>
               Jobs page
             </Link>{" "}
-            to follow {several ? "them" : "it"}. The ranking counts update once{" "}
-            {several ? "they have" : "it has"} finished.
+            to follow it. The ranking counts update once it has finished.
           </p>
         </Modal.Body>
         <Modal.Footer>
