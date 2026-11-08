@@ -16,9 +16,10 @@ on:
     paths: [src/**, pom.xml, lombok.config, frontend/**]
 
 jobs:
-  # The *WebIT classes run in parallel shards (issue #328). Which class runs in which shard is
-  # listed in src/test/resources/it-shards.json; ItShardAssignmentTests fails the normal build if a
-  # class is in no shard. How to add a shard or a class: docs/testing/integration-shards.md.
+  # The *WebIT classes run in parallel shards (issue #328; four since #361). Which class runs in
+  # which shard is listed in src/test/resources/it-shards.json; ItShardAssignmentTests fails the
+  # normal build if a class is in no shard. How to add a shard or a class, and the timings the
+  # assignment is based on: docs/testing/integration-shards.md.
   it-shard:
     name: "Integration tests (shard ${{ matrix.shard }})"
     # Playwright misbehaves on Ubuntu versions not yet in its version mapping (e.g. ubuntu-26.04).
@@ -30,7 +31,7 @@ jobs:
       # One shard failing must not cancel the others: their results (and artifacts) are still wanted.
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
 
     steps:
     - uses: actions/checkout@v4
