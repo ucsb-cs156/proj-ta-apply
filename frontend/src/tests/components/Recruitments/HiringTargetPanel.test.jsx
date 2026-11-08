@@ -33,13 +33,12 @@ function renderPanel(
   recruitment = taRecruitment,
   allocatedSoFar = 4,
   readOnly = false,
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  }),
 ) {
   return render(
-    <QueryClientProvider
-      client={
-        new QueryClient({ defaultOptions: { queries: { retry: false } } })
-      }
-    >
+    <QueryClientProvider client={queryClient}>
       <HiringTargetPanel
         recruitment={recruitment}
         allocatedSoFar={allocatedSoFar}
@@ -54,6 +53,12 @@ const puts = () =>
   axiosMock.history.put.filter(
     (r) => r.url === "/api/admin/recruitments/totalHiringTarget",
   );
+
+/** The label and the number of one row of the table (issue #320). */
+const rowText = (id) => [
+  screen.getByTestId(`Panel-${id}-label`).textContent,
+  screen.getByTestId(`Panel-${id}-value`).textContent,
+];
 
 describe("HiringTargetPanel tests", () => {
   beforeEach(() => {
@@ -76,12 +81,21 @@ describe("HiringTargetPanel tests", () => {
     expect(box).toHaveAttribute("step", "1");
     expect(box.style.width).toBe("6em");
     expect(box).toHaveClass("form-control-sm");
+    // The box is a block, pushed to the right edge of the numbers column.
+    expect(box).toHaveClass("ms-auto");
     expect(screen.getByTestId("Panel")).toHaveClass("mb-3");
-    // The space after the colon keeps the label off the box.
+    const label = document.querySelector(
+      'label[for="Panel-totalHiringTarget"]',
+    );
+    expect(label.textContent).toBe("Total number of TAs expected to be hired:");
+    expect(label).toHaveClass("mb-0");
+    // The label is in the first cell of the row, the box in the second.
     expect(
-      document.querySelector('label[for="Panel-totalHiringTarget"]')
-        .textContent,
-    ).toBe("Total number of TAs expected to be hired: ");
+      screen.getByTestId("Panel-totalHiringTarget-label").contains(label),
+    ).toBe(true);
+    expect(
+      screen.getByTestId("Panel-totalHiringTarget-value").contains(box),
+    ).toBe(true);
   });
 
   test("has a default test id prefix", () => {
@@ -94,6 +108,9 @@ describe("HiringTargetPanel tests", () => {
     expect(
       screen.getByTestId("HiringTargetPanel-totalHiringTarget"),
     ).toHaveValue(10);
+    expect(
+      screen.getByTestId("HiringTargetPanel-allocated-value"),
+    ).toHaveTextContent(/^0$/);
   });
 
   test("says ULAs for a ULA recruitment", () => {
@@ -102,9 +119,7 @@ describe("HiringTargetPanel tests", () => {
     expect(
       screen.getByLabelText("Total number of ULAs expected to be hired:"),
     ).toHaveValue(6);
-    expect(screen.getByTestId("Panel-left")).toHaveTextContent(
-      "ULA allocations left to assign: 4",
-    );
+    expect(rowText("left")).toEqual(["ULA allocations left to assign:", "4"]);
   });
 
   test("a recruitment without a target yet counts as expecting one", () => {
@@ -112,47 +127,46 @@ describe("HiringTargetPanel tests", () => {
     renderPanel(legacy, 0);
 
     expect(screen.getByTestId("Panel-totalHiringTarget")).toHaveValue(1);
-    expect(screen.getByTestId("Panel-left")).toHaveTextContent(
-      "TA allocations left to assign: 1",
-    );
+    expect(rowText("left")).toEqual(["TA allocations left to assign:", "1"]);
   });
 
   test("the allocated and left counts add up to the target", () => {
     renderPanel(taRecruitment, 4);
 
-    expect(screen.getByTestId("Panel-allocated")).toHaveTextContent(
-      "Allocated so far: 4",
-    );
-    expect(screen.getByTestId("Panel-left")).toHaveTextContent(
-      "TA allocations left to assign: 6",
-    );
+    expect(rowText("allocated")).toEqual(["Allocated so far:", "4"]);
+    expect(rowText("left")).toEqual(["TA allocations left to assign:", "6"]);
     expect(screen.queryByTestId("Panel-over")).not.toBeInTheDocument();
   });
 
   test("exactly allocated shows zero left and no warning", () => {
     renderPanel(taRecruitment, 10);
 
-    expect(screen.getByTestId("Panel-left")).toHaveTextContent(
-      "TA allocations left to assign: 0",
-    );
+    expect(rowText("left")).toEqual(["TA allocations left to assign:", "0"]);
     expect(screen.queryByTestId("Panel-over")).not.toBeInTheDocument();
   });
 
-  test("over-allocation shows a negative number and the warning", () => {
+  test("over-allocation shows a negative number and the warning, under the table", () => {
     renderPanel(taRecruitment, 13);
 
-    expect(screen.getByTestId("Panel-left")).toHaveTextContent(
-      "TA allocations left to assign: -3",
-    );
+    expect(rowText("left")).toEqual(["TA allocations left to assign:", "-3"]);
     const warning = screen.getByTestId("Panel-over");
     expect(warning).toHaveTextContent(
       "Please either increase the hiring target, or reduce the allocations for one or more courses.",
     );
     expect(warning).toHaveClass("text-danger");
+    expect(
+      screen.getByTestId("Panel-table").compareDocumentPosition(warning) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByTestId("Panel-table").contains(warning)).toBe(false);
   });
 
-  test("a valid number is saved as soon as it is typed", async () => {
-    renderPanel();
+  test("a valid number is saved as soon as it is typed, and the recruitments are re-read", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    renderPanel(taRecruitment, 4, false, queryClient);
     const box = screen.getByTestId("Panel-totalHiringTarget");
 
     await userEvent.clear(box);
@@ -167,6 +181,13 @@ describe("HiringTargetPanel tests", () => {
     expect(puts()[0].method).toBe("put");
     expect(box).toHaveValue(12);
     expect(box).not.toHaveClass("is-invalid");
+    // Each save re-reads the recruitment list, which carries the stored target.
+    await waitFor(() =>
+      expect(invalidate.mock.calls.map((c) => c[0].queryKey)).toEqual([
+        ["/api/admin/recruitments/all"],
+        ["/api/admin/recruitments/all"],
+      ]),
+    );
   });
 
   test("an invalid value is never sent, is flagged, and reverts on blur", async () => {
@@ -205,20 +226,62 @@ describe("HiringTargetPanel tests", () => {
     expect(box).toHaveValue(10);
   });
 
-  test("read-only (the view-only Courses page) shows the target as text, with the totals", () => {
+  test("read-only (the view-only Courses page) shows the target as a number, with the totals", () => {
     renderPanel(taRecruitment, 4, true);
 
-    const target = screen.getByTestId("Panel-totalHiringTarget");
-    expect(target.tagName).toBe("DIV");
-    expect(target).toHaveTextContent(
-      "Total number of TAs expected to be hired: 10",
+    // No box, so nothing carries the box's test id; the row and its cells do.
+    expect(screen.queryByTestId("Panel-totalHiringTarget")).toBeNull();
+    expect(screen.getByTestId("Panel-totalHiringTarget-row").tagName).toBe(
+      "TR",
     );
+    expect(rowText("totalHiringTarget")).toEqual([
+      "Total number of TAs expected to be hired:",
+      "10",
+    ]);
     expect(screen.queryByRole("spinbutton")).toBeNull();
-    expect(screen.getByTestId("Panel-allocated")).toHaveTextContent(
-      "Allocated so far: 4",
+    expect(document.querySelector("label")).toBeNull();
+    expect(rowText("allocated")).toEqual(["Allocated so far:", "4"]);
+    expect(rowText("left")).toEqual(["TA allocations left to assign:", "6"]);
+  });
+
+  // Issue #320: the three lines are a two-column table.
+  test("the figures are a small two-column table: labels left, numbers right, no header, not sortable", () => {
+    renderPanel(ulaRecruitment, 2, true);
+
+    const table = screen.getByTestId("Panel-table");
+    expect(table.tagName).toBe("TABLE");
+    expect(table).toHaveClass(
+      "table",
+      "table-sm",
+      "table-borderless",
+      "w-auto",
+      "mb-2",
+      "align-middle",
     );
-    expect(screen.getByTestId("Panel-left")).toHaveTextContent(
-      "TA allocations left to assign: 6",
-    );
+    expect(table.querySelector("thead")).toBeNull();
+    expect(table.querySelector("tfoot")).toBeNull();
+    expect(table.querySelectorAll("th")).toHaveLength(0);
+    expect(table.querySelectorAll("button, a")).toHaveLength(0);
+    const rows = [...table.querySelectorAll("tbody tr")];
+    expect(rows.map((tr) => tr.getAttribute("data-testid"))).toEqual([
+      "Panel-totalHiringTarget-row",
+      "Panel-allocated-row",
+      "Panel-left-row",
+    ]);
+    rows.forEach((tr) => {
+      const cells = tr.querySelectorAll("td");
+      expect(cells).toHaveLength(2);
+      expect(cells[0]).not.toHaveClass("text-end");
+      expect(cells[1]).toHaveClass("text-end");
+    });
+    expect(
+      rows.map((tr) =>
+        [...tr.querySelectorAll("td")].map((td) => td.textContent),
+      ),
+    ).toEqual([
+      ["Total number of ULAs expected to be hired:", "6"],
+      ["Allocated so far:", "2"],
+      ["ULA allocations left to assign:", "4"],
+    ]);
   });
 });

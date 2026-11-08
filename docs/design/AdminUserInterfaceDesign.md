@@ -286,6 +286,25 @@ number, in the same 80% font), and the cell holds the course number in an inline
 `COURSE_NUMBER_WIDTH` (`13ch`, monospaced) wide, the width of the widest UCSB course number, the same
 cell as the Combined Allocation table's. The course numbers themselves keep their full size.
 
+### The title and the text of the Recruitment Courses pages (issue #320)
+
+Both pages' title is `{QXX} {TA|ULA} Courses` for the recruitment's quarter and type ("W26 TA
+Courses"); it is the generic "Recruitment Courses" only while the recruitment list is loading or
+for an id no recruitment has. The view-only page's description is exactly "These are the courses
+for which the department plans to hire TAs." (ULAs for a ULA recruitment; "TAs/ULAs" while the
+recruitment is unknown), followed by "If courses do not appear, please go to the Courses page and
+click *Populate*.", in which **Courses** links to the admin Courses page, `/admin/courses`, whose
+Populate button fills the course table that a recruitment's lectures are drawn from (the paragraph
+the issue quotes, "The courses in this recruitment: every lecture of a course flagged for its type
+…", had already been removed by issue #358). The pointer to the Combined Allocation page follows,
+then the read-only hiring target: `HiringTargetPanel` renders its three figures as a small
+two-column table (`table-sm`, borderless, `w-auto`, no header row, nothing sortable), the labels
+"Total number of TAs expected to be hired:", "Allocated so far:" and "TA allocations left to
+assign:" in the left column and the numbers right-aligned in the right one; the over-allocation
+warning stays under the table. The panel's editable form, which no page has used since #358, lays
+out the same way with the box in the right column. The edit page still has no description, hint,
+pointer or hiring target.
+
 ## The new recruitment card layout
 
 The card becomes much wider to hold the diagram. From top to bottom:

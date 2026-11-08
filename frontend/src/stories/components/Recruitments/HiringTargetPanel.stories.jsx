@@ -39,3 +39,15 @@ OverAllocated.args = {
   recruitment: recruitmentsFixtures.threeRecruitments[2],
   allocatedSoFar: 13,
 };
+
+/**
+ * As the view-only Recruitment Courses page shows it (issues #278 and #320): the target is a
+ * number, not a box, and the three figures are a two-column table, labels left and numbers
+ * right-aligned, with no header row.
+ */
+export const ReadOnly = Template.bind({});
+ReadOnly.args = {
+  recruitment: recruitmentsFixtures.threeRecruitments[2],
+  allocatedSoFar: 4,
+  readOnly: true,
+};

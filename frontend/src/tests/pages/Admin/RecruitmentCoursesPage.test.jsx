@@ -175,12 +175,44 @@ describe("RecruitmentCoursesPage tests", () => {
   test("lists the recruitment's courses", async () => {
     renderPage();
 
-    expect(await screen.findByText("Recruitment Courses")).toBeInTheDocument();
+    // Issue #320: the title names the quarter and the type; recruitment 7 is W26's ULA one.
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-title"),
+    ).toHaveTextContent(/^W26 ULA Courses$/);
+    expect(screen.getByTestId("RecruitmentCoursesPage-title").tagName).toBe(
+      "H1",
+    );
     expect(
       await screen.findByTestId(
         "RecruitmentCoursesPage-cell-row-0-col-courseId",
       ),
     ).toHaveTextContent("CMPSC     1A", { normalizeWhitespace: false });
+  });
+
+  test("the title is the generic one until the recruitment is known, and for an unknown one", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-title"),
+    ).toHaveTextContent(/^Recruitment Courses$/);
+  });
+
+  test("the title follows the recruitment's quarter and type", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[0],
+        id: 7,
+        quarter: "20263",
+        type: "TA",
+      },
+    ]);
+    renderPage({ edit: false });
+
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-title"),
+    ).toHaveTextContent(/^M26 TA Courses$/);
   });
 
   test("shows sortable Rankings as the leftmost column only after reviews start", async () => {
@@ -515,22 +547,46 @@ describe("RecruitmentCoursesPage tests", () => {
   test("the view page shows the hiring target above the refresh line, with the visible allocations added up", async () => {
     renderPage({ edit: false });
 
-    const box = await screen.findByTestId(
-      "RecruitmentCoursesPage-hiring-target-totalHiringTarget",
+    const target = await screen.findByTestId(
+      "RecruitmentCoursesPage-hiring-target-totalHiringTarget-row",
     );
     // Recruitment 7 is a ULA recruitment expecting 6; the three visible rows allocate 2 + 3 + 1.
-    expect(box).toHaveTextContent(
-      "Total number of ULAs expected to be hired: 6",
+    // Issue #320: a two-column table, the labels left and the numbers right-aligned, no header.
+    expect(target.tagName).toBe("TR");
+    expect(
+      screen.getByTestId(
+        "RecruitmentCoursesPage-hiring-target-totalHiringTarget-label",
+      ),
+    ).toHaveTextContent(/^Total number of ULAs expected to be hired:$/);
+    const targetValue = screen.getByTestId(
+      "RecruitmentCoursesPage-hiring-target-totalHiringTarget-value",
     );
+    expect(targetValue).toHaveTextContent(/^6$/);
+    expect(targetValue).toHaveClass("text-end");
+    const table = screen.getByTestId(
+      "RecruitmentCoursesPage-hiring-target-table",
+    );
+    expect(table.querySelector("thead")).toBeNull();
+    expect(table.querySelectorAll("tbody tr")).toHaveLength(3);
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
     await waitFor(() =>
       expect(
-        screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
-      ).toHaveTextContent("Allocated so far: 6"),
+        screen.getByTestId(
+          "RecruitmentCoursesPage-hiring-target-allocated-value",
+        ),
+      ).toHaveTextContent(/^6$/),
     );
     expect(
-      screen.getByTestId("RecruitmentCoursesPage-hiring-target-left"),
-    ).toHaveTextContent("ULA allocations left to assign: 0");
+      screen.getByTestId(
+        "RecruitmentCoursesPage-hiring-target-allocated-label",
+      ),
+    ).toHaveTextContent(/^Allocated so far:$/);
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-hiring-target-left-label"),
+    ).toHaveTextContent(/^ULA allocations left to assign:$/);
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-hiring-target-left-value"),
+    ).toHaveTextContent(/^0$/);
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-hiring-target-over"),
     ).not.toBeInTheDocument();
@@ -570,13 +626,15 @@ describe("RecruitmentCoursesPage tests", () => {
       "Please either increase the hiring target, or reduce the allocations for one or more courses.",
     );
     expect(
-      screen.getByTestId("RecruitmentCoursesPage-hiring-target-left"),
-    ).toHaveTextContent("ULA allocations left to assign: -2");
+      screen.getByTestId("RecruitmentCoursesPage-hiring-target-left-value"),
+    ).toHaveTextContent(/^-2$/);
   });
 
   test("removed rows do not count toward the allocation, even when shown", async () => {
     renderPage({ edit: false });
-    await screen.findByTestId("RecruitmentCoursesPage-hiring-target-allocated");
+    await screen.findByTestId(
+      "RecruitmentCoursesPage-hiring-target-allocated-value",
+    );
 
     await userEvent.click(
       screen.getByTestId("RecruitmentCoursesPage-show-removed"),
@@ -589,8 +647,10 @@ describe("RecruitmentCoursesPage tests", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
-    ).toHaveTextContent("Allocated so far: 6");
+      screen.getByTestId(
+        "RecruitmentCoursesPage-hiring-target-allocated-value",
+      ),
+    ).toHaveTextContent(/^6$/);
   });
 
   test("a row without an allocation counts as zero", async () => {
@@ -606,8 +666,10 @@ describe("RecruitmentCoursesPage tests", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
-      ).toHaveTextContent("Allocated so far: 0"),
+        screen.getByTestId(
+          "RecruitmentCoursesPage-hiring-target-allocated-value",
+        ),
+      ).toHaveTextContent(/^0$/),
     );
   });
 
@@ -618,8 +680,11 @@ describe("RecruitmentCoursesPage tests", () => {
 
     for (const id of [
       "hiring-target",
-      "hiring-target-totalHiringTarget",
+      "hiring-target-table",
+      "hiring-target-totalHiringTarget-row",
       "description",
+      "populate-hint",
+      "courses-link",
       "combined-pointer",
       "combined-link",
       "publish",

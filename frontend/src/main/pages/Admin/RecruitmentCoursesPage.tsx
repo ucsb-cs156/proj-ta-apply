@@ -170,6 +170,11 @@ export default function RecruitmentCoursesPage({
   );
   // Issue #358: where the estimates and allocations went, once the quarter is known.
   const quarterQyy = recruitment ? yyyyqToQyy(recruitment.quarter) : null;
+  // Issue #320: the title names the quarter and the type, "W26 TA Courses", once the recruitment
+  // is known; until then (and for an unknown recruitment) it is the generic one.
+  const title = recruitment
+    ? `${quarterQyy} ${recruitment.type} Courses`
+    : "Recruitment Courses";
 
   const copyToClipboard = async (value: string, successMessage: string) => {
     try {
@@ -320,7 +325,7 @@ export default function RecruitmentCoursesPage({
     <BasicLayout>
       {edit && <DeveloperFooterControls controls={developerButtons} />}
       <div className="pt-2">
-        <h1>Recruitment Courses</h1>
+        <h1 data-testid="RecruitmentCoursesPage-title">{title}</h1>
         {edit ? (
           <>
             <MultipleTabsBanner
@@ -368,11 +373,24 @@ export default function RecruitmentCoursesPage({
         {/* The edit page is the controls and the table alone (issue #358): no description, no
             pointer and no hiring target, which is entered on the Budget page. */}
         {!edit && (
-          <p data-testid="RecruitmentCoursesPage-description">
-            Courses for which the department is planning to hire{" "}
-            {recruitment ? `${recruitment.type}s` : "TAs/ULAs"}
-            {recruitment ? ` for ${yyyyqToQyy(recruitment.quarter)}` : ""}.
-          </p>
+          <>
+            <p data-testid="RecruitmentCoursesPage-description">
+              These are the courses for which the department plans to hire{" "}
+              {recruitment ? `${recruitment.type}s` : "TAs/ULAs"}.
+            </p>
+            {/* Issue #320: a recruitment's list is the lectures of the courses flagged for its type
+                on the admin Courses page, so that is where a missing course is put right. */}
+            <p data-testid="RecruitmentCoursesPage-populate-hint">
+              If courses do not appear, please go to the{" "}
+              <Link
+                to="/admin/courses"
+                data-testid="RecruitmentCoursesPage-courses-link"
+              >
+                Courses
+              </Link>{" "}
+              page and click <em>Populate</em>.
+            </p>
+          </>
         )}
         {!edit && quarterQyy !== null && (
           <p data-testid="RecruitmentCoursesPage-combined-pointer">
