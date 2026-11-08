@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
@@ -121,7 +121,24 @@
 <a name='L56'></a><a href='#L56'>56</a>
 <a name='L57'></a><a href='#L57'>57</a>
 <a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -171,7 +188,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">952x</span>
+<span class="cline-any cline-yes">952x</span>
+<span class="cline-any cline-yes">952x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -226,15 +260,32 @@ export const wideColumnProps = (
     : {};
 &nbsp;
 /**
- * The widest UCSB course number is 13 characters including the space, "XXXXXXX 999XX" (issue #358):
- * a 7-letter subject area, a space and a 3-digit number with up to two letters.
+ * A course number as the Combined Allocation table shows it (issue #383): the subject area, one
+ * space, and the number with its digits right-justified in three columns, so the digits of
+ * "CMPSC   8" and "CMPSC 190DD" line up as they do in the UCSB API's padded form ("CMPSC     8",
+ * "CMPSC   190DD": an eight-column subject area field, then three digit columns and the letters).
+ * Only the subject area field's padding goes, which for CMPSC was three spaces no one needs; the
+ * unpadded "CMPSC 8" of the catalog comes out the same way.
  */
-export const COURSE_NUMBER_CHARACTERS = "XXXXXXX 999XX".length;
+export const compactCourseNumber = (courseId: string): string =&gt; {
+  const [subject, ...rest] = courseId.trim().split(/\s+/);
+  const number = rest.join(" ").replace(/^\d+/, (digits) =&gt; digits.padStart(3));
+  return number === "" ? subject : `${subject} ${number}`;
+};
+&nbsp;
+/**
+ * The widest course number the Combined Allocation table shows, "CMPSC 190DD": the subject area
+ * this app manages (CMPSC, `app.subjectArea`), a space, and a 3-digit number with up to two letters,
+ * in the form of {@link compactCourseNumber}: 11 characters. Until issue #383 the cell kept the
+ * API's padded form and was 13 (a 7-letter subject area field, a space, "999XX").
+ */
+export const COURSE_NUMBER_CHARACTERS = "CMPSC 190DD".length;
 &nbsp;
 /**
  * The width of a course number's cell contents: exactly {@link COURSE_NUMBER_CHARACTERS}
  * characters of the monospaced font it is shown in, so the column is just wide enough for the
- * widest course number, whether or not any course in the table has one that long.
+ * widest course number, whether or not any course in the table has one that long. (A longer
+ * subject area, if one were configured, widens the cell: it is a minimum, and the text never wraps.)
  */
 export const COURSE_NUMBER_WIDTH = `${COURSE_NUMBER_CHARACTERS}ch`;
 &nbsp;</pre></td></tr></table></pre>
@@ -244,7 +295,7 @@ export const COURSE_NUMBER_WIDTH = `${COURSE_NUMBER_CHARACTERS}ch`;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-07T21:10:14.268Z
+                at 2026-11-08T01:51:50.901Z
             </div>
         <script src="../prettify.js"></script>
         <script>
