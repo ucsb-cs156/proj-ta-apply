@@ -29,16 +29,17 @@ import {
 /** A lecture of the page with the label the page shows for it. */
 type Course = LabelledCourse<AssignmentCourse>;
 
-/** A monospace font with the spaces kept, so the padded labels line up (issue #355). */
-const alignedText = {
-  className: "font-monospace",
-  style: { whiteSpace: "pre" as const },
-};
+/**
+ * A lecture's name in a monospace font with its spaces kept, so the padded labels line up (issue
+ * #355): the `course-label` class in index.css (issue #415).
+ */
+const COURSE_LABEL_CLASS = "course-label";
 
 /**
  * The dropdown's width: the longest label, plus its two 1px borders, the small select's left
  * padding (0.5rem) and the room Bootstrap keeps on the right for the arrow (2.25rem). The `ch` is
- * the dropdown's own monospace font, so the longest label fits exactly (issue #355).
+ * the dropdown's own monospace font, so the longest label fits exactly (issue #355). Inline, not in
+ * index.css, because it is derived from LONGEST_COURSE_LABEL and must not drift from it.
  */
 const TENTATIVE_SELECT_WIDTH = `calc(${COURSE_LABEL_WIDTH} + 2px + 2.75rem)`;
 
@@ -66,8 +67,8 @@ function TentativeAssignmentCell({
   return (
     <Form.Select
       size="sm"
-      className={alignedText.className}
-      style={{ ...alignedText.style, width: TENTATIVE_SELECT_WIDTH }}
+      className={COURSE_LABEL_CLASS}
+      style={{ width: TENTATIVE_SELECT_WIDTH }}
       aria-label={`Tentative assignment for ${row.identity.email}`}
       // Stryker disable all : a select shows a value with no matching option as blank anyway
       value={
@@ -95,15 +96,19 @@ function TentativeAssignmentCell({
 /** The widest of the three count labels; the other two are padded to it so the counts line up. */
 const COUNT_LABEL_WIDTH = "Allocation".length;
 
-/** "  Assigned 1": a count line of a lecture's heading, its label right-aligned under "Allocation". */
+/** " To Assign 1": a count line of a lecture's heading, its label right-aligned under "Allocation". */
 const countLine = (label: string, count: number): string =>
   `${label.padStart(COUNT_LABEL_WIDTH)} ${count}`;
 
+/** The classes of a count line (issue #415): a size smaller than `small`, and not bold. */
+const COUNT_LINE_CLASSES = "course-heading-count fw-normal";
+
 /**
  * A lecture's column heading: its name, then three lines that stay put whatever the sort order:
- * the allocation, how many applicants are pencilled into it, and how many places are left (in red
- * when more are assigned than allocated). Monospace, as wide as the longest possible name (issue
- * #355), so every lecture column is the same width and the counts line up under the name.
+ * the allocation, how many applicants are pencilled into it, and how many places are still to
+ * assign (in red when more are assigned than allocated). Monospace with the spaces kept (issue
+ * #355), so the counts line up under the name; the column itself is a fixed 100px (issue #415,
+ * `course-column` in index.css), so every lecture column is the same width.
  */
 function CourseHeader({
   course,
@@ -114,12 +119,8 @@ function CourseHeader({
 }): React.JSX.Element {
   const id = `${testIdPrefix}-course-${course.id}`;
   return (
-    <div
-      className={alignedText.className}
-      style={{ ...alignedText.style, minWidth: COURSE_LABEL_WIDTH }}
-      data-testid={`${id}-header`}
-    >
-      <div data-testid={`${id}-label`}>
+    <div className={COURSE_LABEL_CLASS} data-testid={`${id}-header`}>
+      <div className="course-heading-label" data-testid={`${id}-label`}>
         {course.label}
         {course.historical && (
           <Badge
@@ -131,17 +132,17 @@ function CourseHeader({
           </Badge>
         )}
       </div>
-      <div className="small fw-normal" data-testid={`${id}-allocation`}>
+      <div className={COUNT_LINE_CLASSES} data-testid={`${id}-allocation`}>
         {countLine("Allocation", course.allocation)}
       </div>
-      <div className="small fw-normal" data-testid={`${id}-assigned`}>
+      <div className={COUNT_LINE_CLASSES} data-testid={`${id}-assigned`}>
         {countLine("Assigned", course.assigned)}
       </div>
       <div
-        className={`small fw-normal${course.left < 0 ? " text-danger" : ""}`}
+        className={`${COUNT_LINE_CLASSES}${course.left < 0 ? " text-danger" : ""}`}
         data-testid={`${id}-left`}
       >
-        {countLine("Left", course.left)}
+        {countLine("To Assign", course.left)}
       </div>
     </div>
   );
@@ -151,15 +152,16 @@ function CourseHeader({
 type CourseColumnMeta = {
   course: Course;
   testIdPrefix: string;
-  /** Right-aligned ranks, in a column no wider than its heading (issue #355). */
-  style: { textAlign: "right"; width: string; whiteSpace: "nowrap" };
+  /** On the heading and every cell (OurTable): 100px wide, right-aligned ranks (issue #415). */
+  className: "course-column";
 };
 
 /**
  * One lecture's cell for one applicant (issue #199): the rank, right-aligned, on a pastel
  * background that says how interested the applicant is in the course, with a symbol at the left
- * for readers who cannot tell the colours apart. A module-level component so TanStack does not
- * remount it on every render.
+ * for readers who cannot tell the colours apart. The cell of the lecture the applicant is
+ * pencilled into has a thick black outline (issue #415). A module-level component so TanStack does
+ * not remount it on every render.
  */
 function CourseRankCell({
   cell,
@@ -170,11 +172,11 @@ function CourseRankCell({
   const row = cell.row.original;
   const preference = preferenceFor(row, meta.course);
   const rank = rankFor(row, meta.course);
+  const selected = row.tentativeAssignment === meta.course.id;
   const id = `${meta.testIdPrefix}-cell-row-${cell.row.index}-course-${meta.course.id}`;
   return (
     <div
-      className="d-flex justify-content-between align-items-center px-1"
-      style={{ backgroundColor: interestDisplay(preference).background }}
+      className={`d-flex justify-content-between align-items-center px-1 ${interestDisplay(preference).className}${selected ? " selected-course-assignment-cell" : ""}`}
       data-testid={id}
     >
       <InterestMark preference={preference} testId={`${id}-mark`} />
@@ -266,7 +268,7 @@ export default function AssignmentsTable({
       meta: {
         course,
         testIdPrefix,
-        style: { ...shrinkToContent.style, textAlign: "right" },
+        className: "course-column",
       } satisfies CourseColumnMeta,
     })),
   ];

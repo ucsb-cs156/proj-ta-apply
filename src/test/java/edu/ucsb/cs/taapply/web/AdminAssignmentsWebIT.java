@@ -4,7 +4,9 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.SelectOption;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Application;
@@ -235,6 +237,93 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     reloadPage(page);
     assertThat(page.getByTestId("AdminAssignmentsPage-table-header-email")).isVisible();
     assertThat(page.getByTestId("AdminAssignmentsPage-table-header-major")).not().isVisible();
+  }
+
+  /**
+   * Issue #415: every lecture column is 100px wide, the third count line reads "To Assign", a
+   * cell's colour is a class rather than an inline style, and once a lecture is chosen for a row,
+   * that row's cell for it has a thick black outline. The widths and the border are measured in the
+   * browser, which also shows that index.css defines the classes. With two sections of CMPSC 156
+   * the headings carry the longest kind of name, "156 (0100)" (12 characters), which must fit.
+   */
+  @Test
+  public void lecture_columns_are_100px_wide_and_the_chosen_lecture_cell_is_outlined()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    recruitmentCourseRepository.save(
+        RecruitmentCourse.builder()
+            .recruitmentId(recruitment.getId())
+            .courseId("CMPSC   156")
+            .section("0200")
+            .enrollCode("07493")
+            .title("ADV APP PROGRAM")
+            .removed(false)
+            .build());
+    seedApplicant(recruitment);
+    setupAdminUser();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
+    assertThat(page.getByTestId(SELECT)).isVisible();
+
+    // The first lecture's heading (the th; its sort header and carets share the prefix).
+    Locator heading =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-header-course-']").first();
+    assertThat(heading).hasClass(Pattern.compile("course-column"));
+    assertThat(heading).containsText("156   (0100)");
+    assertThat(heading).containsText("To Assign");
+    assertThat(heading).not().containsText("Left");
+    double headingWidth = heading.boundingBox().width;
+    assertTrue(Math.abs(headingWidth - 100) <= 1.5, "heading width was " + headingWidth);
+    // The 12-character name fits on one line of the 100px column, with room to spare.
+    Locator label =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-label']")
+            .first();
+    assertThat(label).hasText("156   (0100)");
+    assertEquals(true, label.evaluate("e => e.scrollWidth <= e.closest('th').clientWidth"));
+    assertEquals(
+        true,
+        label.evaluate(
+            "e => e.getBoundingClientRect().height < 2 * parseFloat(getComputedStyle(e).fontSize)"));
+    // The count lines are smaller than the name.
+    Locator toAssign =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-left']")
+            .first();
+    assertThat(toAssign).hasClass(Pattern.compile("course-heading-count"));
+    assertEquals("12px", toAssign.evaluate("e => getComputedStyle(e).fontSize"));
+
+    // The applicant marked no interest: the cell is pale red by its class, with no inline style,
+    // and not outlined.
+    Locator cell =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-cell-row-0-course-']").first();
+    assertThat(cell).hasClass(Pattern.compile("candidate-course-rank-not-applicable"));
+    assertThat(cell).not().hasClass(Pattern.compile("selected-course-assignment-cell"));
+    assertNull(cell.getAttribute("style"));
+    assertEquals("rgb(248, 215, 218)", cell.evaluate("e => getComputedStyle(e).backgroundColor"));
+    assertEquals("0px", cell.evaluate("e => getComputedStyle(e).borderTopWidth"));
+    Locator td =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-cell-row-0-col-course-']").first();
+    assertThat(td).hasClass(Pattern.compile("course-column"));
+    double tdWidth = td.boundingBox().width;
+    assertTrue(Math.abs(tdWidth - 100) <= 1.5, "cell width was " + tdWidth);
+
+    // Choosing the first lecture outlines that cell, and the counts follow.
+    page.getByTestId(SELECT).selectOption(new SelectOption().setIndex(1));
+    assertThat(cell).hasClass(Pattern.compile("selected-course-assignment-cell"));
+    assertEquals("5px solid rgb(0, 0, 0)", cell.evaluate("e => getComputedStyle(e).borderTop"));
+    assertThat(heading).containsText("Assigned 1");
+    assertThat(cell).hasClass(Pattern.compile("candidate-course-rank-not-applicable"));
+    // The other lecture's cell is not outlined, and the column is still 100px.
+    Locator otherCell =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-cell-row-0-col-course-']")
+            .nth(1)
+            .locator(":scope > div");
+    assertThat(otherCell).not().hasClass(Pattern.compile("selected-course-assignment-cell"));
+    headingWidth = heading.boundingBox().width;
+    assertTrue(Math.abs(headingWidth - 100) <= 1.5, "heading width was " + headingWidth);
+
+    // Clearing the dropdown takes the outline away again.
+    page.getByTestId(SELECT).selectOption(new SelectOption().setIndex(0));
+    assertThat(cell).not().hasClass(Pattern.compile("selected-course-assignment-cell"));
+    assertThat(heading).containsText("Assigned 0");
   }
 
   @Test

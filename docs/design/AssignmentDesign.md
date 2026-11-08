@@ -271,7 +271,24 @@ dropdown's options use non-breaking spaces, because browsers collapse an option'
 whatever its CSS. The Tentative Assignment column, its dropdown and every lecture column are sized
 to the longest label the rule can produce, `190DD (0100)` (12 characters), not to the longest
 label present, so the columns are the same width on every recruitment. The three count lines under
-a lecture's name are padded so the numbers line up (`Allocation 1`, `  Assigned 1`, `      Left 0`).
+a lecture's name are padded so the numbers line up (`Allocation 1`, `  Assigned 1`, ` To Assign 0`).
+
+### UX tweaks, 2026-11-08 (issue #415)
+
+* The third count line reads `To Assign` (it was `Left`; the rankings CSV's `Left to assign` row
+  label is unchanged), and the three count lines are one size smaller than before (`0.75em`, the
+  `course-heading-count` class).
+* Every lecture column is a fixed 100px wide (the `course-column` class on its heading and cells,
+  passed through OurTable's column `meta.className`), with 3px of horizontal padding instead of the
+  table's 16px. The lecture's name at the top of the heading is shown at 80% of the heading size, the
+  size of the stacked "Tentative Assignment" heading beside it, so that `190DD (0100)` (12 monospace
+  characters, about 92px) still fits on one line.
+* In each row, the lecture cell matching the row's `tentativeAssignment` gets the
+  `selected-course-assignment-cell` class: `border: 5px solid black`.
+* The pastel interest colours are classes (`candidate-course-rank-enthusiastic`,
+  `candidate-course-rank-would-consider`, `candidate-course-rank-not-applicable`) that
+  `interestDisplay(preference).className` names, instead of inline background colours. All of these
+  classes live in `frontend/src/index.css`.
 
 # Increment 7: Allow Admin to publish assignments
 

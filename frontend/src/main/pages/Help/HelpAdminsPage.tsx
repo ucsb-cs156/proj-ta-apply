@@ -98,14 +98,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           for one lecture but not another is placed separately in each. Under
           each lecture&apos;s name the heading shows its{" "}
           <strong>Allocation</strong>, how many applicants are{" "}
-          <strong>Assigned</strong> to it so far, and how many places are{" "}
-          <strong>Left</strong>, in red when more have been assigned than
-          allocated; those numbers stay put when you sort. A progress
-          thermometer under the page heading shows how many assignments have
-          been made against the recruitment&apos;s hiring target (entered on the
-          Budget page), as a filled bar with the numbers and percentage: green
-          when the target is met, red when more have been assigned than the
-          target, and an empty bar saying so when no target is set yet.
+          <strong>Assigned</strong> to it so far, and how many places are still{" "}
+          <strong>To Assign</strong>, in red when more have been assigned than
+          allocated; those numbers stay put when you sort. In each row, the cell
+          of the lecture chosen in the Tentative Assignment dropdown has a thick
+          black outline. A progress thermometer under the page heading shows how
+          many assignments have been made against the recruitment&apos;s hiring
+          target (entered on the Budget page), as a filled bar with the numbers
+          and percentage: green when the target is met, red when more have been
+          assigned than the target, and an empty bar saying so when no target is
+          set yet.
         </p>
         <p data-testid="HelpAdminsPage-assignment-columns">
           The <strong>Columns</strong> menu above the table hides and shows

@@ -1,8 +1,8 @@
 /**
  * How a cell that carries a faculty ranking shows the applicant's own interest in the course
- * (issue #199): a pastel background and, for readers who cannot tell the colours apart, a symbol at
- * the left of the cell. The preference strings are the ones the backend sends as a candidate's
- * "preference" and in an assignment row's "preferences".
+ * (issue #199): a pastel background (a class in index.css, issue #415) and, for readers who cannot
+ * tell the colours apart, a symbol at the left of the cell. The preference strings are the ones the
+ * backend sends as a candidate's "preference" and in an assignment row's "preferences".
  */
 
 export const FIRST_CHOICE = "1st Choice";
@@ -15,14 +15,17 @@ export const NOT_INTERESTED = "Not Interested";
 /** The label shown wherever the not-interested answer is spelled out in full. */
 export const NOT_INTERESTED_LABEL = "Not Interested/Not Applicable";
 
-/** Bootstrap's pastel success, warning and danger backgrounds. */
-export const LIGHT_GREEN = "#d1e7dd";
-export const PALE_YELLOW = "#fff3cd";
-export const PALE_RED = "#f8d7da";
+/**
+ * The classes, in index.css, that give a cell its pastel background (issue #415): Bootstrap's
+ * success green (shared by both choices and Enthusiastic), warning yellow and danger red.
+ */
+const ENTHUSIASTIC_CLASS = "candidate-course-rank-enthusiastic";
+const WOULD_CONSIDER_CLASS = "candidate-course-rank-would-consider";
+const NOT_APPLICABLE_CLASS = "candidate-course-rank-not-applicable";
 
 export type InterestDisplay = {
-  /** The cell's background colour. */
-  background: string;
+  /** The class (in index.css) that gives the cell its background colour. */
+  className: string;
   /** The symbol at the left of the cell. */
   symbol: string;
   /** ➊ and ➋ are shown at 120% of the cell's font size; the rest at the cell's size. */
@@ -41,35 +44,35 @@ export const interestDisplay = (
   switch (preference) {
     case FIRST_CHOICE:
       return {
-        background: LIGHT_GREEN,
+        className: ENTHUSIASTIC_CLASS,
         symbol: "➊",
         large: true,
         description: "Applicant's 1st choice",
       };
     case SECOND_CHOICE:
       return {
-        background: LIGHT_GREEN,
+        className: ENTHUSIASTIC_CLASS,
         symbol: "➋",
         large: true,
         description: "Applicant's 2nd choice",
       };
     case ENTHUSIASTIC:
       return {
-        background: LIGHT_GREEN,
+        className: ENTHUSIASTIC_CLASS,
         symbol: "✓",
         large: false,
         description: "Applicant is enthusiastic about this course",
       };
     case WOULD_CONSIDER:
       return {
-        background: PALE_YELLOW,
+        className: WOULD_CONSIDER_CLASS,
         symbol: "▬",
         large: false,
         description: "Applicant would consider this course",
       };
     default:
       return {
-        background: PALE_RED,
+        className: NOT_APPLICABLE_CLASS,
         symbol: "✖",
         large: false,
         description: `Applicant marked this course ${NOT_INTERESTED_LABEL}`,

@@ -492,7 +492,9 @@ describe("CandidateTable", () => {
     expect(
       screen.queryByText(/You have ranked multiple candidates/),
     ).not.toBeInTheDocument();
-    expect(cells[0]).not.toHaveStyle({ backgroundColor: "#ffff00" });
+    // Issue #415: the yellow is the candidate-rank-tied class in index.css, not an inline style.
+    expect(cells[0]).not.toHaveClass("candidate-rank-tied");
+    expect(cells[0]).toHaveClass("text-end");
     act(() => vi.advanceTimersByTime(1999));
     expect(
       screen.queryByText(/You have ranked multiple candidates/),
@@ -511,7 +513,8 @@ describe("CandidateTable", () => {
     expect(warning).toHaveAttribute("role", "alert");
     expect(warning.querySelector("svg")).toBeInTheDocument();
     const cell = warning.closest("td");
-    expect(cell.getAttribute("style")).toBe("font-size: 0.8em;");
+    expect(cell).toHaveClass("candidate-table-tied-warning");
+    expect(cell).not.toHaveAttribute("style");
     expect(cell).toHaveAttribute("colspan", "9");
     expect(cell.closest("tr")).toHaveClass("text-danger");
     // Directly under the last row of the tied group (Ada, then Grace by preference).
@@ -521,16 +524,18 @@ describe("CandidateTable", () => {
     expect(cells[0].closest("tr").nextElementSibling).toBe(
       cells[1].closest("tr"),
     );
-    cells.forEach((cell) =>
-      expect(cell).toHaveStyle({ backgroundColor: "#ffff00" }),
-    );
+    cells.forEach((cell) => {
+      expect(cell).toHaveClass("text-end", "candidate-rank-tied");
+      expect(cell).not.toHaveAttribute("style");
+    });
     fireEvent.change(input("Grace Hopper"), { target: { value: "" } });
     expect(
       screen.queryByText(/You have ranked multiple candidates/),
     ).not.toBeInTheDocument();
-    cells.forEach((cell) =>
-      expect(cell).not.toHaveStyle({ backgroundColor: "#ffff00" }),
-    );
+    cells.forEach((cell) => {
+      expect(cell).not.toHaveClass("candidate-rank-tied");
+      expect(cell).toHaveClass("text-end");
+    });
     await settle();
   });
 
@@ -665,18 +670,20 @@ describe("CandidateTable", () => {
     const cell = (id) => screen.getByTestId(`CandidateTable-preference-${id}`);
     const mark = (id) =>
       screen.getByTestId(`CandidateTable-preference-${id}-mark`);
-    expect(cell(1).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    // Issue #415: the colours are classes in index.css, not inline backgrounds.
+    expect(cell(1)).toHaveClass("candidate-course-rank-enthusiastic");
+    expect(cell(1)).not.toHaveAttribute("style");
     expect(cell(1)).toHaveTextContent("➊1st Choice");
-    expect(mark(1).style.fontSize).toBe("120%");
-    expect(cell(2).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    expect(mark(1)).toHaveClass("interest-mark-large");
+    expect(cell(2)).toHaveClass("candidate-course-rank-enthusiastic");
     expect(mark(2)).toHaveTextContent("➋");
-    expect(cell(98).style.backgroundColor).toBe("rgb(255, 243, 205)");
+    expect(cell(98)).toHaveClass("candidate-course-rank-would-consider");
     expect(mark(98)).toHaveTextContent("▬");
     expect(mark(98)).toHaveAttribute(
       "title",
       "Applicant would consider this course",
     );
-    expect(cell(99).style.backgroundColor).toBe("rgb(248, 215, 218)");
+    expect(cell(99)).toHaveClass("candidate-course-rank-not-applicable");
     expect(mark(99)).toHaveTextContent("✖");
     expect(cell(99)).toHaveTextContent("Not Interested");
     // Not Interested sorts after every other preference.
@@ -692,10 +699,12 @@ describe("CandidateTable", () => {
     expect(cells[1]).not.toHaveClass("text-end");
     expect(cells[2]).not.toHaveClass("text-end");
     expect(cells[2]).not.toHaveAttribute("data-testid");
-    // Only the preference cell is coloured by interest.
-    expect(cells[1].style.backgroundColor).not.toBe("");
-    expect(cells[2].style.backgroundColor).toBe("");
-    expect(cells[0].style.backgroundColor).toBe("");
+    // Only the preference cell is coloured by interest (a class, issue #415); no cell is styled
+    // inline.
+    expect(cells[1]).toHaveClass("candidate-course-rank-enthusiastic");
+    expect(cells[2]).not.toHaveAttribute("class");
+    expect(cells[0].className).toBe("text-end");
+    cells.forEach((cell) => expect(cell).not.toHaveAttribute("style"));
   });
 
   /** Issue #205: video links are clickable. */
@@ -1057,12 +1066,20 @@ describe("CandidateTable", () => {
     test("a hide link is tucked into the heading's top-right corner", () => {
       table();
       const link = screen.getByTestId("CandidateTable-hide-email");
-      expect(link.getAttribute("style")).toBe(
-        "position: absolute; top: 0px; right: 0.25rem; font-size: 0.6rem; line-height: 1.2;",
+      // Issue #415: the corner position is the column-hide-link class in index.css, and the
+      // heading it sits in is Bootstrap's position-relative; neither is styled inline.
+      expect(link).toHaveClass(
+        "btn",
+        "btn-link",
+        "p-0",
+        "border-0",
+        "text-secondary",
+        "column-hide-link",
       );
+      expect(link).not.toHaveAttribute("style");
       expect(link).toHaveAttribute("type", "button");
-      expect(link).toHaveClass("btn", "btn-link", "text-secondary");
-      expect(link.closest("th")).toHaveStyle({ position: "relative" });
+      expect(link.closest("th")).toHaveClass("position-relative");
+      expect(link.closest("th")).not.toHaveAttribute("style");
     });
 
     test("a hide link hides its column, heading and cells, and it is remembered", async () => {

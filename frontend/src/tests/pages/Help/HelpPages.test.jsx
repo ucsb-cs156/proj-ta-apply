@@ -1747,7 +1747,7 @@ describe("Help pages (issue #140)", () => {
       "Sorting by a lecture uses the same order as the faculty ranking page: the ranked applicants first, from rank 1 down, then the unranked ones by the student's preference (1st choice, 2nd choice, Enthusiastic, Would Consider, then Not Interested/Not Applicable); applicants who tie stay in the order they applied. Clicking the heading again reverses that order.",
     );
     expect(assignments).toHaveTextContent(
-      "Allocation, how many applicants are Assigned to it so far, and how many places are Left, in red when more have been assigned than allocated; those numbers stay put when you sort.",
+      "Allocation, how many applicants are Assigned to it so far, and how many places are still To Assign, in red when more have been assigned than allocated; those numbers stay put when you sort. In each row, the cell of the lecture chosen in the Tentative Assignment dropdown has a thick black outline.",
     );
     expect(
       screen.getByTestId("HelpAdminsPage-tentative-assignment"),

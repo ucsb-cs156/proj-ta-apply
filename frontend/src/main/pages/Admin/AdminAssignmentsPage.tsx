@@ -205,7 +205,8 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
         </Tooltip>
       }
     >
-      {/* A disabled button gets no mouse events, so the wrapper carries the tooltip. */}
+      {/* A disabled button gets no mouse events, so the wrapper carries the tooltip; pe-none
+          (Bootstrap's pointer-events: none) lets the hover reach the wrapper. */}
       <span
         className="d-inline-block"
         tabIndex={0}
@@ -215,7 +216,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           variant="outline-secondary"
           size="sm"
           disabled
-          style={{ pointerEvents: "none" }}
+          className="pe-none"
           data-testid="AdminAssignmentsPage-fake-rankings"
         >
           Create Fake Rankings
