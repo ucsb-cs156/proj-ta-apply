@@ -227,15 +227,20 @@ Courses pages" below).
   exists, with the same tooltip and confirmation modal). *Download Rankings CSV* is not on this
   page: it is on each recruitment's card (below).
 - **Developer mode** (part 2, PR #373): the footer has the Edit Courses page's *Fake Hiring Targets
-  and Allocations* and *Create Fake Rankings* buttons for the whole quarter. The first opens one
-  modal with a hiring target box per recruitment that has a course (*TA hiring target*, *ULA hiring
-  target*; one estimate source and one visibility choice for both) and sends one
-  `POST /api/admin/developer/fakeAllocations` per recruitment in one click; it is disabled when no
-  recruitment has a course. The second launches one `POST /api/admin/developer/fakeRankings` job
-  per recruitment whose faculty review is Open and which has a course; when only one of the two
-  qualifies the modal says which one and that the other is left alone, and the button is disabled
-  while neither qualifies. The modals (`FakeAllocationsModal`, `FakeRankingsModal`) take a list of
-  recruitments; the Edit Courses page passes its one.
+  and Allocations* button for the whole quarter. It opens one modal with a hiring target box per
+  recruitment that has a course (*TA hiring target*, *ULA hiring target*; one estimate source and
+  one visibility choice for both) and sends one `POST /api/admin/developer/fakeAllocations` per
+  recruitment in one click; it is disabled when no recruitment has a course. `FakeAllocationsModal`
+  takes a list of recruitments; the Edit Courses page passes its one. Until issue #385 the footer
+  also had a *Create Fake Rankings* button that launched one `POST /api/admin/developer/fakeRankings`
+  job per recruitment whose faculty review was Open; the maintainer did not want rankings faked for
+  the TA and ULA recruitments at once, so it was removed, and the admin Assignments page
+  (`/admin/recruitments/:id/assignments`) is the only page in the app with *Create Fake Rankings*.
+  Issue #385 moved the single-recruitment button there from the Edit Courses page, red like the
+  other developer-mode buttons while it can be used. When it cannot (faculty ranking not Open, or
+  no course on offer) it is the neutral outline it always was, disabled, and a tooltip on it says
+  what must happen first (`fakeRankingsBlockers`); with no applicants the modal notes that the job
+  would rank nobody. `FakeRankingsModal` takes one `recruitmentId`.
 - **Multi-tab edit warning** (part 2, PR #373): the page is one tab on every recruitment of the
   quarter, so it heartbeats under each recruitment's Edit Courses page key,
   `courses-edit:<recruitmentId>`, with one client id (two heartbeats when the quarter has both),

@@ -128,9 +128,6 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
       .onPut("/api/recruitmentcourses/enrollmentEstimate")
       .reply(200, {});
     axiosMock.onPost("/api/admin/developer/fakeAllocations").reply(200, []);
-    axiosMock
-      .onPost("/api/admin/developer/fakeRankings")
-      .reply(200, { id: 9, status: "running" });
     axiosMock.onPost(HEARTBEAT_URL).reply(200, alone);
   });
 
@@ -417,8 +414,17 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
 
   // ---- item 13: developer mode's fake data ----
 
-  test("with developer mode on, the footer has both buttons, and the allocations one is red", async () => {
+  test("with developer mode on, the footer has the red allocations button and no fake rankings button (issue #385)", async () => {
     developerMode(true);
+    // Both reviews Open and both recruitments with courses: the rankings button would have been
+    // enabled here before issue #385 sent it to the Assignments pages.
+    axiosMock.onGet("/api/admin/recruitments/all").reply(
+      200,
+      combinedAllocationsFixtures.recruitments.map((r) => ({
+        ...r,
+        reviewStatus: "Open",
+      })),
+    );
     renderPage("F26");
 
     const fake = await screen.findByTestId(
@@ -426,17 +432,22 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
     );
     expect(fake).toHaveTextContent("Fake Hiring Targets and Allocations");
     expect(fake).toHaveClass("btn-danger");
-    const rankings = screen.getByTestId(
-      "CombinedAllocationsPage-fake-rankings",
-    );
-    expect(rankings).toHaveTextContent("Create Fake Rankings");
-    expect(rankings).toHaveClass("btn-outline-secondary");
+    // Alone in the slot, it no longer keeps a gap for a neighbour.
+    expect(fake).not.toHaveClass("me-2");
     expect(
       screen.getByTestId("Footer-developer-mode-controls"),
     ).toContainElement(fake);
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ).length,
+      ).toBeGreaterThan(0),
+    );
     expect(
-      screen.getByTestId("Footer-developer-mode-controls"),
-    ).toContainElement(rankings);
+      screen.queryByTestId("CombinedAllocationsPage-fake-rankings"),
+    ).toBeNull();
+    expect(screen.queryByText("Create Fake Rankings")).toBeNull();
   });
 
   test("with developer mode off there are no buttons", async () => {
@@ -453,9 +464,6 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
     );
     expect(
       screen.queryByTestId("CombinedAllocationsPage-fake-allocations"),
-    ).toBeNull();
-    expect(
-      screen.queryByTestId("CombinedAllocationsPage-fake-rankings"),
     ).toBeNull();
   });
 
@@ -566,44 +574,7 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
     expect(button).toBeDisabled();
   });
 
-  test("Create Fake Rankings acts only on the recruitment whose faculty review is Open, and says so", async () => {
-    developerMode(true);
-    renderPage("F26");
-
-    const button = await screen.findByTestId(
-      "CombinedAllocationsPage-fake-rankings",
-    );
-    // TA (5) is Open, ULA (6) has not started.
-    await waitFor(() => expect(button).toBeEnabled());
-    await userEvent.click(button);
-
-    const prefix = "CombinedAllocationsPage-fake-rankings-modal";
-    expect(await screen.findByTestId(`${prefix}-modal`)).toBeInTheDocument();
-    expect(screen.getByTestId(`${prefix}-note`)).toHaveTextContent(
-      "Only the TA recruitment's faculty review is Open with courses to rank, so only its courses get rankings; the ULA recruitment is left alone.",
-    );
-    await userEvent.click(screen.getByTestId(`${prefix}-create`));
-
-    await waitFor(() =>
-      expect(posts("/api/admin/developer/fakeRankings")).toHaveLength(1),
-    );
-    expect(posts("/api/admin/developer/fakeRankings")[0].params).toEqual({
-      recruitmentId: 5,
-      scope: "ALL",
-      includeNotInterested: false,
-    });
-    expect(
-      await screen.findByTestId(`${prefix}-launched-modal`),
-    ).toHaveTextContent("by a background job");
-    await userEvent.click(screen.getByTestId(`${prefix}-launched-close`));
-    await waitFor(() =>
-      expect(
-        screen.queryByTestId(`${prefix}-launched-modal`),
-      ).not.toBeInTheDocument(),
-    );
-  });
-
-  test("with both reviews Open, one click ranks both recruitments", async () => {
+  test("the page never posts fake rankings: no request to the endpoint however the reviews stand (issue #385)", async () => {
     developerMode(true);
     axiosMock.onGet("/api/admin/recruitments/all").reply(
       200,
@@ -612,125 +583,18 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
         reviewStatus: "Open",
       })),
     );
-    renderPage("F26");
-
-    const button = await screen.findByTestId(
-      "CombinedAllocationsPage-fake-rankings",
-    );
-    await waitFor(() => expect(button).toBeEnabled());
-    await userEvent.click(button);
-
-    const prefix = "CombinedAllocationsPage-fake-rankings-modal";
-    expect(await screen.findByTestId(`${prefix}-note`)).toHaveTextContent(
-      "The TA and ULA recruitments both get rankings, one job each.",
-    );
-    await userEvent.click(screen.getByTestId(`${prefix}-create`));
-
-    await waitFor(() =>
-      expect(posts("/api/admin/developer/fakeRankings")).toHaveLength(2),
-    );
-    expect(
-      posts("/api/admin/developer/fakeRankings").map(
-        (r) => r.params.recruitmentId,
-      ),
-    ).toEqual([5, 6]);
-    expect(
-      await screen.findByTestId(`${prefix}-launched-modal`),
-    ).toHaveTextContent("background jobs, one per recruitment");
-  });
-
-  test("with only the ULA review Open, the note names the ULA as acting and the TA as left alone", async () => {
-    developerMode(true);
-    axiosMock.onGet("/api/admin/recruitments/all").reply(
-      200,
-      combinedAllocationsFixtures.recruitments.map((r) => ({
-        ...r,
-        reviewStatus: r.id === 6 ? "Open" : "Closed",
-      })),
-    );
-    renderPage("F26");
-
-    const button = await screen.findByTestId(
-      "CombinedAllocationsPage-fake-rankings",
-    );
-    await waitFor(() => expect(button).toBeEnabled());
-    await userEvent.click(button);
-
-    const prefix = "CombinedAllocationsPage-fake-rankings-modal";
-    expect(await screen.findByTestId(`${prefix}-note`)).toHaveTextContent(
-      "Only the ULA recruitment's faculty review is Open with courses to rank, so only its courses get rankings; the TA recruitment is left alone.",
-    );
-    await userEvent.click(screen.getByTestId(`${prefix}-cancel`));
-    await waitFor(() =>
-      expect(screen.queryByTestId(`${prefix}-modal`)).not.toBeInTheDocument(),
-    );
-    expect(posts("/api/admin/developer/fakeRankings")).toHaveLength(0);
-  });
-
-  test("an Open review with no courses to rank does not count", async () => {
-    developerMode(true);
-    axiosMock
-      .onGet(COURSES, { params: { recruitmentId: 5, includeRemoved: false } })
-      .reply(200, []);
-    renderPage("F26");
-
-    const button = await screen.findByTestId(
-      "CombinedAllocationsPage-fake-rankings",
-    );
-    await screen.findByTestId(
-      "CombinedAllocationTable-cell-row-1-ULA-allocation",
-    );
-    await waitFor(() =>
-      expect(
-        axiosMock.history.get.filter(
-          (r) => r.url === "/api/admin/recruitments/all",
-        ).length,
-      ).toBeGreaterThan(0),
-    );
-    expect(button).toBeDisabled();
-  });
-
-  test("with no review Open the rankings button is disabled while the allocations one is not", async () => {
-    developerMode(true);
     renderPage("W26");
 
-    const rankings = await screen.findByTestId(
-      "CombinedAllocationsPage-fake-rankings",
-    );
-    const allocations = screen.getByTestId(
+    const allocations = await screen.findByTestId(
       "CombinedAllocationsPage-fake-allocations",
     );
     await waitFor(() => expect(allocations).toBeEnabled());
-    // W26's only recruitment (1) has not started its review.
-    expect(rankings).toBeDisabled();
-  });
-
-  test("with a single recruitment whose review is Open, the modal has no note and one job", async () => {
-    developerMode(true);
-    axiosMock.onGet("/api/admin/recruitments/all").reply(
-      200,
-      combinedAllocationsFixtures.recruitments.map((r) => ({
-        ...r,
-        reviewStatus: "Open",
-      })),
-    );
-    renderPage("W26");
-
-    const button = await screen.findByTestId(
-      "CombinedAllocationsPage-fake-rankings",
-    );
-    await waitFor(() => expect(button).toBeEnabled());
-    await userEvent.click(button);
-
-    const prefix = "CombinedAllocationsPage-fake-rankings-modal";
-    expect(await screen.findByTestId(`${prefix}-modal`)).toBeInTheDocument();
-    expect(screen.queryByTestId(`${prefix}-note`)).toBeNull();
-    await userEvent.click(screen.getByTestId(`${prefix}-create`));
-    await waitFor(() =>
-      expect(posts("/api/admin/developer/fakeRankings")).toHaveLength(1),
-    );
     expect(
-      posts("/api/admin/developer/fakeRankings")[0].params.recruitmentId,
-    ).toBe(1);
+      screen.queryByTestId("CombinedAllocationsPage-fake-rankings"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("CombinedAllocationsPage-fake-rankings-modal-modal"),
+    ).toBeNull();
+    expect(posts("/api/admin/developer/fakeRankings")).toHaveLength(0);
   });
 });

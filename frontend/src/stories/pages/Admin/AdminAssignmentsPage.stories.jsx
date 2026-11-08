@@ -137,6 +137,52 @@ AnotherAdminHasItOpen.parameters = {
   },
 };
 
+/**
+ * Issue #385: with developer mode on, the footer has Create Fake Rankings (moved here from the
+ * Courses edit page). The handlers for a recruitment whose faculty review has the given status.
+ */
+const developerModeHandlers = (
+  reviewStatus,
+  page = assignmentsFixtures.taPage,
+) => [
+  http.get("/api/systemInfo", () =>
+    HttpResponse.json(systemInfoFixtures.developerModeAvailable),
+  ),
+  http.get("/api/developerMode", () =>
+    HttpResponse.json({ available: true, on: true }),
+  ),
+  http.get("/api/admin/recruitments/all", () =>
+    HttpResponse.json([
+      { ...recruitmentsFixtures.threeRecruitments[0], id: 7, reviewStatus },
+    ]),
+  ),
+  http.post("/api/admin/developer/fakeRankings", () =>
+    HttpResponse.json({ id: 1, status: "running" }),
+  ),
+  ...handlers(page, assignmentsFixtures.taPageAfterMove),
+];
+
+/** Faculty ranking is Open and there are courses: the button is red and opens the modal. */
+export const DeveloperMode = Template.bind({});
+DeveloperMode.parameters = {
+  msw: { handlers: developerModeHandlers("Open") },
+};
+
+/**
+ * Faculty ranking is not started: the button is a grey outline, disabled, and hovering over it
+ * says to open faculty ranking from the recruitment's card first.
+ */
+export const DeveloperModeRankingNotOpen = Template.bind({});
+DeveloperModeRankingNotOpen.parameters = {
+  msw: { handlers: developerModeHandlers("NotStarted") },
+};
+
+/** Ranking is Open but the recruitment has no course: the tooltip is about the courses instead. */
+export const DeveloperModeNoCourses = Template.bind({});
+DeveloperModeNoCourses.parameters = {
+  msw: { handlers: developerModeHandlers("Open", assignmentsFixtures.empty) },
+};
+
 /** Two applicant columns and a lecture hidden: the Columns button counts them, each can be shown again. */
 export const SomeColumnsHidden = Template.bind({});
 SomeColumnsHidden.parameters = {

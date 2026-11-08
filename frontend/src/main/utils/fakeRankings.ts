@@ -19,20 +19,43 @@ export const canCreateFakeRankings = (
   courseCount: number,
 ): boolean => reviewStatus === "Open" && courseCount > 0;
 
-/**
- * What the Combined Allocation page's modal says about which of the quarter's recruitments get
- * fake rankings (issue #358), by type: nothing when there is only the one acted on; which ones when
- * several are; and when one is left out, because its faculty review is not Open or it has no
- * course, which one and why.
- */
-export const fakeRankingsNote = (
-  acting: string[],
-  skipped: string[],
-): string | undefined => {
-  if (skipped.length > 0) {
-    return `Only the ${acting.join(" and ")} recruitment's faculty review is Open with courses to rank, so only its courses get rankings; the ${skipped.join(" and ")} recruitment is left alone.`;
+/** How the tooltip names a faculty ranking status that is not Open. */
+const describeReviewStatus = (reviewStatus: string | undefined): string => {
+  switch (reviewStatus) {
+    case "NotStarted":
+      return "not started";
+    case "Closed":
+      return "closed";
+    default:
+      return "not known yet";
   }
-  return acting.length > 1
-    ? `The ${acting.join(" and ")} recruitments both get rankings, one job each.`
-    : undefined;
 };
+
+/**
+ * Why the Create Fake Rankings button is disabled (issue #385): one sentence for each condition
+ * that is not met, saying what must happen first and where, for the disabled button's tooltip and
+ * the Help page. The backend refuses the job unless the faculty review is Open; the course
+ * condition is the page's own, since a recruitment without a course on offer has nothing to rank.
+ * Empty while the button is enabled.
+ */
+export const fakeRankingsBlockers = (
+  reviewStatus: string | undefined,
+  courseCount: number,
+): string[] => {
+  const blockers: string[] = [];
+  if (reviewStatus !== "Open") {
+    blockers.push(
+      `Faculty ranking must be Open for this recruitment; it is ${describeReviewStatus(reviewStatus)}. ${reviewStatus === "Closed" ? "Reopen" : "Open"} it from the recruitment's card on the home page (Recruitment Steps, step 6: Open Faculty Ranking), which asks for a faculty ranking deadline.`,
+    );
+  }
+  if (courseCount === 0) {
+    blockers.push(
+      "The recruitment must have at least one course on offer to rank; it has none. Fill its course list with Populate on its Courses page.",
+    );
+  }
+  return blockers;
+};
+
+/** The note the modal shows when the recruitment has no applicants to rank (issue #385). */
+export const NO_APPLICANTS_NOTE =
+  "This recruitment has no applicants yet, so the job would rank nobody. Create fake applications on the recruitment's Applications page first.";

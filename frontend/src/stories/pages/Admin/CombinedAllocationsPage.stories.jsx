@@ -54,9 +54,6 @@ const handlers = (
   http.post("/api/admin/developer/fakeAllocations", () =>
     HttpResponse.json([]),
   ),
-  http.post("/api/admin/developer/fakeRankings", () =>
-    HttpResponse.json({ id: 1, status: "running" }),
-  ),
   http.get("/api/admin/budget", () => HttpResponse.json(summary)),
   http.put("/api/admin/budget", () => HttpResponse.json(summary)),
   http.get("/api/recruitmentcourses/all", ({ request }) =>
@@ -181,8 +178,8 @@ AnotherAdminEditing.parameters = {
 
 /**
  * F26 with developer mode on (issue #358 part 2): the footer has Fake Hiring Targets and
- * Allocations and Create Fake Rankings, each acting on both recruitments in one click (rankings
- * for the TA recruitment only, whose faculty review is the one that is Open).
+ * Allocations, acting on both recruitments in one click. Create Fake Rankings is not here since
+ * issue #385: it is on each recruitment's Assignments page only.
  */
 export const DeveloperMode = Template.bind({});
 DeveloperMode.parameters = {

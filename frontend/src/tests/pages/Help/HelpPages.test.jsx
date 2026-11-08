@@ -790,10 +790,22 @@ describe("Help pages (issue #140)", () => {
       autoCreate.compareDocumentPosition(fake) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    // Issue #220: the Create Fake Rankings button.
+    // Issue #220: the Create Fake Rankings button; issue #385 moved it to the Assignments page.
     const rankings = screen.getByTestId("HelpDeveloperPage-fake-rankings");
     expect(rankings).toHaveTextContent(
-      "While developer mode is on, the footer of a recruitment's Courses page also has a Create Fake Rankings button, enabled only while faculty ranking is open.",
+      "While developer mode is on, the footer of a recruitment's Assignments page (/admin/recruitments/:id/assignments) has a red Create Fake Rankings button. That is the only page in the app with it: until issue #385 it was on the Courses edit page, and the Combined Allocation page had a version that ranked the quarter's TA and ULA recruitments at once, which was removed; fake rankings are added to each recruitment separately. It can be used only while the recruitment's faculty ranking is Open, the only time instructors rank, and the recruitment has at least one course on offer.",
+    );
+    expect(rankings).not.toHaveTextContent("Courses page also has");
+    // Issue #385's new criterion: no whole-quarter button on the Combined Allocation page.
+    expect(rankings).not.toHaveTextContent(
+      "has the same button for the whole quarter",
+    );
+    // The tooltip's words, exactly as the button says them.
+    expect(rankings).toHaveTextContent(
+      'Otherwise the button is a grey outline, and hovering over it says what must happen first: "Faculty ranking must be Open for this recruitment; it is not started. Open it from the recruitment\'s card on the home page (Recruitment Steps, step 6: Open Faculty Ranking), which asks for a faculty ranking deadline." or "The recruitment must have at least one course on offer to rank; it has none. Fill its course list with Populate on its Courses page." (both, when both apply).',
+    );
+    expect(rankings).toHaveTextContent(
+      "The job ranks the recruitment's applicants, so when there are none the modal adds: \"This recruitment has no applicants yet, so the job would rank nobody. Create fake applications on the recruitment's Applications page first.\"",
     );
     expect(rankings).toHaveTextContent(
       "for every course that has no rankings yet or for a random part of them.",
@@ -803,9 +815,6 @@ describe("Help pages (issue #140)", () => {
     );
     expect(rankings).toHaveTextContent(
       "Courses that already have rankings are never changed.",
-    );
-    expect(rankings).toHaveTextContent(
-      "The Combined Allocation page's footer has the same button for the whole quarter: one click launches a job for each of the quarter's recruitments whose faculty review is Open and which has a course; when only one of the two qualifies the modal says which, and that the other is left alone. The button is disabled while neither qualifies.",
     );
     expect(
       fake.compareDocumentPosition(rankings) & Node.DOCUMENT_POSITION_FOLLOWING,
