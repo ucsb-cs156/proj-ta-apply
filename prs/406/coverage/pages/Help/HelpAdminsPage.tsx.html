@@ -1300,7 +1300,29 @@
 <a name='L1235'></a><a href='#L1235'>1235</a>
 <a name='L1236'></a><a href='#L1236'>1236</a>
 <a name='L1237'></a><a href='#L1237'>1237</a>
-<a name='L1238'></a><a href='#L1238'>1238</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1238'></a><a href='#L1238'>1238</a>
+<a name='L1239'></a><a href='#L1239'>1239</a>
+<a name='L1240'></a><a href='#L1240'>1240</a>
+<a name='L1241'></a><a href='#L1241'>1241</a>
+<a name='L1242'></a><a href='#L1242'>1242</a>
+<a name='L1243'></a><a href='#L1243'>1243</a>
+<a name='L1244'></a><a href='#L1244'>1244</a>
+<a name='L1245'></a><a href='#L1245'>1245</a>
+<a name='L1246'></a><a href='#L1246'>1246</a>
+<a name='L1247'></a><a href='#L1247'>1247</a>
+<a name='L1248'></a><a href='#L1248'>1248</a>
+<a name='L1249'></a><a href='#L1249'>1249</a>
+<a name='L1250'></a><a href='#L1250'>1250</a>
+<a name='L1251'></a><a href='#L1251'>1251</a>
+<a name='L1252'></a><a href='#L1252'>1252</a>
+<a name='L1253'></a><a href='#L1253'>1253</a>
+<a name='L1254'></a><a href='#L1254'>1254</a>
+<a name='L1255'></a><a href='#L1255'>1255</a>
+<a name='L1256'></a><a href='#L1256'>1256</a>
+<a name='L1257'></a><a href='#L1257'>1257</a>
+<a name='L1258'></a><a href='#L1258'>1258</a>
+<a name='L1259'></a><a href='#L1259'>1259</a>
+<a name='L1260'></a><a href='#L1260'>1260</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1556,6 +1578,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">286x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3044,7 +3088,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           A new quarter&amp;apos;s budget starts as a copy of the most recent
           earlier quarter&amp;apos;s: its costs, funds and conversion factor, and
           each recruitment&amp;apos;s hiring target from the same type of
-          recruitment in that quarter; change whatever differs.
+          recruitment in that quarter; change whatever differs. At the bottom of
+          the page, a closed &lt;strong&gt;Audit Trail&lt;/strong&gt; card (&amp;ldquo;Track
+          changes to hiring targets&amp;rdquo;) opens to list every change to the
+          quarter&amp;apos;s TA and ULA hiring targets, newest first, with who made
+          it, the old and new values and the &lt;em&gt;Type&lt;/em&gt; of recruitment; the
+          same rows appear in each recruitment&amp;apos;s own change history.
         &lt;/p&gt;
         &lt;p id="budget-lines" data-testid="HelpAdminsPage-budget-lines"&gt;
           The three budget lines are the &lt;strong&gt;unrestricted&lt;/strong&gt; temp
@@ -3227,8 +3276,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           &lt;strong&gt;Make Assignments&lt;/strong&gt; opens the page where candidates are
           assigned to slots, and &lt;strong&gt;View Assignments&lt;/strong&gt; the read-only
           assignments page that admins and faculty share (it says the
-          assignments are not published yet until they are). In the diagram,
-          step 3&amp;apos;s &lt;em&gt;Allocations&lt;/em&gt; and step 5&amp;apos;s{" "}
+          assignments are not published yet until they are). Apart from them, at
+          the right end of the same row, &lt;strong&gt;Change History&lt;/strong&gt; opens
+          the list of every change made to the recruitment itself (see{" "}
+          &lt;a href="#audit-trail"&gt;Audit Trail&lt;/a&gt; below). In the diagram, step
+          3&amp;apos;s &lt;em&gt;Allocations&lt;/em&gt; and step 5&amp;apos;s{" "}
           &lt;em&gt;(see allocations)&lt;/em&gt; links open the quarter&amp;apos;s{" "}
           &lt;Link to="#combined-allocations"&gt;Combined Allocation page&lt;/Link&gt;, and
           the same two assignment pages are under steps 8 and 9 as{" "}
@@ -3380,6 +3432,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
             clicked at the top of the Assignments page it says the assignments
             are not published yet.
           &lt;/li&gt;
+          &lt;li id="change-history" data-testid="HelpAdminsPage-change-history"&gt;
+            &lt;strong&gt;Change History.&lt;/strong&gt; Every change to the recruitment
+            itself, newest first: when it was created, each time applications or
+            faculty reviews were opened or closed, each date or setting that
+            changed, and (&lt;em&gt;Changed By&lt;/em&gt;) who made the change. The button
+            is at the right end of the card&amp;apos;s row of buttons, apart from
+            the others, and opens the recruitment&amp;apos;s own Change History
+            page, which shows the recruitment&amp;apos;s row above the list and has
+            a page-size control and Previous and Next buttons. Changes to
+            individual applications are not here but in the{" "}
+            &lt;a href="#audit-trail"&gt;Audit Trail&lt;/a&gt;.
+          &lt;/li&gt;
           &lt;li&gt;
             &lt;strong&gt;Delete.&lt;/strong&gt; Removes the recruitment, its course list
             and every application to it, after a warning that says how many
@@ -3493,10 +3557,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           with a &lt;em&gt;[See value]&lt;/em&gt; link that shows the whole thing. The trail
           for one application is also shown on that application&amp;apos;s View
           page. A recruitment&amp;apos;s own changes (its creation, opening, closing
-          and dates) are listed on its Applications page under Change History,
-          with the same &lt;em&gt;Changed By&lt;/em&gt; column. Changes made before the
-          email was recorded show that column blank. Its times, like every date
-          and time on this site, are Pacific Time.
+          and dates) are not here: they are on its own Change History page,
+          opened by the &lt;strong&gt;Change History&lt;/strong&gt; button at the right end
+          of its card&amp;apos;s row of buttons on the home page, with the same{" "}
+          &lt;em&gt;Changed By&lt;/em&gt; column. Changes made before the email was recorded
+          show that column blank. Its times, like every date and time on this
+          site, are Pacific Time.
         &lt;/p&gt;
 &nbsp;
         &lt;h2
@@ -3781,7 +3847,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-08T18:24:37.356Z
+                at 2026-11-08T19:02:49.440Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
