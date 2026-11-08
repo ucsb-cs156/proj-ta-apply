@@ -107,7 +107,7 @@ public class FakeRankingsGenerator {
       boolean includeNotInterested,
       Random random) {
     List<List<Application>> tiers = new ArrayList<>();
-    for (String ignored : TIERS) {
+    for (int i = 0; i < TIERS.size(); i++) {
       tiers.add(new ArrayList<>());
     }
     List<Application> notInterested = new ArrayList<>();
