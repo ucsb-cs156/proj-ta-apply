@@ -520,6 +520,14 @@ topics an applicant may pick from, and for ULAs the interest areas they rate.</d
 <dd>
 <div class="block">Returns the value of the <code>arrivedAtMillis</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.SettingsUpdate.html#askForFeedback()" class="member-name-link">askForFeedback()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.SettingsUpdate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorFeedbackSettingsController.SettingsUpdate</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>askForFeedback</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/InstructorFeedbackSettings.html#askingForFeedback(java.util.Optional)" class="member-name-link">askingForFeedback(Optional)</a> - Static method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/InstructorFeedbackSettings.html" title="class in edu.ucsb.cs.taapply.entity">InstructorFeedbackSettings</a></dt>
+<dd>
+<div class="block">Whether the settings ask for feedback: those of the newest version, and yes with none.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCourseChoices.html#assign(java.util.List,java.util.List,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random)" class="member-name-link">assign(List, List, FakeCoverage, Random)</a> - Static method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCourseChoices.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCourseChoices</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/HiringDecisions.html#ASSIGN_FIRST" class="member-name-link">ASSIGN_FIRST</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/HiringDecisions.html" title="class in edu.ucsb.cs.taapply.services">HiringDecisions</a></dt>
@@ -2867,7 +2875,7 @@ course's current TA and ULA allocations joined in.</div>
 <dd>
 <div class="block">One saved version of the Instructor Feedback Settings (issue #429): today the Markdown of the
 "Notes on TA/ULA tradeoffs" under each course's allocation feedback form on the instructor home
-page.</div>
+page, and (issue #430) whether instructors are asked for that feedback at all.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/InstructorFeedbackSettings.html#%3Cinit%3E()" class="member-name-link">InstructorFeedbackSettings()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/InstructorFeedbackSettings.html" title="class in edu.ucsb.cs.taapply.entity">InstructorFeedbackSettings</a></dt>
 <dd>&nbsp;</dd>
@@ -2875,7 +2883,8 @@ page.</div>
 <dd>
 <div class="block">The Instructor Feedback Settings (issue #429), kept as an append-only history of versions: admins
 read the history and save new versions; instructors read the newest, whose notes the allocation
-feedback form shows as its "Notes on TA/ULA tradeoffs".</div>
+feedback form shows as its "Notes on TA/ULA tradeoffs", and whose askForFeedback (issue #430)
+says whether the home page shows the feedback parts at all.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.html#%3Cinit%3E()" class="member-name-link">InstructorFeedbackSettingsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorFeedbackSettingsController</a></dt>
 <dd>&nbsp;</dd>
@@ -4439,7 +4448,7 @@ so with no source; creates the row if need be.</div>
 <dd>
 <div class="block">The setting's key in <code>global_settings</code>.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.SettingsUpdate.html#%3Cinit%3E(java.lang.String)" class="member-name-link">SettingsUpdate(String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.SettingsUpdate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorFeedbackSettingsController.SettingsUpdate</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.SettingsUpdate.html#%3Cinit%3E(java.lang.String,java.lang.Boolean)" class="member-name-link">SettingsUpdate(String, Boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackSettingsController.SettingsUpdate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorFeedbackSettingsController.SettingsUpdate</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>SettingsUpdate</code> record class.</div>
 </dd>
