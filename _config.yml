@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/425-instructor-allocation-feedback","number":428,"title":"Instructors can give feedback on their TA/ULA allocation (closes #425)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/428"}]
+pull_requests: []
