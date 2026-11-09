@@ -61,7 +61,7 @@ public class InstructorFeedbackSettingsController extends ApiController {
       description =
           "Every save is a new version with its own id, timestamp and editor; earlier versions are"
               + " kept. A field the body leaves out keeps the newest version's value. 400 if the"
-              + " notes would be blank.")
+              + " notes would be blank or longer than 1,000,000 characters.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PostMapping("/admin/instructorFeedbackSettings")
   public InstructorFeedbackSettings save(@RequestBody SettingsUpdate body) {
@@ -74,6 +74,12 @@ public class InstructorFeedbackSettingsController extends ApiController {
             .strip();
     if (notesText.isEmpty()) {
       throw new IllegalArgumentException("The notes cannot be blank");
+    }
+    if (notesText.length() > InstructorFeedbackSettings.MAX_NOTES_LENGTH) {
+      throw new IllegalArgumentException(
+          "The notes may be at most "
+              + InstructorFeedbackSettings.MAX_NOTES_LENGTH
+              + " characters");
     }
     return instructorFeedbackSettingsRepository.save(
         InstructorFeedbackSettings.builder()

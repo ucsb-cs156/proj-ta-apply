@@ -4,7 +4,7 @@
       "changeSet": {
         "id": "069-create-instructor-feedback-settings",
         "author": "pc",
-        "comment": "The Instructor Feedback Settings page (issue #429): one row per saved version, never updated, the id being the version number. notes_text is the Markdown of the 'Notes on TA/ULA tradeoffs' under the instructors' allocation feedback form, with ${field}s filled in for the quarter. created_at is Pacific wall-clock time set by the server; editor_email is the admin who saved it. Version 1 is inserted here: the text the notes showed before this change, written with the new fields, so instructors see no change on deploy; it has no editor. Later settings of the same page (issue #430) are added as columns. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "comment": "The Instructor Feedback Settings page (issue #429): one row per saved version, never updated, the id being the version number. notes_text (up to a million characters) is the Markdown of the 'Notes on TA/ULA tradeoffs' under the instructors' allocation feedback form, with ${field}s filled in for the quarter. created_at is Pacific wall-clock time set by the server; editor_email is the admin who saved it. Version 1 is inserted here: the text the notes showed before this change, written with the new fields, so instructors see no change on deploy; it has no editor. Later settings of the same page (issue #430) are added as columns. Roll back with liquibase rollback-count 1: the table is dropped.",
         "preConditions": [
           { "onFail": "MARK_RAN" },
           { "not": { "tableExists": { "tableName": "instructor_feedback_settings" } } }
@@ -33,7 +33,7 @@
                 {
                   "column": {
                     "name": "notes_text",
-                    "type": "TEXT",
+                    "type": "VARCHAR(1000000)",
                     "constraints": { "nullable": false }
                   }
                 }

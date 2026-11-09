@@ -69,7 +69,7 @@ inserted, never updated or deleted.
 | `id` | BIGINT, auto-increment, primary key | The version number |
 | `created_at` | TIMESTAMP, not null | Pacific wall-clock time, set by the server (`AppTime.now()`) |
 | `editor_email` | VARCHAR(255), nullable | The admin who saved it; null only for version 1 |
-| `notes_text` | TEXT, not null | Markdown, no length limit (Postgres `TEXT`, H2 `CLOB`) |
+| `notes_text` | VARCHAR(1000000), not null | Markdown, up to a million characters (the save refuses more with 400). Not TEXT: on H2 that is a CLOB, which Hibernate's schema validation rejects for a `String`; a wide VARCHAR is the same type on H2 and Postgres, as `notice_versions.content` is |
 
 The changeset inserts version 1: the text the notes showed before, rewritten with the new fields, so
 nothing changes for instructors on deploy. Its `created_at` is `LOCALTIMESTAMP`, which is Pacific

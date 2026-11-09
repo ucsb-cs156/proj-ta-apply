@@ -116,18 +116,26 @@ public class InstructorFeedbackSettingsChangelogTests {
     assertTrue(notes.contains("${taToUlaCostRatio}.\n\nOn the other hand"), notes);
     assertTrue(notes.endsWith("take your preferences into consideration."), notes);
 
-    // Saves are new rows, numbered after the first; no editor and no small limit on the text.
+    // Saves are new rows, numbered after the first; the text may be a million characters.
     sql(
         "INSERT INTO instructor_feedback_settings (created_at, editor_email, notes_text) VALUES"
             + " (LOCALTIMESTAMP, 'admin@ucsb.edu', '"
-            + "x".repeat(200000)
+            + "x".repeat(1_000_000)
             + "')");
     assertEquals(
         2L, ((Number) one("SELECT MAX(id) FROM instructor_feedback_settings")).longValue());
     assertEquals(
-        200000L,
+        1_000_000L,
         ((Number) one("SELECT LENGTH(notes_text) FROM instructor_feedback_settings WHERE id = 2"))
             .longValue());
+    assertThrows(
+        SQLException.class,
+        () ->
+            sql(
+                "INSERT INTO instructor_feedback_settings (created_at, notes_text) VALUES"
+                    + " (LOCALTIMESTAMP, '"
+                    + "x".repeat(1_000_001)
+                    + "')"));
     // The time and the text are required.
     assertThrows(
         SQLException.class,

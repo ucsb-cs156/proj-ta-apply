@@ -241,6 +241,24 @@ public class InstructorFeedbackSettingsControllerTests extends ControllerTestCas
 
   @WithMockUser(roles = {"USER", "ADMIN"})
   @Test
+  public void notes_may_be_a_million_characters_but_no_more() throws Exception {
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(Optional.of(V2));
+    savesEcho();
+
+    save("{\"notesText\":\"" + "x".repeat(1_000_000) + "\"}").andExpect(status().isOk());
+    assertEquals(1_000_000, saved().getNotesText().length());
+
+    MvcResult response =
+        save("{\"notesText\":\"" + "x".repeat(1_000_001) + "\"}")
+            .andExpect(status().is(400))
+            .andReturn();
+    assertEquals(
+        "The notes may be at most 1000000 characters", responseToJson(response).get("message"));
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
   public void blank_notes_are_refused() throws Exception {
     when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
         .thenReturn(Optional.of(V2));

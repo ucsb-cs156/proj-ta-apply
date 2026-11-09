@@ -21,6 +21,12 @@ import lombok.*;
 @Builder
 @Entity(name = "instructor_feedback_settings")
 public class InstructorFeedbackSettings {
+  /**
+   * The longest the notes may be, in characters: the column's width. A VARCHAR rather than TEXT so
+   * that the schema is the same type on H2 (where TEXT is a CLOB) and Postgres, as the notices' is.
+   */
+  public static final int MAX_NOTES_LENGTH = 1_000_000;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -32,6 +38,6 @@ public class InstructorFeedbackSettings {
   private String editorEmail;
 
   /** The notes, in Markdown, with ${field}s filled in for the instructor's quarter. */
-  @Column(columnDefinition = "TEXT")
+  @Column(length = MAX_NOTES_LENGTH)
   private String notesText;
 }
