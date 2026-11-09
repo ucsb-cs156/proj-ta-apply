@@ -898,15 +898,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
           applications are open, an applicant who cancelled may choose{" "}
           <em>Create a new application</em>, which turns the cancelled
           application back into a draft with its answers (not the reason for
-          cancelling) and removes the cancelled row, so the applicant then has
-          a draft and no application. Your comments on the application move to
-          the draft and come back when it is submitted; the faculty&apos;s
-          rankings of the cancelled application are removed with it, and its
-          audit trail is kept. Applicants who started again before this button
-          existed may still have a cancelled row beside the live one, so the
-          same email address can appear twice: the earlier row (lower id) has
-          the status CANCELLED and the later one is the live application. Only
-          the live one
+          cancelling) and removes the cancelled row, so the applicant then has a
+          draft and no application. Your comments on the application move to the
+          draft and come back when it is submitted; the faculty&apos;s rankings
+          of the cancelled application are removed with it, and its audit trail
+          is kept. Applicants who started again before this button existed may
+          still have a cancelled row beside the live one, so the same email
+          address can appear twice: the earlier row (lower id) has the status
+          CANCELLED and the later one is the live application. Only the live one
           is counted, ranked and assigned: the cancelled row is left out of the
           Assignments page, the rankings and their CSV, and the number of
           applications under the Applications step. The count on the
