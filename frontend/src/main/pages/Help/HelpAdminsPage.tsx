@@ -691,26 +691,33 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Creating one launches the job that fills its course list, so the list
           is there without a second step. The recruitments are grouped by
           quarter: one card per quarter, headed by the quarter (for example{" "}
-          <em>W26</em>) with two buttons on the same row:{" "}
+          <em>W26</em>) with three buttons on the same row:{" "}
           <strong>Budget Planning</strong> opens that quarter&apos;s Budget for
-          Quarter page, and one allocation button opens the quarter&apos;s
-          Combined Allocation page, where the TA and ULA allocations are edited
-          side by side; its label says which recruitments the quarter has:{" "}
+          Quarter page, one allocation button opens the quarter&apos;s Combined
+          Allocation page, where the TA and ULA allocations are edited side by
+          side; its label says which recruitments the quarter has:{" "}
           <strong>Allocate TA slots to Courses</strong>,{" "}
           <strong>Allocate ULA slots to Courses</strong> or{" "}
-          <strong>Allocate TA and ULA slots to Courses</strong>. Clicking
-          anywhere else on that row closes or opens the quarter&apos;s card (the
-          caret at its left shows which it is); clicking a button on the row
-          goes to its page and leaves the card as it was. The newest quarter
-          starts open and the older quarters closed, and this browser remembers
-          each card as you left it. The <strong>Quarters</strong> control above
-          the cards puts the newest or the oldest quarter first. Inside a
-          quarter&apos;s card is a nested card for each of its recruitments,
-          headed <strong>TA</strong> or <strong>ULA</strong> with its status
-          badges and how many applications it has; clicking that row closes or
-          opens just that card, and the trash icon at its right deletes the
-          recruitment. Open, the card shows the recruitment&apos;s dates, and
-          under the dates the live{" "}
+          <strong>Allocate TA and ULA slots to Courses</strong>; and{" "}
+          <strong>Instructor Feedback</strong> opens a table of what instructors
+          said about their courses&apos; allocations that quarter, one row per
+          course and instructor, beside each course&apos;s current TA and ULA
+          allocations. A preferred number shows only when its &ldquo;different
+          number&rdquo; box is checked. Every column sorts, every column but
+          Course Name can be hidden (this browser remembers which), and the
+          Comments column can be dragged wider or narrower, down to 200px.
+          Clicking anywhere else on that row closes or opens the quarter&apos;s
+          card (the caret at its left shows which it is); clicking a button on
+          the row goes to its page and leaves the card as it was. The newest
+          quarter starts open and the older quarters closed, and this browser
+          remembers each card as you left it. The <strong>Quarters</strong>{" "}
+          control above the cards puts the newest or the oldest quarter first.
+          Inside a quarter&apos;s card is a nested card for each of its
+          recruitments, headed <strong>TA</strong> or <strong>ULA</strong> with
+          its status badges and how many applications it has; clicking that row
+          closes or opens just that card, and the trash icon at its right
+          deletes the recruitment. Open, the card shows the recruitment&apos;s
+          dates, and under the dates the live{" "}
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
           (collapsed to a one-line summary on older recruitments, expanded on
           the latest TA and ULA recruitments). Its boxes carry the lifecycle

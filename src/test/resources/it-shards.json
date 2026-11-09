@@ -1,5 +1,10 @@
 {
-  "1": ["ApplicationsDraftsWebIT", "CoursesWebIT", "AuditTrailWebIT"],
+  "1": [
+    "ApplicationsDraftsWebIT",
+    "CoursesWebIT",
+    "AuditTrailWebIT",
+    "InstructorFeedbackWebIT"
+  ],
   "2": ["ApplicationsApplyWebIT", "ApplicationsSubmittedWebIT", "AppSettingsWebIT", "OauthWebIT"],
   "3": ["RecruitmentsWebIT", "AdminAssignmentsWebIT", "QuartersWebIT", "LegacyImportWebIT"],
   "4": [
