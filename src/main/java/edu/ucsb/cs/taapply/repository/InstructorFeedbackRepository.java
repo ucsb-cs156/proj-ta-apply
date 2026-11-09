@@ -14,6 +14,9 @@ public interface InstructorFeedbackRepository extends CrudRepository<InstructorF
   /** Every row of one instructor, in no particular order. */
   List<InstructorFeedback> findByEmail(String email);
 
+  /** Every row of one quarter (YYYYQ), in no particular order: the admin's page (issue #427). */
+  List<InstructorFeedback> findByQuarter(String quarter);
+
   Optional<InstructorFeedback> findByQuarterAndEmailAndRecruitmentCourseId(
       String quarter, String email, Long recruitmentCourseId);
 }

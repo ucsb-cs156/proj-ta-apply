@@ -16,6 +16,30 @@ export const stacked = (top: string, bottom: string): React.JSX.Element => (
   </span>
 );
 
+/**
+ * A heading with each word on its own line, all in the size of the given class in index.css
+ * (issue #427: the admin's Instructor Feedback table, "Diff" over "TA" over "Count"). The space
+ * before each break keeps the heading's text whole ("Diff TA Count") for screen readers and tests.
+ */
+export const stackedWords = (
+  text: string,
+  className: string,
+): React.JSX.Element => (
+  <span className={className}>
+    {text.split(" ").map((word, i) => (
+      <Fragment key={word}>
+        {i > 0 && (
+          <>
+            {" "}
+            <br />
+          </>
+        )}
+        {word}
+      </Fragment>
+    ))}
+  </span>
+);
+
 /** The size of the lines under a {@link stackedLead} heading's lead word, relative to the headings. */
 export const STACKED_LEAD_REST_FONT_SIZE = "70%";
 
