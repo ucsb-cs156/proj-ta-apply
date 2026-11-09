@@ -88,9 +88,14 @@ source fixes the outcome.
 
 <p>For each chosen course it ranks as many interested candidates as the course's Ranking Target
 asks for: twice the allocation (at least one), but never more than there are interested
-candidates. With <code>includeNotInterested</code> it also ranks one or two applicants who did not
-express interest, as an instructor who ranks beyond the list might. Ranks are 1..n in a random
-order.</div>
+candidates. Since issue #414 the candidates are ranked by interest tier, as an instructor would
+rank them: those whose first choice the course is come first, then those whose second choice it
+is, then the Enthusiastic, then Would Consider; within a tier the order is random. The target is
+filled from the tiers in that order, so a Would Consider candidate is ranked only when the first
+three tiers together hold fewer candidates than the target, and never while a candidate of a
+higher tier is left unranked. With <code>includeNotInterested</code> it also ranks one or two
+applicants who did not express interest, as an instructor who ranks beyond the list might; they
+go last, after every interested candidate. Ranks are 1..n in that order.</div>
 </div>
 </section>
 <section class="summary">
