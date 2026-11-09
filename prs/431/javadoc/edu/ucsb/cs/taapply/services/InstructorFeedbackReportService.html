@@ -65,6 +65,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#rows(java.lang.String)" tabindex="0">rows(String)</a></li>
+<li><a href="#missing(java.lang.String)" tabindex="0">missing(String)</a></li>
 </ol>
 </li>
 </ol>
@@ -99,8 +100,14 @@ course's current TA and ULA allocations joined in.</div>
 <div class="table-header col-second">Class</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="InstructorFeedbackReportService.Row.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></code></div>
+<div class="col-second even-row-color"><code><a href="InstructorFeedbackReportService.MissingRow.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">One instructor of a course of the quarter who has not checked any of the four boxes (issue
+#427): the course (as the feedback names it), the instructor's catalog name and email.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="InstructorFeedbackReportService.Row.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">One feedback row as the admin's table shows it.</div>
 </div>
 </div>
@@ -130,9 +137,16 @@ course's current TA and ULA allocations joined in.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rows(java.lang.String)" class="member-name-link">rows</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#missing(java.lang.String)" class="member-name-link">missing</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Every instructor of a course of the quarter who has not checked any of the four boxes: those
+with no feedback row for the course, and those whose row has all four unchecked (whatever its
+counts or comments).</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rows(java.lang.String)" class="member-name-link">rows</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Every feedback row of the quarter (YYYYQ), by course id, section and email.</div>
 </div>
 </div>
@@ -175,6 +189,21 @@ course's current TA and ULA allocations joined in.</div>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a>&gt;</span>&nbsp;<span class="element-name">rows</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</span></div>
 <div class="block">Every feedback row of the quarter (YYYYQ), by course id, section and email. A row whose course
 is gone (which the foreign key's cascade should not allow) is left out.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="missing(java.lang.String)">
+<h3>missing</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a>&gt;</span>&nbsp;<span class="element-name">missing</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</span></div>
+<div class="block">Every instructor of a course of the quarter who has not checked any of the four boxes: those
+with no feedback row for the course, and those whose row has all four unchecked (whatever its
+counts or comments). The courses are the non-removed rows of the quarter's TA and ULA
+recruitments, a section in both once (named by its TA row, as the feedback is). A course's
+instructors are the emails the Instructors list maps its instructors of record's catalog names
+to, as the feedback form decides who teaches a course (issue #425); a catalog name with no
+email is listed once with a null email. By course id, section, email (no email last) and name.</div>
 </div>
 </section>
 </li>
