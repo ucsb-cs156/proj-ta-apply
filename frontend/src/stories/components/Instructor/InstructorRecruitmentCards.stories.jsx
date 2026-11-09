@@ -213,6 +213,32 @@ FeedbackNotesOpen.parameters = {
 };
 FeedbackNotesOpen.play = openEveryCourseAndItsNotes;
 
+/**
+ * Issue #430: an admin has turned off "Ask faculty for feedback". Both W26 allocations are released
+ * and S26's are not, yet no course has any of the feedback parts: no waiting message, no form and
+ * no Notes on TA/ULA tradeoffs. The table and the TA and ULA cards are as always.
+ */
+export const FeedbackNotAsked = Template.bind({});
+FeedbackNotAsked.args = {
+  recruitments: [s26Ta, taReleased[1], ulaReleased[2]],
+};
+FeedbackNotAsked.parameters = {
+  msw: {
+    handlers: feedbackHandlers([], [instructorFeedbackSettingsFixtures.v3]),
+  },
+};
+FeedbackNotAsked.play = openEveryCourse;
+
+/** Issue #430: feedback not asked for, and nothing released: no waiting message either. */
+export const FeedbackNotAskedNothingReleased = Template.bind({});
+FeedbackNotAskedNothingReleased.args = { recruitments: nothingReleased };
+FeedbackNotAskedNothingReleased.parameters = {
+  msw: {
+    handlers: feedbackHandlers([], [instructorFeedbackSettingsFixtures.v3]),
+  },
+};
+FeedbackNotAskedNothingReleased.play = openEveryCourse;
+
 /** The notes as they were hard coded before issue #429, opened: what deploying changes nothing of. */
 export const FeedbackNotesOriginalOpen = Template.bind({});
 FeedbackNotesOriginalOpen.args = {

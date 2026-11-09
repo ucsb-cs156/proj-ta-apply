@@ -353,4 +353,94 @@ public class HomePageWebIT extends WebTestCase {
     assertThat(page.getByTestId(form + "-notes-text"))
         .hasText("A TA costs $12,000.00 (1:6.0) in Winter 2026.");
   }
+
+  /**
+   * Issue #430: an admin turns off "Ask faculty for feedback" and the instructor's released course
+   * shows no feedback section at all; turned on again, the form returns with the answer given
+   * before. One user is both admin and instructor, as above.
+   */
+  @Test
+  public void an_admin_turns_feedback_off_and_on_and_the_instructors_course_follows()
+      throws Exception {
+    Recruitment recruitment =
+        recruitmentRepository.save(
+            Recruitment.builder()
+                .quarter("20261")
+                .type(RecruitmentType.TA)
+                .applicationStatus(ApplicationStatus.CLOSED)
+                .allocationVisibility(AllocationVisibility.OWN_COURSES)
+                .tentativeOpeningDate(LocalDate.of(2026, 1, 5))
+                .primaryConsiderationDate(LocalDate.of(2026, 1, 20))
+                .build());
+    RecruitmentCourse mine =
+        recruitmentCourseRepository.save(
+            RecruitmentCourse.builder()
+                .recruitmentId(recruitment.getId())
+                .courseId("CMPSC   156")
+                .enrollCode("07492")
+                .section("0100")
+                .title("ADV APP PROGRAM")
+                .instructor("CONRAD P")
+                .allocation(2)
+                .build());
+    catalogNameRepository.save(CatalogName.builder().name("CONRAD P").build());
+    setupInstructorUser();
+    instructors.save(
+        Instructor.builder().email("instructor@ucsb.edu").catalogName("CONRAD P").build());
+    admins.save(Admin.builder().email("instructor@ucsb.edu").build());
+
+    // As installed, feedback is asked for: the instructor answers.
+    reloadPage(page);
+    String course = "HomePageLoggedIn-instructor-recruitments-quarter-20261-course-" + mine.getId();
+    String form = course + "-feedback";
+    page.getByTestId(course + "-header").getByRole(AriaRole.BUTTON).click();
+    page.waitForResponse(
+        response ->
+            response.request().method().equals("PUT")
+                && response.url().contains("/api/instructor/feedback"),
+        () -> page.getByTestId(form + "-allocReasonable").check());
+
+    // The admin unchecks the box.
+    openPage(page, "/admin/instructorFeedbackSettings");
+    String ask = "InstructorFeedbackSettingsPage-ask";
+    assertThat(page.getByTestId(ask + "-checkbox")).isChecked();
+    assertThat(page.getByTestId(ask + "-last-change"))
+        .containsText("On since the app was installed (version 1,");
+    // A click rather than uncheck(): the box shows the saved value, so it changes only once the
+    // save has been answered and the history reloaded.
+    page.getByTestId(ask + "-checkbox").click();
+    assertThat(
+            page.getByText(
+                "Saved version 2: faculty are no longer asked for feedback on their TA/ULA"
+                    + " allocations"))
+        .isVisible();
+    assertThat(page.getByTestId(ask + "-checkbox")).not().isChecked();
+    assertThat(page.getByTestId(ask + "-last-change"))
+        .containsText("Off since instructor@ucsb.edu saved version 2,");
+    assertThat(page.getByTestId("InstructorFeedbackSettingsPage-notes-history-row-0"))
+        .containsText("Asking for feedback: Off");
+
+    // The instructor's course has no feedback section; the rest is as before.
+    openPage(page, "/");
+    page.getByTestId(course + "-header").getByRole(AriaRole.BUTTON).click();
+    assertThat(page.getByTestId(course + "-TA-card")).isVisible();
+    assertThat(page.getByTestId(course + "-enrollment")).isVisible();
+    assertThat(page.getByTestId(form)).hasCount(0);
+    assertThat(page.getByTestId(form + "-form")).hasCount(0);
+    assertThat(page.getByTestId(form + "-notes-summary")).hasCount(0);
+    assertThat(page.getByTestId(course + "-body")).not().containsText("Notes on TA/ULA tradeoffs");
+
+    // The admin checks it again, and the form is back with the earlier answer.
+    openPage(page, "/admin/instructorFeedbackSettings");
+    page.getByTestId(ask + "-checkbox").click();
+    assertThat(
+            page.getByText(
+                "Saved version 3: faculty are now asked for feedback on their TA/ULA allocations"))
+        .isVisible();
+    openPage(page, "/");
+    page.getByTestId(course + "-header").getByRole(AriaRole.BUTTON).click();
+    assertThat(page.getByTestId(form + "-form")).isVisible();
+    assertThat(page.getByTestId(form + "-allocReasonable")).isChecked();
+    assertThat(page.getByTestId(form + "-notes-summary")).hasText("Notes on TA/ULA tradeoffs");
+  }
 }

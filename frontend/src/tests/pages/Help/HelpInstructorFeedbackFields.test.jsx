@@ -132,6 +132,10 @@ describe("Instructor Feedback Fields help (issue #429)", () => {
     expect(section).toHaveTextContent(
       "Instructor Feedback Settings holds the Notes on TA/ULA tradeoffs that instructors can open under the form where they give feedback on each course's TA and ULA allocation. It is edited as the notices are: in the same Markdown with a live preview, filled in for a quarter chosen above the editor (by default the newest quarter with a recruitment), and each save is kept as a new version, listed with who saved it and when. Instructors always see the newest version. The text can carry the quarter's name and dates, as the notices can, and three fields of its own, the quarter's estimated cost of a TA, of a ULA and the ratio of the two, each “not yet set” until the quarter's budget has it. They are listed, with the text the notes started with as an example, on Help → Instructor Feedback Fields.",
     );
+    // Issue #430: the checkbox above the notes.
+    expect(section).toHaveTextContent(
+      "Help → Instructor Feedback Fields. Above the notes, the checkbox Ask faculty for feedback on TA/ULA allocations after both have been released to instructors turns the whole feedback section of every course on the instructors' home page on or off; it is saved when clicked, and is checked unless an admin unchecks it. While it is unchecked, instructors see no waiting message, form or notes, and cannot save feedback, but what they gave before is kept.",
+    );
     const links = [...section.querySelectorAll("a")].map((a) =>
       a.getAttribute("href"),
     );

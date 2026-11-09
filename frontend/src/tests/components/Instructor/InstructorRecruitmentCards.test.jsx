@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,13 +18,20 @@ import {
   WAITING_FOR_TA,
   WAITING_FOR_ULA,
 } from "main/utils/instructorFeedback";
+import { FEEDBACK_SETTINGS_URL } from "main/utils/feedbackNotesFields";
+import instructorFeedbackSettingsFixtures from "fixtures/instructorFeedbackSettingsFixtures";
 
-// The feedback form (issue #425) reads the instructor's rows and the quarter's costs.
+// The feedback form (issue #425) reads the instructor's rows and the quarter's costs; the cards
+// read whether feedback is asked for (issue #430), by default yes.
 const axiosMock = new AxiosMockAdapter(axios);
+const asking = [instructorFeedbackSettingsFixtures.v1];
+const notAsking = [instructorFeedbackSettingsFixtures.v3];
+const NOT_LOADED = "not loaded";
 beforeEach(() => {
   axiosMock.reset();
   axiosMock.onGet("/api/instructor/feedback").reply(200, []);
   axiosMock.onGet("/api/instructor/feedback/costs").reply(200, null);
+  axiosMock.onGet(FEEDBACK_SETTINGS_URL).reply(200, asking);
 });
 
 const { nothingReleased, taReleased, ulaReleased, bothReleased } =
@@ -35,16 +48,26 @@ const headings = (table) =>
 const before = (a, b) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
-const renderWithClient = (ui) =>
-  render(
-    <QueryClientProvider client={new QueryClient()}>
+/**
+ * Renders with the settings in force already loaded (as the server also answers), unless they are
+ * NOT_LOADED, in which case they arrive from the server after the first render.
+ */
+const renderWithClient = (ui, settings = asking) => {
+  const client = new QueryClient();
+  if (settings !== NOT_LOADED) {
+    client.setQueryData([FEEDBACK_SETTINGS_URL], settings);
+  }
+  return render(
+    <QueryClientProvider client={client}>
       <MemoryRouter>{ui}</MemoryRouter>
     </QueryClientProvider>,
   );
+};
 
-function renderCards(recruitments = nothingReleased) {
+function renderCards(recruitments = nothingReleased, settings = asking) {
   renderWithClient(
     <InstructorRecruitmentCards recruitments={recruitments} testIdPrefix="I" />,
+    settings,
   );
 }
 
@@ -492,6 +515,72 @@ describe("InstructorRecruitmentCards tests", () => {
     expect(
       screen.queryByTestId(`${S26}-course-6-feedback-differentULACount-line`),
     ).toBeNull();
+  });
+
+  // ---- issue #430: the feedback parts only while the settings ask for feedback ----
+
+  test("while feedback is not asked for, no course has a feedback section, released or not", async () => {
+    axiosMock.onGet(FEEDBACK_SETTINGS_URL).reply(200, notAsking);
+    renderCards([...bothReleased, { ...s26Ta }], notAsking);
+
+    for (const course of [1, 2, 3]) {
+      expect(
+        screen.queryByTestId(`${W26}-course-${course}-feedback`),
+      ).toBeNull();
+    }
+    expect(screen.queryByTestId(`${S26}-course-6-feedback`)).toBeNull();
+    expect(screen.queryByText(WAITING_FOR_TA)).toBeNull();
+    expect(screen.queryByText(WAITING_FOR_BOTH)).toBeNull();
+    expect(screen.queryByText("Notes on TA/ULA tradeoffs")).toBeNull();
+    expect(screen.queryByTestId(`${W26}-course-2-feedback-form`)).toBeNull();
+    // Everything else of the course is unchanged: the table and both cards, in order.
+    const body = screen.getByTestId(`${W26}-course-2-body`).firstElementChild;
+    expect([...body.children].map((child) => child.dataset.testid)).toEqual([
+      `${W26}-course-2-enrollment`,
+      `${W26}-course-2-TA-card`,
+      `${W26}-course-2-ULA-card`,
+    ]);
+    expect(
+      screen.getByTestId(`${W26}-course-2-TA-targets`),
+    ).toBeInTheDocument();
+    // The setting is global: read once for the page, not per course.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === FEEDBACK_SETTINGS_URL),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/instructor/feedback"),
+    ).toHaveLength(0);
+  });
+
+  test("with no settings saved at all, feedback is asked for", () => {
+    renderCards(bothReleased, []);
+    expect(
+      screen.getByTestId(`${W26}-course-2-feedback-form`),
+    ).toBeInTheDocument();
+  });
+
+  test("until the settings arrive, no feedback section is shown; then it is", async () => {
+    renderCards(nothingReleased, NOT_LOADED);
+    expect(screen.queryByTestId(`${W26}-course-2-feedback`)).toBeNull();
+    expect(
+      await screen.findByTestId(`${W26}-course-2-feedback-waiting`),
+    ).toHaveTextContent(WAITING_FOR_BOTH);
+  });
+
+  test("settings that arrive saying no keep the feedback hidden", async () => {
+    axiosMock.onGet(FEEDBACK_SETTINGS_URL).reply(200, notAsking);
+    renderCards(nothingReleased, NOT_LOADED);
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === FEEDBACK_SETTINGS_URL),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId(`${W26}-course-2-feedback`)).toBeNull();
+    expect(
+      screen.getByTestId(`${W26}-course-2-enrollment`),
+    ).toBeInTheDocument();
   });
 
   // ---- level 4: the TA card and the ULA card ----

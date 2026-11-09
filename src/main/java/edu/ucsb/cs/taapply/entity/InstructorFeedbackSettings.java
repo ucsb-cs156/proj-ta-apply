@@ -2,12 +2,13 @@ package edu.ucsb.cs.taapply.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.*;
 
 /**
  * One saved version of the Instructor Feedback Settings (issue #429): today the Markdown of the
  * "Notes on TA/ULA tradeoffs" under each course's allocation feedback form on the instructor home
- * page.
+ * page, and (issue #430) whether instructors are asked for that feedback at all.
  *
  * <p>Versions are never edited or deleted, as with the {@link NoticeVersion}s: every save by an
  * admin is a new row, whose id is the version number, and instructors always see the newest. A
@@ -40,4 +41,16 @@ public class InstructorFeedbackSettings {
   /** The notes, in Markdown, with ${field}s filled in for the instructor's quarter. */
   @Column(length = MAX_NOTES_LENGTH)
   private String notesText;
+
+  /**
+   * Whether instructors are asked for feedback on their TA/ULA allocations (issue #430): when
+   * false, their home page shows none of the feedback parts and the server refuses their saves.
+   * True by default, as changeset 070 makes it for the versions saved before it.
+   */
+  @Builder.Default private boolean askForFeedback = true;
+
+  /** Whether the settings ask for feedback: those of the newest version, and yes with none. */
+  public static boolean askingForFeedback(Optional<InstructorFeedbackSettings> newest) {
+    return newest.map(InstructorFeedbackSettings::isAskForFeedback).orElse(true);
+  }
 }

@@ -20,6 +20,7 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Budget;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.InstructorFeedback;
+import edu.ucsb.cs.taapply.entity.InstructorFeedbackSettings;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.User;
@@ -28,6 +29,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.model.CurrentUser;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.InstructorFeedbackRepository;
+import edu.ucsb.cs.taapply.repository.InstructorFeedbackSettingsRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -59,6 +61,7 @@ public class InstructorFeedbackControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean BudgetRepository budgetRepository;
   @MockitoBean BudgetCreationService budgetCreationService;
+  @MockitoBean InstructorFeedbackSettingsRepository instructorFeedbackSettingsRepository;
   @MockitoBean CurrentUserService currentUserService;
 
   private static final String EMAIL = "pconrad@ucsb.edu";
@@ -307,6 +310,69 @@ public class InstructorFeedbackControllerTests extends ControllerTestCase {
   }
 
   // ---- PUT: who and when ----
+
+  /** The newest Instructor Feedback Settings version asks for feedback, or not (issue #430). */
+  private void asking(boolean askForFeedback) {
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(
+            Optional.of(
+                InstructorFeedbackSettings.builder()
+                    .id(4L)
+                    .notesText("Notes")
+                    .askForFeedback(askForFeedback)
+                    .build()));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void saves_are_refused_while_the_settings_do_not_ask_for_feedback() throws Exception {
+    teachesTheUsualCourses();
+    noRowYet();
+    asking(false);
+
+    MvcResult response =
+        save(2, "{\"allocReasonable\": true}").andExpect(status().is(403)).andReturn();
+
+    assertEquals(
+        "Feedback on TA/ULA allocations is not being collected at this time: an admin has turned"
+            + " it off on the Instructor Feedback Settings page.",
+        responseToJson(response).get("message"));
+    verify(instructorFeedbackRepository, never()).save(any());
+    verify(budgetCreationService, never()).findOrCreate(any());
+  }
+
+  /** Turning the setting off hides the form and refuses saves, but what was saved is kept. */
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void stored_feedback_can_still_be_read_while_the_settings_do_not_ask() throws Exception {
+    asking(false);
+    InstructorFeedback stored =
+        InstructorFeedback.builder()
+            .quarter("20261")
+            .email(EMAIL)
+            .recruitmentCourseId(2L)
+            .allocReasonable(true)
+            .build();
+    when(instructorFeedbackRepository.findByEmail(EMAIL)).thenReturn(List.of(stored));
+
+    MvcResult response =
+        mockMvc.perform(get("/api/instructor/feedback")).andExpect(status().isOk()).andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(stored)), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void saves_are_accepted_while_the_settings_ask_for_feedback() throws Exception {
+    teachesTheUsualCourses();
+    noRowYet();
+    asking(true);
+
+    save(2, "{\"allocReasonable\": true}").andExpect(status().isOk());
+
+    assertTrue(saved().isAllocReasonable());
+  }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
   @Test

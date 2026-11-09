@@ -50,7 +50,7 @@ const Template = () => <InstructorFeedbackSettingsPage />;
 
 /**
  * Issue #429: two versions, the admin's rewrite over the one the app was installed with; the
- * preview is filled in for W26.
+ * preview is filled in for W26. "Ask faculty for feedback" is checked, as installed (issue #430).
  */
 export const Default = Template.bind({});
 Default.parameters = {
@@ -59,6 +59,23 @@ Default.parameters = {
       ...common,
       http.get("/api/admin/instructorFeedbackSettings/all", () =>
         HttpResponse.json(instructorFeedbackSettingsFixtures.history),
+      ),
+    ],
+  },
+};
+
+/**
+ * Issue #430: another admin has turned off "Ask faculty for feedback" (version 3): the box is
+ * unchecked and says who turned it off and when, and the history's Changed column tells that
+ * version from the notes versions.
+ */
+export const NotAskingForFeedback = Template.bind({});
+NotAskingForFeedback.parameters = {
+  msw: {
+    handlers: [
+      ...common,
+      http.get("/api/admin/instructorFeedbackSettings/all", () =>
+        HttpResponse.json(instructorFeedbackSettingsFixtures.historyNotAsking),
       ),
     ],
   },

@@ -118,7 +118,7 @@ describe("FeedbackNotesEditorCard (issue #429)", () => {
     const table = screen.getByTestId("Card-history");
     expect(
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
-    ).toEqual(["Version", "Saved", "Editor", "Length"]);
+    ).toEqual(["Version", "Saved", "Editor", "Changed", "Length"]);
     expect(
       [...screen.getByTestId("Card-history-row-0").querySelectorAll("td")].map(
         (td) => td.textContent,
@@ -127,6 +127,7 @@ describe("FeedbackNotesEditorCard (issue #429)", () => {
       "2",
       "11/10/2026, 2:30:05 PM",
       "admin@ucsb.edu",
+      "Notes",
       `${v2.notesText.length} characters`,
     ]);
     // The version the app was installed with has no editor.
@@ -138,8 +139,41 @@ describe("FeedbackNotesEditorCard (issue #429)", () => {
       "1",
       "11/9/2026, 8:00:00 AM",
       "(installed with the app)",
+      "First version",
       `${v1.notesText.length} characters`,
     ]);
+  });
+
+  // Issue #430: turning asking for feedback on or off is a version too, with the same notes.
+  test("the history says what each version changed: the notes, the checkbox, both or nothing", async () => {
+    const { v3 } = instructorFeedbackSettingsFixtures;
+    const v4 = { ...v3, id: 4, notesText: "Other", askForFeedback: true };
+    const v5 = { ...v4, id: 5 };
+    axiosMock
+      .onGet(HISTORY_URL)
+      .reply(200, [
+        v5,
+        v4,
+        ...instructorFeedbackSettingsFixtures.historyNotAsking,
+      ]);
+    renderCard();
+    await editorWith("Other");
+
+    const changed = [0, 1, 2, 3, 4].map(
+      (row) =>
+        screen.getByTestId(`Card-history-row-${row}`).querySelectorAll("td")[3]
+          .textContent,
+    );
+    expect(changed).toEqual([
+      "Nothing",
+      "Notes; Asking for feedback: On",
+      "Asking for feedback: Off",
+      "Notes",
+      "First version",
+    ]);
+    expect(screen.getByTestId("Card-history-row-2")).toHaveTextContent(
+      "other-admin@ucsb.edu",
+    );
   });
 
   test("explains where the notes are shown, and links to Markdown and the fields help", async () => {
@@ -150,7 +184,7 @@ describe("FeedbackNotesEditorCard (issue #429)", () => {
     expect(markdown).toHaveAttribute("target", "_blank");
     expect(markdown).toHaveAttribute("rel", "noreferrer");
     expect(markdown.parentElement).toHaveTextContent(
-      "Shown to every instructor under the feedback form on their course's allocation, on their home page, in a section they open themselves. Written in Markdown; the preview on the right is what instructors see. Each save is kept as a new version; instructors always see the newest.",
+      "Shown to every instructor under the feedback form on their course's allocation, on their home page, in a section they open themselves. Written in Markdown; the preview on the right is what instructors see. Each save is kept as a new version; instructors always see the newest. Turning “Ask faculty for feedback” on or off is a version too, with the same notes; the history says what each version changed.",
     );
     expect(markdown.parentElement).toHaveClass("text-muted", "small");
     const hint = screen.getByTestId("Card-fields-hint");

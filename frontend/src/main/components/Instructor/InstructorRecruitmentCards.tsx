@@ -14,6 +14,12 @@ import {
 } from "main/utils/instructorQuarters";
 import { feedbackWaitingMessage } from "main/utils/instructorFeedback";
 import InstructorFeedbackForm from "main/components/Instructor/InstructorFeedbackForm";
+import {
+  askingForFeedback,
+  FEEDBACK_SETTINGS_URL,
+  type InstructorFeedbackSettings,
+} from "main/utils/feedbackNotesFields";
+import { useBackend } from "main/utils/useBackend";
 
 export type { InstructorRecruitment } from "main/utils/instructorQuarters";
 
@@ -155,15 +161,18 @@ function RecruitmentCard({
  * since issue #410, Enrollment Estimate and the two Allocations reading TBD or N/A until there is a
  * number), the allocation feedback (issue #425: a note saying which allocations it waits for,
  * then, once the quarter's are released, the form), then the TA card and the ULA card for each
- * recruitment it is in.
+ * recruitment it is in. Since issue #430 the feedback is there only while the Instructor Feedback
+ * Settings ask for it.
  */
 function CourseBody({
   quarter,
   course,
+  askForFeedback,
   testIdPrefix,
 }: {
   quarter: InstructorQuarter;
   course: QuarterCourse;
+  askForFeedback: boolean;
   testIdPrefix: string;
 }): React.JSX.Element {
   const waiting = feedbackWaitingMessage(quarter);
@@ -173,25 +182,27 @@ function CourseBody({
         testIdPrefix={`${testIdPrefix}-enrollment`}
         columns={enrollmentColumns(course, testIdPrefix)}
       />
-      <div
-        className="border rounded p-2"
-        data-testid={`${testIdPrefix}-feedback`}
-      >
-        {waiting === null ? (
-          <InstructorFeedbackForm
-            quarter={quarter}
-            course={course}
-            testIdPrefix={`${testIdPrefix}-feedback`}
-          />
-        ) : (
-          <span
-            className="text-muted"
-            data-testid={`${testIdPrefix}-feedback-waiting`}
-          >
-            {waiting}
-          </span>
-        )}
-      </div>
+      {askForFeedback && (
+        <div
+          className="border rounded p-2"
+          data-testid={`${testIdPrefix}-feedback`}
+        >
+          {waiting === null ? (
+            <InstructorFeedbackForm
+              quarter={quarter}
+              course={course}
+              testIdPrefix={`${testIdPrefix}-feedback`}
+            />
+          ) : (
+            <span
+              className="text-muted"
+              data-testid={`${testIdPrefix}-feedback-waiting`}
+            >
+              {waiting}
+            </span>
+          )}
+        </div>
+      )}
       {course.ta && (
         <RecruitmentCard
           entry={course.ta}
@@ -212,12 +223,23 @@ function CourseBody({
  * One card per quarter (issue #364), newest first, headed by the quarter alone, with an accordion
  * item per course the instructor teaches in that quarter's TA or ULA recruitment, course id then
  * section; a course in both appears once.
+ *
+ * Whether to ask for feedback (issue #430) is one global setting, read once here for every course;
+ * until it has loaded, no course shows its feedback section, so none flashes up and then vanishes.
  */
 export default function InstructorRecruitmentCards({
   recruitments,
   testIdPrefix = "InstructorRecruitmentCards",
 }: InstructorRecruitmentCardsProps): React.JSX.Element {
   const quarters = groupByQuarter(recruitments);
+  const { data: settings } = useBackend<InstructorFeedbackSettings[] | null>(
+    // Stryker disable next-line ArrayDeclaration : the cache key is not observable from here
+    [FEEDBACK_SETTINGS_URL],
+    // Stryker disable next-line ObjectLiteral,StringLiteral : axios sends a GET whatever the method says
+    { method: "GET", url: FEEDBACK_SETTINGS_URL },
+    null,
+  );
+  const askForFeedback = askingForFeedback(settings) === true;
 
   return (
     <div data-testid={testIdPrefix}>
@@ -263,6 +285,7 @@ export default function InstructorRecruitmentCards({
                       <CourseBody
                         quarter={quarter}
                         course={course}
+                        askForFeedback={askForFeedback}
                         testIdPrefix={id(`course-${course.id}`)}
                       />
                     </Accordion.Body>

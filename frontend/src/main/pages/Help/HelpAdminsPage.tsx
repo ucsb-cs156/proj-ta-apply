@@ -987,7 +987,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <Link to="/help/instructor-feedback-fields">
             Help &rarr; Instructor Feedback Fields
           </Link>
-          .
+          . Above the notes, the checkbox{" "}
+          <strong>
+            Ask faculty for feedback on TA/ULA allocations after both have been
+            released to instructors
+          </strong>{" "}
+          turns the whole feedback section of every course on the
+          instructors&apos; home page on or off; it is saved when clicked, and
+          is checked unless an admin unchecks it. While it is unchecked,
+          instructors see no waiting message, form or notes, and cannot save
+          feedback, but what they gave before is kept.
         </p>
 
         <h2 className="my-3 h4" id="markdown">
