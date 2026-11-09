@@ -6,12 +6,14 @@ taapply,edu.ucsb.cs.taapply.services,RankingsCsvService,0,237,0,8,0,45,0,12,0,8
 taapply,edu.ucsb.cs.taapply.services,SystemInfoService,0,3,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,CurrentUserService,0,10,0,2,0,2,0,3,0,2
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.AssignmentRow,0,18,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.MissingRow,0,18,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,BudgetService.QuarterSummary,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RefreshSetting,0,58,0,14,0,11,0,10,0,3
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.CancelledApplication,0,18,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService,0,144,0,14,0,31,0,12,0,5
 taapply,edu.ucsb.cs.taapply.services,BudgetCourseService,0,391,0,34,0,92,0,36,0,19
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.ImportResult,0,21,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.Row,0,54,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService,0,342,0,22,0,77,0,26,0,15
 taapply,edu.ucsb.cs.taapply.services,BudgetService,0,303,0,26,0,55,0,28,0,15
 taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService.UploadResult,0,15,0,0,0,1,0,1,0,1
@@ -19,8 +21,10 @@ taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Row,0,55,0,8
 taapply,edu.ucsb.cs.taapply.services,DeveloperModeService,0,75,0,8,0,15,0,11,0,7
 taapply,edu.ucsb.cs.taapply.services,AllocationService,0,303,0,34,0,63,0,26,0,9
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Step,0,33,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService,0,408,0,28,0,103,0,31,0,17
 taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService.Snapshot,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,HiringDecisions,0,37,0,12,0,8,0,8,0,2
+taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.Responder,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,DeveloperModeService.Status,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RoleAssignmentService,0,89,0,14,0,17,0,13,0,6
 taapply,edu.ucsb.cs.taapply.services,BudgetCreationService,0,75,0,0,0,22,0,6,0,6
@@ -41,6 +45,7 @@ taapply,edu.ucsb.cs.taapply.services,ApplicationCsvService.Column,0,9,0,0,0,1,0,
 taapply,edu.ucsb.cs.taapply.services,BudgetService.Side,0,27,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RankingsCsvService.Column,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Link,0,9,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.SectionKey,0,17,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService.CourseTargets,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService,0,140,0,8,0,28,0,14,0,10
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
@@ -91,6 +96,7 @@ taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,551,0,56,0,126,0
 taapply,edu.ucsb.cs.taapply.controller,InstructorFeedbackController,0,366,0,48,0,98,0,42,0,18
 taapply,edu.ucsb.cs.taapply.controller,DeveloperAllocationsController,0,20,0,2,0,4,0,3,0,2
 taapply,edu.ucsb.cs.taapply.controller,NoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.controller,AdminInstructorFeedbackController,0,13,0,0,0,3,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,AdminsController,0,124,0,2,0,24,0,10,0,9
 taapply,edu.ucsb.cs.taapply.controller,UserInfoController,0,6,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,DeveloperFakeRankingsController,0,47,0,4,0,10,0,5,0,3
