@@ -191,6 +191,13 @@ applicant, plus the admin's comments under the name an application's use.</div>
 <dd>
 <div class="block">Creates an instance of a <code>AdminDTO</code> record class.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminInstructorFeedbackController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminInstructorFeedbackController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">The admin's Instructor Feedback page (issue #427), /admin/instructorFeedback/QXX: every
+instructor's feedback on their TA/ULA allocation in one quarter (issue #425).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminInstructorFeedbackController.html#%3Cinit%3E()" class="member-name-link">AdminInstructorFeedbackController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminInstructorFeedbackController.html" title="class in edu.ucsb.cs.taapply.controller">AdminInstructorFeedbackController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminRankingsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html#%3Cinit%3E()" class="member-name-link">AdminRankingsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminRankingsController</a></dt>
@@ -296,6 +303,10 @@ allocation an admin can ask for from it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AllocationVisibilityService.html#%3Cinit%3E()" class="member-name-link">AllocationVisibilityService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AllocationVisibilityService.html" title="class in edu.ucsb.cs.taapply.services">AllocationVisibilityService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#allocReasonable()" class="member-name-link">allocReasonable()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>allocReasonable</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/UCSBAPIQuarterController.html#allQuarters(java.lang.String)" class="member-name-link">allQuarters(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/UCSBAPIQuarterController.html" title="class in edu.ucsb.cs.taapply.controller">UCSBAPIQuarterController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#allRecruitments()" class="member-name-link">allRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
@@ -955,6 +966,10 @@ six months after it closes (issue #107), as the place for what has changed since
 <dd>
 <div class="block">Returns the value of the <code>comments</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#comments()" class="member-name-link">comments()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>comments</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/ConcurrencyConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">ConcurrencyConfig</a> - Class in <a href="edu/ucsb/cs/taapply/config/package-summary.html">edu.ucsb.cs.taapply.config</a></dt>
 <dd>
 <div class="block">Makes the one <a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> the application uses (issues #273, #284).</div>
@@ -1036,6 +1051,14 @@ least one quarter the admin has populated from the UCSB API.</div>
 <div class="block">Returns the value of the <a href="./edu/ucsb/cs/taapply/models/CourseSections.html#param-courseId"><code>courseId</code></a> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CourseSummary.html#courseId()" class="member-name-link">courseId()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CourseSummary.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>courseId</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#courseId()" class="member-name-link">courseId()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>courseId</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#courseId()" class="member-name-link">courseId()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>courseId</code> record component.</div>
 </dd>
@@ -1310,6 +1333,14 @@ makes it available.</div>
 <dd>
 <div class="block">What the frontend needs: whether the switch exists here, and whether it is on.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#differentTACount()" class="member-name-link">differentTACount()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>differentTACount</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#differentULACount()" class="member-name-link">differentULACount()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>differentULACount</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Step.html#done()" class="member-name-link">done()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Step.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentStepsService.Step</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>done</code> record component.</div>
@@ -1473,6 +1504,14 @@ open (issue #98).</div>
 <div class="block">Returns the value of the <code>email</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#email()" class="member-name-link">email()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>email</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#email()" class="member-name-link">email()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>email</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#email()" class="member-name-link">email()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>email</code> record component.</div>
 </dd>
@@ -1719,6 +1758,14 @@ gets it back after removing it.</div>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -1884,6 +1931,8 @@ science courses of a few other universities.</div>
 <dd>
 <div class="block">Returns the value of the <code>familyName</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminInstructorFeedbackController.html#feedback(java.lang.String)" class="member-name-link">feedback(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminInstructorFeedbackController.html" title="class in edu.ucsb.cs.taapply.controller">AdminInstructorFeedbackController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#fields()" class="member-name-link">fields()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>fields</code> record component.</div>
@@ -1959,6 +2008,10 @@ and started again (issue #318).</div>
 <dt><a href="edu/ucsb/cs/taapply/repository/BudgetCourseRepository.html#findByQuarter(java.lang.String)" class="member-name-link">findByQuarter(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/BudgetCourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">BudgetCourseRepository</a></dt>
 <dd>
 <div class="block">Every section of the quarter, in no particular order; callers key them by enroll code.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/InstructorFeedbackRepository.html#findByQuarter(java.lang.String)" class="member-name-link">findByQuarter(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/InstructorFeedbackRepository.html" title="interface in edu.ucsb.cs.taapply.repository">InstructorFeedbackRepository</a></dt>
+<dd>
+<div class="block">Every row of one quarter (YYYYQ), in no particular order: the admin's page (issue #427).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/InstructorFeedbackRepository.html#findByQuarterAndEmailAndRecruitmentCourseId(java.lang.String,java.lang.String,java.lang.Long)" class="member-name-link">findByQuarterAndEmailAndRecruitmentCourseId(String, String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/InstructorFeedbackRepository.html" title="interface in edu.ucsb.cs.taapply.repository">InstructorFeedbackRepository</a></dt>
 <dd>&nbsp;</dd>
@@ -2459,6 +2512,14 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -2656,6 +2717,10 @@ Courses table today, others later.</div>
 <dd>
 <div class="block">Returns the value of the <code>id</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#id()" class="member-name-link">id()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>id</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html#identity()" class="member-name-link">identity()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>identity</code> record component.</div>
@@ -2778,6 +2843,22 @@ course's drop-down on the instructor home page.</div>
 of the budget: the estimated cost per TA and the estimated cost per ULA (the ULA hourly rate
 times the hours per ULA).</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The admin's table of instructors' allocation feedback (issue #427): every <a href="edu/ucsb/cs/taapply/entity/InstructorFeedback.html" title="class in edu.ucsb.cs.taapply.entity"><code>InstructorFeedback</code></a> row of a quarter, with the course, the instructor's catalog name and the
+course's current TA and ULA allocations joined in.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.html#%3Cinit%3E()" class="member-name-link">InstructorFeedbackReportService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">One instructor of a course of the quarter who has not checked any of the four boxes (issue
+#427): the course (as the feedback names it), the instructor's catalog name and email.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">One feedback row as the admin's table shows it.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/InstructorFeedbackRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">InstructorFeedbackRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>
 <div class="block">Instructors' feedback on their allocations (issue #425), one row per quarter, email and course.</div>
@@ -2804,6 +2885,14 @@ feedback form shows as its "Notes on TA/ULA tradeoffs".</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/InstructorFeedbackSettingsRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">InstructorFeedbackSettingsRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#instructorName()" class="member-name-link">instructorName()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>instructorName</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#instructorName()" class="member-name-link">instructorName()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>instructorName</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map,boolean)" class="member-name-link">InstructorRecruitment(Long, String, RecruitmentType, ApplicationStatus, LocalDate, LocalDate, LocalDate, LocalDate, String, LocalDate, LocalDate, List, Map, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>InstructorRecruitment</code> record class.</div>
@@ -3036,6 +3125,10 @@ their row is stamped with the time, if the stamp it carries is more than a minut
 <dd>
 <div class="block">Returns the value of the <code>lastPopulatedAt</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#lastUpdated()" class="member-name-link">lastUpdated()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>lastUpdated</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html#latestQuarter(java.time.LocalDate)" class="member-name-link">latestQuarter(LocalDate)</a> - Static method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></dt>
 <dd>
 <div class="block">The quarter of the latest course on a fake transcript: the quarter containing <code>today</code>, by
@@ -3239,6 +3332,18 @@ not, or 0 if they have none; a new application is one more (issue #318).</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackController.html#mine()" class="member-name-link">mine()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorFeedbackController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorFeedbackController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminInstructorFeedbackController.html#missing(java.lang.String)" class="member-name-link">missing(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminInstructorFeedbackController.html" title="class in edu.ucsb.cs.taapply.controller">AdminInstructorFeedbackController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.html#missing(java.lang.String)" class="member-name-link">missing(String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService</a></dt>
+<dd>
+<div class="block">Every instructor of a course of the quarter who has not checked any of the four boxes: those
+with no feedback row for the course, and those whose row has all four unchecked (whatever its
+counts or comments).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">MissingRow(String, String, String, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>MissingRow</code> record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.html#money(java.math.BigDecimal)" class="member-name-link">money(BigDecimal)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.html" title="class in edu.ucsb.cs.taapply.services">BudgetService</a></dt>
 <dd>
 <div class="block">Dollars and cents: two decimal places, half up.</div>
@@ -3411,6 +3516,14 @@ application form.</div>
 <dd>
 <div class="block">Returns the value of the <code>number</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#numTAsPreferred()" class="member-name-link">numTAsPreferred()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>numTAsPreferred</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#numULAsPreferred()" class="member-name-link">numULAsPreferred()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>numULAsPreferred</code> record component.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:O">O</h2>
 <dl class="index">
@@ -3483,6 +3596,10 @@ and whether they are an admin (issue #302), so that the client can choose its me
 <dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#%3Cinit%3E(java.lang.String,boolean,boolean)" class="member-name-link">OtherClient(String, boolean, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>OtherClient</code> record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#otherConcerns()" class="member-name-link">otherConcerns()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>otherConcerns</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">OtherCourse(String, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework.OtherCourse</a></dt>
 <dd>
@@ -3705,6 +3822,10 @@ with their course.</div>
 <div class="block">Returns the value of the <code>quarter</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html#quarter()" class="member-name-link">quarter()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>quarter</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#quarter()" class="member-name-link">quarter()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>quarter</code> record component.</div>
 </dd>
@@ -4169,6 +4290,10 @@ effect without requiring re-login.</div>
 <dd>
 <div class="block">Returns the value of the <code>room</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#%3Cinit%3E(java.lang.Long,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,boolean,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.String,java.time.LocalDateTime)" class="member-name-link">Row(Long, String, String, String, String, String, String, boolean, boolean, boolean, boolean, Integer, Integer, Integer, Integer, String, LocalDateTime)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>Row</code> record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#rows()" class="member-name-link">rows()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>rows</code> record component.</div>
@@ -4180,6 +4305,10 @@ effect without requiring re-login.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.Table.html#rows()" class="member-name-link">rows()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.Table.html" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService.Table</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>rows</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.html#rows(java.lang.String)" class="member-name-link">rows(String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService</a></dt>
+<dd>
+<div class="block">Every feedback row of the quarter (YYYYQ), by course id, section and email.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html#run(org.springframework.boot.ApplicationArguments)" class="member-name-link">run(ApplicationArguments)</a> - Method in class edu.ucsb.cs.taapply.startup.<a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html" title="class in edu.ucsb.cs.taapply.startup">ScaffoldApplicationRunner</a></dt>
 <dd>&nbsp;</dd>
@@ -4260,6 +4389,14 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <div class="block">Returns the value of the <code>section</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CourseSummary.html#section()" class="member-name-link">section()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CourseSummary.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>section</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#section()" class="member-name-link">section()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>section</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#section()" class="member-name-link">section()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>section</code> record component.</div>
 </dd>
@@ -4478,6 +4615,10 @@ for; ULA positions are funded for undergraduates only.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#TA_TOPICS" class="member-name-link">TA_TOPICS</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#taAllocation()" class="member-name-link">taAllocation()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>taAllocation</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/TaApplyApplication.html" class="type-name-link" title="class in edu.ucsb.cs.taapply">TaApplyApplication</a> - Class in <a href="edu/ucsb/cs/taapply/package-summary.html">edu.ucsb.cs.taapply</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/TaApplyApplication.html#%3Cinit%3E()" class="member-name-link">TaApplyApplication()</a> - Constructor for class edu.ucsb.cs.taapply.<a href="edu/ucsb/cs/taapply/TaApplyApplication.html" title="class in edu.ucsb.cs.taapply">TaApplyApplication</a></dt>
@@ -4582,6 +4723,14 @@ a ULA application.</div>
 <div class="block">Returns the value of the <a href="./edu/ucsb/cs/taapply/models/CourseSections.html#param-title"><code>title</code></a> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html#title()" class="member-name-link">title()</a> - Method in record class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework.OtherCourse</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>title</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#title()" class="member-name-link">title()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>title</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#title()" class="member-name-link">title()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>title</code> record component.</div>
 </dd>
@@ -4784,6 +4933,14 @@ a ULA application.</div>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework.OtherCourse</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.MissingRow.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.MissingRow</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -5048,6 +5205,10 @@ currently is.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#ULA_TOPICS" class="member-name-link">ULA_TOPICS</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#ulaAllocation()" class="member-name-link">ulaAllocation()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>ulaAllocation</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/UlaInterest.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">UlaInterest</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
 <dd>
 <div class="block">An area a ULA applicant may say how interested they are in (Admin &gt; ULA App Settings).</div>
