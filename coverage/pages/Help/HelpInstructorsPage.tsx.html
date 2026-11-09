@@ -320,7 +320,22 @@
 <a name='L255'></a><a href='#L255'>255</a>
 <a name='L256'></a><a href='#L256'>256</a>
 <a name='L257'></a><a href='#L257'>257</a>
-<a name='L258'></a><a href='#L258'>258</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -333,6 +348,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -606,10 +636,10 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           the allocations of either recruitment, an Allocation cell reads{" "}
           &lt;strong&gt;TBD&lt;/strong&gt; until that recruitment&amp;apos;s allocations are
           released, and &lt;strong&gt;N/A&lt;/strong&gt; when the course is not in a
-          recruitment of that type), a note where you will one day be able to
-          comment on your allocations, and then a &lt;strong&gt;TA&lt;/strong&gt; card
-          and/or a &lt;strong&gt;ULA&lt;/strong&gt; card: one for each recruitment the
-          course is in, with that recruitment&amp;apos;s status and dates.
+          recruitment of that type), a place to give feedback on your
+          allocations (see below), and then a &lt;strong&gt;TA&lt;/strong&gt; card and/or a{" "}
+          &lt;strong&gt;ULA&lt;/strong&gt; card: one for each recruitment the course is in,
+          with that recruitment&amp;apos;s status and dates.
         &lt;/p&gt;
         &lt;p data-testid="HelpInstructorsPage-steps-link"&gt;
           Where your part fits in a recruitment, and what the admin does before
@@ -651,6 +681,21 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           Courses page, listing every course of a recruitment with its
           instructor, enrollment and meeting times, is being phased out and is
           no longer linked from the home page.
+        &lt;/p&gt;
+        &lt;p data-testid="HelpInstructorsPage-feedback"&gt;
+          Each course also has a &lt;strong&gt;feedback form&lt;/strong&gt; on your
+          allocation. Until the admin releases the quarter&amp;apos;s allocations
+          (the TA allocations in a quarter with only a TA recruitment, the ULA
+          ones in a quarter with only a ULA recruitment, and both in a quarter
+          with both), the course says what it is waiting for. Then the form
+          appears: tick at least one of the boxes (the allocation seems
+          reasonable; you would prefer a different number of TAs or of ULAs,
+          which then asks how many; you have other concerns) and, if you like,
+          write comments of up to 2048 characters. Everything is saved as you
+          go, and &lt;strong&gt;Last saved&lt;/strong&gt; shows when. Under the form,{" "}
+          &lt;strong&gt;Notes on TA/ULA tradeoffs&lt;/strong&gt; opens to show the
+          quarter&amp;apos;s estimated cost of a TA and of a ULA, and so how many
+          ULAs cost the same as one TA.
         &lt;/p&gt;
         &lt;p&gt;
           When faculty reviews are open, expand one of your listed courses and
@@ -841,7 +886,7 @@ export default function HelpInstructorsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-09T05:22:37.937Z
+                at 2026-11-09T17:23:39.849Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
