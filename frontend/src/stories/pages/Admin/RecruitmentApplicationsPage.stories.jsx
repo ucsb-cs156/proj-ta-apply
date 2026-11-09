@@ -104,6 +104,52 @@ UlaRound.parameters = {
   },
 };
 
+/** Issue #421: the six availability columns, which only a ULA table has. */
+const AVAILABILITY = [
+  "availableForLecturesFirstChoice",
+  "availableForDiscussionFirstChoice",
+  "availabilityCommentsFirstChoice",
+  "availableForLecturesSecondChoice",
+  "availableForDiscussionSecondChoice",
+  "availabilityCommentsSecondChoice",
+];
+
+/**
+ * Issue #421: the ULA round with its availability columns shown (Lecture, Discussion and
+ * Availability for each choice), holding the answers the applicant gave. A TA round never has them.
+ */
+export const UlaRoundWithAvailability = Template.bind({});
+UlaRoundWithAvailability.parameters = {
+  reactRouter: {
+    initialEntries: ["/admin/recruitments/2/applications"],
+  },
+  msw: {
+    handlers: [
+      // Ahead of common's, so these are the hidden columns on file.
+      http.get("/api/admin/hiddencolumns", () =>
+        HttpResponse.json(
+          defaultHiddenColumns("ULA").filter(
+            (id) => !AVAILABILITY.includes(id),
+          ),
+        ),
+      ),
+      ...common,
+      http.get("/api/admin/applications/all", () =>
+        HttpResponse.json([
+          {
+            ...applicationsFixtures.oneUlaApplication,
+            secondChoiceCourse: "CMPSC   130A",
+            availableForDiscussionFirstChoice: true,
+            availabilityCommentsFirstChoice: "Not before 10 on Mondays.",
+            availableForDiscussionSecondChoice: true,
+            availabilityCommentsSecondChoice: "Any section on Thursday.",
+          },
+        ]),
+      ),
+    ],
+  },
+};
+
 export const NothingYet = Template.bind({});
 NothingYet.parameters = {
   reactRouter: {

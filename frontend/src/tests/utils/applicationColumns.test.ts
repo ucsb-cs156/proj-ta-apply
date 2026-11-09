@@ -105,22 +105,122 @@ describe("applicationColumns", () => {
       "major",
       "graduationDate",
     ]);
-    expect(taIds).toHaveLength(28);
-    expect(ulaIds).toHaveLength(32);
+    expect(taIds).toHaveLength(22);
+    expect(ulaIds).toHaveLength(38);
     expect(taIds).toContain("residencyStatus");
-    expect(taIds).toContain("availabilityCommentsSecondChoice");
+    expect(taIds).not.toContain("availabilityCommentsSecondChoice");
     expect(taIds).not.toContain("permNumber");
     expect(taIds).not.toContain("interests");
     expect(ulaIds).toContain("permNumber");
     expect(ulaIds).toContain("interests");
     expect(ulaIds).not.toContain("classLevel");
-    expect(ulaIds).not.toContain("availableForLecturesFirstChoice");
+    expect(ulaIds).toContain("availableForLecturesFirstChoice");
     expect(taIds[taIds.length - 1]).toBe("noticeVersionId");
+  });
+
+  // Issue #421: every column of each type's table, in order, checked against the questions the
+  // form asks of that type and the answers the backend keeps for it. A column tagged with the
+  // wrong type fails here by name.
+  const SHARED_BEFORE = ["submittedAt", "email", "major"];
+  const SHARED_ANSWERS = [
+    "graduationDate",
+    "status",
+    "gpaMajor",
+    "gpaOverall",
+    "yearInProgram",
+  ];
+  const SHARED_AFTER = [
+    "courseInterests",
+    "topicProficiencies",
+    "prevExperience",
+    "comments",
+    "postApplicationComments",
+    "adminComments",
+    "cancelled",
+    "noticeVersionId",
+  ];
+  const CHOICES = ["firstChoiceCourse", "secondChoiceCourse"];
+  const AVAILABILITY = [
+    "availableForLecturesFirstChoice",
+    "availableForDiscussionFirstChoice",
+    "availabilityCommentsFirstChoice",
+    "availableForLecturesSecondChoice",
+    "availableForDiscussionSecondChoice",
+    "availabilityCommentsSecondChoice",
+  ];
+  const TA_COLUMN_IDS = [
+    ...SHARED_BEFORE,
+    "classLevel",
+    ...SHARED_ANSWERS,
+    "residencyStatus",
+    "languageExam",
+    "languageExamDatePassed",
+    ...CHOICES,
+    ...SHARED_AFTER,
+  ];
+  const ULA_COLUMN_IDS = [
+    ...SHARED_BEFORE,
+    ...SHARED_ANSWERS,
+    "permNumber",
+    "previousServiceAsUla",
+    "videoLink",
+    "changingMajor",
+    "bsMsStudent",
+    "studentStatusNextQuarter",
+    "wantsTaEligibility",
+    "otherCampusJob",
+    "priorUcsbEmployment",
+    "employeeId",
+    "i9Appointment",
+    "trainingCommitment",
+    "trainingCommitmentExplanation",
+    ...CHOICES,
+    ...AVAILABILITY,
+    "courseInterests",
+    "topicProficiencies",
+    "interests",
+    ...SHARED_AFTER.slice(2),
+  ];
+
+  test.each([
+    ["TA", TA_COLUMN_IDS],
+    ["ULA", ULA_COLUMN_IDS],
+  ] as const)(
+    "a %s table has exactly the columns for the questions its form asks (issue #421)",
+    (type, expected) => {
+      expect(applicationColumns(type).map((c) => c.id)).toEqual(expected);
+      expect(applicationColumns(type, true).map((c) => c.id)).toEqual(expected);
+      expect(applicationColumnChoices(type).map((c) => c.id)).toEqual(expected);
+    },
+  );
+
+  test("the availability columns are on the ULA table and its menu, not the TA one (issue #421)", () => {
+    const taLabels = applicationColumnChoices("TA").map((c) => c.label);
+    const ulaLabels = applicationColumnChoices("ULA").map((c) => c.label);
+    const availabilityLabels = [
+      "Lecture (1st)",
+      "Discussion (1st)",
+      "Availability (1st)",
+      "Lecture (2nd)",
+      "Discussion (2nd)",
+      "Availability (2nd)",
+    ];
+    availabilityLabels.forEach((label) => {
+      expect(taLabels).not.toContain(label);
+      expect(ulaLabels).toContain(label);
+    });
+    // Like every answer added to a table, they start hidden on a new ULA recruitment.
+    AVAILABILITY.forEach((id) =>
+      expect(defaultHiddenColumns("ULA")).toContain(id),
+    );
+    AVAILABILITY.forEach((id) =>
+      expect(defaultHiddenColumns("TA")).not.toContain(id),
+    );
   });
 
   test("applicationColumnChoices is the id and label of each column", () => {
     const choices = applicationColumnChoices("TA");
-    expect(choices).toHaveLength(28);
+    expect(choices).toHaveLength(22);
     expect(choices[0]).toEqual({ id: "submittedAt", label: "Submitted" });
     expect(choices.find((c) => c.id === "classLevel")).toEqual({
       id: "classLevel",
@@ -141,14 +241,14 @@ describe("applicationColumns", () => {
     expect(taHidden).toContain("residencyStatus");
     expect(taHidden).not.toContain("permNumber");
     expect(taHidden[taHidden.length - 1]).toBe(DEFAULTS_MARKER);
-    expect(taHidden).toHaveLength(28 - 4 + 1);
+    expect(taHidden).toHaveLength(22 - 4 + 1);
 
     const ulaHidden = defaultHiddenColumns("ULA");
     expect(ulaHidden).not.toContain("graduationDate");
     expect(ulaHidden).toContain("permNumber");
     expect(ulaHidden).not.toContain("classLevel");
     expect(ulaHidden[ulaHidden.length - 1]).toBe(DEFAULTS_MARKER);
-    expect(ulaHidden).toHaveLength(32 - 4 + 1);
+    expect(ulaHidden).toHaveLength(38 - 4 + 1);
   });
 
   test("exactly the long-labelled narrow columns are stacked", () => {
@@ -209,12 +309,6 @@ describe("applicationColumns", () => {
       "residencyStatus",
       "languageExam",
       "languageExamDatePassed",
-      "availableForLecturesFirstChoice",
-      "availableForDiscussionFirstChoice",
-      "availabilityCommentsFirstChoice",
-      "availableForLecturesSecondChoice",
-      "availableForDiscussionSecondChoice",
-      "availabilityCommentsSecondChoice",
     ]);
     expect(
       ALL_APPLICATION_COLUMNS.filter((c) => c.types?.includes("ULA")).map(
@@ -234,6 +328,12 @@ describe("applicationColumns", () => {
       "i9Appointment",
       "trainingCommitment",
       "trainingCommitmentExplanation",
+      "availableForLecturesFirstChoice",
+      "availableForDiscussionFirstChoice",
+      "availabilityCommentsFirstChoice",
+      "availableForLecturesSecondChoice",
+      "availableForDiscussionSecondChoice",
+      "availabilityCommentsSecondChoice",
       "interests",
     ]);
     ALL_APPLICATION_COLUMNS.forEach((c) => {

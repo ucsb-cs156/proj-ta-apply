@@ -257,6 +257,23 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
             page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-submittedAt"))
         .not()
         .isEmpty();
+    // Issue #421: the TA form asks no availability, so neither the table nor its Columns menu
+    // offers the availability columns.
+    page.getByTestId("RecruitmentApplicationsPage-columns-toggle").click();
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-columns-classLevel")).isVisible();
+    assertThat(
+            page.getByTestId("RecruitmentApplicationsPage-columns-availableForLecturesFirstChoice"))
+        .hasCount(0);
+    page.getByTestId("RecruitmentApplicationsPage-columns-toggle").click();
+    assertThat(
+            page.getByTestId(
+                "RecruitmentApplicationsPage-applications-header-availableForLecturesFirstChoice"))
+        .hasCount(0);
+    assertThat(
+            page.locator(
+                "th",
+                new com.microsoft.playwright.Page.LocatorOptions().setHasText("Lecture (1st)")))
+        .hasCount(0);
 
     // The id opens the read-only application; Save returns to the list with the comments kept.
     page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
@@ -318,6 +335,70 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app-link")).isVisible();
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-editorEmail"))
         .hasText("admin@ucsb.edu");
+  }
+
+  /**
+   * Issue #421: availability is a ULA question, so a ULA recruitment's Applications and Draft
+   * Applications tables offer its six columns, with the answers the students gave.
+   */
+  @Test
+  public void a_ula_table_has_the_availability_columns() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.ULA, LocalDate.now().plusDays(30));
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email("ula@ucsb.edu")
+            .firstName("Una")
+            .lastName("Ula")
+            .firstChoiceCourse("CMPSC   156")
+            .availableForLecturesFirstChoice(true)
+            .availabilityCommentsFirstChoice("Not before 10 on Mondays")
+            .build());
+    draftApplicationRepository.save(
+        edu.ucsb.cs.taapply.entity.DraftApplication.builder()
+            .recruitmentId(recruitment.getId())
+            .email("drafter@ucsb.edu")
+            .firstName("Dana")
+            .lastName("Draft")
+            .availableForDiscussionSecondChoice(true)
+            .build());
+
+    setupAdminUser();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/applications");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-name"))
+        .containsText("Una Ula");
+    // The availability columns start hidden; the Columns menu offers them, and Show All shows them.
+    page.getByTestId("RecruitmentApplicationsPage-columns-toggle").click();
+    assertThat(
+            page.getByTestId("RecruitmentApplicationsPage-columns-availableForLecturesFirstChoice"))
+        .isVisible();
+    page.getByTestId("RecruitmentApplicationsPage-columns-select-all").click();
+    page.getByTestId("RecruitmentApplicationsPage-columns-toggle").click();
+    assertThat(
+            page.getByTestId(
+                "RecruitmentApplicationsPage-applications-header-availableForLecturesFirstChoice"))
+        .containsText("Lecture (1st)");
+    assertThat(
+            page.getByTestId(
+                "RecruitmentApplicationsPage-applications-cell-row-0-col-availableForLecturesFirstChoice"))
+        .hasText("Yes");
+    assertThat(
+            page.getByTestId(
+                "RecruitmentApplicationsPage-applications-cell-row-0-col-availabilityCommentsFirstChoice"))
+        .hasText("Not before 10 on Mondays");
+
+    // The drafts table shares the columns and the choice of which are shown.
+    goTo("/admin/recruitments/" + recruitment.getId() + "/draft-applications");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-name"))
+        .containsText("Dana Draft");
+    assertThat(
+            page.getByTestId(
+                "RecruitmentDraftApplicationsPage-drafts-header-availableForLecturesFirstChoice"))
+        .containsText("Lecture (1st)");
+    assertThat(
+            page.getByTestId(
+                "RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-availableForDiscussionSecondChoice"))
+        .hasText("Yes");
   }
 
   @Autowired edu.ucsb.cs.taapply.repository.UserRepository itUserRepository;

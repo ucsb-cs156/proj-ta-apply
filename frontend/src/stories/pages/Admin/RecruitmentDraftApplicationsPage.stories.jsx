@@ -99,6 +99,49 @@ UlaRound.parameters = {
   },
 };
 
+/** Issue #421: the six availability columns, which only a ULA table has. */
+const AVAILABILITY = [
+  "availableForLecturesFirstChoice",
+  "availableForDiscussionFirstChoice",
+  "availabilityCommentsFirstChoice",
+  "availableForLecturesSecondChoice",
+  "availableForDiscussionSecondChoice",
+  "availabilityCommentsSecondChoice",
+];
+
+/**
+ * Issue #421: the ULA round's drafts with the availability columns shown, holding what the
+ * applicant has answered so far. A TA round's drafts never have them.
+ */
+export const UlaRoundWithAvailability = Template.bind({});
+UlaRoundWithAvailability.parameters = {
+  reactRouter: routeTo(2),
+  msw: {
+    handlers: [
+      // Ahead of common's, so these are the hidden columns on file.
+      http.get("/api/admin/hiddencolumns", () =>
+        HttpResponse.json(
+          defaultHiddenColumns("ULA").filter(
+            (id) => !AVAILABILITY.includes(id),
+          ),
+        ),
+      ),
+      ...common,
+      http.get("/api/admin/draftApplications/all", () =>
+        HttpResponse.json([
+          {
+            ...draftApplicationsFixtures.adminSavedUlaDraft,
+            availableForLecturesFirstChoice: true,
+            availableForDiscussionFirstChoice: false,
+            availabilityCommentsFirstChoice: "Mornings only.",
+          },
+          draftApplicationsFixtures.adminEmptyUlaDraft,
+        ]),
+      ),
+    ],
+  },
+};
+
 /** No one has started an application: the count is 0, and there is no table and no copy-emails button. */
 export const NoDrafts = Template.bind({});
 NoDrafts.parameters = {

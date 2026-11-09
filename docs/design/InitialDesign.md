@@ -569,6 +569,12 @@ all of them. A TA application stores none of those answers, whatever the client 
 pre-filled earlier answer cannot linger), the admin's view and the TA CSV leave the rows and columns
 out, and a TA application's audit trail never records them. Existing stored values are not deleted.
 
+*Note (2026-11-08, issue #421):* the admin's Applications and Draft Applications tables (issue #189,
+`applicationColumns.ts`) had the six availability columns (Lecture, Discussion and Availability for
+the 1st and 2nd choice) tagged as TA columns, so a TA table offered them (with no real answers in
+them, since the TA form has not asked the questions since issue #76) and a ULA table did not. They are now ULA columns, like the questions. An audit of every other column against
+the form and the backend found no other column on the wrong type.
+
 # Twenty-fourth Iteration
 
 The **Notices, Terms and Conditions** section sits at the top of the application form, right after
