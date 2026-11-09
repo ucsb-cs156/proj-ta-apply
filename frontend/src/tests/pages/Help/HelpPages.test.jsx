@@ -2373,11 +2373,11 @@ describe("Help pages (issue #140)", () => {
 });
 
 describe("admin Help: the home page's quarter cards (issues #357, #379)", () => {
-  test("describes one card per quarter with its two buttons, the nested TA and ULA cards, how they open and close, the default state and the Quarters control", async () => {
+  test("describes one card per quarter with its three buttons, the nested TA and ULA cards, how they open and close, the default state and the Quarters control", async () => {
     renderPage(<HelpAdminsPage />);
     const card = (await screen.findByText("Budget Planning")).parentElement;
     expect(card).toHaveTextContent(
-      "The recruitments are grouped by quarter: one card per quarter, headed by the quarter (for example W26) with two buttons on the same row: Budget Planning opens that quarter's Budget for Quarter page, and one allocation button opens the quarter's Combined Allocation page, where the TA and ULA allocations are edited side by side; its label says which recruitments the quarter has: Allocate TA slots to Courses, Allocate ULA slots to Courses or Allocate TA and ULA slots to Courses.",
+      "The recruitments are grouped by quarter: one card per quarter, headed by the quarter (for example W26) with three buttons on the same row: Budget Planning opens that quarter's Budget for Quarter page, one allocation button opens the quarter's Combined Allocation page, where the TA and ULA allocations are edited side by side; its label says which recruitments the quarter has: Allocate TA slots to Courses, Allocate ULA slots to Courses or Allocate TA and ULA slots to Courses; and Instructor Feedback opens a table of what instructors said about their courses' allocations that quarter, one row per course and instructor, beside each course's current TA and ULA allocations. A preferred number shows only when its “different number” box is checked. Every column sorts, every column but Course Name can be hidden (this browser remembers which), and the Comments column can be dragged wider or narrower, down to 200px. Below it, No Feedback Yet From These Instructors lists each course whose instructor has not checked any box, including instructors who never opened the form, with a button that copies their emails.",
     );
     expect(card).toHaveTextContent(
       "Clicking anywhere else on that row closes or opens the quarter's card (the caret at its left shows which it is); clicking a button on the row goes to its page and leaves the card as it was. The newest quarter starts open and the older quarters closed, and this browser remembers each card as you left it. The Quarters control above the cards puts the newest or the oldest quarter first.",

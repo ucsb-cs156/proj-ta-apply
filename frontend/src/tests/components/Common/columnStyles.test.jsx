@@ -7,6 +7,7 @@ import {
   shrinkToContent,
   stacked,
   stackedLead,
+  stackedWords,
 } from "main/components/Common/columnStyles";
 
 describe("columnStyles", () => {
@@ -17,6 +18,23 @@ describe("columnStyles", () => {
     expect(span.style.fontSize).toBe("80%");
     expect(span.querySelector("br")).not.toBeNull();
     expect(span).toHaveTextContent("Enrollment Estimate");
+  });
+
+  test("stackedWords: one word per line, sized by its class, the text whole", () => {
+    const { container } = render(
+      stackedWords("Preferred TA Allocation", "small-heading"),
+    );
+
+    const span = container.querySelector("span");
+    expect(span).toHaveClass("small-heading");
+    expect(span.getAttribute("style")).toBeNull();
+    expect(span.innerHTML).toBe("Preferred <br>TA <br>Allocation");
+    expect(span.textContent).toBe("Preferred TA Allocation");
+  });
+
+  test("stackedWords: a single word has no break", () => {
+    const { container } = render(stackedWords("Count", "small-heading"));
+    expect(container.querySelector("span").innerHTML).toBe("Count");
   });
 
   test("shrinkToContent and numeric", () => {

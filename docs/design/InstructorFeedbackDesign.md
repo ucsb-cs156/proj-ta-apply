@@ -2,8 +2,8 @@
 
 Each course on the instructor home page (one drop-down per course in each quarter card, issue #364)
 has a feedback area between the enrollment table and the TA/ULA cards. This note describes what it
-shows, where the data lives and the decisions behind it. The admin page that lists the feedback is
-issue #427, a separate change.
+shows, where the data lives and the decisions behind it. The admin page that lists the feedback
+(issue #427) is described at the end.
 
 ## What the instructor sees
 
@@ -170,3 +170,78 @@ name, and the course must be a non-removed recruitment course whose instructor o
 name (otherwise 403). Saves and the costs are refused (403) unless the release condition above
 holds, counting the recruitments of the quarter that hold a course the caller teaches, as the home
 page does.
+
+## The admin's view (issue #427)
+
+Each quarter card on the admin home page has an **Instructor Feedback** button, after Budget
+Planning and the Allocate button. It opens `/admin/instructorFeedback/QXX`
+(`InstructorFeedbackPage`): every feedback row of that quarter, the quarter being the card's. A
+URL whose QXX is not a quarter says so, as the Budget page does, and links to the home page (there
+is no select-quarter page for it: the quarter cards are the way in). A quarter with no feedback
+says "No instructor has given feedback on their allocation for QXX yet." It refreshes only as
+react-query does on window focus.
+
+**Endpoint.** `GET /api/admin/instructorFeedback?quarter=YYYYQ` (`AdminInstructorFeedbackController`,
+`ROLE_ADMIN`, read only), built by `InstructorFeedbackReportService`. One entry per row, by course
+id, section and email, with what the table needs joined in:
+
+- the course: its course id, section and title, from the row's recruitment course;
+- the instructor: the row's email and, when the Instructors list has that email, its catalog name;
+- the four booleans, the comments and `lastUpdated`;
+- `taAllocation` and `ulaAllocation`: the `allocation` of the course's non-removed row in the
+  quarter's TA and ULA recruitments. The feedback names one row (the TA row if any, else the ULA
+  row); the other type's row is the one with the same course id and section, as the home page's
+  `QuarterCourse` pairs them. Null when the quarter has no recruitment of that type, or the course
+  is not in it;
+- `numTAsPreferred` and `numULAsPreferred`, **null unless their "different number" box is
+  checked**. The stored count behind an unchecked box is dropped on the server, so the admin
+  never sees a number the instructor took back.
+
+**The table** (`InstructorFeedbackTable`, on `OurTable`). Columns, in the issue's order (which puts
+Other Concerns between ULA Allocation and Preferred ULA Allocation): Course Name, Instructor, Alloc
+Reasonable, Diff TA Count, TA Allocation, Preferred TA Allocation, Diff ULA Count, ULA Allocation,
+Other Concerns, Preferred ULA Allocation, Comments, then Last Updated (not in the issue; Pacific
+time by `formatPacificDateTime`).
+
+- Course Name is the course number as the Combined Allocation page writes it
+  (`compactCourseNumber`, monospaced) and the section in parentheses, such as `CMPSC 156 (0100)`.
+- The booleans show a read-only checkbox mark, ☒ (U+2612) checked or ☐ (U+2610) not, with the
+  accessible name Yes or No, sized by `.instructor-feedback-checkmark` in index.css. They sort on
+  the boolean, so checked and unchecked rows group together (the maintainer's request on
+  2026-11-09; until then they read Yes or No).
+- Every heading but Course Name, Instructor and Comments has each word on its own line ("Diff /
+  TA / Count", "Preferred / ULA / Allocation", "Last / Updated" and so on), in the smaller size of
+  `.instructor-feedback-stacked-heading` in index.css (0.8em of the heading), through
+  `stackedWords` in `columnStyles.tsx`. The Columns menu and the "hide" links keep the one-line
+  labels.
+- Each email in the Instructor column has the copy icon of the Recruitment Courses table
+  (`InstructorEmailCell`); it copies the address and toasts "Email copied to clipboard." (or the
+  clipboard-permissions message), through `copyToClipboard` in `utils/clipboard.ts`.
+- An allocation the course does not have reads N/A; a preferred count not given is blank.
+- Every column sorts; a missing number sorts last either way.
+- Every column but Course Name can be hidden, from the Columns menu or the "hide" link over its
+  heading. Which are hidden is kept in this browser (`useStoredHiddenColumns`, key
+  `instructorFeedback.hiddenColumns`, the same for every quarter); all start shown.
+- Comments starts at `Math.max(200, 0.8 * window.innerWidth)` pixels, measured at the first
+  render, and has `OurTable`'s drag handle (and arrow keys), with a 200px minimum the resizing
+  will not go below. Its text wraps within the column, keeping the instructor's line breaks.
+
+**No Feedback Yet From These Instructors.** Under the feedback table, a second table
+(`MissingFeedbackTable`, Course and Email, both sortable) from `GET /api/admin/instructorFeedback/missing?quarter=YYYYQ` (`ROLE_ADMIN`,
+`InstructorFeedbackReportService.missing`). It lists one row per course and instructor where the
+instructor has not checked any of the four boxes: those with no feedback row for the course, and
+those whose row has all four unchecked, whatever its counts or comments.
+
+- The courses are the non-removed rows of the quarter's TA and ULA recruitments, a section in both
+  once, named by its TA row (as the feedback is). A row with no instructor of record is not listed.
+- A course's instructors are the catalog names of the instructors of record of its TA and ULA
+  rows, mapped to emails through the Instructors list, as the form decides who teaches a course.
+  Several emails mapped to one catalog name (co-instructors) are each listed unless they answered.
+- A catalog name with no email on file is still listed, its Email cell reading "no email on file
+  (NAME)", with no copy icon, and it is left out of the copy-all.
+- By course id, section, email (no email last) and name.
+- The button "Copy emails of instructors that have not provided feedback" copies the table's emails,
+  each once, in table order, one per line (as the Recruitment Courses page's copy of faculty
+  emails), and toasts "N emails copied to clipboard."; it is disabled when no one listed has an
+  email. When everyone has answered, the table is replaced by "Every instructor has given
+  feedback."

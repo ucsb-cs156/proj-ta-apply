@@ -16,6 +16,7 @@ import QuartersPage from "main/pages/Admin/QuartersPage";
 import BudgetSelectQuarterPage from "main/pages/Admin/BudgetSelectQuarterPage";
 import BudgetPage from "main/pages/Admin/BudgetPage";
 import CombinedAllocationsPage from "main/pages/Admin/CombinedAllocationsPage";
+import InstructorFeedbackPage from "main/pages/Admin/InstructorFeedbackPage";
 import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import RecruitmentCoursesEditPage from "main/pages/Admin/RecruitmentCoursesEditPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
@@ -266,6 +267,16 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<CombinedAllocationsPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/instructorFeedback/:qyy"
+            element={
+              <ProtectedPage
+                component={<InstructorFeedbackPage />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />

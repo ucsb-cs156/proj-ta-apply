@@ -231,3 +231,28 @@ body {
 .candidate-table-tied-warning {
   font-size: 0.8em;
 }
+
+/* The two-line column headings of the admin's Instructor Feedback table (issue #427): every
+   heading but Course Name, Instructor and Comments, in a smaller size, as the maintainer asked on
+   2026-11-09. */
+.instructor-feedback-stacked-heading {
+  font-size: 0.8em;
+}
+
+/* The read-only checkbox marks (☒ checked, ☐ not) in the true-or-false columns of the admin's
+   Instructor Feedback table (issue #427), a little larger than the text so they are easy to tell
+   apart, as the maintainer asked on 2026-11-09. */
+.instructor-feedback-checkmark {
+  font-size: 1.25em;
+  line-height: 1;
+}
+
+/* A course name in the admin's Instructor Feedback tables (issue #427): the course number in the
+   monospaced form of the Combined Allocation page, at least as wide as "CMPSC 190DD" (11
+   characters, COURSE_NUMBER_WIDTH in columnWidths.ts), so the digits line up. */
+.instructor-feedback-course {
+  display: inline-block;
+  min-width: 11ch;
+  white-space: pre;
+  font-family: monospace;
+}

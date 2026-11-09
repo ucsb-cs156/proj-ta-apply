@@ -45,11 +45,12 @@ export const allocateLabel = (hasTa: boolean, hasUla: boolean): string => {
 /**
  * The admin home page's card for one quarter (issue #379; until then a flat "QXX Budget" card
  * above the quarter's recruitment cards, issue #357). Its header row is headed by the quarter as
- * QXX and has the quarter's two buttons: a Budget Planning link to the quarter's Budget page, and
+ * QXX and has the quarter's three buttons: a Budget Planning link to the quarter's Budget page,
  * one button to the quarter's Combined Allocation page, /admin/allocations/QXX (issue #358),
  * labelled by the recruitments the quarter has: "Allocate TA slots to Courses", "Allocate ULA
  * slots to Courses" or "Allocate TA and ULA slots to Courses" (with neither the button is greyed
- * out and does nothing). The rest of the row is one button that opens and closes the card, so
+ * out and does nothing), and an Instructor Feedback link to /admin/instructorFeedback/QXX, the
+ * instructors' feedback on the quarter's allocations (issue #427). The rest of the row is one button that opens and closes the card, so
  * clicking the row toggles it and clicking a button in it does not; it carries aria-expanded and
  * a caret. The quarter's TA and ULA recruitment cards are its children, nested inside its body,
  * which is not rendered while the card is closed. Whether it is open is remembered in this browser
@@ -119,6 +120,13 @@ export default function AdminQuarterCard({
               {label}
             </Button>
           )}
+          <Link
+            className="btn btn-outline-primary"
+            to={`/admin/instructorFeedback/${qyy}`}
+            data-testid={id("instructorFeedback")}
+          >
+            Instructor Feedback
+          </Link>
         </div>
       </Card.Header>
       {open && (
