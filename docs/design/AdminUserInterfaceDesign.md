@@ -125,12 +125,14 @@ quarter has: **Allocate TA slots to Courses**, **Allocate ULA slots to Courses**
 and ULA slots to Courses** (before part 3 there were two buttons, **TA allocations** and **ULA
 allocations**, to `/admin/recruitments/:id/courses/edit` of that quarter's TA or ULA recruitment,
 each greyed out when the quarter had no recruitment of that type; the single button is greyed out
-only when the quarter has neither, which the home page never shows).
+only when the quarter has neither, which the home page never shows). Since issue #427 a third
+button, **Instructor Feedback**, opens `/admin/instructorFeedback/QXX`, the instructors' feedback
+on the quarter's allocations (see `InstructorFeedbackDesign.md`).
 
-**Opening and closing (issue #379).** Everything on the header row except the two buttons is one
+**Opening and closing (issue #379).** Everything on the header row except the buttons is one
 `<button aria-expanded>`: a caret (▾ open, ▸ closed) and the quarter. It grows to fill the row, so
 clicking anywhere on the row other than a button toggles the card, a button click only navigates,
-and the keyboard (Tab to the row, Enter or Space) toggles it too. The two buttons sit together at
+and the keyboard (Tab to the row, Enter or Space) toggles it too. The buttons sit together at
 the right end of the row, after the toggle. The quarter's recruitment cards are nested inside the
 quarter card's body, which is not rendered while the card is closed (so a closed quarter's steps
 are not fetched). The **nested recruitment card** (`RecruitmentCardLayout`) has the same kind of

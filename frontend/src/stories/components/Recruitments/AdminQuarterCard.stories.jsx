@@ -36,8 +36,9 @@ const Template = (args) => (
 
 /**
  * Open, with both a TA and a ULA recruitment: the row is headed W26 with a caret, and the buttons
- * are Budget Planning and "Allocate TA and ULA slots to Courses", which opens the quarter's
- * Combined Allocation page, /admin/allocations/QXX (issue #358). Clicking the row (anywhere but
+ * are Budget Planning, "Allocate TA and ULA slots to Courses", which opens the quarter's
+ * Combined Allocation page, /admin/allocations/QXX (issue #358), and Instructor Feedback, which
+ * opens /admin/instructorFeedback/QXX (issue #427). Clicking the row (anywhere but
  * the buttons) closes the card; clicking a button navigates and leaves the card open.
  */
 export const Open = Template.bind({});

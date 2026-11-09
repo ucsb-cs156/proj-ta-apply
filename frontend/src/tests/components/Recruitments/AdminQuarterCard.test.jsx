@@ -49,9 +49,17 @@ describe("AdminQuarterCard", () => {
     expect(allocate).toHaveClass("btn-outline-primary");
     expect(allocate.tagName).toBe("A");
     expect(header).toContainElement(allocate);
+    // Issue #427: the instructors' feedback on the quarter's allocations.
+    const feedback = screen.getByTestId(
+      "AdminQuarterCard-W26-instructorFeedback",
+    );
+    expect(feedback).toHaveTextContent(/^Instructor Feedback$/);
+    expect(feedback).toHaveAttribute("href", "/admin/instructorFeedback/W26");
+    expect(feedback).toHaveClass("btn", "btn-outline-primary");
+    expect(feedback.tagName).toBe("A");
     // The buttons sit together after the toggle, outside it.
     const buttons = screen.getByTestId("AdminQuarterCard-W26-buttons");
-    expect(Array.from(buttons.children)).toEqual([budget, allocate]);
+    expect(Array.from(buttons.children)).toEqual([budget, allocate, feedback]);
     expect(buttons).toHaveClass("d-flex", "gap-2");
     expect(buttons.previousElementSibling).toBe(
       screen.getByTestId("AdminQuarterCard-W26-toggle"),
@@ -177,6 +185,14 @@ describe("AdminQuarterCard", () => {
     await userEvent.click(screen.getByTestId("AdminQuarterCard-W26-allocate"));
     expect(screen.getByTestId("where")).toHaveTextContent(
       "/admin/allocations/W26",
+    );
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    await userEvent.click(
+      screen.getByTestId("AdminQuarterCard-W26-instructorFeedback"),
+    );
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/admin/instructorFeedback/W26",
     );
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(localStorage.length).toBe(0);
