@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>131/131</span>
+                <span class='fraction'>129/129</span>
             </div>
         
             
@@ -613,14 +613,7 @@
 <a name='L548'></a><a href='#L548'>548</a>
 <a name='L549'></a><a href='#L549'>549</a>
 <a name='L550'></a><a href='#L550'>550</a>
-<a name='L551'></a><a href='#L551'>551</a>
-<a name='L552'></a><a href='#L552'>552</a>
-<a name='L553'></a><a href='#L553'>553</a>
-<a name='L554'></a><a href='#L554'>554</a>
-<a name='L555'></a><a href='#L555'>555</a>
-<a name='L556'></a><a href='#L556'>556</a>
-<a name='L557'></a><a href='#L557'>557</a>
-<a name='L558'></a><a href='#L558'>558</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L551'></a><a href='#L551'>551</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -984,13 +977,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16678x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1531,7 +1517,7 @@ export default function CandidateTable({
                 {shownColumns.map((column) =&gt; (
                   &lt;th
                     key={column.key}
-                    style={{ position: "relative" }}
+                    className="position-relative"
                     aria-sort={
                       sort?.key === column.key
                         ? sort.descending
@@ -1543,14 +1529,7 @@ export default function CandidateTable({
                     {choices.some((choice) =&gt; choice.id === column.key) &amp;&amp; (
                       &lt;button
                         type="button"
-                        className="btn btn-link p-0 border-0 text-secondary"
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          right: "0.25rem",
-                          fontSize: "0.6rem",
-                          lineHeight: 1.2,
-                        }}
+                        className="btn btn-link p-0 border-0 text-secondary column-hide-link"
                         aria-label={`Hide ${column.label} column`}
                         onClick={() =&gt; toggleColumn(column.key, true)}
                         data-testid={`CandidateTable-hide-${column.key}`}
@@ -1581,19 +1560,19 @@ export default function CandidateTable({
                     {shownColumns.map((column) =&gt; (
                       &lt;td
                         key={column.key}
+                        // The classes are in index.css (issue #415): a tied ranking is yellow,
+                        // and the preference cell is coloured by the applicant's interest.
                         className={
-                          column.key === "rank" ? "text-end" : undefined
-                        }
-                        style={
-                          column.key === "rank" &amp;&amp;
-                          tied.includes(Number(ranks[candidate.applicationId]))
-                            ? { backgroundColor: "#ffff00" }
+                          column.key === "rank"
+                            ? `text-end${
+                                tied.includes(
+                                  Number(ranks[candidate.applicationId]),
+                                )
+                                  ? " candidate-rank-tied"
+                                  : ""
+                              }`
                             : column.key === "preference"
-                              ? {
-                                  backgroundColor: interestDisplay(
-                                    candidate.preference,
-                                  ).background,
-                                }
+                              ? interestDisplay(candidate.preference).className
                               : undefined
                         }
                         data-testid={
@@ -1716,7 +1695,7 @@ export default function CandidateTable({
                     &gt;
                       &lt;td
                         colSpan={shownColumns.length}
-                        style={{ fontSize: "0.8em" }}
+                        className="candidate-table-tied-warning"
                       &gt;
                         &lt;p className="mb-0" role="alert"&gt;
                           &lt;WarningIcon className="me-1 align-text-bottom" /&gt;
@@ -1741,7 +1720,7 @@ export default function CandidateTable({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-09T00:40:28.727Z
+                at 2026-11-09T01:00:19.650Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
