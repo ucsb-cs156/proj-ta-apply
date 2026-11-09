@@ -74,7 +74,7 @@ describe("InstructorFeedbackForm (issue #425)", () => {
     expect(screen.getByTestId(`${P}-form`)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "Please Feedback on your allocation of TAs/ULAs",
+        name: "Please provide feedback on your allocation of TAs/ULAs",
       }),
     ).toHaveClass("h6");
     expect(

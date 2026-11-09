@@ -245,7 +245,9 @@ export default function InstructorFeedbackForm({
 
   return (
     <div data-testid={id("form")}>
-      <h3 className="h6">Please Feedback on your allocation of TAs/ULAs</h3>
+      <h3 className="h6">
+        Please provide feedback on your allocation of TAs/ULAs
+      </h3>
       <p className="mb-1">Please select all that apply, but at least one:</p>
       {box("allocReasonable", "The allocation seems reasonable to me")}
       {quarter.ta &&

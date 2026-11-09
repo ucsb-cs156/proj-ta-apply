@@ -20,7 +20,7 @@ Until the quarter's allocations are released, the area says what it is waiting f
 
 Then the form appears:
 
-- "Please Feedback on your allocation of TAs/ULAs" and "Please select all that apply, but at least
+- "Please provide feedback on your allocation of TAs/ULAs" and "Please select all that apply, but at least
   one:".
 - Four checkboxes. The TA line ("I would prefer a different number of TAs") is there only if the
   quarter has a TA recruitment, the ULA line only if it has a ULA one. Each line's "Number of ...
