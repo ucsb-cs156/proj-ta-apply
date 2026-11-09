@@ -1,7 +1,7 @@
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
-import { stacked } from "main/components/Common/columnStyles";
+import { stackedWords } from "main/components/Common/columnStyles";
 import { InstructorEmailCell } from "main/components/Recruitments/RecruitmentCourseTable";
 import { WIDE_COLUMN_MAX_WIDTH } from "main/utils/columnWidths";
 import { formatPacificDateTime } from "main/utils/pacificTime";
@@ -32,12 +32,12 @@ const CHECKMARK_CLASS = "instructor-feedback-checkmark";
 const STACKED_HEADING_CLASS = "instructor-feedback-stacked-heading";
 
 /**
- * A heading on two lines in the smaller size (the maintainer's request on issue #427): every
- * column but Course Name, Instructor and Comments. The Columns menu and the "hide" links keep the
- * plain labels of FEEDBACK_COLUMN_CHOICES.
+ * A heading with each word on its own line, in the smaller size (the maintainer's requests on issue
+ * #427): every column but Course Name, Instructor and Comments. The Columns menu and the "hide"
+ * links keep the one-line labels of FEEDBACK_COLUMN_CHOICES.
  */
-const heading = ([top, bottom]: [string, string]): React.JSX.Element =>
-  stacked(top, bottom, STACKED_HEADING_CLASS);
+const heading = (text: string): React.JSX.Element =>
+  stackedWords(text, STACKED_HEADING_CLASS);
 
 type Props = {
   rows: InstructorFeedbackRow[];
@@ -62,7 +62,7 @@ export default function InstructorFeedbackTable({
   onCopyEmail,
   testIdPrefix = "InstructorFeedbackTable",
 }: Props): React.JSX.Element {
-  const flag = (id: keyof InstructorFeedbackRow, label: [string, string]) => ({
+  const flag = (id: keyof InstructorFeedbackRow, label: string) => ({
     header: heading(label),
     id,
     // Sorted on the answer itself, so checked and unchecked rows group together.
@@ -80,7 +80,7 @@ export default function InstructorFeedbackTable({
   // A missing number has nothing to sort by, so it goes last either way.
   const count = (
     id: keyof InstructorFeedbackRow,
-    label: [string, string],
+    label: string,
     whenMissing: string,
   ) => ({
     header: heading(label),
@@ -129,14 +129,14 @@ export default function InstructorFeedbackTable({
         );
       },
     },
-    flag("allocReasonable", ["Alloc", "Reasonable"]),
-    flag("differentTACount", ["Diff TA", "Count"]),
-    count("taAllocation", ["TA", "Allocation"], NOT_APPLICABLE),
-    count("numTAsPreferred", ["Preferred TA", "Allocation"], ""),
-    flag("differentULACount", ["Diff ULA", "Count"]),
-    count("ulaAllocation", ["ULA", "Allocation"], NOT_APPLICABLE),
-    flag("otherConcerns", ["Other", "Concerns"]),
-    count("numULAsPreferred", ["Preferred ULA", "Allocation"], ""),
+    flag("allocReasonable", "Alloc Reasonable"),
+    flag("differentTACount", "Diff TA Count"),
+    count("taAllocation", "TA Allocation", NOT_APPLICABLE),
+    count("numTAsPreferred", "Preferred TA Allocation", ""),
+    flag("differentULACount", "Diff ULA Count"),
+    count("ulaAllocation", "ULA Allocation", NOT_APPLICABLE),
+    flag("otherConcerns", "Other Concerns"),
+    count("numULAsPreferred", "Preferred ULA Allocation", ""),
     {
       header: "Comments",
       id: "comments",
@@ -150,7 +150,7 @@ export default function InstructorFeedbackTable({
       },
     },
     {
-      header: heading(["Last", "Updated"]),
+      header: heading("Last Updated"),
       id: "lastUpdated",
       accessorFn: (row: InstructorFeedbackRow) => row.lastUpdated ?? "",
       meta: shrinkToContent,

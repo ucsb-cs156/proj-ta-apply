@@ -183,15 +183,19 @@ describe("InstructorFeedbackTable", () => {
         expect(sortHeader.querySelector("br"), id).toBeNull();
       } else {
         expect(small, id).not.toBeNull();
-        expect(small.querySelector("br"), id).not.toBeNull();
+        // One word per line: a break between each pair of words.
+        expect(small.querySelectorAll("br").length, id).toBe(
+          small.textContent.split(" ").length - 1,
+        );
         expect(small.getAttribute("style"), id).toBeNull();
       }
     }
-    // The first line of a stacked heading, before the break.
-    expect(
-      screen.getByTestId(`${T}-header-differentTACount-sort-header`).firstChild
-        .firstChild.textContent,
-    ).toBe("Diff TA");
+    // Each word on its own line.
+    const diffTa = screen.getByTestId(
+      `${T}-header-differentTACount-sort-header`,
+    ).firstChild;
+    expect(diffTa.querySelectorAll("br")).toHaveLength(2);
+    expect(diffTa.innerHTML).toBe("Diff <br>TA <br>Count");
     expect(
       screen.getByTestId(`${T}-header-course-sort-header`),
     ).toHaveTextContent(/^Course Name$/);

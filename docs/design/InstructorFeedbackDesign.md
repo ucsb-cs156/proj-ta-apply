@@ -137,10 +137,11 @@ time by `formatPacificDateTime`).
   accessible name Yes or No, sized by `.instructor-feedback-checkmark` in index.css. They sort on
   the boolean, so checked and unchecked rows group together (the maintainer's request on
   2026-11-09; until then they read Yes or No).
-- Every heading but Course Name, Instructor and Comments is on two lines ("Alloc / Reasonable",
-  "Diff TA / Count", "TA / Allocation", "Last / Updated" and so on), in the smaller size of
-  `.instructor-feedback-stacked-heading` in index.css, through `stacked` in `columnStyles.tsx`
-  given that class. The Columns menu and the "hide" links keep the one-line labels.
+- Every heading but Course Name, Instructor and Comments has each word on its own line ("Diff /
+  TA / Count", "Preferred / ULA / Allocation", "Last / Updated" and so on), in the smaller size of
+  `.instructor-feedback-stacked-heading` in index.css (0.8em of the heading), through
+  `stackedWords` in `columnStyles.tsx`. The Columns menu and the "hide" links keep the one-line
+  labels.
 - Each email in the Instructor column has the copy icon of the Recruitment Courses table
   (`InstructorEmailCell`); it copies the address and toasts "Email copied to clipboard." (or the
   clipboard-permissions message), through `copyToClipboard` in `utils/clipboard.ts`.
