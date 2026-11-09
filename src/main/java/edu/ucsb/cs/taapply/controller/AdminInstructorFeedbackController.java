@@ -39,4 +39,19 @@ public class AdminInstructorFeedbackController extends ApiController {
           String quarter) {
     return instructorFeedbackReportService.rows(quarter);
   }
+
+  @Operation(
+      summary = "The instructors of a quarter's courses who have not given feedback",
+      description =
+          "One entry per course and instructor where the instructor has not checked any of the"
+              + " four boxes, including instructors with no feedback row at all: the course id,"
+              + " section and title, the instructor's catalog name and email (null when the"
+              + " Instructors list has no email for that name). By course id, section and email.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping("/missing")
+  public List<InstructorFeedbackReportService.MissingRow> missing(
+      @Parameter(name = "quarter", description = "YYYYQ, e.g. 20264") @RequestParam
+          String quarter) {
+    return instructorFeedbackReportService.missing(quarter);
+  }
 }

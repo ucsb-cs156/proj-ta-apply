@@ -61,11 +61,23 @@ export const COMMENTS_MIN_WIDTH = WIDE_COLUMN_MIN_WIDTH;
 export const commentsDefaultWidth = (windowWidth: number): number =>
   Math.max(COMMENTS_MIN_WIDTH, 0.8 * windowWidth);
 
-/** A checkbox as the admin's tables show a yes-or-no answer (as on the application tables). */
+/** A checkbox's answer as words, the accessible name of its mark. */
 export const yesNo = (value: boolean): string => (value ? "Yes" : "No");
 
+/** The read-only mark of a checked box (U+2612), as the maintainer asked on issue #427. */
+export const CHECKED_MARK = "\u2612";
+
+/** The read-only mark of an unchecked box (U+2610). */
+export const UNCHECKED_MARK = "\u2610";
+
+/** The mark a true-or-false column shows. */
+export const checkboxMark = (value: boolean): string =>
+  value ? CHECKED_MARK : UNCHECKED_MARK;
+
 /** The course as the Combined Allocation page writes it, then its section in parentheses. */
-export const courseName = (row: InstructorFeedbackRow): string =>
+export const courseName = (
+  row: Pick<InstructorFeedbackRow, "courseId" | "section">,
+): string =>
   row.section
     ? `${compactCourseNumber(row.courseId)} (${row.section})`
     : compactCourseNumber(row.courseId);
@@ -73,3 +85,44 @@ export const courseName = (row: InstructorFeedbackRow): string =>
 /** The instructor's catalog name and email, or the email alone when the name is not known. */
 export const instructorText = (row: InstructorFeedbackRow): string =>
   row.instructorName ? `${row.instructorName} ${row.email}` : row.email;
+
+/**
+ * One instructor of a course who has not checked any box of the feedback form, as
+ * /api/admin/instructorFeedback/missing returns it (issue #427). The email is null when the
+ * Instructors list has no email for the course's catalog name.
+ */
+export type MissingFeedbackRow = {
+  courseId: string;
+  section: string | null;
+  title: string | null;
+  instructorName: string;
+  email: string | null;
+};
+
+/** What the Email cell says for an instructor the Instructors list has no email for. */
+export const NO_EMAIL_ON_FILE = "no email on file";
+
+/**
+ * The emails the "Copy emails of instructors that have not provided feedback" button copies: each
+ * one once, in the table's order, leaving out the instructors with no email on file.
+ */
+export const missingFeedbackEmails = (rows: MissingFeedbackRow[]): string[] => [
+  ...new Set(
+    rows
+      .map((row) => row.email)
+      .filter((email): email is string => email !== null),
+  ),
+];
+
+/** The toast after the button has copied them. */
+export const emailsCopiedText = (count: number): string =>
+  count === 1
+    ? "1 email copied to clipboard."
+    : `${count} emails copied to clipboard.`;
+
+/** The heading of the second table, as the maintainer worded it (issue #427). */
+export const MISSING_HEADING = "No Feedback Yet From These Instructors";
+
+/** The copy-all button's label, as the maintainer worded it. */
+export const COPY_MISSING_LABEL =
+  "Copy emails of instructors that have not provided feedback";

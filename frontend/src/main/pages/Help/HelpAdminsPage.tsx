@@ -705,7 +705,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
           allocations. A preferred number shows only when its &ldquo;different
           number&rdquo; box is checked. Every column sorts, every column but
           Course Name can be hidden (this browser remembers which), and the
-          Comments column can be dragged wider or narrower, down to 200px.
+          Comments column can be dragged wider or narrower, down to 200px. Below
+          it, <em>No Feedback Yet From These Instructors</em> lists each course
+          whose instructor has not checked any box, including instructors who
+          never opened the form, with a button that copies their emails.
           Clicking anywhere else on that row closes or opens the quarter&apos;s
           card (the caret at its left shows which it is); clicking a button on
           the row goes to its page and leaves the card as it was. The newest

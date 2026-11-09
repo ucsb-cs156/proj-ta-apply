@@ -26,12 +26,15 @@ const Template = () => {
   );
 };
 
-const handlers = (rows) => [
+const handlers = (rows, missing = []) => [
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.adminUser),
   ),
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),
+  ),
+  http.get("/api/admin/instructorFeedback/missing", () =>
+    HttpResponse.json(missing),
   ),
   http.get("/api/admin/instructorFeedback", () => HttpResponse.json(rows)),
 ];
@@ -39,19 +42,36 @@ const handlers = (rows) => [
 /**
  * W26 with four records: a course in both recruitments, a TA-only course (ULA Allocation N/A, its
  * unchecked ULA count left out), a ULA-only course whose instructor is not in the instructor list,
- * and a long comment wrapped in the Comments column, which starts at 80% of the window.
+ * and a long comment wrapped in the Comments column, which starts at 80% of the window. The
+ * headings but Course Name, Instructor and Comments are two lines in the smaller size; the
+ * true-or-false columns show ☒ or ☐; each email has its copy icon. Below, the "No Feedback Yet From
+ * These Instructors" table, with its copy button and an instructor with no email on file.
  */
 export const SeveralRecords = Template.bind({});
 SeveralRecords.parameters = {
   reactRouter: { initialEntries: ["/admin/instructorFeedback/W26"] },
-  msw: { handlers: handlers(adminInstructorFeedbackFixtures.severalRecords) },
+  msw: {
+    handlers: handlers(
+      adminInstructorFeedbackFixtures.severalRecords,
+      adminInstructorFeedbackFixtures.missing,
+    ),
+  },
 };
 
-/** A quarter no instructor has given feedback for. */
+/** Every instructor has answered: the second table is replaced by a short line. */
+export const EveryoneResponded = Template.bind({});
+EveryoneResponded.parameters = {
+  reactRouter: { initialEntries: ["/admin/instructorFeedback/W26"] },
+  msw: {
+    handlers: handlers(adminInstructorFeedbackFixtures.severalRecords, []),
+  },
+};
+
+/** A quarter no instructor has given feedback for: everyone is in the second table. */
 export const EmptyQuarter = Template.bind({});
 EmptyQuarter.parameters = {
   reactRouter: { initialEntries: ["/admin/instructorFeedback/S26"] },
-  msw: { handlers: handlers([]) },
+  msw: { handlers: handlers([], adminInstructorFeedbackFixtures.missing) },
 };
 
 /** Something in the URL that is not a quarter. */

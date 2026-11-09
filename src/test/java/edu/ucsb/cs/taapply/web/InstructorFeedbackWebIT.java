@@ -21,6 +21,7 @@ import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -46,6 +47,7 @@ public class InstructorFeedbackWebIT extends WebTestCase {
   @Autowired CatalogNameRepository catalogNameRepository;
 
   private static final String TABLE = "InstructorFeedbackPage-table";
+  private static final String MISSING = "InstructorFeedbackPage-missing";
 
   private Recruitment recruitment(RecruitmentType type) {
     return recruitmentRepository.save(
@@ -81,8 +83,14 @@ public class InstructorFeedbackWebIT extends WebTestCase {
     RecruitmentCourse cs156 = course(ta, "CMPSC   156", "07492", 3);
     course(ula, "CMPSC   156", "07492", 4);
     RecruitmentCourse cs8 = course(ta, "CMPSC     8", "07500", 2);
+    // CMPSC 16, ULA only, is taught by an instructor who has never opened the form.
+    recruitmentCourseRepository.save(
+        course(ula, "CMPSC    16", "07600", 5).toBuilder().instructor("LEE K").build());
     budgetRepository.save(Budget.builder().quarter("20261").build());
     catalogNameRepository.save(CatalogName.builder().name("CONRAD P").build());
+    catalogNameRepository.save(CatalogName.builder().name("LEE K").build());
+    instructorRepository.save(
+        Instructor.builder().email("klee@ucsb.edu").catalogName("LEE K").build());
     instructorRepository.save(
         Instructor.builder().email("pconrad@ucsb.edu").catalogName("CONRAD P").build());
     instructorFeedbackRepository.save(
@@ -121,16 +129,16 @@ public class InstructorFeedbackWebIT extends WebTestCase {
     Locator row156 = rows.filter(new Locator.FilterOptions().setHasText("CMPSC 156 (0100)"));
     assertThat(row156.locator("[data-testid$='-col-instructor']"))
         .hasText("CONRAD Ppconrad@ucsb.edu");
-    assertThat(row156.locator("[data-testid$='-col-differentTACount']")).hasText("Yes");
+    assertThat(row156.locator("[data-testid$='-col-differentTACount']")).hasText("\u2612");
     assertThat(row156.locator("[data-testid$='-col-taAllocation']")).hasText("3");
     assertThat(row156.locator("[data-testid$='-col-numTAsPreferred']")).hasText("5");
-    assertThat(row156.locator("[data-testid$='-col-differentULACount']")).hasText("No");
+    assertThat(row156.locator("[data-testid$='-col-differentULACount']")).hasText("\u2610");
     assertThat(row156.locator("[data-testid$='-col-ulaAllocation']")).hasText("4");
     assertThat(row156.locator("[data-testid$='-col-numULAsPreferred']")).hasText("");
     assertThat(row156.locator("[data-testid$='-col-comments']"))
         .hasText("One more TA would let us open a fourth lab.");
     Locator row8 = rows.filter(new Locator.FilterOptions().setHasText("CMPSC   8 (0100)"));
-    assertThat(row8.locator("[data-testid$='-col-allocReasonable']")).hasText("Yes");
+    assertThat(row8.locator("[data-testid$='-col-allocReasonable']")).hasText("\u2612");
     assertThat(row8.locator("[data-testid$='-col-taAllocation']")).hasText("2");
     assertThat(row8.locator("[data-testid$='-col-ulaAllocation']")).hasText("N/A");
     assertThat(row8.locator("[data-testid$='-col-instructor']")).hasText("other@ucsb.edu");
@@ -149,5 +157,36 @@ public class InstructorFeedbackWebIT extends WebTestCase {
     page.getByTestId(TABLE + "-header-taAllocation-sort-header").click();
     assertThat(page.locator("tbody tr").first().locator("[data-testid$='-col-taAllocation']"))
         .hasText("2");
+
+    // The instructors who have not answered: CONRAD P on CMPSC 8 (no feedback row there; the
+    // row on CMPSC 8 is someone else's) and LEE K, who never opened the form. CONRAD P answered on
+    // CMPSC 156, so that course is not listed.
+    assertThat(
+            page.getByRole(
+                AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName("No Feedback Yet From These Instructors")))
+        .isVisible();
+    Locator missing = page.locator("[data-testid^='" + MISSING + "-row-']");
+    assertThat(missing).hasCount(2);
+    assertThat(page.getByTestId(MISSING + "-cell-row-0-col-email")).hasText("pconrad@ucsb.edu");
+    assertThat(page.getByTestId(MISSING + "-cell-row-1-col-email")).hasText("klee@ucsb.edu");
+    assertThat(missing.filter(new Locator.FilterOptions().setHasText("CMPSC 156"))).hasCount(0);
+
+    // The copy controls, with the browser allowed to use the clipboard.
+    page.context().grantPermissions(List.of("clipboard-read", "clipboard-write"));
+    row156
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Copy pconrad@ucsb.edu"))
+        .click();
+    assertThat(page.getByText("Email copied to clipboard.")).isVisible();
+    org.junit.jupiter.api.Assertions.assertEquals(
+        "pconrad@ucsb.edu", page.evaluate("navigator.clipboard.readText()"));
+    page.getByRole(
+            AriaRole.BUTTON,
+            new Page.GetByRoleOptions()
+                .setName("Copy emails of instructors that have not provided feedback"))
+        .click();
+    assertThat(page.getByText("2 emails copied to clipboard.")).isVisible();
+    org.junit.jupiter.api.Assertions.assertEquals(
+        "pconrad@ucsb.edu\nklee@ucsb.edu", page.evaluate("navigator.clipboard.readText()"));
   }
 }

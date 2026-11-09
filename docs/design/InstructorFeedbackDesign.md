@@ -133,7 +133,17 @@ time by `formatPacificDateTime`).
 
 - Course Name is the course number as the Combined Allocation page writes it
   (`compactCourseNumber`, monospaced) and the section in parentheses, such as `CMPSC 156 (0100)`.
-- The booleans read Yes or No, as the admin's application tables show yes-or-no answers.
+- The booleans show a read-only checkbox mark, ☒ (U+2612) checked or ☐ (U+2610) not, with the
+  accessible name Yes or No, sized by `.instructor-feedback-checkmark` in index.css. They sort on
+  the boolean, so checked and unchecked rows group together (the maintainer's request on
+  2026-11-09; until then they read Yes or No).
+- Every heading but Course Name, Instructor and Comments is on two lines ("Alloc / Reasonable",
+  "Diff TA / Count", "TA / Allocation", "Last / Updated" and so on), in the smaller size of
+  `.instructor-feedback-stacked-heading` in index.css, through `stacked` in `columnStyles.tsx`
+  given that class. The Columns menu and the "hide" links keep the one-line labels.
+- Each email in the Instructor column has the copy icon of the Recruitment Courses table
+  (`InstructorEmailCell`); it copies the address and toasts "Email copied to clipboard." (or the
+  clipboard-permissions message), through `copyToClipboard` in `utils/clipboard.ts`.
 - An allocation the course does not have reads N/A; a preferred count not given is blank.
 - Every column sorts; a missing number sorts last either way.
 - Every column but Course Name can be hidden, from the Columns menu or the "hide" link over its
@@ -142,3 +152,23 @@ time by `formatPacificDateTime`).
 - Comments starts at `Math.max(200, 0.8 * window.innerWidth)` pixels, measured at the first
   render, and has `OurTable`'s drag handle (and arrow keys), with a 200px minimum the resizing
   will not go below. Its text wraps within the column, keeping the instructor's line breaks.
+
+**No Feedback Yet From These Instructors.** Under the feedback table, a second table
+(`MissingFeedbackTable`, Course and Email, both sortable) from `GET /api/admin/instructorFeedback/missing?quarter=YYYYQ` (`ROLE_ADMIN`,
+`InstructorFeedbackReportService.missing`). It lists one row per course and instructor where the
+instructor has not checked any of the four boxes: those with no feedback row for the course, and
+those whose row has all four unchecked, whatever its counts or comments.
+
+- The courses are the non-removed rows of the quarter's TA and ULA recruitments, a section in both
+  once, named by its TA row (as the feedback is). A row with no instructor of record is not listed.
+- A course's instructors are the catalog names of the instructors of record of its TA and ULA
+  rows, mapped to emails through the Instructors list, as the form decides who teaches a course.
+  Several emails mapped to one catalog name (co-instructors) are each listed unless they answered.
+- A catalog name with no email on file is still listed, its Email cell reading "no email on file
+  (NAME)", with no copy icon, and it is left out of the copy-all.
+- By course id, section, email (no email last) and name.
+- The button "Copy emails of instructors that have not provided feedback" copies the table's emails,
+  each once, in table order, one per line (as the Recruitment Courses page's copy of faculty
+  emails), and toasts "N emails copied to clipboard."; it is disabled when no one listed has an
+  email. When everyone has answered, the table is replaced by "Every instructor has given
+  feedback."

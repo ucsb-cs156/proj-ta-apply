@@ -94,6 +94,41 @@ const adminInstructorFeedbackFixtures = {
       lastUpdated: "2026-01-13T08:15:00",
     },
   ],
+  /**
+   * What /api/admin/instructorFeedback/missing returns for W26: an instructor who never opened the
+   * form, a co-instructor who has not answered, the same email on a second course (copied once),
+   * and an instructor with no email on file.
+   */
+  missing: [
+    {
+      courseId: "CMPSC     5A",
+      section: "0100",
+      title: "INTRO DATA SCI 1",
+      instructorName: "SMITH J",
+      email: "jsmith@ucsb.edu",
+    },
+    {
+      courseId: "CMPSC    16",
+      section: "0100",
+      title: "PROBLEM SOLVING I",
+      instructorName: "LEE K",
+      email: "klee@ucsb.edu",
+    },
+    {
+      courseId: "CMPSC    24",
+      section: "0100",
+      title: "PROBLEM SOLVING II",
+      instructorName: "SMITH J",
+      email: "jsmith@ucsb.edu",
+    },
+    {
+      courseId: "CMPSC   190J",
+      section: "0100",
+      title: "SPECIAL TOPICS",
+      instructorName: "VISITOR V",
+      email: null,
+    },
+  ],
 };
 
 export default adminInstructorFeedbackFixtures;

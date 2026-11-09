@@ -19,6 +19,16 @@ vi.mock("react-toastify", async (importOriginal) => ({
 }));
 
 const axiosMock = new AxiosMockAdapter(axios);
+const MISSING_URL = "/api/admin/instructorFeedback/missing";
+
+const stubClipboard = () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText },
+  });
+  return writeText;
+};
 
 function renderPage(qyy = "W26") {
   return render(
@@ -51,6 +61,7 @@ describe("InstructorFeedbackPage", () => {
     axiosMock
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock.onGet(MISSING_URL).reply(200, []);
   });
 
   test("asks for the quarter's feedback and shows a row per record, every column shown", async () => {
@@ -148,6 +159,35 @@ describe("InstructorFeedbackPage", () => {
     ).toBeInTheDocument();
   });
 
+  test("the copy control copies the instructor's email and says so, or says the browser refused", async () => {
+    const writeText = stubClipboard();
+    axiosMock
+      .onGet("/api/admin/instructorFeedback")
+      .reply(200, adminInstructorFeedbackFixtures.severalRecords);
+    renderPage();
+    await userEvent.click(
+      await screen.findByTestId(
+        "InstructorFeedbackPage-table-cell-row-0-copy-email",
+      ),
+    );
+    expect(writeText).toHaveBeenCalledWith("pconrad@ucsb.edu");
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Email copied to clipboard."),
+    );
+
+    mockToast.mockClear();
+    writeText.mockRejectedValueOnce(new Error("permission denied"));
+    await userEvent.click(
+      screen.getByTestId("InstructorFeedbackPage-table-cell-row-1-copy-email"),
+    );
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Unable to copy to clipboard. Check your browser clipboard permissions.",
+      ),
+    );
+    expect(mockToast).toHaveBeenCalledTimes(1);
+  });
+
   test("a quarter with no feedback says so", async () => {
     axiosMock.onGet("/api/admin/instructorFeedback").reply(200, []);
     renderPage("S26");
@@ -175,9 +215,134 @@ describe("InstructorFeedbackPage", () => {
     ).toHaveAttribute("href", "/");
     await screen.findByText("Choose a quarter on the home page");
     expect(
-      axiosMock.history.get.filter(
-        (r) => r.url === "/api/admin/instructorFeedback",
+      axiosMock.history.get.filter((r) =>
+        r.url.startsWith("/api/admin/instructorFeedback"),
       ),
     ).toHaveLength(0);
+    expect(
+      screen.queryByRole("heading", {
+        name: "No Feedback Yet From These Instructors",
+      }),
+    ).toBeNull();
+  });
+
+  describe("No Feedback Yet From These Instructors", () => {
+    beforeEach(() => {
+      axiosMock
+        .onGet("/api/admin/instructorFeedback")
+        .reply(200, adminInstructorFeedbackFixtures.severalRecords);
+    });
+
+    test("lists the course and email of each instructor who has not answered", async () => {
+      axiosMock
+        .onGet(MISSING_URL)
+        .reply(200, adminInstructorFeedbackFixtures.missing);
+      renderPage();
+
+      expect(
+        screen.getByRole("heading", {
+          level: 2,
+          name: "No Feedback Yet From These Instructors",
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("InstructorFeedbackPage-missing-loading"),
+      ).toHaveTextContent("Loading…");
+      expect(
+        await screen.findByTestId("InstructorFeedbackPage-missing-row-3"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("InstructorFeedbackPage-missing-loading"),
+      ).toBeNull();
+      expect(
+        screen.getByText(
+          "The instructors of the quarter's courses who have not checked any box of the feedback form, including those who have never opened it.",
+        ),
+      ).toBeInTheDocument();
+      const get = axiosMock.history.get.find((r) => r.url === MISSING_URL);
+      expect(get.params).toEqual({ quarter: "20261" });
+      expect(
+        screen.getByTestId(
+          "InstructorFeedbackPage-missing-cell-row-0-col-course",
+        ).textContent,
+      ).toBe("CMPSC   5A (0100)");
+      expect(
+        screen.getByTestId(
+          "InstructorFeedbackPage-missing-cell-row-0-col-email",
+        ),
+      ).toHaveTextContent(/^jsmith@ucsb\.edu$/);
+      expect(
+        screen.getByTestId(
+          "InstructorFeedbackPage-missing-cell-row-3-col-email",
+        ),
+      ).toHaveTextContent(/^no email on file \(VISITOR V\)$/);
+      expect(
+        screen.queryByTestId(
+          "InstructorFeedbackPage-missing-cell-row-3-copy-email",
+        ),
+      ).toBeNull();
+      expect(
+        screen.queryByTestId("InstructorFeedbackPage-missing-empty"),
+      ).toBeNull();
+    });
+
+    test("the button copies each email once, one per line, and a row's control copies its own", async () => {
+      const writeText = stubClipboard();
+      axiosMock
+        .onGet(MISSING_URL)
+        .reply(200, adminInstructorFeedbackFixtures.missing);
+      renderPage();
+
+      const button = await screen.findByRole("button", {
+        name: "Copy emails of instructors that have not provided feedback",
+      });
+      expect(button).toBeEnabled();
+      await userEvent.click(button);
+      expect(writeText).toHaveBeenCalledWith("jsmith@ucsb.edu\nklee@ucsb.edu");
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith("2 emails copied to clipboard."),
+      );
+
+      mockToast.mockClear();
+      await userEvent.click(
+        screen.getByTestId(
+          "InstructorFeedbackPage-missing-cell-row-1-copy-email",
+        ),
+      );
+      expect(writeText).toHaveBeenLastCalledWith("klee@ucsb.edu");
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith("Email copied to clipboard."),
+      );
+    });
+
+    test("a failed request for the list is reported", async () => {
+      axiosMock.onGet(MISSING_URL).reply(500);
+      renderPage();
+      await waitFor(() => expect(mockToast).toHaveBeenCalled());
+      expect(
+        screen.getByTestId("InstructorFeedbackPage-missing-loading"),
+      ).toBeInTheDocument();
+    });
+
+    test("the button is disabled when no one listed has an email", async () => {
+      axiosMock
+        .onGet(MISSING_URL)
+        .reply(200, [adminInstructorFeedbackFixtures.missing[3]]);
+      renderPage();
+      expect(
+        await screen.findByTestId("InstructorFeedbackPage-copy-missing-emails"),
+      ).toBeDisabled();
+    });
+
+    test("when everyone has answered it says so, with no table and no button", async () => {
+      renderPage();
+      expect(
+        await screen.findByTestId("InstructorFeedbackPage-missing-empty"),
+      ).toHaveTextContent(/^Every instructor has given feedback\.$/);
+      expect(screen.queryByTestId("InstructorFeedbackPage-missing")).toBeNull();
+      expect(
+        screen.queryByTestId("InstructorFeedbackPage-copy-missing-emails"),
+      ).toBeNull();
+    });
   });
 });

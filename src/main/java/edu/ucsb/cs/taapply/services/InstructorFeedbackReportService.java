@@ -9,10 +9,15 @@ import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -56,6 +61,17 @@ public class InstructorFeedbackReportService {
       Integer numULAsPreferred,
       String comments,
       LocalDateTime lastUpdated) {}
+
+  /**
+   * One instructor of a course of the quarter who has not checked any of the four boxes (issue
+   * #427): the course (as the feedback names it), the instructor's catalog name and email. The
+   * email is null when the Instructors list has no email for that catalog name.
+   */
+  public static record MissingRow(
+      String courseId, String section, String title, String instructorName, String email) {}
+
+  /** Who has answered about which course: a feedback row with at least one box checked. */
+  private static record Responder(Long recruitmentCourseId, String email) {}
 
   /**
    * A section of a course: what pairs a course's TA row with its ULA row, as the home page does.
@@ -122,24 +138,100 @@ public class InstructorFeedbackReportService {
   }
 
   /**
-   * The allocation of each section in the quarter's recruitment of one type, leaving out the
-   * courses an admin removed; none when the quarter has no such recruitment.
+   * Every instructor of a course of the quarter who has not checked any of the four boxes: those
+   * with no feedback row for the course, and those whose row has all four unchecked (whatever its
+   * counts or comments). The courses are the non-removed rows of the quarter's TA and ULA
+   * recruitments, a section in both once (named by its TA row, as the feedback is). A course's
+   * instructors are the emails the Instructors list maps its instructors of record's catalog names
+   * to, as the feedback form decides who teaches a course (issue #425); a catalog name with no
+   * email is listed once with a null email. By course id, section, email (no email last) and name.
    */
-  private Map<SectionKey, Integer> allocations(String quarter, RecruitmentType type) {
+  public List<MissingRow> missing(String quarter) {
+    Map<SectionKey, RecruitmentCourse> courses = new LinkedHashMap<>();
+    Map<SectionKey, Set<String>> names = new HashMap<>();
+    List<RecruitmentCourse> rows = new ArrayList<>(sectionRows(quarter, RecruitmentType.TA));
+    rows.addAll(sectionRows(quarter, RecruitmentType.ULA));
+    for (RecruitmentCourse row : rows) {
+      SectionKey key = SectionKey.of(row);
+      courses.putIfAbsent(key, row);
+      if (row.getInstructor() != null) {
+        names.computeIfAbsent(key, k -> new TreeSet<>()).add(row.getInstructor());
+      }
+    }
+    Map<String, List<String>> emails =
+        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)
+            .filter(instructor -> instructor.getCatalogName() != null)
+            .collect(
+                Collectors.groupingBy(
+                    Instructor::getCatalogName,
+                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));
+    Set<Responder> responded =
+        instructorFeedbackRepository.findByQuarter(quarter).stream()
+            .filter(InstructorFeedbackReportService::anyChecked)
+            .map(row -> new Responder(row.getRecruitmentCourseId(), row.getEmail()))
+            .collect(Collectors.toSet());
+
+    List<MissingRow> missing = new ArrayList<>();
+    courses.forEach(
+        (key, course) -> {
+          for (String name : names.getOrDefault(key, Set.of())) {
+            List<String> theirs = emails.getOrDefault(name, List.of());
+            if (theirs.isEmpty()) {
+              missing.add(missingRow(course, name, null));
+            }
+            for (String email : theirs) {
+              if (!responded.contains(new Responder(course.getId(), email))) {
+                missing.add(missingRow(course, name, email));
+              }
+            }
+          }
+        });
+    missing.sort(
+        Comparator.comparing(MissingRow::courseId)
+            .thenComparing(MissingRow::section, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(MissingRow::email, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(MissingRow::instructorName));
+    return missing;
+  }
+
+  private static MissingRow missingRow(RecruitmentCourse course, String name, String email) {
+    return new MissingRow(
+        course.getCourseId(), course.getSection(), course.getTitle(), name, email);
+  }
+
+  /** Whether the instructor checked at least one of the four boxes. */
+  private static boolean anyChecked(InstructorFeedback row) {
+    return row.isAllocReasonable()
+        || row.isDifferentTACount()
+        || row.isDifferentULACount()
+        || row.isOtherConcerns();
+  }
+
+  /**
+   * The non-removed rows of the quarter's recruitment of one type; none when the quarter has no
+   * such recruitment.
+   */
+  private List<RecruitmentCourse> sectionRows(String quarter, RecruitmentType type) {
     return recruitmentRepository
         .findByQuarterAndType(quarter, type)
         .map(
             recruitment ->
                 recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
                     .filter(row -> !row.isRemoved())
-                    .collect(
-                        Collectors.toMap(
-                            SectionKey::of,
-                            RecruitmentCourse::getAllocation,
-                            // Two rows of one section cannot both be on file (the enroll code
-                            // is unique per recruitment), but keep the first all the same.
-                            (first, second) -> first)))
-        .orElse(Map.of());
+                    .toList())
+        .orElse(List.of());
+  }
+
+  /** The allocation of each section in the quarter's recruitment of one type (see sectionRows). */
+  private Map<SectionKey, Integer> allocations(String quarter, RecruitmentType type) {
+    return sectionRows(quarter, type).stream()
+        .collect(
+            Collectors.toMap(
+                SectionKey::of,
+                RecruitmentCourse::getAllocation,
+                // Two rows of one section cannot both be on file (the enroll code is unique per
+                // recruitment), but keep the first all the same.
+                (first, second) -> first));
   }
 
   /** The rows a findAllById returns (each id at most once), by their id. */

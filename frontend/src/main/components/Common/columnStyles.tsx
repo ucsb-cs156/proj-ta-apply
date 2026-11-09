@@ -7,10 +7,18 @@ import { Fragment } from "react";
 /**
  * A heading on two lines in a smaller font (80% of the other headings), so a column is no wider
  * than its values (issue #185). The space before the break keeps the heading's text whole for
- * screen readers and tests.
+ * screen readers and tests. With a class name, the size comes from that class in index.css instead
+ * of an inline style (issue #427).
  */
-export const stacked = (top: string, bottom: string): React.JSX.Element => (
-  <span style={{ fontSize: "80%" }}>
+export const stacked = (
+  top: string,
+  bottom: string,
+  className?: string,
+): React.JSX.Element => (
+  <span
+    className={className}
+    style={className === undefined ? { fontSize: "80%" } : undefined}
+  >
     {top} <br />
     {bottom}
   </span>

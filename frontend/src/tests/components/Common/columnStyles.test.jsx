@@ -19,6 +19,23 @@ describe("columnStyles", () => {
     expect(span).toHaveTextContent("Enrollment Estimate");
   });
 
+  test("stacked with a class name: the size comes from the class, not an inline style", () => {
+    const { container } = render(
+      stacked("Alloc", "Reasonable", "small-heading"),
+    );
+
+    const span = container.querySelector("span");
+    expect(span).toHaveClass("small-heading");
+    expect(span.getAttribute("style")).toBeNull();
+    expect(span.querySelector("br")).not.toBeNull();
+    expect(span).toHaveTextContent("Alloc Reasonable");
+  });
+
+  test("stacked without a class name has no class", () => {
+    const { container } = render(stacked("Enrollment", "Estimate"));
+    expect(container.querySelector("span").getAttribute("class")).toBeNull();
+  });
+
   test("shrinkToContent and numeric", () => {
     expect(shrinkToContent.style).toEqual({
       width: "1%",

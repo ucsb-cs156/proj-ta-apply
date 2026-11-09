@@ -1,15 +1,15 @@
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
-import {
-  COURSE_NUMBER_WIDTH,
-  WIDE_COLUMN_MAX_WIDTH,
-} from "main/utils/columnWidths";
+import { stacked } from "main/components/Common/columnStyles";
+import { InstructorEmailCell } from "main/components/Recruitments/RecruitmentCourseTable";
+import { WIDE_COLUMN_MAX_WIDTH } from "main/utils/columnWidths";
 import { formatPacificDateTime } from "main/utils/pacificTime";
 import {
   COMMENTS_MIN_WIDTH,
   FEEDBACK_COLUMN_CHOICES,
   NOT_APPLICABLE,
+  checkboxMark,
   commentsDefaultWidth,
   courseName,
   instructorText,
@@ -25,12 +25,28 @@ const numeric = {
   style: { ...shrinkToContent.style, textAlign: "right" as const },
 };
 
+/** The class in index.css that sizes the read-only checkbox marks. */
+const CHECKMARK_CLASS = "instructor-feedback-checkmark";
+
+/** The class in index.css that draws the two-line headings smaller. */
+const STACKED_HEADING_CLASS = "instructor-feedback-stacked-heading";
+
+/**
+ * A heading on two lines in the smaller size (the maintainer's request on issue #427): every
+ * column but Course Name, Instructor and Comments. The Columns menu and the "hide" links keep the
+ * plain labels of FEEDBACK_COLUMN_CHOICES.
+ */
+const heading = ([top, bottom]: [string, string]): React.JSX.Element =>
+  stacked(top, bottom, STACKED_HEADING_CLASS);
+
 type Props = {
   rows: InstructorFeedbackRow[];
   /** Column ids hidden; see FEEDBACK_COLUMN_CHOICES. */
   hiddenColumns: string[];
   /** Hides one column, as unticking it in the Columns menu does. */
   onHide: (columnId: string) => void;
+  /** Copies an instructor's email, from the control beside it. */
+  onCopyEmail: (email: string) => void;
   testIdPrefix?: string;
 };
 
@@ -43,21 +59,31 @@ export default function InstructorFeedbackTable({
   rows,
   hiddenColumns,
   onHide,
+  onCopyEmail,
   testIdPrefix = "InstructorFeedbackTable",
 }: Props): React.JSX.Element {
-  const flag = (id: keyof InstructorFeedbackRow, label: string) => ({
-    header: label,
+  const flag = (id: keyof InstructorFeedbackRow, label: [string, string]) => ({
+    header: heading(label),
     id,
-    accessorFn: (row: InstructorFeedbackRow) => yesNo(row[id] as boolean),
+    // Sorted on the answer itself, so checked and unchecked rows group together.
+    accessorFn: (row: InstructorFeedbackRow) => row[id] as boolean,
     meta: shrinkToContent,
+    cell: ({ cell }: { cell: Cell<InstructorFeedbackRow, unknown> }) => {
+      const value = cell.row.original[id] as boolean;
+      return (
+        <span role="img" aria-label={yesNo(value)} className={CHECKMARK_CLASS}>
+          {checkboxMark(value)}
+        </span>
+      );
+    },
   });
   // A missing number has nothing to sort by, so it goes last either way.
   const count = (
     id: keyof InstructorFeedbackRow,
-    label: string,
+    label: [string, string],
     whenMissing: string,
   ) => ({
-    header: label,
+    header: heading(label),
     id,
     accessorFn: (row: InstructorFeedbackRow) => row[id] ?? undefined,
     sortUndefined: "last" as const,
@@ -73,14 +99,7 @@ export default function InstructorFeedbackTable({
       accessorFn: courseName,
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<InstructorFeedbackRow, unknown> }) => (
-        <span
-          style={{
-            display: "inline-block",
-            minWidth: COURSE_NUMBER_WIDTH,
-            whiteSpace: "pre",
-            fontFamily: "monospace",
-          }}
-        >
+        <span className="instructor-feedback-course">
           {courseName(cell.row.original)}
         </span>
       ),
@@ -92,25 +111,32 @@ export default function InstructorFeedbackTable({
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<InstructorFeedbackRow, unknown> }) => {
         const row = cell.row.original;
-        return row.instructorName ? (
+        return (
           <>
-            {row.instructorName}
-            <br />
-            <small className="text-muted">{row.email}</small>
+            {row.instructorName && (
+              <>
+                {row.instructorName}
+                <br />
+              </>
+            )}
+            <InstructorEmailCell
+              email={row.email}
+              index={cell.row.index}
+              testIdPrefix={testIdPrefix}
+              onCopyEmail={onCopyEmail}
+            />
           </>
-        ) : (
-          row.email
         );
       },
     },
-    flag("allocReasonable", "Alloc Reasonable"),
-    flag("differentTACount", "Diff TA Count"),
-    count("taAllocation", "TA Allocation", NOT_APPLICABLE),
-    count("numTAsPreferred", "Preferred TA Allocation", ""),
-    flag("differentULACount", "Diff ULA Count"),
-    count("ulaAllocation", "ULA Allocation", NOT_APPLICABLE),
-    flag("otherConcerns", "Other Concerns"),
-    count("numULAsPreferred", "Preferred ULA Allocation", ""),
+    flag("allocReasonable", ["Alloc", "Reasonable"]),
+    flag("differentTACount", ["Diff TA", "Count"]),
+    count("taAllocation", ["TA", "Allocation"], NOT_APPLICABLE),
+    count("numTAsPreferred", ["Preferred TA", "Allocation"], ""),
+    flag("differentULACount", ["Diff ULA", "Count"]),
+    count("ulaAllocation", ["ULA", "Allocation"], NOT_APPLICABLE),
+    flag("otherConcerns", ["Other", "Concerns"]),
+    count("numULAsPreferred", ["Preferred ULA", "Allocation"], ""),
     {
       header: "Comments",
       id: "comments",
@@ -124,7 +150,7 @@ export default function InstructorFeedbackTable({
       },
     },
     {
-      header: "Last Updated",
+      header: heading(["Last", "Updated"]),
       id: "lastUpdated",
       accessorFn: (row: InstructorFeedbackRow) => row.lastUpdated ?? "",
       meta: shrinkToContent,

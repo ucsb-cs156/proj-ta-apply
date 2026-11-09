@@ -3,6 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import InstructorFeedbackTable from "main/components/InstructorFeedback/InstructorFeedbackTable";
 import {
+  COPY_MISSING_LABEL,
+  MISSING_HEADING,
+  NO_EMAIL_ON_FILE,
+  emailsCopiedText,
+  missingFeedbackEmails,
+  CHECKED_MARK,
+  UNCHECKED_MARK,
+  checkboxMark,
   COMMENTS_MIN_WIDTH,
   FEEDBACK_COLUMN_CHOICES,
   FEEDBACK_COLUMNS_STORAGE_KEY,
@@ -23,6 +31,7 @@ const renderTable = (props = {}) =>
       rows={rows}
       hiddenColumns={[]}
       onHide={vi.fn()}
+      onCopyEmail={vi.fn()}
       {...props}
     />,
   );
@@ -50,6 +59,27 @@ describe("InstructorFeedbackTable helpers", () => {
   test("yesNo", () => {
     expect(yesNo(true)).toBe("Yes");
     expect(yesNo(false)).toBe("No");
+  });
+
+  test("the missing-feedback helpers", () => {
+    expect(MISSING_HEADING).toBe("No Feedback Yet From These Instructors");
+    expect(COPY_MISSING_LABEL).toBe(
+      "Copy emails of instructors that have not provided feedback",
+    );
+    expect(NO_EMAIL_ON_FILE).toBe("no email on file");
+    expect(emailsCopiedText(1)).toBe("1 email copied to clipboard.");
+    expect(emailsCopiedText(3)).toBe("3 emails copied to clipboard.");
+    expect(
+      missingFeedbackEmails(adminInstructorFeedbackFixtures.missing),
+    ).toEqual(["jsmith@ucsb.edu", "klee@ucsb.edu"]);
+    expect(missingFeedbackEmails([])).toEqual([]);
+  });
+
+  test("checkboxMark is a checked or an unchecked box", () => {
+    expect(CHECKED_MARK).toBe("\u2612");
+    expect(UNCHECKED_MARK).toBe("\u2610");
+    expect(checkboxMark(true)).toBe("☒");
+    expect(checkboxMark(false)).toBe("☐");
   });
 
   test("courseName writes the course number compactly, then the section", () => {
@@ -141,6 +171,27 @@ describe("InstructorFeedbackTable", () => {
       "Comments",
       "Last Updated",
     ]);
+    // Every heading but Course Name, Instructor and Comments is two lines in the smaller class.
+    for (const th of screen.getAllByRole("columnheader")) {
+      const id = th.dataset.testid.replace(`${T}-header-`, "");
+      const sortHeader = within(th).getByTestId(/-sort-header$/);
+      const small = sortHeader.querySelector(
+        ".instructor-feedback-stacked-heading",
+      );
+      if (["course", "instructor", "comments"].includes(id)) {
+        expect(small, id).toBeNull();
+        expect(sortHeader.querySelector("br"), id).toBeNull();
+      } else {
+        expect(small, id).not.toBeNull();
+        expect(small.querySelector("br"), id).not.toBeNull();
+        expect(small.getAttribute("style"), id).toBeNull();
+      }
+    }
+    // The first line of a stacked heading, before the break.
+    expect(
+      screen.getByTestId(`${T}-header-differentTACount-sort-header`).firstChild
+        .firstChild.textContent,
+    ).toBe("Diff TA");
     expect(
       screen.getByTestId(`${T}-header-course-sort-header`),
     ).toHaveTextContent(/^Course Name$/);
@@ -154,23 +205,27 @@ describe("InstructorFeedbackTable", () => {
     renderTable();
     expect(cell(0, "course")).toHaveTextContent(/^CMPSC 156 \(0100\)$/);
     const number = cell(0, "course").firstChild;
-    expect(number.style.fontFamily).toBe("monospace");
-    expect(number.style.whiteSpace).toBe("pre");
-    expect(number.style.minWidth).toBe("11ch");
-    expect(number.style.display).toBe("inline-block");
+    expect(number).toHaveClass("instructor-feedback-course");
+    expect(number.getAttribute("style")).toBeNull();
     expect(cell(0, "instructor")).toHaveTextContent(
       /^CONRAD Ppconrad@ucsb\.edu$/,
     );
     expect(
-      within(cell(0, "instructor")).getByText("pconrad@ucsb.edu"),
-    ).toHaveClass("text-muted");
-    expect(cell(0, "allocReasonable")).toHaveTextContent(/^No$/);
-    expect(cell(0, "differentTACount")).toHaveTextContent(/^Yes$/);
+      screen.getByTestId(`${T}-cell-row-0-copy-email`),
+    ).toHaveAccessibleName("Copy pconrad@ucsb.edu");
+    expect(cell(0, "allocReasonable")).toHaveTextContent(/^☐$/);
+    expect(
+      within(cell(0, "allocReasonable")).getByRole("img", { name: "No" }),
+    ).toHaveClass("instructor-feedback-checkmark");
+    expect(cell(0, "differentTACount")).toHaveTextContent(/^☒$/);
+    expect(
+      within(cell(0, "differentTACount")).getByRole("img", { name: "Yes" }),
+    ).toBeInTheDocument();
     expect(cell(0, "taAllocation")).toHaveTextContent(/^3$/);
     expect(cell(0, "numTAsPreferred")).toHaveTextContent(/^5$/);
-    expect(cell(0, "differentULACount")).toHaveTextContent(/^Yes$/);
+    expect(cell(0, "differentULACount")).toHaveTextContent(/^☒$/);
     expect(cell(0, "ulaAllocation")).toHaveTextContent(/^4$/);
-    expect(cell(0, "otherConcerns")).toHaveTextContent(/^No$/);
+    expect(cell(0, "otherConcerns")).toHaveTextContent(/^☐$/);
     expect(cell(0, "numULAsPreferred")).toHaveTextContent(/^2$/);
     expect(cell(0, "comments")).toHaveTextContent(
       /^One more TA would let us open a fourth lab\.$/,
@@ -180,7 +235,7 @@ describe("InstructorFeedbackTable", () => {
     );
 
     // TA only: no ULA allocation, and no counts or comments.
-    expect(cell(1, "allocReasonable")).toHaveTextContent(/^Yes$/);
+    expect(cell(1, "allocReasonable")).toHaveTextContent(/^☒$/);
     expect(cell(1, "ulaAllocation")).toHaveTextContent(
       new RegExp(`^${NOT_APPLICABLE}$`),
     );
@@ -190,8 +245,11 @@ describe("InstructorFeedbackTable", () => {
 
     // ULA only, and an instructor not in the list.
     expect(cell(2, "taAllocation")).toHaveTextContent(/^N\/A$/);
-    expect(cell(2, "otherConcerns")).toHaveTextContent(/^Yes$/);
+    expect(cell(2, "otherConcerns")).toHaveTextContent(/^☒$/);
     expect(cell(2, "instructor")).toHaveTextContent(/^newprof@ucsb\.edu$/);
+    // The name, when known, is on its own line above the email.
+    expect(cell(0, "instructor").querySelectorAll("br")).toHaveLength(1);
+    expect(cell(2, "instructor").querySelectorAll("br")).toHaveLength(0);
 
     // An allocation of 0 is shown as 0.
     expect(cell(3, "ulaAllocation")).toHaveTextContent(/^0$/);
@@ -278,8 +336,11 @@ describe("InstructorFeedbackTable", () => {
     ]);
     await sortBy("instructor");
     expect(columnText("instructor")[0]).toBe("CONRAD Ppconrad@ucsb.edu");
+    // On the answer, not the character: checked first, then the other way.
     await sortBy("allocReasonable");
-    expect(columnText("allocReasonable")).toEqual(["No", "No", "No", "Yes"]);
+    expect(columnText("allocReasonable")).toEqual(["☒", "☐", "☐", "☐"]);
+    await sortBy("allocReasonable");
+    expect(columnText("allocReasonable")).toEqual(["☐", "☐", "☐", "☒"]);
     await sortBy("comments");
     expect(columnText("comments")[0]).toBe("");
     await sortBy("lastUpdated");
@@ -295,6 +356,18 @@ describe("InstructorFeedbackTable", () => {
     expect(columnText("taAllocation")).toEqual(["2", "2", "3", "N/A"]);
     await sortBy("numULAsPreferred");
     expect(columnText("numULAsPreferred")).toEqual(["8", "2", "", ""]);
+  });
+
+  test("the copy control beside an email copies that email", async () => {
+    const onCopyEmail = vi.fn();
+    renderTable({ onCopyEmail });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copy newprof@ucsb.edu" }),
+    );
+    expect(onCopyEmail).toHaveBeenCalledWith("newprof@ucsb.edu");
+    expect(
+      screen.getByTestId(`${T}-cell-row-2-copy-email`),
+    ).toBeInTheDocument();
   });
 
   test("hidden columns are left out, and Course Name has no hide link", async () => {
