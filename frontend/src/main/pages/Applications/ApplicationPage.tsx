@@ -76,17 +76,15 @@ export default function ApplicationPage(): React.JSX.Element {
   );
   // A draft already begun for the recruitment is offered instead: the server will not make a
   // second one from this application (issue #420).
-  const cancelledHere = application?.status === "CANCELLED";
   const { data: myDrafts, isFetched: draftsFetched } = useBackend<
     DraftApplication[]
   >(
+    // Stryker disable next-line all : the cache key only shares the list with the home page
     ["/api/draftApplications/mine"],
+    // Stryker disable next-line StringLiteral : axios reads a blank method as GET
     { method: "GET", url: "/api/draftApplications/mine" },
     // Stryker disable next-line all : don't test default value of empty list
     [],
-    false,
-    // Stryker disable next-line all : the guard only avoids a pointless request
-    { enabled: cancelledHere },
   );
   const draftHere =
     application &&
