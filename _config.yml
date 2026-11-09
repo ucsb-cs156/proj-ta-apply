@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/420-resume-cancelled-application","number":423,"title":"\"Create a new application\" turns a cancelled application back into a draft (closes #420)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/423"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/421-application-columns-by-type","number":422,"title":"Show each type's own fields on the admin application tables (closes #421)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/422"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/420-resume-cancelled-application","number":423,"title":"\"Create a new application\" turns a cancelled application back into a draft (closes #420)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/423"}]
