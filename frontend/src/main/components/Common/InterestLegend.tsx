@@ -22,8 +22,7 @@ export default function InterestLegend({
       {INTEREST_LEGEND.map(({ preference, label }) => (
         <li
           key={preference}
-          className="list-inline-item px-2 rounded"
-          style={{ backgroundColor: interestDisplay(preference).background }}
+          className={`list-inline-item px-2 rounded ${interestDisplay(preference).className}`}
           data-testid={`${testIdPrefix}-${preference.replace(/\W/g, "")}`}
         >
           <InterestMark preference={preference} />

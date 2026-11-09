@@ -18,11 +18,17 @@ import {
   type LegacyColumn,
 } from "main/components/Common/OurTableUtils";
 
-/** Optional per-column presentation, passed through a column's `meta` key. */
-type ColumnStyleMeta = { style?: CSSProperties };
+/**
+ * Optional per-column presentation, passed through a column's `meta` key: an inline style, or a
+ * class defined in index.css (issue #415). Either goes on the column's heading, cells and footer.
+ */
+type ColumnStyleMeta = { style?: CSSProperties; className?: string };
 
 const styleOf = (meta: unknown): CSSProperties | undefined =>
   (meta as ColumnStyleMeta | undefined)?.style;
+
+const classOf = (meta: unknown): string | undefined =>
+  (meta as ColumnStyleMeta | undefined)?.className;
 
 /** How far an arrow key moves a column's edge, in pixels. */
 const KEYBOARD_RESIZE_CHANGE: Record<string, number> = {
@@ -150,6 +156,7 @@ export default function OurTable<T extends object>({
                   data-testid={`${testid}-header-${header.column.id}`}
                   key={`${testid}-header-${header.column.id}`}
                   colSpan={header.colSpan}
+                  className={classOf(header.column.columnDef.meta)}
                   style={{
                     ...thStyle,
                     ...(isSized(header.column) && sizedStyle(header.column)),
@@ -248,6 +255,7 @@ export default function OurTable<T extends object>({
                     data-testid={testId}
                     // Stryker disable next-line StringLiteral : React key property not exposed in dom
                     key={testId}
+                    className={classOf(cell.column.columnDef.meta)}
                     style={{
                       ...styleOf(cell.column.columnDef.meta),
                       ...(isSized(cell.column) && sizedStyle(cell.column)),
@@ -276,6 +284,7 @@ export default function OurTable<T extends object>({
                   // Stryker disable next-line StringLiteral : React key property not exposed in dom
                   key={`${testid}-footer-${header.column.id}`}
                   colSpan={header.colSpan}
+                  className={classOf(header.column.columnDef.meta)}
                   style={styleOf(header.column.columnDef.meta)}
                 >
                   {header.isPlaceholder
