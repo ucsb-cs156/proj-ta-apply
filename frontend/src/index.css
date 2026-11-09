@@ -162,10 +162,11 @@ body {
   font-size: 80%;
 }
 
-/* The Allocation, Assigned and To Assign lines under a lecture's name (CourseHeader): one size
-   smaller than Bootstrap's `small` (0.875em). */
+/* The Allocation, Assigned and To Assign lines under a lecture's name (CourseHeader), well below
+   Bootstrap's `small` (0.875em) so that a 14-character line such as " To Assign -10" fits the
+   100px lecture column (issue #415). */
 .course-heading-count {
-  font-size: 0.75em;
+  font-size: 0.65em;
 }
 
 /* A lecture column's heading and cells: 100px wide, with less horizontal padding than the table's

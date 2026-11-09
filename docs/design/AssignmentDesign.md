@@ -276,8 +276,9 @@ a lecture's name are padded so the numbers line up (`Allocation 1`, `  Assigned 
 ### UX tweaks, 2026-11-08 (issue #415)
 
 * The third count line reads `To Assign` (it was `Left`; the rankings CSV's `Left to assign` row
-  label is unchanged), and the three count lines are one size smaller than before (`0.75em`, the
-  `course-heading-count` class).
+  label is unchanged), and the three count lines are smaller than before (`0.65em`, the
+  `course-heading-count` class), small enough that a line such as ` To Assign -10` fits the 100px
+  column.
 * Every lecture column is a fixed 100px wide (the `course-column` class on its heading and cells,
   passed through OurTable's column `meta.className`), with 3px of horizontal padding instead of the
   table's 16px. The lecture's name at the top of the heading is shown at 80% of the heading size, the

@@ -17,6 +17,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -283,12 +284,24 @@ public class AdminAssignmentsWebIT extends WebTestCase {
         true,
         label.evaluate(
             "e => e.getBoundingClientRect().height < 2 * parseFloat(getComputedStyle(e).fontSize)"));
-    // The count lines are smaller than the name.
+    // The count lines are smaller than the name, and each fits on one line of the column.
     Locator toAssign =
         page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-left']")
             .first();
     assertThat(toAssign).hasClass(Pattern.compile("course-heading-count"));
-    assertEquals("12px", toAssign.evaluate("e => getComputedStyle(e).fontSize"));
+    assertEquals("10.4px", toAssign.evaluate("e => getComputedStyle(e).fontSize"));
+    for (String line : List.of("allocation", "assigned", "left")) {
+      Locator count =
+          page.locator(
+                  "[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-"
+                      + line
+                      + "']")
+              .first();
+      assertEquals(
+          true,
+          count.evaluate("e => e.scrollWidth <= e.closest('th').clientWidth"),
+          line + " line overflows its column");
+    }
 
     // The applicant marked no interest: the cell is pale red by its class, with no inline style,
     // and not outlined.
