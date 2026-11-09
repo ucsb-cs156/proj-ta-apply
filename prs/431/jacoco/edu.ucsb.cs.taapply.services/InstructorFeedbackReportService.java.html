@@ -9,10 +9,15 @@ import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -25,7 +30,7 @@ import org.springframework.stereotype.Service;
  * course's current TA and ULA allocations joined in.
  */
 @Service
-<span class="fc" id="L28">public class InstructorFeedbackReportService {</span>
+<span class="fc" id="L33">public class InstructorFeedbackReportService {</span>
 
   @Autowired InstructorFeedbackRepository instructorFeedbackRepository;
   @Autowired InstructorRepository instructorRepository;
@@ -38,7 +43,7 @@ import org.springframework.stereotype.Service;
    * that number is not meant. The allocations are null when the quarter has no recruitment of that
    * type, or the course is not in it.
    */
-<span class="fc" id="L41">  public static record Row(</span>
+<span class="fc" id="L46">  public static record Row(</span>
       Long id,
       String quarter,
       String courseId,
@@ -58,11 +63,22 @@ import org.springframework.stereotype.Service;
       LocalDateTime lastUpdated) {}
 
   /**
+   * One instructor of a course of the quarter who has not checked any of the four boxes (issue
+   * #427): the course (as the feedback names it), the instructor's catalog name and email. The
+   * email is null when the Instructors list has no email for that catalog name.
+   */
+<span class="fc" id="L70">  public static record MissingRow(</span>
+      String courseId, String section, String title, String instructorName, String email) {}
+
+  /** Who has answered about which course: a feedback row with at least one box checked. */
+<span class="fc" id="L74">  private static record Responder(Long recruitmentCourseId, String email) {}</span>
+
+  /**
    * A section of a course: what pairs a course's TA row with its ULA row, as the home page does.
    */
-<span class="fc" id="L63">  private static record SectionKey(String courseId, String section) {</span>
+<span class="fc" id="L79">  private static record SectionKey(String courseId, String section) {</span>
     static SectionKey of(RecruitmentCourse row) {
-<span class="fc" id="L65">      return new SectionKey(row.getCourseId(), row.getSection());</span>
+<span class="fc" id="L81">      return new SectionKey(row.getCourseId(), row.getSection());</span>
     }
   }
 
@@ -71,81 +87,157 @@ import org.springframework.stereotype.Service;
    * is gone (which the foreign key's cascade should not allow) is left out.
    */
   public List&lt;Row&gt; rows(String quarter) {
-<span class="fc" id="L74">    List&lt;InstructorFeedback&gt; feedback = instructorFeedbackRepository.findByQuarter(quarter);</span>
-<span class="fc" id="L75">    Map&lt;Long, RecruitmentCourse&gt; courses =</span>
-<span class="fc" id="L76">        byId(</span>
-<span class="fc" id="L77">            recruitmentCourseRepository.findAllById(</span>
-<span class="fc" id="L78">                feedback.stream()</span>
-<span class="fc" id="L79">                    .map(InstructorFeedback::getRecruitmentCourseId)</span>
-<span class="fc" id="L80">                    .distinct()</span>
-<span class="fc" id="L81">                    .toList()),</span>
+<span class="fc" id="L90">    List&lt;InstructorFeedback&gt; feedback = instructorFeedbackRepository.findByQuarter(quarter);</span>
+<span class="fc" id="L91">    Map&lt;Long, RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L92">        byId(</span>
+<span class="fc" id="L93">            recruitmentCourseRepository.findAllById(</span>
+<span class="fc" id="L94">                feedback.stream()</span>
+<span class="fc" id="L95">                    .map(InstructorFeedback::getRecruitmentCourseId)</span>
+<span class="fc" id="L96">                    .distinct()</span>
+<span class="fc" id="L97">                    .toList()),</span>
             RecruitmentCourse::getId);
-<span class="fc" id="L83">    Map&lt;String, Instructor&gt; instructors =</span>
-<span class="fc" id="L84">        byId(</span>
-<span class="fc" id="L85">            instructorRepository.findAllById(</span>
-<span class="fc" id="L86">                feedback.stream().map(InstructorFeedback::getEmail).distinct().toList()),</span>
+<span class="fc" id="L99">    Map&lt;String, Instructor&gt; instructors =</span>
+<span class="fc" id="L100">        byId(</span>
+<span class="fc" id="L101">            instructorRepository.findAllById(</span>
+<span class="fc" id="L102">                feedback.stream().map(InstructorFeedback::getEmail).distinct().toList()),</span>
             Instructor::getEmail);
-<span class="fc" id="L88">    Map&lt;SectionKey, Integer&gt; ta = allocations(quarter, RecruitmentType.TA);</span>
-<span class="fc" id="L89">    Map&lt;SectionKey, Integer&gt; ula = allocations(quarter, RecruitmentType.ULA);</span>
-<span class="fc" id="L90">    return feedback.stream()</span>
-<span class="fc" id="L91">        .filter(row -&gt; courses.containsKey(row.getRecruitmentCourseId()))</span>
-<span class="fc" id="L92">        .map(</span>
+<span class="fc" id="L104">    Map&lt;SectionKey, Integer&gt; ta = allocations(quarter, RecruitmentType.TA);</span>
+<span class="fc" id="L105">    Map&lt;SectionKey, Integer&gt; ula = allocations(quarter, RecruitmentType.ULA);</span>
+<span class="fc" id="L106">    return feedback.stream()</span>
+<span class="fc" id="L107">        .filter(row -&gt; courses.containsKey(row.getRecruitmentCourseId()))</span>
+<span class="fc" id="L108">        .map(</span>
             row -&gt; {
-<span class="fc" id="L94">              RecruitmentCourse course = courses.get(row.getRecruitmentCourseId());</span>
-<span class="fc" id="L95">              SectionKey key = SectionKey.of(course);</span>
-<span class="fc" id="L96">              return new Row(</span>
-<span class="fc" id="L97">                  row.getId(),</span>
-<span class="fc" id="L98">                  row.getQuarter(),</span>
-<span class="fc" id="L99">                  course.getCourseId(),</span>
-<span class="fc" id="L100">                  course.getSection(),</span>
-<span class="fc" id="L101">                  course.getTitle(),</span>
-<span class="fc" id="L102">                  row.getEmail(),</span>
-<span class="fc" id="L103">                  Optional.ofNullable(instructors.get(row.getEmail()))</span>
-<span class="fc" id="L104">                      .map(Instructor::getCatalogName)</span>
-<span class="fc" id="L105">                      .orElse(null),</span>
-<span class="fc" id="L106">                  row.isAllocReasonable(),</span>
-<span class="fc" id="L107">                  row.isDifferentTACount(),</span>
-<span class="fc" id="L108">                  row.isDifferentULACount(),</span>
-<span class="fc" id="L109">                  row.isOtherConcerns(),</span>
-<span class="fc" id="L110">                  ta.get(key),</span>
-<span class="fc" id="L111">                  ula.get(key),</span>
-<span class="fc bfc" id="L112" title="All 2 branches covered.">                  row.isDifferentTACount() ? row.getNumTAsPreferred() : null,</span>
-<span class="fc bfc" id="L113" title="All 2 branches covered.">                  row.isDifferentULACount() ? row.getNumULAsPreferred() : null,</span>
-<span class="fc" id="L114">                  row.getComments(),</span>
-<span class="fc" id="L115">                  row.getLastUpdated());</span>
+<span class="fc" id="L110">              RecruitmentCourse course = courses.get(row.getRecruitmentCourseId());</span>
+<span class="fc" id="L111">              SectionKey key = SectionKey.of(course);</span>
+<span class="fc" id="L112">              return new Row(</span>
+<span class="fc" id="L113">                  row.getId(),</span>
+<span class="fc" id="L114">                  row.getQuarter(),</span>
+<span class="fc" id="L115">                  course.getCourseId(),</span>
+<span class="fc" id="L116">                  course.getSection(),</span>
+<span class="fc" id="L117">                  course.getTitle(),</span>
+<span class="fc" id="L118">                  row.getEmail(),</span>
+<span class="fc" id="L119">                  Optional.ofNullable(instructors.get(row.getEmail()))</span>
+<span class="fc" id="L120">                      .map(Instructor::getCatalogName)</span>
+<span class="fc" id="L121">                      .orElse(null),</span>
+<span class="fc" id="L122">                  row.isAllocReasonable(),</span>
+<span class="fc" id="L123">                  row.isDifferentTACount(),</span>
+<span class="fc" id="L124">                  row.isDifferentULACount(),</span>
+<span class="fc" id="L125">                  row.isOtherConcerns(),</span>
+<span class="fc" id="L126">                  ta.get(key),</span>
+<span class="fc" id="L127">                  ula.get(key),</span>
+<span class="fc bfc" id="L128" title="All 2 branches covered.">                  row.isDifferentTACount() ? row.getNumTAsPreferred() : null,</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">                  row.isDifferentULACount() ? row.getNumULAsPreferred() : null,</span>
+<span class="fc" id="L130">                  row.getComments(),</span>
+<span class="fc" id="L131">                  row.getLastUpdated());</span>
             })
-<span class="fc" id="L117">        .sorted(</span>
-<span class="fc" id="L118">            Comparator.comparing(Row::courseId)</span>
-<span class="fc" id="L119">                .thenComparing(Row::section, Comparator.nullsFirst(Comparator.naturalOrder()))</span>
-<span class="fc" id="L120">                .thenComparing(Row::email))</span>
-<span class="fc" id="L121">        .toList();</span>
+<span class="fc" id="L133">        .sorted(</span>
+<span class="fc" id="L134">            Comparator.comparing(Row::courseId)</span>
+<span class="fc" id="L135">                .thenComparing(Row::section, Comparator.nullsFirst(Comparator.naturalOrder()))</span>
+<span class="fc" id="L136">                .thenComparing(Row::email))</span>
+<span class="fc" id="L137">        .toList();</span>
   }
 
   /**
-   * The allocation of each section in the quarter's recruitment of one type, leaving out the
-   * courses an admin removed; none when the quarter has no such recruitment.
+   * Every instructor of a course of the quarter who has not checked any of the four boxes: those
+   * with no feedback row for the course, and those whose row has all four unchecked (whatever its
+   * counts or comments). The courses are the non-removed rows of the quarter's TA and ULA
+   * recruitments, a section in both once (named by its TA row, as the feedback is). A course's
+   * instructors are the emails the Instructors list maps its instructors of record's catalog names
+   * to, as the feedback form decides who teaches a course (issue #425); a catalog name with no
+   * email is listed once with a null email. By course id, section, email (no email last) and name.
    */
-  private Map&lt;SectionKey, Integer&gt; allocations(String quarter, RecruitmentType type) {
-<span class="fc" id="L129">    return recruitmentRepository</span>
-<span class="fc" id="L130">        .findByQuarterAndType(quarter, type)</span>
-<span class="fc" id="L131">        .map(</span>
+  public List&lt;MissingRow&gt; missing(String quarter) {
+<span class="fc" id="L150">    Map&lt;SectionKey, RecruitmentCourse&gt; courses = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L151">    Map&lt;SectionKey, Set&lt;String&gt;&gt; names = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L152">    List&lt;RecruitmentCourse&gt; rows = new ArrayList&lt;&gt;(sectionRows(quarter, RecruitmentType.TA));</span>
+<span class="fc" id="L153">    rows.addAll(sectionRows(quarter, RecruitmentType.ULA));</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
+<span class="fc" id="L155">      SectionKey key = SectionKey.of(row);</span>
+<span class="fc" id="L156">      courses.putIfAbsent(key, row);</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">      if (row.getInstructor() != null) {</span>
+<span class="fc" id="L158">        names.computeIfAbsent(key, k -&gt; new TreeSet&lt;&gt;()).add(row.getInstructor());</span>
+      }
+<span class="fc" id="L160">    }</span>
+<span class="fc" id="L161">    Map&lt;String, List&lt;String&gt;&gt; emails =</span>
+<span class="fc" id="L162">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
+<span class="fc" id="L164">            .collect(</span>
+<span class="fc" id="L165">                Collectors.groupingBy(</span>
+                    Instructor::getCatalogName,
+<span class="fc" id="L167">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
+<span class="fc" id="L168">    Set&lt;Responder&gt; responded =</span>
+<span class="fc" id="L169">        instructorFeedbackRepository.findByQuarter(quarter).stream()</span>
+<span class="fc" id="L170">            .filter(InstructorFeedbackReportService::anyChecked)</span>
+<span class="fc" id="L171">            .map(row -&gt; new Responder(row.getRecruitmentCourseId(), row.getEmail()))</span>
+<span class="fc" id="L172">            .collect(Collectors.toSet());</span>
+
+<span class="fc" id="L174">    List&lt;MissingRow&gt; missing = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L175">    courses.forEach(</span>
+        (key, course) -&gt; {
+<span class="fc bfc" id="L177" title="All 2 branches covered.">          for (String name : names.getOrDefault(key, Set.of())) {</span>
+<span class="fc" id="L178">            List&lt;String&gt; theirs = emails.getOrDefault(name, List.of());</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">            if (theirs.isEmpty()) {</span>
+<span class="fc" id="L180">              missing.add(missingRow(course, name, null));</span>
+            }
+<span class="fc bfc" id="L182" title="All 2 branches covered.">            for (String email : theirs) {</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">              if (!responded.contains(new Responder(course.getId(), email))) {</span>
+<span class="fc" id="L184">                missing.add(missingRow(course, name, email));</span>
+              }
+<span class="fc" id="L186">            }</span>
+<span class="fc" id="L187">          }</span>
+<span class="fc" id="L188">        });</span>
+<span class="fc" id="L189">    missing.sort(</span>
+<span class="fc" id="L190">        Comparator.comparing(MissingRow::courseId)</span>
+<span class="fc" id="L191">            .thenComparing(MissingRow::section, Comparator.nullsFirst(Comparator.naturalOrder()))</span>
+<span class="fc" id="L192">            .thenComparing(MissingRow::email, Comparator.nullsLast(Comparator.naturalOrder()))</span>
+<span class="fc" id="L193">            .thenComparing(MissingRow::instructorName));</span>
+<span class="fc" id="L194">    return missing;</span>
+  }
+
+  private static MissingRow missingRow(RecruitmentCourse course, String name, String email) {
+<span class="fc" id="L198">    return new MissingRow(</span>
+<span class="fc" id="L199">        course.getCourseId(), course.getSection(), course.getTitle(), name, email);</span>
+  }
+
+  /** Whether the instructor checked at least one of the four boxes. */
+  private static boolean anyChecked(InstructorFeedback row) {
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    return row.isAllocReasonable()</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">        || row.isDifferentTACount()</span>
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        || row.isDifferentULACount()</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        || row.isOtherConcerns();</span>
+  }
+
+  /**
+   * The non-removed rows of the quarter's recruitment of one type; none when the quarter has no
+   * such recruitment.
+   */
+  private List&lt;RecruitmentCourse&gt; sectionRows(String quarter, RecruitmentType type) {
+<span class="fc" id="L215">    return recruitmentRepository</span>
+<span class="fc" id="L216">        .findByQuarterAndType(quarter, type)</span>
+<span class="fc" id="L217">        .map(</span>
             recruitment -&gt;
-<span class="fc" id="L133">                recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
-<span class="fc bfc" id="L134" title="All 2 branches covered.">                    .filter(row -&gt; !row.isRemoved())</span>
-<span class="fc" id="L135">                    .collect(</span>
-<span class="fc" id="L136">                        Collectors.toMap(</span>
-                            SectionKey::of,
-                            RecruitmentCourse::getAllocation,
-                            // Two rows of one section cannot both be on file (the enroll code
-                            // is unique per recruitment), but keep the first all the same.
-<span class="fc" id="L141">                            (first, second) -&gt; first)))</span>
-<span class="fc" id="L142">        .orElse(Map.of());</span>
+<span class="fc" id="L219">                recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc bfc" id="L220" title="All 2 branches covered.">                    .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L221">                    .toList())</span>
+<span class="fc" id="L222">        .orElse(List.of());</span>
+  }
+
+  /** The allocation of each section in the quarter's recruitment of one type (see sectionRows). */
+  private Map&lt;SectionKey, Integer&gt; allocations(String quarter, RecruitmentType type) {
+<span class="fc" id="L227">    return sectionRows(quarter, type).stream()</span>
+<span class="fc" id="L228">        .collect(</span>
+<span class="fc" id="L229">            Collectors.toMap(</span>
+                SectionKey::of,
+                RecruitmentCourse::getAllocation,
+                // Two rows of one section cannot both be on file (the enroll code is unique per
+                // recruitment), but keep the first all the same.
+<span class="fc" id="L234">                (first, second) -&gt; first));</span>
   }
 
   /** The rows a findAllById returns (each id at most once), by their id. */
   private static &lt;K, V&gt; Map&lt;K, V&gt; byId(Iterable&lt;V&gt; values, Function&lt;V, K&gt; key) {
-<span class="fc" id="L147">    return StreamSupport.stream(values.spliterator(), false)</span>
-<span class="fc" id="L148">        .collect(Collectors.toMap(key, Function.identity()));</span>
+<span class="fc" id="L239">    return StreamSupport.stream(values.spliterator(), false)</span>
+<span class="fc" id="L240">        .collect(Collectors.toMap(key, Function.identity()));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

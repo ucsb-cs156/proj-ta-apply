@@ -39,5 +39,20 @@ import org.springframework.web.bind.annotation.RestController;
           String quarter) {
 <span class="fc" id="L40">    return instructorFeedbackReportService.rows(quarter);</span>
   }
+
+  @Operation(
+      summary = &quot;The instructors of a quarter's courses who have not given feedback&quot;,
+      description =
+          &quot;One entry per course and instructor where the instructor has not checked any of the&quot;
+              + &quot; four boxes, including instructors with no feedback row at all: the course id,&quot;
+              + &quot; section and title, the instructor's catalog name and email (null when the&quot;
+              + &quot; Instructors list has no email for that name). By course id, section and email.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/missing&quot;)
+  public List&lt;InstructorFeedbackReportService.MissingRow&gt; missing(
+      @Parameter(name = &quot;quarter&quot;, description = &quot;YYYYQ, e.g. 20264&quot;) @RequestParam
+          String quarter) {
+<span class="fc" id="L55">    return instructorFeedbackReportService.missing(quarter);</span>
+  }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
