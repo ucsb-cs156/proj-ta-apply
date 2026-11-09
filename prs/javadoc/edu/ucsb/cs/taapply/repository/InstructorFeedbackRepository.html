@@ -58,6 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#findByEmail(java.lang.String)" tabindex="0">findByEmail(String)</a></li>
+<li><a href="#findByQuarter(java.lang.String)" tabindex="0">findByQuarter(String)</a></li>
 <li><a href="#findByQuarterAndEmailAndRecruitmentCourseId(java.lang.String,java.lang.String,java.lang.Long)" tabindex="0">findByQuarterAndEmailAndRecruitmentCourseId(String, String, Long)</a></li>
 </ol>
 </li>
@@ -99,11 +100,16 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Every row of one instructor, in no particular order.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../entity/InstructorFeedback.html" title="class in edu.ucsb.cs.taapply.entity">InstructorFeedback</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByQuarterAndEmailAndRecruitmentCourseId(java.lang.String,java.lang.String,java.lang.Long)" class="member-name-link">findByQuarterAndEmailAndRecruitmentCourseId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/InstructorFeedback.html" title="class in edu.ucsb.cs.taapply.entity">InstructorFeedback</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByQuarter(java.lang.String)" class="member-name-link">findByQuarter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Every row of one quarter (YYYYQ), in no particular order: the admin's page (issue #427).</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../entity/InstructorFeedback.html" title="class in edu.ucsb.cs.taapply.entity">InstructorFeedback</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByQuarterAndEmailAndRecruitmentCourseId(java.lang.String,java.lang.String,java.lang.Long)" class="member-name-link">findByQuarterAndEmailAndRecruitmentCourseId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -127,6 +133,15 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/InstructorFeedback.html" title="class in edu.ucsb.cs.taapply.entity">InstructorFeedback</a>&gt;</span>&nbsp;<span class="element-name">findByEmail</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</span></div>
 <div class="block">Every row of one instructor, in no particular order.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="findByQuarter(java.lang.String)">
+<h3>findByQuarter</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/InstructorFeedback.html" title="class in edu.ucsb.cs.taapply.entity">InstructorFeedback</a>&gt;</span>&nbsp;<span class="element-name">findByQuarter</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</span></div>
+<div class="block">Every row of one quarter (YYYYQ), in no particular order: the admin's page (issue #427).</div>
 </div>
 </section>
 </li>
