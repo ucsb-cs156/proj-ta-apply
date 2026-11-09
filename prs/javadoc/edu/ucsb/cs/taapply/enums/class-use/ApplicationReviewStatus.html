@@ -113,6 +113,13 @@ the order they are declared.</div>
 <div class="col-last even-row-color">
 <div class="block">Whether the person has an application to the recruitment other than one with this status.</div>
 </div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationRepository.</span><code><a href="../../repository/DraftApplicationRepository.html#findConflictsWithApplications(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" class="member-name-link">findConflictsWithApplications</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="../ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a>&nbsp;excluded)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Issue #417: every student with both a draft and an application to one recruitment, leaving out
+the applications with status <code>excluded</code> (CANCELLED: one who cancelled may start again).</div>
+</div>
 </div>
 </section>
 </li>

@@ -61,6 +61,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" tabindex="0">findByRecruitmentIdOrderByIdAsc(Long)</a></li>
 <li><a href="#countByRecruitmentId(java.lang.Long)" tabindex="0">countByRecruitmentId(Long)</a></li>
 <li><a href="#findByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" tabindex="0">findByEmailAndRecruitmentId(String, Long)</a></li>
+<li><a href="#findConflictsWithApplications(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" tabindex="0">findConflictsWithApplications(Long, ApplicationReviewStatus)</a></li>
 </ol>
 </li>
 </ol>
@@ -114,6 +115,13 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Every draft for one recruitment, oldest first (issue #296).</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findConflictsWithApplications(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" class="member-name-link">findConflictsWithApplications</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="../enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a>&nbsp;excluded)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Issue #417: every student with both a draft and an application to one recruitment, leaving out
+the applications with status <code>excluded</code> (CANCELLED: one who cancelled may start again).</div>
+</div>
 </div>
 </div>
 </div>
@@ -164,6 +172,22 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../entity/DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&gt;</span>&nbsp;<span class="element-name">findByEmailAndRecruitmentId</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="findConflictsWithApplications(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)">
+<h3>findConflictsWithApplications</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Query("select new edu.ucsb.cs.taapply.models.DraftConflict(d.email, d.id, a.id) from draft_applications d, applications a where d.recruitmentId = :recruitmentId and a.recruitmentId = d.recruitmentId and a.email = d.email and a.status &lt;&gt; :excluded order by d.email, a.id")
+</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a>&gt;</span>&nbsp;<span class="element-name">findConflictsWithApplications</span><wbr><span class="parameters">(@Param("recruitmentId")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ @Param("excluded")
+ <a href="../enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a>&nbsp;excluded)</span></div>
+<div class="block">Issue #417: every student with both a draft and an application to one recruitment, leaving out
+the applications with status <code>excluded</code> (CANCELLED: one who cancelled may start again).
+One row per draft and application pair, by email and then application id. A join in the
+database, so nothing but the conflicts is loaded.</div>
 </div>
 </section>
 </li>

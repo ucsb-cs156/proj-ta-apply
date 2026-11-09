@@ -300,6 +300,10 @@ allocation an admin can ask for from it.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#allRecruitments()" class="member-name-link">allRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#ALREADY_APPLIED" class="member-name-link">ALREADY_APPLIED</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Why a submission, or a draft, is refused once there is an application.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html#alreadyPresent()" class="member-name-link">alreadyPresent()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>alreadyPresent</code> record component.</div>
@@ -396,6 +400,10 @@ open in a spreadsheet.</div>
 <div class="block">Creates an instance of a <code>ApplicationFields</code> record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html#applicationId()" class="member-name-link">applicationId()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>applicationId</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html#applicationId()" class="member-name-link">applicationId()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>applicationId</code> record component.</div>
 </dd>
@@ -1336,6 +1344,10 @@ saved as they type so that nothing they have written is ever lost.</div>
 <dd>
 <div class="block">The prior coursework rows as JSON.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html#draftApplicationId()" class="member-name-link">draftApplicationId()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>draftApplicationId</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
@@ -1343,6 +1355,25 @@ saved as they type so that nothing they have written is ever lost.</div>
 <div class="block">An applicant's drafts: applications as they are being filled in (issue #270).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#%3Cinit%3E()" class="member-name-link">DraftApplicationsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The writes that keep a student from having both a draft and a finalized application to the same
+recruitment (issue #417).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#%3Cinit%3E()" class="member-name-link">DraftApplicationService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a> - Record Class in <a href="edu/ucsb/cs/taapply/models/package-summary.html">edu.ucsb.cs.taapply.models</a></dt>
+<dd>
+<div class="block">Issue #417: a student who has both a draft and a finalized (not cancelled) application to the
+same recruitment, which is not supposed to be possible: submitting an application deletes the
+draft, and a draft cannot be opened or saved once there is an application.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html#%3Cinit%3E(java.lang.String,java.lang.Long,java.lang.Long)" class="member-name-link">DraftConflict(String, Long, Long)</a> - Constructor for record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>DraftConflict</code> record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#draftConflicts(java.lang.Long)" class="member-name-link">draftConflicts(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#dropIfUnused(java.lang.String,java.lang.String)" class="member-name-link">dropIfUnused(String, String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
 <dd>
@@ -1423,6 +1454,10 @@ open (issue #98).</div>
 <div class="block">Returns the value of the <code>email</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#email()" class="member-name-link">email()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>email</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html#email()" class="member-name-link">email()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>email</code> record component.</div>
 </dd>
@@ -1610,6 +1645,10 @@ gets it back after removing it.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1930,6 +1969,11 @@ and started again (issue #318).</div>
 <dt><a href="edu/ucsb/cs/taapply/repository/AuditTrailRepository.html#findByUlaApplicationIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByUlaApplicationIdOrderByIdAsc(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/AuditTrailRepository.html" title="interface in edu.ucsb.cs.taapply.repository">AuditTrailRepository</a></dt>
 <dd>
 <div class="block">The changes recorded against one ULA application, oldest first.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#findConflictsWithApplications(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" class="member-name-link">findConflictsWithApplications(Long, ApplicationReviewStatus)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
+<dd>
+<div class="block">Issue #417: every student with both a draft and an application to one recruitment, leaving out
+the applications with status <code>excluded</code> (CANCELLED: one who cancelled may start again).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html#findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(String, RecruitmentType)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></dt>
 <dd>
@@ -2309,6 +2353,10 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -3262,6 +3310,11 @@ application form.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/QuarterCalendarController.html#one(java.lang.String)" class="member-name-link">one(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/QuarterCalendarController.html" title="class in edu.ucsb.cs.taapply.controller">QuarterCalendarController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#open(java.lang.String,java.lang.Long)" class="member-name-link">open(String, Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">The student's draft for the recruitment, created empty if there is none; refused if they
+already have an application to it.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html#OPEN" class="member-name-link">OPEN</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/OpenAPIConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">OpenAPIConfig</a> - Class in <a href="edu/ucsb/cs/taapply/config/package-summary.html">edu.ucsb.cs.taapply.config</a></dt>
@@ -3924,6 +3977,10 @@ column is refused with a clear message, never truncated.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/LegacyUlaApplicationCsvService.html#REQUIRED_COLUMNS" class="member-name-link">REQUIRED_COLUMNS</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyUlaApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#requireNoApplication(java.lang.String,java.lang.Long)" class="member-name-link">requireNoApplication(String, Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Refuses (400) a student who already has an application to the recruitment, not cancelled.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#residencyStatus()" class="member-name-link">residencyStatus()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>residencyStatus</code> record component.</div>
@@ -3999,6 +4056,10 @@ effect without requiring re-login.</div>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#samePerson()" class="member-name-link">samePerson()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>samePerson</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#save(edu.ucsb.cs.taapply.entity.DraftApplication)" class="member-name-link">save(DraftApplication)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Saves a draft; refused if the student already has an application to its recruitment.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.html#save(edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.controller.NoticesController.NoticeContent)" class="member-name-link">save(RecruitmentType, NoticesController.NoticeContent)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController</a></dt>
 <dd>&nbsp;</dd>
@@ -4218,6 +4279,10 @@ for; ULA positions are funded for undergraduates only.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#studentStatusNextQuarter()" class="member-name-link">studentStatusNextQuarter()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>studentStatusNextQuarter</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#submit(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">submit(Application)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Saves a newly submitted application and deletes the draft it grew from, in one transaction.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateApplication.html#submittedAt()" class="member-name-link">submittedAt()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateApplication.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateApplication</a></dt>
 <dd>
@@ -4514,6 +4579,10 @@ a ULA application.</div>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.html" title="class in edu.ucsb.cs.taapply.models">CourseSections</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/models/DraftConflict.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/DraftConflict.html" title="class in edu.ucsb.cs.taapply.models">DraftConflict</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>

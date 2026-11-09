@@ -62,6 +62,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -135,6 +137,40 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><span class="type-name-label">DraftApplicationRepository.</span><code><a href="../../repository/DraftApplicationRepository.html#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Every draft for one recruitment, oldest first (issue #296).</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.services">
+<h2>Uses of <a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> that return <a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#open(java.lang.String,java.lang.Long)" class="member-name-link">open</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The student's draft for the recruitment, created empty if there is none; refused if they
+already have an application to it.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#save(edu.ucsb.cs.taapply.entity.DraftApplication)" class="member-name-link">save</a><wbr>(<a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&nbsp;draft)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Saves a draft; refused if the student already has an application to its recruitment.</div>
+</div>
+</div>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#save(edu.ucsb.cs.taapply.entity.DraftApplication)" class="member-name-link">save</a><wbr>(<a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&nbsp;draft)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Saves a draft; refused if the student already has an application to its recruitment.</div>
 </div>
 </div>
 </section>
