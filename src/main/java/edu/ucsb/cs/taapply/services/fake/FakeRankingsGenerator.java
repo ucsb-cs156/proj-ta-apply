@@ -5,10 +5,13 @@ import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,15 +21,31 @@ import org.springframework.stereotype.Service;
  *
  * <p>For each chosen course it ranks as many interested candidates as the course's Ranking Target
  * asks for: twice the allocation (at least one), but never more than there are interested
- * candidates. With {@code includeNotInterested} it also ranks one or two applicants who did not
- * express interest, as an instructor who ranks beyond the list might. Ranks are 1..n in a random
- * order.
+ * candidates. Since issue #414 the candidates are ranked by interest tier, as an instructor would
+ * rank them: those whose first choice the course is come first, then those whose second choice it
+ * is, then the Enthusiastic, then Would Consider; within a tier the order is random. The target is
+ * filled from the tiers in that order, so a Would Consider candidate is ranked only when the first
+ * three tiers together hold fewer candidates than the target, and never while a candidate of a
+ * higher tier is left unranked. With {@code includeNotInterested} it also ranks one or two
+ * applicants who did not express interest, as an instructor who ranks beyond the list might; they
+ * go last, after every interested candidate. Ranks are 1..n in that order.
  */
 @Service
 public class FakeRankingsGenerator {
 
   /** At most this many not-interested applicants are added to a course when asked for. */
   static final int MAX_NOT_INTERESTED = 2;
+
+  /** The interest tiers, strongest first, as {@link AssignmentsService#preference} names them. */
+  static final List<String> TIERS =
+      Arrays.asList(
+          AssignmentsService.FIRST_CHOICE,
+          AssignmentsService.SECOND_CHOICE,
+          AssignmentsService.ENTHUSIASTIC,
+          AssignmentsService.WOULD_CONSIDER);
+
+  /** The tier of an applicant who expressed no interest in the course. */
+  static final int NOT_INTERESTED = -1;
 
   /**
    * @param courses the recruitment's sections
@@ -76,30 +95,48 @@ public class FakeRankingsGenerator {
     return Math.min(Math.max(1, 2 * allocated), interested);
   }
 
+  /**
+   * The interest tier of an applicant for a course: the index in {@link #TIERS} (0 for a first
+   * choice, 3 for Would Consider), or {@link #NOT_INTERESTED} when they expressed none.
+   */
+  static int tier(Application application, String courseId) {
+    return TIERS.indexOf(AssignmentsService.preference(application, courseId));
+  }
+
   private List<CandidateRanking> rankCourse(
       RecruitmentCourse course,
       List<Application> applications,
       boolean includeNotInterested,
       Random random) {
-    List<Application> interested = new ArrayList<>();
+    // One empty list per tier. (Not a counted loop: its bound would be an unkillable mutant.)
+    List<List<Application>> tiers =
+        Stream.generate(() -> new ArrayList<Application>())
+            .limit(TIERS.size())
+            .collect(Collectors.toList());
     List<Application> notInterested = new ArrayList<>();
     for (Application application : applications) {
-      if (AssignmentsService.preference(application, course.getCourseId()) == null) {
+      int tier = tier(application, course.getCourseId());
+      if (tier == NOT_INTERESTED) {
         notInterested.add(application);
       } else {
-        interested.add(application);
+        tiers.get(tier).add(application);
       }
     }
-    Collections.shuffle(interested, random);
+    for (List<Application> tier : tiers) {
+      Collections.shuffle(tier, random);
+    }
     Collections.shuffle(notInterested, random);
 
-    List<Application> ranked =
-        new ArrayList<>(interested.subList(0, target(course.getAllocation(), interested.size())));
+    int interested = tiers.stream().mapToInt(List::size).sum();
+    int target = target(course.getAllocation(), interested);
+    List<Application> ranked = new ArrayList<>();
+    for (List<Application> tier : tiers) {
+      ranked.addAll(tier.subList(0, Math.min(tier.size(), target - ranked.size())));
+    }
     if (includeNotInterested) {
       int extra = Math.min(notInterested.size(), 1 + random.nextInt(MAX_NOT_INTERESTED));
       ranked.addAll(notInterested.subList(0, extra));
     }
-    Collections.shuffle(ranked, random);
 
     List<CandidateRanking> rows = new ArrayList<>();
     for (int i = 0; i < ranked.size(); i++) {
