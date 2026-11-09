@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.css";
+// The app's own CSS, after Bootstrap as main.tsx loads it, so stories and Chromatic show it too.
+import "../src/index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { mswLoader } from "msw-storybook-addon/csf3";
