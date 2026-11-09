@@ -3,10 +3,6 @@ import type { RecruitmentCourse } from "main/components/Recruitments/Recruitment
 import type { DetailsColumn } from "main/components/Common/DetailsTable";
 import type { CourseTargets } from "main/utils/courseTargets";
 
-/** Where faculty will one day comment on their allocations (issue #364); the feature is later. */
-export const FEEDBACK_PLACEHOLDER =
-  "Coming soon: the ability for faculty to provide feedback on allocations of TA/ULAs to their courses";
-
 /** Shown while faculty reviews have not opened, in place of the ranking button. */
 export const NOT_OPEN_NOTE =
   "Candidate rankings will be available when faculty reviews open.";

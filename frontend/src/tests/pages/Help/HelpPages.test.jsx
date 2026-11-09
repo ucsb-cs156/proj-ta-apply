@@ -430,7 +430,7 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByTestId("HelpInstructorsPage-home-cards"),
     ).toHaveTextContent(
-      "your home page has an Instructor section with one card per quarter, newest first, for each quarter in which you teach a course that is in a TA or ULA recruitment. The card's header is the quarter; under it is a drop-down for each of your courses in that quarter's recruitments (a course in both the TA and the ULA recruitment appears once). Open a course to see its enrollment table (Section, Enrolled, Max, Enrollment Estimate, TA Allocation and ULA Allocation, always all six; the Enrollment Estimate reads TBD until an admin releases the allocations of either recruitment, an Allocation cell reads TBD until that recruitment's allocations are released, and N/A when the course is not in a recruitment of that type), a note where you will one day be able to comment on your allocations, and then a TA card and/or a ULA card: one for each recruitment the course is in, with that recruitment's status and dates.",
+      "your home page has an Instructor section with one card per quarter, newest first, for each quarter in which you teach a course that is in a TA or ULA recruitment. The card's header is the quarter; under it is a drop-down for each of your courses in that quarter's recruitments (a course in both the TA and the ULA recruitment appears once). Open a course to see its enrollment table (Section, Enrolled, Max, Enrollment Estimate, TA Allocation and ULA Allocation, always all six; the Enrollment Estimate reads TBD until an admin releases the allocations of either recruitment, an Allocation cell reads TBD until that recruitment's allocations are released, and N/A when the course is not in a recruitment of that type), a place to give feedback on your allocations (see below), and then a TA card and/or a ULA card: one for each recruitment the course is in, with that recruitment's status and dates.",
     );
     // Issue #410: the card shows the review dates only; the allocation columns are always there.
     expect(
@@ -448,6 +448,17 @@ describe("Help pages (issue #140)", () => {
     );
     // Issue #364: the Courses button is gone from the home page, so it is no longer described.
     expect(allocations).not.toHaveTextContent(/Courses button/);
+    expect(
+      screen.getByText(/When faculty reviews are open, expand one/),
+    ).toHaveTextContent(
+      "After reviews close, the link changes to View Candidate Rankings.",
+    );
+    // Issue #425: the allocation feedback form.
+    expect(
+      screen.getByTestId("HelpInstructorsPage-feedback"),
+    ).toHaveTextContent(
+      "Each course also has a feedback form on your allocation. Until the admin releases the quarter's allocations (the TA allocations in a quarter with only a TA recruitment, the ULA ones in a quarter with only a ULA recruitment, and both in a quarter with both), the course says what it is waiting for. Then the form appears: tick at least one of the boxes (the allocation seems reasonable; you would prefer a different number of TAs or of ULAs, which then asks how many; you have other concerns) and, if you like, write comments of up to 2048 characters. Everything is saved as you go, and Last saved shows when. Under the form, Notes on TA/ULA tradeoffs opens to show the quarter's estimated cost of a TA and of a ULA, and so how many ULAs cost the same as one TA.",
+    );
     // Issue #366: the all-courses setting is no longer offered, so it is no longer described.
     expect(allocations).not.toHaveTextContent(/all courses to all faculty/);
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();

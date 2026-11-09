@@ -7,6 +7,7 @@ import edu.ucsb.cs.taapply.entity.CatalogName;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
@@ -149,14 +150,17 @@ public class HomePageWebIT extends WebTestCase {
     page.getByTestId(header).getByRole(com.microsoft.playwright.options.AriaRole.BUTTON).click();
     // Nothing released (issue #410): all six columns; Enrollment Estimate and TA Allocation read
     // TBD (the TA recruitment has not released) and ULA Allocation N/A (there is no ULA
-    // recruitment), then the feedback placeholder.
+    // recruitment), then the feedback area, which waits for the TA allocations (issue #425).
     assertThat(page.getByTestId(course + "-enrollment").locator("thead th")).hasCount(6);
     assertThat(page.getByTestId(course + "-section")).hasText("0100");
     assertThat(page.getByTestId(course + "-enrollment-estimate")).hasText("TBD");
     assertThat(page.getByTestId(course + "-ta-allocation")).hasText("TBD");
     assertThat(page.getByTestId(course + "-ula-allocation")).hasText("N/A");
-    assertThat(page.getByTestId(course + "-feedback"))
-        .containsText("Coming soon: the ability for faculty to provide feedback");
+    assertThat(page.getByTestId(course + "-feedback-waiting"))
+        .hasText(
+            "When initial TA allocations have been released to faculty, you will be given an"
+                + " opportunity here to provide feedback");
+    assertThat(page.getByTestId(course + "-feedback-form")).hasCount(0);
     // The TA card carries the recruitment's status and, since issue #410, only the faculty review
     // dates: the application dates are not on it. There is no ULA recruitment, so no ULA card.
     assertThat(page.getByTestId(course + "-TA-type")).hasText("TA");
@@ -176,5 +180,94 @@ public class HomePageWebIT extends WebTestCase {
                     new com.microsoft.playwright.Locator.GetByRoleOptions().setName("Courses")))
         .hasCount(0);
     assertThat(page.getByTestId("HomePageLoggedIn-instructor-none")).not().isVisible();
+  }
+
+  /**
+   * Issue #425: the course waits for the allocations; once the admin releases them the feedback
+   * form appears, and what the instructor checks and types is saved as they go and is still there
+   * after a reload, with when it was last saved.
+   */
+  @Test
+  public void an_instructor_gives_feedback_once_the_allocations_are_released() throws Exception {
+    Recruitment recruitment =
+        recruitmentRepository.save(
+            Recruitment.builder()
+                .quarter("20261")
+                .type(RecruitmentType.TA)
+                .applicationStatus(ApplicationStatus.CLOSED)
+                .tentativeOpeningDate(LocalDate.of(2026, 1, 5))
+                .primaryConsiderationDate(LocalDate.of(2026, 1, 20))
+                .build());
+    RecruitmentCourse mine =
+        recruitmentCourseRepository.save(
+            RecruitmentCourse.builder()
+                .recruitmentId(recruitment.getId())
+                .courseId("CMPSC   156")
+                .enrollCode("07492")
+                .section("0100")
+                .title("ADV APP PROGRAM")
+                .instructor("CONRAD P")
+                .allocation(2)
+                .build());
+    catalogNameRepository.save(CatalogName.builder().name("CONRAD P").build());
+    setupInstructorUser();
+    instructors.save(
+        Instructor.builder().email("instructor@ucsb.edu").catalogName("CONRAD P").build());
+    reloadPage(page);
+
+    String course = "HomePageLoggedIn-instructor-recruitments-quarter-20261-course-" + mine.getId();
+    String form = course + "-feedback";
+    page.getByTestId(course + "-header")
+        .getByRole(com.microsoft.playwright.options.AriaRole.BUTTON)
+        .click();
+    // Before the release: the waiting message, no form.
+    assertThat(page.getByTestId(form + "-waiting"))
+        .containsText("When initial TA allocations have been released to faculty");
+    assertThat(page.getByTestId(form + "-form")).hasCount(0);
+
+    // The admin releases the TA allocations.
+    recruitment.setAllocationVisibility(AllocationVisibility.OWN_COURSES);
+    recruitmentRepository.save(recruitment);
+    reloadPage(page);
+    page.getByTestId(course + "-header")
+        .getByRole(com.microsoft.playwright.options.AriaRole.BUTTON)
+        .click();
+
+    assertThat(page.getByTestId(form + "-form")).isVisible();
+    assertThat(page.getByTestId(form + "-waiting")).hasCount(0);
+    assertThat(page.getByTestId(form + "-last-saved")).hasText("Last saved: never");
+    assertThat(page.getByTestId(form + "-at-least-one")).isVisible();
+    // A TA-only quarter: no ULA line.
+    assertThat(page.getByTestId(form + "-differentULACount-line")).hasCount(0);
+
+    page.getByTestId(form + "-differentTACount").check();
+    // The saves go one after another, so once the comments' save is answered all of them are.
+    page.waitForResponse(
+        response ->
+            response.request().method().equals("PUT")
+                && response.url().contains("/api/instructor/feedback")
+                && response.request().postData().contains("fourth lab"),
+        () -> {
+          page.getByTestId(form + "-numTAsPreferred").fill("3");
+          page.getByTestId(form + "-comments").fill("One more TA would let us open a fourth lab.");
+          page.getByTestId(form + "-comments").blur();
+        });
+    assertThat(page.getByTestId(form + "-last-saved")).not().hasText("Last saved: never");
+    assertThat(page.getByTestId(form + "-at-least-one")).hasCount(0);
+
+    reloadPage(page);
+    page.getByTestId(course + "-header")
+        .getByRole(com.microsoft.playwright.options.AriaRole.BUTTON)
+        .click();
+    assertThat(page.getByTestId(form + "-differentTACount")).isChecked();
+    assertThat(page.getByTestId(form + "-allocReasonable")).not().isChecked();
+    assertThat(page.getByTestId(form + "-numTAsPreferred")).hasValue("3");
+    assertThat(page.getByTestId(form + "-comments"))
+        .hasValue("One more TA would let us open a fourth lab.");
+    assertThat(page.getByTestId(form + "-last-saved")).containsText("Last saved: ");
+    assertThat(page.getByTestId(form + "-last-saved")).not().hasText("Last saved: never");
+    // The tradeoff notes are there, closed.
+    assertThat(page.getByTestId(form + "-notes-summary")).hasText("Notes on TA/ULA tradeoffs");
+    assertThat(page.getByTestId(form + "-notes-ratio")).not().isVisible();
   }
 }

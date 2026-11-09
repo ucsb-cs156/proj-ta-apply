@@ -1,9 +1,25 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import axios from "axios";
+import AxiosMockAdapter from "axios-mock-adapter";
 
 import InstructorRecruitmentCards from "main/components/Instructor/InstructorRecruitmentCards";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
+import {
+  WAITING_FOR_BOTH,
+  WAITING_FOR_TA,
+  WAITING_FOR_ULA,
+} from "main/utils/instructorFeedback";
+
+// The feedback form (issue #425) reads the instructor's rows and the quarter's costs.
+const axiosMock = new AxiosMockAdapter(axios);
+beforeEach(() => {
+  axiosMock.reset();
+  axiosMock.onGet("/api/instructor/feedback").reply(200, []);
+  axiosMock.onGet("/api/instructor/feedback/costs").reply(200, null);
+});
 
 const { nothingReleased, taReleased, ulaReleased, bothReleased } =
   instructorRecruitmentsFixtures.quarters;
@@ -19,14 +35,16 @@ const headings = (table) =>
 const before = (a, b) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
-function renderCards(recruitments = nothingReleased) {
+const renderWithClient = (ui) =>
   render(
-    <MemoryRouter>
-      <InstructorRecruitmentCards
-        recruitments={recruitments}
-        testIdPrefix="I"
-      />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+
+function renderCards(recruitments = nothingReleased) {
+  renderWithClient(
+    <InstructorRecruitmentCards recruitments={recruitments} testIdPrefix="I" />,
   );
 }
 
@@ -374,33 +392,106 @@ describe("InstructorRecruitmentCards tests", () => {
     ).toHaveTextContent("1");
   });
 
-  test("the feedback placeholder sits under the table, before the recruitment cards", () => {
+  test("the feedback area sits under the table, before the recruitment cards", () => {
     renderCards(bothReleased);
 
-    const placeholder = screen.getByTestId(`${W26}-course-2-feedback`);
-    expect(placeholder).toHaveTextContent(
-      "Coming soon: the ability for faculty to provide feedback on allocations of TA/ULAs to their courses",
-    );
-    expect(placeholder).toHaveClass("border", "rounded", "p-2", "text-muted");
+    const feedback = screen.getByTestId(`${W26}-course-2-feedback`);
+    expect(feedback).toHaveClass("border", "rounded", "p-2");
+    expect(feedback).not.toHaveClass("text-muted");
     const body = screen.getByTestId(`${W26}-course-2-body`);
-    expect(within(body).getByTestId(`${W26}-course-2-feedback`)).toBe(
-      placeholder,
-    );
+    expect(within(body).getByTestId(`${W26}-course-2-feedback`)).toBe(feedback);
     expect(body.firstElementChild).toHaveClass(
       "d-flex",
       "flex-column",
       "gap-3",
     );
     expect(
-      before(screen.getByTestId(`${W26}-course-2-enrollment`), placeholder),
+      before(screen.getByTestId(`${W26}-course-2-enrollment`), feedback),
     ).toBe(true);
     expect(
-      before(placeholder, screen.getByTestId(`${W26}-course-2-TA-card`)),
+      before(feedback, screen.getByTestId(`${W26}-course-2-TA-card`)),
     ).toBe(true);
-    // One per course, whatever the number of recruitments it is in.
+  });
+
+  // Issue #425: what the feedback area says until the quarter's allocations are released.
+  test("nothing released: a quarter with both recruitments waits for both, a TA-only one for TA", () => {
+    renderCards();
+
+    const waiting = screen.getByTestId(`${W26}-course-2-feedback-waiting`);
+    expect(waiting.textContent).toBe(WAITING_FOR_BOTH);
+    expect(waiting).toHaveClass("text-muted");
+    expect(waiting.parentElement).toBe(
+      screen.getByTestId(`${W26}-course-2-feedback`),
+    );
     expect(
-      screen.getAllByText(/Coming soon: the ability for faculty/),
-    ).toHaveLength(4);
+      screen.getByTestId(`${S26}-course-6-feedback-waiting`).textContent,
+    ).toBe(WAITING_FOR_TA);
+    // One per course, whatever the number of recruitments it is in; no form anywhere.
+    expect(screen.getAllByText(WAITING_FOR_BOTH)).toHaveLength(3);
+    expect(screen.getAllByText(WAITING_FOR_TA)).toHaveLength(1);
+    expect(screen.queryByTestId(`${W26}-course-2-feedback-form`)).toBeNull();
+  });
+
+  test("one of two released: still waiting for both", () => {
+    renderCards(taReleased);
+    expect(screen.getAllByText(WAITING_FOR_BOTH)).toHaveLength(3);
+    cleanup();
+    renderCards(ulaReleased);
+    expect(screen.getAllByText(WAITING_FOR_BOTH)).toHaveLength(3);
+    expect(screen.queryByTestId(`${W26}-course-1-feedback-form`)).toBeNull();
+  });
+
+  test("both released: every course of the quarter has the form; the other quarter still waits", () => {
+    renderCards(bothReleased);
+
+    for (const course of [1, 2, 3]) {
+      expect(
+        screen.getByTestId(`${W26}-course-${course}-feedback-form`),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(`${W26}-course-${course}-feedback-waiting`),
+      ).toBeNull();
+    }
+    expect(screen.queryByText(WAITING_FOR_BOTH)).toBeNull();
+    expect(
+      screen.getByTestId(`${S26}-course-6-feedback-waiting`).textContent,
+    ).toBe(WAITING_FOR_TA);
+    // The quarter has both recruitments, so both lines are there.
+    expect(
+      screen.getByTestId(`${W26}-course-1-feedback-differentTACount-line`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`${W26}-course-1-feedback-differentULACount-line`),
+    ).toBeInTheDocument();
+  });
+
+  test("a ULA-only quarter waits for the ULA allocations, then shows the form with no TA line", () => {
+    renderCards([w26Ula]);
+    expect(
+      screen.getByTestId(`${W26}-course-1-feedback-waiting`).textContent,
+    ).toBe(WAITING_FOR_ULA);
+    cleanup();
+
+    renderCards([ulaReleased[2]]);
+    expect(
+      screen.getByTestId(`${W26}-course-1-feedback-form`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(`${W26}-course-1-feedback-differentTACount-line`),
+    ).toBeNull();
+    expect(
+      screen.getByTestId(`${W26}-course-1-feedback-differentULACount-line`),
+    ).toBeInTheDocument();
+  });
+
+  test("a TA-only quarter shows the form once its TA allocations are released", () => {
+    renderCards([{ ...s26Ta, allocationsReleased: true }]);
+    expect(
+      screen.getByTestId(`${S26}-course-6-feedback-form`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(`${S26}-course-6-feedback-differentULACount-line`),
+    ).toBeNull();
   });
 
   // ---- level 4: the TA card and the ULA card ----
@@ -743,10 +834,8 @@ describe("InstructorRecruitmentCards tests", () => {
   // ---- odds and ends ----
 
   test("odd input renders nothing rather than crashing", () => {
-    render(
-      <MemoryRouter>
-        <InstructorRecruitmentCards recruitments={undefined} testIdPrefix="I" />
-      </MemoryRouter>,
+    renderWithClient(
+      <InstructorRecruitmentCards recruitments={undefined} testIdPrefix="I" />,
     );
     expect(screen.getByTestId("I").children).toHaveLength(0);
     cleanup();
@@ -769,11 +858,7 @@ describe("InstructorRecruitmentCards tests", () => {
   });
 
   test("the default test id prefix is the component name", () => {
-    render(
-      <MemoryRouter>
-        <InstructorRecruitmentCards recruitments={[w26Ula]} />
-      </MemoryRouter>,
-    );
+    renderWithClient(<InstructorRecruitmentCards recruitments={[w26Ula]} />);
     expect(
       screen.getByTestId("InstructorRecruitmentCards-quarter-20261-quarter"),
     ).toHaveTextContent("W26");
