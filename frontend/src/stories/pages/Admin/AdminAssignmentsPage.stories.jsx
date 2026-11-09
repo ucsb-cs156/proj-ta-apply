@@ -56,6 +56,11 @@ export default {
 
 const Template = () => <AdminAssignmentsPage />;
 
+/**
+ * Issue #415: each lecture column is 100px wide with "To Assign" (not "Left") as the third, smaller
+ * count line, and the cell of the lecture each row is pencilled into (Ada's CMPSC 8, Grace's and
+ * Alan's CMPSC 16) has a thick black outline. Moving Ada to CMPSC 24 moves her outline.
+ */
 export const Default = Template.bind({});
 
 export const UlaRecruitment = Template.bind({});
@@ -99,7 +104,8 @@ Published.parameters = {
  * Issue #355: nine lectures, with two sections each of CMPSC 8 and CMPSC 190DD. The lecture
  * headings, the Tentative Assignment dropdown and the Columns menu name them "  5A", "  8   (0100)",
  * " 16", "130A", "190DD (0200)": no CMPSC, the digits aligned, the section only where a course has
- * two. Each lecture column is as wide as "190DD (0100)", and so is the dropdown.
+ * two. Each lecture column is 100px wide (issue #415), which "190DD (0100)" fits at the heading
+ * name's 80% size; the dropdown is as wide as that name.
  */
 export const ManyCourses = Template.bind({});
 ManyCourses.parameters = {

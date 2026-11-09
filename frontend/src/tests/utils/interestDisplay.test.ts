@@ -5,13 +5,10 @@ import {
   INCLUDE_NOT_INTERESTED_LABEL,
   INTEREST_LEGEND,
   interestDisplay,
-  LIGHT_GREEN,
   NOT_INTERESTED,
   NOT_INTERESTED_LABEL,
   NOT_INTERESTED_FORCED_TOOLTIP,
   NOT_INTERESTED_WARNING,
-  PALE_RED,
-  PALE_YELLOW,
   SECOND_CHOICE,
   WOULD_CONSIDER,
 } from "main/utils/interestDisplay";
@@ -26,21 +23,16 @@ describe("interestDisplay", () => {
     expect(NOT_INTERESTED_LABEL).toBe("Not Interested/Not Applicable");
   });
 
-  test("the colours are Bootstrap's pastels", () => {
-    expect(LIGHT_GREEN).toBe("#d1e7dd");
-    expect(PALE_YELLOW).toBe("#fff3cd");
-    expect(PALE_RED).toBe("#f8d7da");
-  });
-
+  // Issue #415: the background is a class in index.css, not an inline colour.
   test("first and second choice are green with a large numbered mark", () => {
     expect(interestDisplay("1st Choice")).toEqual({
-      background: "#d1e7dd",
+      className: "candidate-course-rank-enthusiastic",
       symbol: "➊",
       large: true,
       description: "Applicant's 1st choice",
     });
     expect(interestDisplay("2nd Choice")).toEqual({
-      background: "#d1e7dd",
+      className: "candidate-course-rank-enthusiastic",
       symbol: "➋",
       large: true,
       description: "Applicant's 2nd choice",
@@ -49,13 +41,13 @@ describe("interestDisplay", () => {
 
   test("enthusiastic is green with a tick, would consider yellow with a bar", () => {
     expect(interestDisplay("Enthusiastic")).toEqual({
-      background: "#d1e7dd",
+      className: "candidate-course-rank-enthusiastic",
       symbol: "✓",
       large: false,
       description: "Applicant is enthusiastic about this course",
     });
     expect(interestDisplay("Would Consider")).toEqual({
-      background: "#fff3cd",
+      className: "candidate-course-rank-would-consider",
       symbol: "▬",
       large: false,
       description: "Applicant would consider this course",
@@ -64,7 +56,7 @@ describe("interestDisplay", () => {
 
   test("anything else is the red not-interested display", () => {
     const notInterested = {
-      background: "#f8d7da",
+      className: "candidate-course-rank-not-applicable",
       symbol: "✖",
       large: false,
       description: "Applicant marked this course Not Interested/Not Applicable",

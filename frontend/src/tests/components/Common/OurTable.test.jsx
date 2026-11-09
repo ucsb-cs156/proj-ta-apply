@@ -291,6 +291,40 @@ describe("OurTable tests", () => {
     );
   });
 
+  // ---- Issue #415 ----
+
+  test("a column's meta.className goes on its heading, cells and footer; a column without one has no class", () => {
+    const columns = [
+      { Header: "Name", accessor: "name", footer: "Total" },
+      {
+        Header: "Age",
+        accessor: "age",
+        footer: "99",
+        meta: { className: "age-column", style: { width: "1%" } },
+      },
+    ];
+    render(
+      <OurTable
+        data={[{ name: "Ann", age: 1 }]}
+        columns={columns}
+        testid="cls"
+      />,
+    );
+    expect(screen.getByTestId("cls-header-age")).toHaveClass("age-column");
+    expect(screen.getByTestId("cls-cell-row-0-col-age")).toHaveClass(
+      "age-column",
+    );
+    expect(screen.getByTestId("cls-footer-age")).toHaveClass("age-column");
+    // The style still applies alongside the class.
+    expect(screen.getByTestId("cls-header-age").style.width).toBe("1%");
+    expect(screen.getByTestId("cls-cell-row-0-col-age").style.width).toBe("1%");
+    expect(screen.getByTestId("cls-header-name")).not.toHaveAttribute("class");
+    expect(screen.getByTestId("cls-cell-row-0-col-name")).not.toHaveAttribute(
+      "class",
+    );
+    expect(screen.getByTestId("cls-footer-name")).not.toHaveAttribute("class");
+  });
+
   // ---- Issue #314 ----
 
   test("hideLinks puts a small hide link over each listed column only, and it reports the column", async () => {

@@ -97,25 +97,36 @@ describe("AssignmentsTable tests (issue #179)", () => {
     expect(screen.getByTestId("T-course-10-assigned").textContent).toBe(
       "  Assigned 1",
     );
+    // Issue #415: "To Assign" (it was "Left"), still right-aligned under "Allocation", and the
+    // three count lines a size smaller than `small` (the course-heading-count class in index.css).
     expect(screen.getByTestId("T-course-10-left").textContent).toBe(
-      "      Left 1",
+      " To Assign 1",
     );
     expect(screen.getByTestId("T-course-10-left")).not.toHaveClass(
       "text-danger",
     );
-    expect(screen.getByTestId("T-course-10-left")).toHaveClass(
-      "small",
-      "fw-normal",
+    for (const line of ["allocation", "assigned", "left"]) {
+      const element = screen.getByTestId(`T-course-10-${line}`);
+      expect(element).toHaveClass("course-heading-count", "fw-normal");
+      expect(element).not.toHaveClass("small");
+      expect(element).not.toHaveAttribute("style");
+    }
+    expect(screen.getByTestId("T-course-20-left")).toHaveTextContent(
+      "To Assign -1",
     );
-    expect(screen.getByTestId("T-course-20-left")).toHaveTextContent("Left -1");
     expect(screen.getByTestId("T-course-20-left")).toHaveClass(
-      "small",
+      "course-heading-count",
       "fw-normal",
       "text-danger",
     );
-    expect(screen.getByTestId("T-course-30-left")).toHaveTextContent("Left 0");
+    expect(screen.getByTestId("T-course-30-left")).toHaveTextContent(
+      "To Assign 0",
+    );
     expect(screen.getByTestId("T-course-30-left")).not.toHaveClass(
       "text-danger",
+    );
+    expect(screen.getByTestId("T-header-course-10")).not.toHaveTextContent(
+      "Left",
     );
     // Only a lecture no longer offered carries the badge.
     expect(screen.getByTestId("T-course-30-historical")).toHaveTextContent(
@@ -167,27 +178,45 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "  Assigned 2",
     );
     expect(screen.getByTestId("M-course-105-left").textContent).toBe(
-      "      Left -1",
+      " To Assign -1",
     );
   });
 
-  test("a lecture heading is monospace with its spaces kept, and as wide as the longest possible name", () => {
+  test("a lecture heading is monospace with its spaces kept, in a 100px column (issue #415)", () => {
     render(
       <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
     );
+    // The classes are in index.css: course-label is the monospace font with white-space: pre,
+    // course-heading-label the smaller name, so that "190DD (0100)" fits the 100px column.
     const header = screen.getByTestId("T-course-10-header");
-    expect(header).toHaveClass("font-monospace");
-    expect(header.style.whiteSpace).toBe("pre");
-    expect(header.style.minWidth).toBe("12ch");
-    // The column itself is no wider than its heading: the slack goes to the applicant's columns.
+    expect(header).toHaveClass("course-label");
+    expect(header).not.toHaveClass("font-monospace");
+    expect(header).not.toHaveAttribute("style");
+    expect(screen.getByTestId("T-course-10-label")).toHaveClass(
+      "course-heading-label",
+    );
+    // The heading and every cell of the column carry course-column (100px, right-aligned, nowrap),
+    // through OurTable's column meta; nothing is styled inline.
     const th = screen.getByTestId("T-header-course-10");
-    expect(th.style.width).toBe("1%");
-    expect(th.style.whiteSpace).toBe("nowrap");
-    expect(th.style.textAlign).toBe("right");
+    expect(th).toHaveClass("course-column");
+    expect(th.style.width).toBe("");
+    expect(th.style.textAlign).toBe("");
     const td = screen.getByTestId("T-cell-row-0-col-course-10");
-    expect(td.style.width).toBe("1%");
-    expect(td.style.whiteSpace).toBe("nowrap");
-    expect(td.style.textAlign).toBe("right");
+    expect(td).toHaveClass("course-column");
+    expect(td).not.toHaveAttribute("style");
+    expect(screen.getByTestId("T-cell-row-3-col-course-30")).toHaveClass(
+      "course-column",
+    );
+    // The other columns do not.
+    expect(screen.getByTestId("T-header-email")).not.toHaveClass(
+      "course-column",
+    );
+    expect(screen.getByTestId("T-header-tentativeAssignment")).not.toHaveClass(
+      "course-column",
+    );
+    expect(screen.getByTestId("T-cell-row-0-col-email")).not.toHaveClass(
+      "course-column",
+    );
   });
 
   test("the dropdown lists the same names, their spaces non-breaking, in a monospace select just wide enough for the longest", () => {
@@ -216,9 +245,14 @@ describe("AssignmentsTable tests (issue #179)", () => {
       nbsp("190DD (0100)"),
       nbsp("190DD (0200)"),
     ]);
-    expect(select).toHaveClass("font-monospace", "form-select-sm");
-    expect(select.style.whiteSpace).toBe("pre");
-    expect(select.style.width).toBe("calc(12ch + 2px + 2.75rem)");
+    // Issue #415: the monospace, spaces-kept font is the course-label class; the width, worked out
+    // from the longest label, stays inline.
+    expect(select).toHaveClass("course-label", "form-select-sm");
+    expect(select).not.toHaveClass("font-monospace");
+    expect(select.style.whiteSpace).toBe("");
+    expect(select.getAttribute("style")).toBe(
+      "width: calc(12ch + 2px + 2.75rem);",
+    );
     expect(select).toHaveValue("101");
   });
 
@@ -300,9 +334,10 @@ describe("AssignmentsTable tests (issue #179)", () => {
     expect(screen.getByTestId("T-cell-row-0-course-30-rank").textContent).toBe(
       "",
     );
-    expect(screen.getByTestId("T-cell-row-0-col-course-10")).toHaveStyle({
-      textAlign: "right",
-    });
+    // Right-aligned by the course-column class (issue #415), not inline.
+    expect(screen.getByTestId("T-cell-row-0-col-course-10")).toHaveClass(
+      "course-column",
+    );
     expect(screen.getByTestId("T-cell-row-2-col-course-30")).toHaveTextContent(
       "1",
     );
@@ -383,7 +418,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "blank@ucsb.edu",
     ]);
     expect(screen.getByTestId("T-header-course-10")).toHaveTextContent(
-      "8Allocation 2 Assigned 1 Left 1",
+      "8Allocation 2 Assigned 1 To Assign 1",
     );
 
     // The second click reverses the order; applicants who tie (Grace and the blank applicant,
@@ -396,7 +431,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "ada@ucsb.edu",
     ]);
     expect(screen.getByTestId("T-header-course-10")).toHaveTextContent(
-      "8Allocation 2 Assigned 1 Left 1",
+      "8Allocation 2 Assigned 1 To Assign 1",
     );
 
     // A third click clears the sort.
@@ -576,7 +611,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "GPA (Overall)",
       "Previous ULA Quarters",
       "Tentative Assignment",
-      "156Allocation 3  Assigned 0      Left 3",
+      "156Allocation 3  Assigned 0 To Assign 3",
     ]);
     expect(
       screen.getByTestId("AssignmentsTable-cell-row-0-col-gpaMajor"),
@@ -619,18 +654,20 @@ describe("AssignmentsTable tests (issue #179)", () => {
       screen.getByTestId(`T-cell-row-${row}-course-${course}-rank`);
 
     // Ada: 1st choice for CMPSC 8 (rank 1), Would Consider CMPSC 16 (rank 3), nothing for 24.
-    expect(cell(0, 10).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    // Issue #415: the colours are classes in index.css, not inline backgrounds.
+    expect(cell(0, 10)).toHaveClass("candidate-course-rank-enthusiastic");
     expect(mark(0, 10)).toHaveTextContent("➊");
-    expect(mark(0, 10).style.fontSize).toBe("120%");
+    expect(mark(0, 10)).toHaveClass("interest-mark-large");
     expect(rank(0, 10)).toHaveTextContent("1");
-    expect(cell(0, 20).style.backgroundColor).toBe("rgb(255, 243, 205)");
+    expect(cell(0, 20)).toHaveClass("candidate-course-rank-would-consider");
     expect(mark(0, 20)).toHaveTextContent("▬");
+    expect(mark(0, 20)).not.toHaveClass("interest-mark-large");
     expect(rank(0, 20)).toHaveTextContent("3");
-    expect(cell(0, 30).style.backgroundColor).toBe("rgb(248, 215, 218)");
+    expect(cell(0, 30)).toHaveClass("candidate-course-rank-not-applicable");
     expect(mark(0, 30)).toHaveTextContent("✖");
     expect(rank(0, 30).textContent).toBe("");
     // Grace: Enthusiastic about 16, 2nd choice 24.
-    expect(cell(1, 20).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    expect(cell(1, 20)).toHaveClass("candidate-course-rank-enthusiastic");
     expect(mark(1, 20)).toHaveTextContent("✓");
     expect(mark(1, 30)).toHaveTextContent("➋");
     expect(cell(0, 10)).toHaveClass(
@@ -639,10 +676,73 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "align-items-center",
       "px-1",
     );
-    expect(screen.getByTestId("T-cell-row-0-col-course-20")).toHaveStyle({
-      textAlign: "right",
-    });
+    expect(cell(0, 10)).not.toHaveAttribute("style");
+    expect(cell(0, 20)).not.toHaveAttribute("style");
     expect(mark(0, 10)).toHaveAttribute("title", "Applicant's 1st choice");
+  });
+
+  // ---- issue #415: the cell of the row's tentative assignment is outlined ----
+
+  test("the lecture cell matching the row's tentative assignment has the selected class and nothing else changes", () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    const cell = (row, course) =>
+      screen.getByTestId(`T-cell-row-${row}-course-${course}`);
+
+    // Ada is in CMPSC 8, Grace and Alan in CMPSC 16, the blank applicant nowhere.
+    expect(cell(0, 10)).toHaveClass("selected-course-assignment-cell");
+    expect(cell(0, 20)).not.toHaveClass("selected-course-assignment-cell");
+    expect(cell(0, 30)).not.toHaveClass("selected-course-assignment-cell");
+    expect(cell(1, 10)).not.toHaveClass("selected-course-assignment-cell");
+    expect(cell(1, 20)).toHaveClass("selected-course-assignment-cell");
+    expect(cell(2, 20)).toHaveClass("selected-course-assignment-cell");
+    expect(cell(2, 30)).not.toHaveClass("selected-course-assignment-cell");
+    for (const course of [10, 20, 30]) {
+      expect(cell(3, course)).not.toHaveClass(
+        "selected-course-assignment-cell",
+      );
+    }
+    // The selected cell keeps its layout, colour, mark and rank; only the class is added.
+    expect(cell(0, 10)).toHaveClass(
+      "d-flex",
+      "justify-content-between",
+      "align-items-center",
+      "px-1",
+      "candidate-course-rank-enthusiastic",
+    );
+    expect(cell(0, 10)).not.toHaveAttribute("style");
+    expect(screen.getByTestId("T-cell-row-0-course-10-mark")).toHaveTextContent(
+      "➊",
+    );
+    expect(screen.getByTestId("T-cell-row-0-course-10-rank")).toHaveTextContent(
+      "1",
+    );
+    // An unselected cell of the same colour differs in that one class only.
+    expect(
+      cell(0, 10)
+        .className.replace("selected-course-assignment-cell", "")
+        .trim(),
+    ).toBe(
+      cell(1, 20)
+        .className.replace("selected-course-assignment-cell", "")
+        .trim(),
+    );
+  });
+
+  test("a row pencilled into a lecture no longer listed has no selected cell", () => {
+    const data = {
+      ...page,
+      rows: [{ ...page.rows[0], tentativeAssignment: 999 }],
+    };
+    render(
+      <AssignmentsTable data={data} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    for (const course of [10, 20, 30]) {
+      expect(
+        screen.getByTestId(`T-cell-row-0-course-${course}`),
+      ).not.toHaveClass("selected-course-assignment-cell");
+    }
   });
 
   test("hidden columns leave out heading and cells and nothing else (issue #314)", () => {

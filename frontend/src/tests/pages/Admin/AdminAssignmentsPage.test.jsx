@@ -142,10 +142,20 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     );
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-20-left"),
-    ).toHaveTextContent("Left -1");
+    ).toHaveTextContent("To Assign -1");
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-20-left"),
-    ).toHaveClass("text-danger");
+    ).toHaveClass("text-danger", "course-heading-count");
+    // Issue #415: the lecture columns are 100px (a class), and Ada's CMPSC 8 cell is outlined.
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-10"),
+    ).toHaveClass("course-column");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-cell-row-0-course-10"),
+    ).toHaveClass("selected-course-assignment-cell");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-cell-row-0-course-30"),
+    ).not.toHaveClass("selected-course-assignment-cell");
   });
 
   test("choosing a lecture saves at once and the heading counts follow the response", async () => {
@@ -182,7 +192,7 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     );
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-30-left"),
-    ).toHaveTextContent("Left -1");
+    ).toHaveTextContent("To Assign -1");
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-30-left"),
     ).toHaveClass("text-danger");
@@ -191,12 +201,19 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     ).toHaveTextContent("Assigned 0");
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-10-left"),
-    ).toHaveTextContent("Left 2");
+    ).toHaveTextContent("To Assign 2");
     expect(
       screen.getByTestId(
         "AdminAssignmentsPage-table-cell-row-0-tentative-select",
       ),
     ).toHaveValue("30");
+    // Issue #415: the outline follows the dropdown, from CMPSC 8 to CMPSC 24.
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-cell-row-0-course-30"),
+    ).toHaveClass("selected-course-assignment-cell");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-cell-row-0-course-10"),
+    ).not.toHaveClass("selected-course-assignment-cell");
     // The response was enough: the list was not re-read, and nothing was toasted.
     expect(assignmentsGets()).toHaveLength(1);
     expect(mockToast).not.toHaveBeenCalled();
@@ -1253,8 +1270,8 @@ describe("AdminAssignmentsPage: Create Fake Rankings (issue #385)", () => {
     expect(button).toHaveTextContent("Create Fake Rankings");
     // Issue #252: every usable developer-mode control is red, like the badge it sits beside.
     expect(button).toHaveClass("btn-danger", "btn-sm");
-    expect(button).not.toHaveClass("btn-outline-secondary");
-    expect(button).not.toHaveStyle({ pointerEvents: "none" });
+    expect(button).not.toHaveClass("btn-outline-secondary", "pe-none");
+    expect(button).not.toHaveAttribute("style");
     expect(
       screen.getByTestId("Footer-developer-mode-controls"),
     ).toContainElement(button);
@@ -1314,7 +1331,9 @@ describe("AdminAssignmentsPage: Create Fake Rankings (issue #385)", () => {
     // The look it had before: a neutral outline, small.
     expect(button).toHaveClass("btn-outline-secondary", "btn-sm");
     expect(button).not.toHaveClass("btn-danger");
-    expect(button).toHaveStyle({ pointerEvents: "none" });
+    // Issue #415: Bootstrap's pe-none (pointer-events: none) instead of an inline style.
+    expect(button).toHaveClass("pe-none");
+    expect(button).not.toHaveAttribute("style");
     const wrapper = screen.getByTestId(WRAPPER);
     expect(wrapper).toContainElement(button);
     expect(wrapper).toHaveClass("d-inline-block");

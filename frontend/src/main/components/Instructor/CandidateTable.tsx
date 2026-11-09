@@ -352,7 +352,7 @@ export default function CandidateTable({
                 {shownColumns.map((column) => (
                   <th
                     key={column.key}
-                    style={{ position: "relative" }}
+                    className="position-relative"
                     aria-sort={
                       sort?.key === column.key
                         ? sort.descending
@@ -364,14 +364,7 @@ export default function CandidateTable({
                     {choices.some((choice) => choice.id === column.key) && (
                       <button
                         type="button"
-                        className="btn btn-link p-0 border-0 text-secondary"
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          right: "0.25rem",
-                          fontSize: "0.6rem",
-                          lineHeight: 1.2,
-                        }}
+                        className="btn btn-link p-0 border-0 text-secondary column-hide-link"
                         aria-label={`Hide ${column.label} column`}
                         onClick={() => toggleColumn(column.key, true)}
                         data-testid={`CandidateTable-hide-${column.key}`}
@@ -402,19 +395,19 @@ export default function CandidateTable({
                     {shownColumns.map((column) => (
                       <td
                         key={column.key}
+                        // The classes are in index.css (issue #415): a tied ranking is yellow,
+                        // and the preference cell is coloured by the applicant's interest.
                         className={
-                          column.key === "rank" ? "text-end" : undefined
-                        }
-                        style={
-                          column.key === "rank" &&
-                          tied.includes(Number(ranks[candidate.applicationId]))
-                            ? { backgroundColor: "#ffff00" }
+                          column.key === "rank"
+                            ? `text-end${
+                                tied.includes(
+                                  Number(ranks[candidate.applicationId]),
+                                )
+                                  ? " candidate-rank-tied"
+                                  : ""
+                              }`
                             : column.key === "preference"
-                              ? {
-                                  backgroundColor: interestDisplay(
-                                    candidate.preference,
-                                  ).background,
-                                }
+                              ? interestDisplay(candidate.preference).className
                               : undefined
                         }
                         data-testid={
@@ -537,7 +530,7 @@ export default function CandidateTable({
                     >
                       <td
                         colSpan={shownColumns.length}
-                        style={{ fontSize: "0.8em" }}
+                        className="candidate-table-tied-warning"
                       >
                         <p className="mb-0" role="alert">
                           <WarningIcon className="me-1 align-text-bottom" />

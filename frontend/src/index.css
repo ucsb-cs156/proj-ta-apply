@@ -141,3 +141,93 @@ body {
   font-family: monospace; /* Ensures consistent spacing */
   font-size: 0.8em; /* Smaller font size for better readability */
 }
+
+/* ============================================================================
+   The admin Assignments page (components/Assignments/AssignmentsTable.tsx),
+   issue #415: the page's presentation lives here, not in inline styles.
+   ============================================================================ */
+
+/* A lecture's name as the Assignments page shows it (issue #355): the column headings and the
+   Tentative Assignment dropdown. Monospace with the spaces kept, so the padded names line up. */
+.course-label {
+  font-family: var(--bs-font-monospace);
+  white-space: pre;
+}
+
+/* The lecture's name at the top of its column heading (CourseHeader): 80% of the heading size, like
+   the stacked "Tentative Assignment" heading beside it. At that size the longest name the page can
+   produce, "190DD (0100)" (12 characters of about 7.7px each), fits in a 100px column (below) with
+   its 3px of padding either side; at the headings' full size (12 x 9.6px = 116px) it would not. */
+.course-heading-label {
+  font-size: 80%;
+}
+
+/* The Allocation, Assigned and To Assign lines under a lecture's name (CourseHeader), well below
+   Bootstrap's `small` (0.875em) so that a 14-character line such as " To Assign -10" fits the
+   100px lecture column (issue #415). */
+.course-heading-count {
+  font-size: 0.65em;
+}
+
+/* A lecture column's heading and cells: 100px wide, with less horizontal padding than the table's
+   16px (above) so a 12-character name still fits on one line, the ranks right-aligned and never
+   wrapped. `.table .course-column` outranks the `.table th, td` rule above. */
+.table .course-column {
+  width: 100px;
+  max-width: 100px;
+  padding-left: 3px;
+  padding-right: 3px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The lecture cell of the row's tentative assignment (CourseRankCell): a thick black outline. */
+.selected-course-assignment-cell {
+  border: 5px solid black;
+}
+
+/* How interested an applicant is in a course (issue #199): Bootstrap's pastel success, warning and
+   danger backgrounds. utils/interestDisplay.ts names the class for a preference; AssignmentsTable's
+   lecture cells, the InterestLegend swatches and CandidateTable's Course Preference cells carry it.
+   1st choice, 2nd choice and Enthusiastic share the green. */
+.candidate-course-rank-enthusiastic {
+  background-color: #d1e7dd;
+}
+
+.candidate-course-rank-would-consider {
+  background-color: #fff3cd;
+}
+
+.candidate-course-rank-not-applicable {
+  background-color: #f8d7da;
+}
+
+/* ➊ and ➋ in an InterestMark (components/Common/InterestMark.tsx) are larger than ✓, ▬ and ✖. */
+.interest-mark-large {
+  font-size: 120%;
+}
+
+/* ============================================================================
+   The faculty ranking page's candidate table
+   (components/Instructor/CandidateTable.tsx), issue #415 likewise.
+   ============================================================================ */
+
+/* A Ranking cell whose rank another candidate shares (issue #311). */
+.candidate-rank-tied {
+  background-color: #ffff00;
+}
+
+/* The small "hide" link tucked into the top-right corner of a heading, which is position-relative
+   (issue #312). OurTable's hide link (issue #314) looks the same; it is styled in OurTable.tsx. */
+.column-hide-link {
+  position: absolute;
+  top: 0;
+  right: 0.25rem;
+  font-size: 0.6rem;
+  line-height: 1.2;
+}
+
+/* The warning under the last row of a group of tied rankings (issue #311). */
+.candidate-table-tied-warning {
+  font-size: 0.8em;
+}
