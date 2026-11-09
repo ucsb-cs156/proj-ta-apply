@@ -62,6 +62,7 @@ describe("ApplicationPage tests", () => {
       .reply(200, systemInfoFixtures.showingNeither);
     axiosMock.onGet("/api/applications").reply(200, application);
     axiosMock.onGet("/api/applications/mine").reply(200, [application]);
+    axiosMock.onGet("/api/draftApplications/mine").reply(200, []);
     axiosMock
       .onGet("/api/recruitments/applicable")
       .reply(200, [openUla, closedTa]);
@@ -415,20 +416,137 @@ describe("ApplicationPage tests", () => {
 
   const cancelled = applicationsFixtures.oneCancelledApplication;
 
-  test("a cancelled application offers to start a new one while applications are open", async () => {
+  test("a cancelled application offers to create a new one while applications are open", async () => {
     axiosMock.onGet("/api/applications").reply(200, cancelled);
     axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
     renderPage(4);
 
     const button = await screen.findByTestId("ApplicationPage-restart");
-    expect(button).toHaveTextContent("Start a new application");
-    expect(button).toHaveAttribute("href", "/apply/2");
+    expect(button).toHaveTextContent("Create a new application");
+    expect(button.tagName).toBe("BUTTON");
+    expect(button).toHaveClass("btn-success");
+    expect(button).toBeEnabled();
     expect(
       screen.getByTestId("ApplicationPage-restart-note"),
     ).toHaveTextContent(
-      "This one stays on file as cancelled. The new application starts empty, as if you had not applied.",
+      "This turns the application back into a draft with your answers, but not your reason for cancelling, and this cancelled copy is removed. Review the draft, then submit it.",
     );
     expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-draft")).toBeNull();
+  });
+
+  // ---- Create a new application from the cancelled one (issue #420) ----
+
+  test("Create a new application turns this application into a draft and opens it", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock
+      .onPost("/api/draftApplications/fromCancelled")
+      .reply(200, { id: 77, recruitmentId: 2, email: cancelled.email });
+    renderPage(4);
+
+    await userEvent.click(await screen.findByTestId("ApplicationPage-restart"));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/apply/2"));
+    expect(axiosMock.history.post).toHaveLength(1);
+    expect(axiosMock.history.post[0].params).toEqual({ applicationId: 4 });
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("Create a new application is disabled while the request is under way", async () => {
+    let answer;
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock
+      .onPost("/api/draftApplications/fromCancelled")
+      .reply(() => new Promise((resolve) => (answer = resolve)));
+    renderPage(4);
+
+    await userEvent.click(await screen.findByTestId("ApplicationPage-restart"));
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationPage-restart")).toBeDisabled(),
+    );
+    answer([400, { message: "nope" }]);
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationPage-restart")).toBeEnabled(),
+    );
+  });
+
+  test("a refused Create a new application toasts the server's reason and stays", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock.onPost("/api/draftApplications/fromCancelled").reply(400, {
+      message: "Applications are not currently open for this recruitment",
+    });
+    renderPage(4);
+
+    await userEvent.click(await screen.findByTestId("ApplicationPage-restart"));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Applications are not currently open for this recruitment",
+      ),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByTestId("ApplicationPage-restart")).toBeInTheDocument();
+  });
+
+  test("with a draft already begun, the cancelled application offers that draft instead", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock
+      .onGet("/api/draftApplications/mine")
+      .reply(200, [{ id: 9, recruitmentId: 2, email: cancelled.email }]);
+    renderPage(4);
+
+    const link = await screen.findByTestId("ApplicationPage-continue-draft");
+    expect(link).toHaveTextContent("Continue editing draft application");
+    expect(link).toHaveAttribute("href", "/apply/2");
+    expect(link).toHaveClass("btn", "btn-success");
+    expect(screen.getByTestId("ApplicationPage-draft")).toHaveTextContent(
+      "You have since begun a new application. It is a draft until you submit it.",
+    );
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+  });
+
+  test("a draft for another recruitment does not stand in the way", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock
+      .onGet("/api/draftApplications/mine")
+      .reply(200, [{ id: 9, recruitmentId: 99, email: cancelled.email }]);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("ApplicationPage-draft")).toBeNull();
+  });
+
+  test("the button waits for the applicant's drafts, so a draft is not missed", async () => {
+    let answer;
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock
+      .onGet("/api/draftApplications/mine")
+      .reply(() => new Promise((resolve) => (answer = resolve)));
+    renderPage(4);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/draftApplications/mine",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-draft")).toBeNull();
+
+    answer([200, []]);
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
   });
 
   test("the button waits for the applicant's list, so a new application is not missed", async () => {

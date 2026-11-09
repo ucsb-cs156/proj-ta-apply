@@ -212,20 +212,21 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           Until the recruitment closes you can withdraw a submitted application
           with <strong>Cancel my Application</strong> on its card on your home
           page. You are asked for a brief reason and to confirm. A cancelled
-          application is not considered, can no longer be edited, and cannot be
-          brought back; the system keeps it, with your reason and the time you
-          cancelled, so the admins can still see it.
+          application is not considered and can no longer be edited; the system
+          keeps it, with your reason and the time you cancelled, so the admins
+          can still see it, unless you turn it into a new application as below.
         </p>
         <p data-testid="HelpUlaApplicantsPage-start-again">
           <strong>Changed your mind, or cancelled by mistake?</strong> While
           applications are still open for that recruitment, the card and the
-          cancelled application&apos;s page show
-          <strong>Start a new application</strong>. It gives you an empty form,
-          as if you had never applied, with the usual saved draft and the usual
-          <strong>Submit Application</strong>. Once you submit it, the new
-          application is the one that counts, and the cancelled one stays on
-          file, marked as cancelled. Once applications have closed the button is
-          gone and a new application can no longer be started.
+          cancelled application&apos;s page show{" "}
+          <strong>Create a new application</strong>. It turns the cancelled
+          application back into a draft with all your answers as you left them,
+          except your reason for cancelling, and opens it, with the usual saved
+          draft and the usual <strong>Submit Application</strong>. The cancelled
+          application is removed: the draft takes its place. A draft is not
+          considered until you submit it. Once applications have closed the
+          button is gone and a new application can no longer be started.
         </p>
 
         <h2

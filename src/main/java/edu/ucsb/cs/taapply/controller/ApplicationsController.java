@@ -179,6 +179,14 @@ public class ApplicationsController extends ApiController {
     return application;
   }
 
+  /**
+   * The attempt number of the current user's next application to a recruitment: one more than the
+   * highest they have there, cancelled or not (issues #318, #420).
+   */
+  private int nextAttemptNumber(Long recruitmentId) {
+    return applicationRepository.maxAttemptNumber(currentEmail(), recruitmentId) + 1;
+  }
+
   private Recruitment recruitmentFor(Application application) {
     return recruitmentRepository
         .findById(application.getRecruitmentId())
@@ -264,7 +272,9 @@ public class ApplicationsController extends ApiController {
           "Any signed-in user may apply to any open recruitment, TA or ULA. Refused if the"
               + " recruitment is not open or they already have an application for it that is not"
               + " cancelled: one who cancelled may apply again while applications are open, as if"
-              + " from scratch, and the cancelled application is kept (issue #318).")
+              + " from scratch, and the cancelled application is kept (issue #318). One who instead"
+              + " turned the cancelled application back into a draft (issue #420) submits that"
+              + " draft here like any other.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PostMapping("/post")
   public Application postApplication(
@@ -293,13 +303,8 @@ public class ApplicationsController extends ApiController {
             .recruitmentId(recruitmentId)
             .email(currentEmail())
             .status(ApplicationReviewStatus.PENDING)
-            // The first, or one more than the cancelled ones before it, which are kept (issue
-            // #318).
-            .attemptNumber(
-                (int)
-                        applicationRepository.countByEmailAndRecruitmentId(
-                            currentEmail(), recruitmentId)
-                    + 1)
+            // The first, or one after the cancelled ones before it (issues #318, #420).
+            .attemptNumber(nextAttemptNumber(recruitmentId))
             .build();
     apply(fields, application, recruitment.getType());
     // The application is complete now, so the draft it grew from has done its job (issue #270);
@@ -357,11 +362,7 @@ public class ApplicationsController extends ApiController {
                     .email(currentEmail())
                     .status(ApplicationReviewStatus.PENDING)
                     .origin(ApplicationOrigin.ADMIN_TEST)
-                    .attemptNumber(
-                        (int)
-                                applicationRepository.countByEmailAndRecruitmentId(
-                                    currentEmail(), recruitmentId)
-                            + 1)
+                    .attemptNumber(nextAttemptNumber(recruitmentId))
                     .build());
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
@@ -539,7 +540,8 @@ public class ApplicationsController extends ApiController {
           "Marks the applicant's own application CANCELLED with the reason they gave (issue #107)."
               + " Final: a cancelled application cannot be edited, commented on or un-cancelled,"
               + " but, while applications are open, the applicant may start a new application to that"
-              + " recruitment (issue #318).")
+              + " recruitment (issue #318), or turn this one back into a draft with"
+              + " POST /api/draftApplications/fromCancelled (issue #420).")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("/cancel")
   public Application cancelApplication(

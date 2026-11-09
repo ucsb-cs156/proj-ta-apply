@@ -27,7 +27,9 @@ import lombok.*;
  * generated id. A person has at most one application per recruitment that is not cancelled; one who
  * cancelled while applications were open may start a new one (issue #318), so the cancelled row is
  * kept and the unique constraint is on (email, recruitment, attempt number) rather than on (email,
- * recruitment): the history survives, and two simultaneous submissions cannot both be stored.
+ * recruitment): the history survives, and two simultaneous submissions cannot both be stored. A
+ * cancelled application turned back into a draft (issue #420) is deleted, so attempt numbers may
+ * have gaps; a new one is one more than the highest.
  *
  * <p>Which fields are asked for depends on the recruitment's type. The TA-only and ULA-only fields
  * are simply left null on the other kind rather than being split into separate tables, since the

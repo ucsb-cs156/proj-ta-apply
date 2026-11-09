@@ -10,4 +10,10 @@ public interface CandidateRankingRepository extends CrudRepository<CandidateRank
 
   Optional<CandidateRanking> findByRecruitmentCourseIdAndApplicationId(
       Long recruitmentCourseId, Long applicationId);
+
+  /**
+   * Removes every faculty ranking of one application, for when the application itself is deleted
+   * (issue #420). Must run inside a transaction.
+   */
+  long deleteByApplicationId(Long applicationId);
 }
