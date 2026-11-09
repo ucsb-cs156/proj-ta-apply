@@ -39,6 +39,11 @@ describe("helpPages", () => {
         audience: "admin",
       },
       {
+        path: "/help/instructor-feedback-fields",
+        label: "Instructor Feedback Fields",
+        audience: "admin",
+      },
+      {
         path: "/help/csv",
         label: "CSV Upload/Download Formats",
         audience: "admin",
@@ -66,6 +71,11 @@ describe("helpPages", () => {
       ["Home page", "Recruitments", "/"],
       ["Admin", "TA App Settings", "/admin/settings/ta"],
       ["Admin", "ULA App Settings", "/admin/settings/ula"],
+      [
+        "Admin",
+        "Instructor Feedback Settings",
+        "/admin/instructorFeedbackSettings",
+      ],
       ["Admin", "Legacy TA Application", "/admin/legacy-ta-application"],
       ["Admin", "Audit Trail", "/admin/audittrail"],
     ]);
@@ -79,6 +89,7 @@ describe("helpPages", () => {
       "recruitments",
       "ta-app-settings",
       "ula-app-settings",
+      "instructor-feedback-settings",
       "legacy-ta-application",
       "audit-trail",
     ]);

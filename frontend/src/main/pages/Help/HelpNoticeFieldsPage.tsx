@@ -1,11 +1,11 @@
 import { Table } from "react-bootstrap";
 import { Link } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
+import QuarterFieldsTable from "main/components/Notices/QuarterFieldsTable";
 import {
   fillNoticeFields,
   longDate,
   NOTICE_FIELD_EXAMPLES,
-  QUARTER_NOTICE_FIELDS,
   quarterName,
   SAMPLE_CALENDAR,
 } from "main/utils/noticeFields";
@@ -85,36 +85,7 @@ export default function HelpNoticeFieldsPage(): React.JSX.Element {
           fields stay as written. Dates are written out; the registration passes
           carry their time of day. The examples are for {SAMPLE_CALENDAR.name}.
         </p>
-        <Table
-          striped
-          bordered
-          size="sm"
-          data-testid="HelpNoticeFieldsPage-quarter-fields"
-        >
-          <thead>
-            <tr>
-              <th>Field</th>
-              <th>Becomes</th>
-              <th>For example</th>
-            </tr>
-          </thead>
-          <tbody>
-            {QUARTER_NOTICE_FIELDS.map((field) => (
-              <tr
-                key={field.key}
-                data-testid={`HelpNoticeFieldsPage-field-${field.key}`}
-              >
-                <td>
-                  <code>{"${" + field.key + "}"}</code>
-                </td>
-                <td>{field.label}</td>
-                <td>
-                  {fillNoticeFields("${" + field.key + "}", SAMPLE_FILL_IN)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <QuarterFieldsTable testIdPrefix="HelpNoticeFieldsPage" />
 
         <h2 className="my-3 h4" id="examples">
           Examples

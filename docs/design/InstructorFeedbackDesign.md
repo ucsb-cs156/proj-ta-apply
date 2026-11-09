@@ -35,7 +35,8 @@ Then the form appears:
 - Below the form, a `<details>` titled "Notes on TA/ULA tradeoffs", closed by default: the estimated
   cost of a TA, the estimated cost of a ULA, the ratio "1:X.X" (cost per TA divided by cost per ULA,
   one decimal), the hours each works per week, and the note about constraints. A cost that is
-  missing or zero reads "not yet set", and so does the ratio, never NaN or Infinity.
+  missing or zero reads "not yet set", and so does the ratio, never NaN or Infinity. Since issue
+  #429 the text is an admin's Markdown; see "Instructor Feedback Settings" below.
 
 ## Saving
 
@@ -51,6 +52,77 @@ kept and ignored, and it comes back if the box is checked again.
 There is no version check and no multi-tab warning (see `ConcurrentEditMitigationDesign.md`): the
 row is one instructor's own, each save sends one field as an absolute value ("Two facts"), and the
 last save of a field wins.
+
+## Instructor Feedback Settings (issue #429, 2026-11-09)
+
+The text of the "Notes on TA/ULA tradeoffs" is no longer hard coded. Admin → **Instructor Feedback
+Settings** (`/admin/instructorFeedbackSettings`, `InstructorFeedbackSettingsPage`) edits it the way
+the TA and ULA App Settings pages edit their Notices, Terms and Conditions, and the instructor's
+form renders the newest version as Markdown, in the same closed `<details>` with the same title.
+There is no notes section at all while there is no version.
+
+**Table `instructor_feedback_settings` (changeset 069).** One row per saved version; rows are
+inserted, never updated or deleted.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | BIGINT, auto-increment, primary key | The version number |
+| `created_at` | TIMESTAMP, not null | Pacific wall-clock time, set by the server (`AppTime.now()`) |
+| `editor_email` | VARCHAR(255), nullable | The admin who saved it; null only for version 1 |
+| `notes_text` | TEXT, not null | Markdown, no length limit (Postgres `TEXT`, H2 `CLOB`) |
+
+The changeset inserts version 1: the text the notes showed before, rewritten with the new fields, so
+nothing changes for instructors on deploy. Its `created_at` is `LOCALTIMESTAMP`, which is Pacific
+because the app makes Pacific the JVM's zone before Liquibase runs; its `editor_email` is null, and
+the history shows "(installed with the app)". Liquibase leaves `${...}` it has no parameter for
+alone, which the changelog test checks.
+
+**One table for the whole page (for issue #430).** The page's later settings, such as #430's "Ask
+faculty for feedback on TA/ULA allocations after both have been released to instructors", are more
+columns of this table (a changeset adding, say, `ask_for_feedback BOOLEAN NOT NULL DEFAULT FALSE`),
+so each version records the whole page as it was saved. To make that clean, a save names only the
+settings it changes: a field the POST body leaves out (or sends as null) is copied from the newest
+version. The entity (`InstructorFeedbackSettings`), the body (`SettingsUpdate`) and the TypeScript
+type (`InstructorFeedbackSettings` in `feedbackNotesFields.ts`) each gain one field; the instructor
+endpoint already returns the whole row; and the page is a column of cards, the notes being the first.
+
+**Endpoints (`InstructorFeedbackSettingsController`).**
+
+- `GET /api/instructor/feedback/settings` (`ROLE_INSTRUCTOR`): the newest version, as a list of zero
+  or one (as `/api/notices/current` is).
+- `GET /api/admin/instructorFeedbackSettings/all` (`ROLE_ADMIN`): every version, newest first.
+- `POST /api/admin/instructorFeedbackSettings` (`ROLE_ADMIN`), body `{"notesText": "..."}`: a new
+  version with `created_at` now and `editor_email` the caller's; the text is trimmed; 400 if it
+  would be blank. Fields left out are copied from the newest version, as above.
+- `GET /api/admin/instructorFeedbackSettings/costs?quarter=` (`ROLE_ADMIN`): the quarter's two
+  costs, for the editor's preview. It reads the budget without creating it (the Budget page's
+  `GET /api/admin/budget` creates one); a quarter without a budget is two nulls. The figures come
+  from `TradeoffCosts.of`, shared with the instructors' `/api/instructor/feedback/costs`.
+
+**Fields.** The text is filled in on the client, as the notices are (`fillFeedbackNotesFields` in
+`feedbackNotesFields.ts`), for the feedback's quarter:
+
+- `${quarter}` and the quarter calendar's fields (`${qyy}`, `${firstDayOfClasses}` and the rest),
+  exactly as in the notices, from `/api/quarters/one` (through `useNoticeFillIn`). A quarter not on
+  file leaves its calendar fields as written.
+- `${estimatedCostPerTA}` and `${estimatedCostPerULA}`, in dollars and cents, and
+  `${taToUlaCostRatio}`, "1:X.X" to one decimal place, as the notes showed before
+  (`costDisplay` and `ratioDisplay`). A missing or zero cost, and then the ratio, read "not yet set".
+- `${primaryConsiderationDate}` is not a field here: it belongs to a recruitment, and the notes
+  belong to a quarter. The editor flags it in red as an unknown field, and the help page says so.
+
+Anything else in `${...}` is left as written.
+
+**The admin's page.** `FeedbackNotesEditorCard` is the Notices editor card's layout: an explanation,
+the fields hint with a link to **Help → Instructor Feedback Fields** (`/help/instructor-feedback-fields`,
+a sibling of Notices Fields, so the notices' page stays about recruitments), a "Preview for quarter"
+box, the editor and its live preview, Save, and the version history, which here has an Editor
+column. The preview's quarters are those with a recruitment (`/api/admin/budget/quarters`), the
+newest first and chosen by default; with none, the fields are shown as written. The editor, the
+preview, the unknown-field messages, Save and the history are `MarkdownVersionEditor`, taken out of
+`NoticeEditorCard`, which now uses it too; `findUnknownFields` and `markUnknownFields` take the list
+of known fields, and `describeVersion` takes any `{id, createdAt}`. The quarter-fields table of the
+help pages is `QuarterFieldsTable`, shared by both.
 
 ## Table `instructor_feedback` (changeset 068)
 

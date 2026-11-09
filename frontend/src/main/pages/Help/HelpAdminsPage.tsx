@@ -965,6 +965,31 @@ export default function HelpAdminsPage(): React.JSX.Element {
           import of the old ULA Google Form&apos;s response sheet.
         </p>
 
+        <h2 className="my-3 h4" id="instructor-feedback-settings">
+          Instructor Feedback Settings
+        </h2>
+        <p data-testid="HelpAdminsPage-instructor-feedback-settings">
+          <Link to="/admin/instructorFeedbackSettings">
+            Instructor Feedback Settings
+          </Link>{" "}
+          holds the <strong>Notes on TA/ULA tradeoffs</strong> that instructors
+          can open under the form where they give feedback on each course&apos;s
+          TA and ULA allocation. It is edited as the notices are: in{" "}
+          <a href="#markdown">the same Markdown</a> with a live preview, filled
+          in for a quarter chosen above the editor (by default the newest
+          quarter with a recruitment), and each save is kept as a new version,
+          listed with who saved it and when. Instructors always see the newest
+          version. The text can carry the quarter&apos;s name and dates, as the
+          notices can, and three fields of its own, the quarter&apos;s estimated
+          cost of a TA, of a ULA and the ratio of the two, each &ldquo;not yet
+          set&rdquo; until the quarter&apos;s budget has it. They are listed,
+          with the text the notes started with as an example, on{" "}
+          <Link to="/help/instructor-feedback-fields">
+            Help &rarr; Instructor Feedback Fields
+          </Link>
+          .
+        </p>
+
         <h2 className="my-3 h4" id="markdown">
           Markdown
         </h2>

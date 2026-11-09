@@ -37,6 +37,11 @@ export const HELP_PAGES: HelpPage[] = [
   },
   { path: "/help/notice-fields", label: "Notices Fields", audience: "admin" },
   {
+    path: "/help/instructor-feedback-fields",
+    label: "Instructor Feedback Fields",
+    audience: "admin",
+  },
+  {
     path: "/help/csv",
     label: "CSV Upload/Download Formats",
     audience: "admin",
@@ -130,6 +135,14 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
     section: "ula-app-settings",
     summary:
       "The lists and notices behind the ULA form, and the legacy ULA import.",
+  },
+  {
+    menu: "Admin",
+    label: "Instructor Feedback Settings",
+    path: "/admin/instructorFeedbackSettings",
+    section: "instructor-feedback-settings",
+    summary:
+      "The notes on TA/ULA tradeoffs under the instructors' allocation feedback form.",
   },
   {
     menu: "Admin",

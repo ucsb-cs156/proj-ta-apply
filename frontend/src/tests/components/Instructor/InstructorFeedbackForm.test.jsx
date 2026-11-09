@@ -20,6 +20,8 @@ import {
 } from "main/utils/instructorFeedback";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import instructorFeedbackFixtures from "fixtures/instructorFeedbackFixtures";
+import instructorFeedbackSettingsFixtures from "fixtures/instructorFeedbackSettingsFixtures";
+import quartersFixtures from "fixtures/quartersFixtures";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -42,14 +44,48 @@ const axiosMock = new AxiosMockAdapter(axios);
 const puts = () => axiosMock.history.put;
 const putBody = (i) => JSON.parse(puts()[i].data);
 
-function renderForm({ quarter = w26, rows = [], costsReply = costs } = {}) {
+// The quarter calendar's row for W26 (issue #429: the notes can carry its dates).
+const w26Calendar = {
+  ...quartersFixtures.f21,
+  quarter: "20261",
+  qyy: "W26",
+  name: "WINTER 2026",
+  firstDayOfClasses: "2026-01-05T00:00:00",
+};
+
+let queryClient;
+
+/** Once the notes in force have arrived and been drawn, whatever they were. */
+const settingsFetched = async () => {
+  await waitFor(() =>
+    expect(
+      queryClient.getQueryState(["/api/instructor/feedback/settings"])
+        ?.dataUpdateCount,
+    ).toBeGreaterThan(0),
+  );
+  await act(async () => {});
+};
+
+function renderForm({
+  quarter = w26,
+  rows = [],
+  costsReply = costs,
+  settingsReply = [instructorFeedbackSettingsFixtures.v1],
+  calendarReply = [200, w26Calendar],
+} = {}) {
   axiosMock.onGet("/api/instructor/feedback").reply(200, rows);
   axiosMock
     .onGet("/api/instructor/feedback/costs", { params: { quarter: "20261" } })
     .reply(200, costsReply);
-  const client = new QueryClient();
+  axiosMock
+    .onGet("/api/instructor/feedback/settings")
+    .reply(200, settingsReply);
+  axiosMock
+    .onGet("/api/quarters/one", { params: { yyyyq: "20261" } })
+    .reply(...calendarReply);
+  queryClient = new QueryClient();
   return render(
-    <QueryClientProvider client={client}>
+    <QueryClientProvider client={queryClient}>
       <InstructorFeedbackForm
         quarter={quarter}
         course={course2}
@@ -526,12 +562,12 @@ describe("InstructorFeedbackForm (issue #425)", () => {
     log.mockRestore();
   });
 
-  // ---- the notes ----
+  // ---- the notes (issues #425 and #429) ----
 
-  test("the notes are closed until opened, and give the costs and the ratio", async () => {
+  test("the notes are closed until opened, below the form, and say what they said before issue #429", async () => {
     renderForm();
 
-    const notes = screen.getByTestId(`${P}-notes`);
+    const notes = await screen.findByTestId(`${P}-notes`);
     expect(notes.tagName).toBe("DETAILS");
     expect(notes).not.toHaveAttribute("open");
     expect(notes).toHaveClass("mt-3");
@@ -540,58 +576,128 @@ describe("InstructorFeedbackForm (issue #425)", () => {
     );
     // Below the form.
     expect(screen.getByTestId(`${P}-form`).lastElementChild).toBe(notes);
+    const text = screen.getByTestId(`${P}-notes-text`);
+    expect(text).toHaveClass("mt-2");
     await waitFor(() =>
-      expect(screen.getByTestId(`${P}-notes-ta-cost`).textContent).toBe(
-        "$12,000.00",
+      expect(text.querySelector("p").textContent).toBe(
+        "Note that the current estimated cost of a TA is $12,000.00 while the estimated cost of a ULA is $2,000.00. This means that on a cost basis, the ratio of TA to ULA is 1:6.0.",
       ),
     );
-    expect(screen.getByTestId(`${P}-notes-ula-cost`).textContent).toBe(
-      "$2,000.00",
-    );
-    expect(screen.getByTestId(`${P}-notes-ratio`).textContent).toBe("1:6.0");
-    expect(screen.getByTestId(`${P}-notes-costs`).textContent).toBe(
+    expect([...text.querySelectorAll("p")].map((p) => p.textContent)).toEqual([
       "Note that the current estimated cost of a TA is $12,000.00 while the estimated cost of a ULA is $2,000.00. This means that on a cost basis, the ratio of TA to ULA is 1:6.0.",
-    );
-    expect(
-      screen.getByText(
-        "On the other hand, TAs work 20 hours per week, while ULAs work 10 hours per week.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "We are not always in a position to trade off TAs for ULAs in precisely the way each faculty member would prefer; there are constraints other than faculty preferences that we must satisfy. That being said, we will do our best to take your preferences into consideration.",
-      ),
-    ).toHaveClass("mb-0");
+      "On the other hand, TAs work 20 hours per week, while ULAs work 10 hours per week.",
+      "We are not always in a position to trade off TAs for ULAs in precisely the way each faculty member would prefer; there are constraints other than faculty preferences that we must satisfy. That being said, we will do our best to take your preferences into consideration.",
+    ]);
     const costRequest = axiosMock.history.get.find(
       (r) => r.url === "/api/instructor/feedback/costs",
     );
     expect(costRequest.params).toEqual({ quarter: "20261" });
+    const calendarRequest = axiosMock.history.get.find(
+      (r) => r.url === "/api/quarters/one",
+    );
+    expect(calendarRequest.params).toEqual({ yyyyq: "20261" });
 
     await userEvent.click(screen.getByTestId(`${P}-notes-summary`));
     expect(notes).toHaveAttribute("open");
   });
 
-  test("a cost not yet entered reads not yet set, and so does the ratio", async () => {
-    renderForm({ costsReply: costsNotSet });
+  test("the newest notes are rendered as Markdown with the quarter, its dates and its costs filled in", async () => {
+    renderForm({ settingsReply: [instructorFeedbackSettingsFixtures.v2] });
 
+    const text = await screen.findByTestId(`${P}-notes-text`);
     await waitFor(() =>
-      expect(screen.getByTestId(`${P}-notes-ta-cost`).textContent).toBe(
-        "$12,000.00",
+      expect(text.querySelector("h2")).toHaveTextContent(
+        "Tradeoffs for Winter 2026",
       ),
     );
-    expect(screen.getByTestId(`${P}-notes-ula-cost`).textContent).toBe(
-      "not yet set",
+    await waitFor(() =>
+      expect(
+        [...text.querySelectorAll("li")].map((li) => li.textContent),
+      ).toEqual([
+        "A TA costs $12,000.00",
+        "A ULA costs $2,000.00",
+        "So the ratio is 1:6.0",
+      ]),
     );
-    expect(screen.getByTestId(`${P}-notes-ratio`).textContent).toBe(
-      "not yet set",
+    await waitFor(() =>
+      expect(text.querySelector("p")).toHaveTextContent(
+        "Classes begin January 5, 2026.",
+      ),
     );
   });
 
-  test("before the costs arrive, they read not yet set", () => {
-    renderForm();
-    expect(screen.getByTestId(`${P}-notes-ta-cost`).textContent).toBe(
-      "not yet set",
+  test("a quarter not on file leaves its dates as written", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    renderForm({
+      settingsReply: [instructorFeedbackSettingsFixtures.v2],
+      calendarReply: [404],
+    });
+
+    const text = await screen.findByTestId(`${P}-notes-text`);
+    await waitFor(() =>
+      expect(text.querySelector("li")).toHaveTextContent(
+        "A TA costs $12,000.00",
+      ),
     );
-    act(() => {});
+    expect(text.querySelector("h2")).toHaveTextContent(
+      "Tradeoffs for Winter 2026",
+    );
+    expect(text.querySelector("p")).toHaveTextContent(
+      "Classes begin ${firstDayOfClasses}.",
+    );
+    // A quarter not on file is answered quietly.
+    expect(mockToast).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  test("a cost not yet entered reads not yet set, and so does the ratio", async () => {
+    renderForm({
+      costsReply: costsNotSet,
+      settingsReply: [instructorFeedbackSettingsFixtures.v2],
+    });
+
+    const text = await screen.findByTestId(`${P}-notes-text`);
+    await waitFor(() =>
+      expect(
+        [...text.querySelectorAll("li")].map((li) => li.textContent),
+      ).toEqual([
+        "A TA costs $12,000.00",
+        "A ULA costs not yet set",
+        "So the ratio is not yet set",
+      ]),
+    );
+  });
+
+  test("before the costs arrive, they read not yet set", async () => {
+    axiosMock
+      .onGet("/api/instructor/feedback/costs")
+      .reply(() => new Promise(() => {}));
+    renderForm({ settingsReply: [instructorFeedbackSettingsFixtures.v2] });
+
+    const text = await screen.findByTestId(`${P}-notes-text`);
+    expect(
+      [...text.querySelectorAll("li")].map((li) => li.textContent),
+    ).toEqual([
+      "A TA costs not yet set",
+      "A ULA costs not yet set",
+      "So the ratio is not yet set",
+    ]);
+  });
+
+  test("with no notes there is no notes section", async () => {
+    renderForm({ settingsReply: [] });
+
+    await settingsFetched();
+    expect(screen.queryByTestId(`${P}-notes`)).toBeNull();
+    expect(screen.getByTestId(`${P}-form`).lastElementChild).toBe(
+      screen.getByTestId(`${P}-last-saved`),
+    );
+  });
+
+  test("an answer that is not a list shows no notes", async () => {
+    renderForm({ settingsReply: { notesText: "Not a list" } });
+
+    await settingsFetched();
+    expect(screen.queryByTestId(`${P}-notes`)).toBeNull();
   });
 });
