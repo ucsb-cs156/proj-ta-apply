@@ -17,6 +17,16 @@ const ula = applicationsFixtures.oneUlaApplication;
 const testApp = applicationsFixtures.oneTestApplication;
 const cancelledTa = applicationsFixtures.oneCancelledTaApplication;
 
+/** The six availability columns, which only a ULA table has (issue #421). */
+const AVAILABILITY_IDS = [
+  "availableForLecturesFirstChoice",
+  "availableForDiscussionFirstChoice",
+  "availabilityCommentsFirstChoice",
+  "availableForLecturesSecondChoice",
+  "availableForDiscussionSecondChoice",
+  "availabilityCommentsSecondChoice",
+];
+
 function renderTable(props = {}) {
   render(
     <MemoryRouter>
@@ -157,7 +167,7 @@ describe("AdminApplicationTable tests", () => {
       "name",
       ...applicationColumns("TA").map((column) => column.id),
     ]);
-    expect(headers).toHaveLength(32);
+    expect(headers).toHaveLength(26);
     expect(headers).toContain("residencyStatus");
     expect(headers).not.toContain("permNumber");
     expect(headers).not.toContain("interests");
@@ -244,14 +254,15 @@ describe("AdminApplicationTable tests", () => {
     expect(cell("languageExamDatePassed")).toBe("F25");
     expect(cell("firstChoiceCourse")).toBe("CMPSC   156");
     expect(cell("secondChoiceCourse")).toBe("CMPSC   130A");
-    expect(cell("availableForLecturesFirstChoice")).toBe("Yes");
-    expect(cell("availableForDiscussionFirstChoice")).toBe("Yes");
-    expect(cell("availabilityCommentsFirstChoice")).toBe(
-      "Free any afternoon but Wednesday.",
+    // Issue #421: the TA form asks no availability, so even an older TA application that still
+    // has stored answers (issue #76 kept them) shows no availability column.
+    expect(ta.availabilityCommentsFirstChoice).not.toBeNull();
+    AVAILABILITY_IDS.forEach((id) =>
+      expect(
+        screen.queryByTestId(`AdminApplicationTable-header-${id}`),
+      ).toBeNull(),
     );
-    expect(cell("availableForLecturesSecondChoice")).toBe("No");
-    expect(cell("availableForDiscussionSecondChoice")).toBe("No");
-    expect(cell("availabilityCommentsSecondChoice")).toBe("");
+    expect(screen.queryByText("Lecture (1st)")).toBeNull();
     expect(cell("courseInterests")).toBe(
       "CMPSC     8 Enthusiastic; CMPSC    16 Would Consider",
     );
@@ -267,23 +278,46 @@ describe("AdminApplicationTable tests", () => {
   });
 
   test("the ULA answers show in their columns, formatted, and a TA answer is not a ULA column", () => {
-    renderTable({ applications: [ula], type: "ULA" });
+    renderTable({
+      applications: [
+        {
+          ...ula,
+          availableForDiscussionFirstChoice: true,
+          availabilityCommentsFirstChoice: "Not before 10 on Mondays.",
+          availableForLecturesSecondChoice: false,
+          availableForDiscussionSecondChoice: true,
+          availabilityCommentsSecondChoice: "Any section on Thursday.",
+        },
+      ],
+      type: "ULA",
+    });
     const cell = (id) =>
       screen.getByTestId(`AdminApplicationTable-cell-row-0-col-${id}`)
         .textContent;
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(36);
+    expect(screen.getAllByRole("columnheader")).toHaveLength(42);
     expect(
       screen.queryByTestId("AdminApplicationTable-header-classLevel"),
     ).toBeNull();
     expect(
       screen.queryByTestId("AdminApplicationTable-header-residencyStatus"),
     ).toBeNull();
+    // Issue #421: availability is a ULA question, so its six columns are here.
     expect(
-      screen.queryByTestId(
+      screen.getByTestId(
         "AdminApplicationTable-header-availableForLecturesFirstChoice",
       ),
-    ).toBeNull();
+    ).toHaveTextContent("Lecture (1st)");
+    expect(cell("availableForLecturesFirstChoice")).toBe("Yes");
+    expect(cell("availableForDiscussionFirstChoice")).toBe("Yes");
+    expect(cell("availabilityCommentsFirstChoice")).toBe(
+      "Not before 10 on Mondays.",
+    );
+    expect(cell("availableForLecturesSecondChoice")).toBe("No");
+    expect(cell("availableForDiscussionSecondChoice")).toBe("Yes");
+    expect(cell("availabilityCommentsSecondChoice")).toBe(
+      "Any section on Thursday.",
+    );
     expect(cell("permNumber")).toBe("A1B2C3D");
     expect(cell("previousServiceAsUla")).toBe("2");
     expect(cell("videoLink")).toBe("https://example.org/chris");

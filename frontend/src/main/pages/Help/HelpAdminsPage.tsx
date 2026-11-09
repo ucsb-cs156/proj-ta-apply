@@ -843,14 +843,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
               column&apos;s heading), which lists every answer on the form for
               that recruitment&apos;s type (TA or ULA); the columns the table
               has always had start shown and the rest start hidden, and the
-              choice is kept for that recruitment, for all admins. The long text
-              columns (Other Courses of Interest, Topic Proficiencies,
-              Interests, Previous Experience, Anything Else, Post-Application
-              Comments and Admin Comments) are wide, 400 pixels to start with.
-              Drag the thin bar at the right edge of such a heading to widen or
-              narrow the column (never narrower than 200 pixels; there is no
-              upper limit), or tab to the bar and press the left and right arrow
-              keys. The widths last until you reload the page.
+              choice is kept for that recruitment, for all admins. Only the ULA
+              form asks about availability, so the <em>Lecture</em>,{" "}
+              <em>Discussion</em> and <em>Availability</em> columns for each
+              choice (1st and 2nd) are on ULA tables only. The long text columns
+              (Other Courses of Interest, Topic Proficiencies, Interests,
+              Previous Experience, Anything Else, Post-Application Comments and
+              Admin Comments) are wide, 400 pixels to start with. Drag the thin
+              bar at the right edge of such a heading to widen or narrow the
+              column (never narrower than 200 pixels; there is no upper limit),
+              or tab to the bar and press the left and right arrow keys. The
+              widths last until you reload the page.
             </span>
           </li>
           <li>

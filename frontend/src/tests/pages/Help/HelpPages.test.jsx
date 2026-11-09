@@ -1858,6 +1858,10 @@ describe("Help pages (issue #140)", () => {
     expect(applicationColumns).toHaveTextContent(
       "the columns the table has always had start shown and the rest start hidden, and the choice is kept for that recruitment, for all admins.",
     );
+    // Issue #421: the availability columns belong to the ULA tables.
+    expect(applicationColumns).toHaveTextContent(
+      "Only the ULA form asks about availability, so the Lecture, Discussion and Availability columns for each choice (1st and 2nd) are on ULA tables only.",
+    );
     // Issue #342: the long text columns are wide and resizable.
     expect(applicationColumns).toHaveTextContent(
       "are wide, 400 pixels to start with. Drag the thin bar at the right edge of such a heading to widen or narrow the column (never narrower than 200 pixels; there is no upper limit), or tab to the bar and press the left and right arrow keys.",
