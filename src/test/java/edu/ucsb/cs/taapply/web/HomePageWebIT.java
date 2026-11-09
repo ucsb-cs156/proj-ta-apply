@@ -2,7 +2,11 @@ package edu.ucsb.cs.taapply.web;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import edu.ucsb.cs.taapply.WebTestCase;
+import edu.ucsb.cs.taapply.entity.Admin;
+import edu.ucsb.cs.taapply.entity.Budget;
 import edu.ucsb.cs.taapply.entity.CatalogName;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
@@ -10,9 +14,12 @@ import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +52,8 @@ public class HomePageWebIT extends WebTestCase {
 
   @Autowired CatalogNameRepository catalogNameRepository;
   @Autowired InstructorRepository instructors;
+  @Autowired AdminRepository admins;
+  @Autowired BudgetRepository budgets;
 
   @Test
   public void logged_in_regular_user_sees_only_the_student_section() throws Exception {
@@ -268,6 +277,80 @@ public class HomePageWebIT extends WebTestCase {
     assertThat(page.getByTestId(form + "-last-saved")).not().hasText("Last saved: never");
     // The tradeoff notes are there, closed.
     assertThat(page.getByTestId(form + "-notes-summary")).hasText("Notes on TA/ULA tradeoffs");
-    assertThat(page.getByTestId(form + "-notes-ratio")).not().isVisible();
+    assertThat(page.getByTestId(form + "-notes-text")).not().isVisible();
+  }
+
+  /**
+   * Issue #429: an admin saves a new version of the notes on Instructor Feedback Settings, and an
+   * instructor whose quarter is released opens the notes and sees it, with the quarter and its
+   * costs filled in. One user is both, so the browser need not sign in twice.
+   */
+  @Test
+  public void an_admin_edits_the_tradeoff_notes_and_an_instructor_sees_them() throws Exception {
+    Recruitment recruitment =
+        recruitmentRepository.save(
+            Recruitment.builder()
+                .quarter("20261")
+                .type(RecruitmentType.TA)
+                .applicationStatus(ApplicationStatus.CLOSED)
+                .allocationVisibility(AllocationVisibility.OWN_COURSES)
+                .tentativeOpeningDate(LocalDate.of(2026, 1, 5))
+                .primaryConsiderationDate(LocalDate.of(2026, 1, 20))
+                .build());
+    RecruitmentCourse mine =
+        recruitmentCourseRepository.save(
+            RecruitmentCourse.builder()
+                .recruitmentId(recruitment.getId())
+                .courseId("CMPSC   156")
+                .enrollCode("07492")
+                .section("0100")
+                .title("ADV APP PROGRAM")
+                .instructor("CONRAD P")
+                .allocation(2)
+                .build());
+    Budget budget =
+        budgets.findById("20261").orElseGet(() -> Budget.builder().quarter("20261").build());
+    budget.setTaCostPerQuarter(new BigDecimal("12000.00"));
+    budget.setUlaRateDollarsPerHour(new BigDecimal("20.00"));
+    budget.setEstimatedHoursPerULAPerQuarter(new BigDecimal("100.00"));
+    budgets.save(budget);
+    catalogNameRepository.save(CatalogName.builder().name("CONRAD P").build());
+    setupInstructorUser();
+    instructors.save(
+        Instructor.builder().email("instructor@ucsb.edu").catalogName("CONRAD P").build());
+    admins.save(Admin.builder().email("instructor@ucsb.edu").build());
+
+    // The admin's page starts with the version the app was installed with.
+    openPage(page, "/admin/instructorFeedbackSettings");
+    String card = "InstructorFeedbackSettingsPage-notes";
+    assertThat(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+        .hasText("Instructor Feedback Settings");
+    assertThat(page.getByTestId(card + "-history-row-0")).containsText("(installed with the app)");
+    assertThat(page.getByTestId(card + "-current")).containsText("Current: Version 1");
+    assertThat(page.getByTestId(card + "-preview"))
+        .containsText("Note that the current estimated cost of a TA is $12,000.00");
+
+    // The editor is CodeMirror, so it is driven by keyboard.
+    page.getByTestId(card + "-editor").locator(".CodeMirror").click();
+    page.keyboard().press("ControlOrMeta+A");
+    page.keyboard().press("Delete");
+    page.keyboard().type("A TA costs ${estimatedCostPerTA} (${taToUlaCostRatio}) in ${quarter}.");
+    assertThat(page.getByTestId(card + "-preview"))
+        .hasText("A TA costs $12,000.00 (1:6.0) in Winter 2026.");
+    page.getByTestId(card + "-save-button").click();
+
+    assertThat(page.getByText("Saved version 2 of the notes on TA/ULA tradeoffs")).isVisible();
+    assertThat(page.getByTestId(card + "-current")).containsText("Current: Version 2");
+    assertThat(page.getByTestId(card + "-history-row-0")).containsText("instructor@ucsb.edu");
+    assertThat(page.getByTestId(card + "-history-row-1")).containsText("(installed with the app)");
+
+    // The instructor opens the course and its notes.
+    openPage(page, "/");
+    String course = "HomePageLoggedIn-instructor-recruitments-quarter-20261-course-" + mine.getId();
+    String form = course + "-feedback";
+    page.getByTestId(course + "-header").getByRole(AriaRole.BUTTON).click();
+    page.getByTestId(form + "-notes-summary").click();
+    assertThat(page.getByTestId(form + "-notes-text"))
+        .hasText("A TA costs $12,000.00 (1:6.0) in Winter 2026.");
   }
 }

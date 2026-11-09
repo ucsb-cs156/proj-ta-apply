@@ -3,12 +3,32 @@ import { HttpResponse, http } from "msw";
 import InstructorRecruitmentCards from "main/components/Instructor/InstructorRecruitmentCards";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import instructorFeedbackFixtures from "fixtures/instructorFeedbackFixtures";
+import instructorFeedbackSettingsFixtures from "fixtures/instructorFeedbackSettingsFixtures";
+import quartersFixtures from "fixtures/quartersFixtures";
 
-/** The feedback form's requests (issue #425): the given rows, the W26 costs, saves stamped now. */
-const feedbackHandlers = (rows = []) => [
+/**
+ * The feedback form's requests (issue #425): the given rows, the W26 costs, saves stamped now; and
+ * (issue #429) the notes in force and W26's calendar, which the notes are filled in from.
+ */
+const feedbackHandlers = (
+  rows = [],
+  settings = [instructorFeedbackSettingsFixtures.v1],
+) => [
   http.get("/api/instructor/feedback", () => HttpResponse.json(rows)),
   http.get("/api/instructor/feedback/costs", () =>
     HttpResponse.json(instructorFeedbackFixtures.costs),
+  ),
+  http.get("/api/instructor/feedback/settings", () =>
+    HttpResponse.json(settings),
+  ),
+  http.get("/api/quarters/one", () =>
+    HttpResponse.json({
+      ...quartersFixtures.f21,
+      quarter: "20261",
+      qyy: "W26",
+      name: "WINTER 2026",
+      firstDayOfClasses: "2026-01-05T00:00:00",
+    }),
   ),
   http.put("/api/instructor/feedback", () =>
     HttpResponse.json({
@@ -167,3 +187,35 @@ FeedbackFormTaOnly.play = openEveryCourse;
 export const FeedbackFormUlaOnly = Template.bind({});
 FeedbackFormUlaOnly.args = { recruitments: [ulaReleased[2]] };
 FeedbackFormUlaOnly.play = openEveryCourse;
+
+/** Opens every course's drop-down, then every course's Notes on TA/ULA tradeoffs. */
+const openEveryCourseAndItsNotes = async (context) => {
+  await openEveryCourse(context);
+  const { canvas, userEvent } = context;
+  for (const summary of await canvas.findAllByText(
+    "Notes on TA/ULA tradeoffs",
+  )) {
+    await userEvent.click(summary);
+  }
+};
+
+/**
+ * Issue #429: the notes opened, as the admin wrote them on Instructor Feedback Settings, rendered
+ * as Markdown (a heading and a list) with W26's name, its first day of classes and its costs
+ * filled in.
+ */
+export const FeedbackNotesOpen = Template.bind({});
+FeedbackNotesOpen.args = { recruitments: [taReleased[1], ulaReleased[2]] };
+FeedbackNotesOpen.parameters = {
+  msw: {
+    handlers: feedbackHandlers([], [instructorFeedbackSettingsFixtures.v2]),
+  },
+};
+FeedbackNotesOpen.play = openEveryCourseAndItsNotes;
+
+/** The notes as they were hard coded before issue #429, opened: what deploying changes nothing of. */
+export const FeedbackNotesOriginalOpen = Template.bind({});
+FeedbackNotesOriginalOpen.args = {
+  recruitments: [taReleased[1], ulaReleased[2]],
+};
+FeedbackNotesOriginalOpen.play = openEveryCourseAndItsNotes;

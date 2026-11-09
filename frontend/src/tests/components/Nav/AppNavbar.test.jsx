@@ -128,6 +128,7 @@ describe("AppNavbar tests", () => {
       "Budget for Quarter",
       "TA App Settings",
       "ULA App Settings",
+      "Instructor Feedback Settings",
       "Legacy TA Application",
       "Audit Trail",
     ];
@@ -137,6 +138,11 @@ describe("AppNavbar tests", () => {
         expect(screen.getByText(item)).toBeInTheDocument();
       });
     });
+    // Issue #429: the item opens the settings page.
+    expect(screen.getByText("Instructor Feedback Settings")).toHaveAttribute(
+      "href",
+      "/admin/instructorFeedbackSettings",
+    );
     // Issue #141: the recruitments live on the admin's home page, so there is no menu item.
     expect(screen.queryByText("Recruitments")).toBeNull();
   });
@@ -266,6 +272,7 @@ describe("AppNavbar tests", () => {
       "For Developers",
       "Recruitment Steps",
       "Notices Fields",
+      "Instructor Feedback Fields",
       "CSV Upload/Download Formats",
     ]);
   });

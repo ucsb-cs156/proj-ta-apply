@@ -128,13 +128,17 @@ const FIELD_PATTERN = /\$\{([^}\n]*)\}/g;
 
 /**
  * The names written as ${name} that are not fields at all (issue #192), each once, in the order
- * they first appear; "${}" counts, as the empty name.
+ * they first appear; "${}" counts, as the empty name. The fields are a notice's unless another
+ * text's are given (issue #429).
  */
-export const findUnknownFields = (content: string): string[] => {
+export const findUnknownFields = (
+  content: string,
+  known: readonly string[] = KNOWN_NOTICE_FIELDS,
+): string[] => {
   const unknown: string[] = [];
   for (const match of content.matchAll(FIELD_PATTERN)) {
     const key = match[1];
-    if (!KNOWN_NOTICE_FIELDS.includes(key) && !unknown.includes(key)) {
+    if (!known.includes(key) && !unknown.includes(key)) {
       unknown.push(key);
     }
   }
@@ -155,12 +159,15 @@ export const UNKNOWN_FIELD_TITLE = "unknown-notice-field";
 /**
  * The content with every unknown ${name} turned into a Markdown link titled
  * {@link UNKNOWN_FIELD_TITLE}, which the preview renders as red text instead of a link. Known
- * fields, filled in or not, are left alone. Brackets and backslashes in the name are escaped so
+ * fields (a notice's, unless others are given), filled in or not, are left alone. Brackets and backslashes in the name are escaped so
  * the link text survives Markdown.
  */
-export const markUnknownFields = (content: string): string =>
+export const markUnknownFields = (
+  content: string,
+  known: readonly string[] = KNOWN_NOTICE_FIELDS,
+): string =>
   content.replace(FIELD_PATTERN, (whole, key: string) =>
-    KNOWN_NOTICE_FIELDS.includes(key)
+    known.includes(key)
       ? whole
       : `[${whole.replace(/[\\[\]]/g, "\\$&")}](# "${UNKNOWN_FIELD_TITLE}")`,
   );

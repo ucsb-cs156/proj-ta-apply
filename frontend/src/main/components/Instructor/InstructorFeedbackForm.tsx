@@ -17,14 +17,20 @@ import {
   FEEDBACK_COSTS_URL,
   FEEDBACK_URL,
   MAX_COMMENTS,
-  costDisplay,
   countFromInput,
   isValidCount,
-  ratioDisplay,
   type FeedbackFields,
   type InstructorFeedback,
   type TradeoffCosts,
 } from "main/utils/instructorFeedback";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {
+  FEEDBACK_SETTINGS_URL,
+  fillFeedbackNotesFields,
+  type InstructorFeedbackSettings,
+} from "main/utils/feedbackNotesFields";
+import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 
 type Props = {
   quarter: InstructorQuarter;
@@ -74,8 +80,10 @@ function useFeedbackSaves(recruitmentCourseId: number) {
 }
 
 /**
- * The "Notes on TA/ULA tradeoffs" (issue #425), closed until opened: the quarter's estimated cost
- * per TA and per ULA, the ratio of the two, and the hours each works.
+ * The "Notes on TA/ULA tradeoffs" (issue #425), closed until opened: since issue #429 the newest
+ * version of the admin's notes from Instructor Feedback Settings, as Markdown, with its fields
+ * filled in for the quarter: its name and calendar dates, and its estimated cost per TA and per ULA
+ * and their ratio. There is no section at all while there are no notes.
  */
 function TradeoffNotes({
   quarter,
@@ -83,7 +91,15 @@ function TradeoffNotes({
 }: {
   quarter: string;
   testIdPrefix: string;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
+  const { data: settings } = useBackend<InstructorFeedbackSettings[]>(
+    // Stryker disable next-line ArrayDeclaration : the cache key is not observable from here
+    [FEEDBACK_SETTINGS_URL],
+    // Stryker disable next-line ObjectLiteral,StringLiteral : axios sends a GET whatever the method says
+    { method: "GET", url: FEEDBACK_SETTINGS_URL },
+    // Stryker disable next-line ArrayDeclaration : a placeholder until the settings arrive
+    [],
+  );
   const { data: costs } = useBackend<TradeoffCosts | null>(
     // Stryker disable next-line ArrayDeclaration : the cache key is not observable from here
     [FEEDBACK_COSTS_URL, quarter],
@@ -91,37 +107,25 @@ function TradeoffNotes({
     { method: "GET", url: FEEDBACK_COSTS_URL, params: { quarter } },
     null,
   );
+  const fillIn = useNoticeFillIn({ quarter });
+  const notes = Array.isArray(settings) ? settings[0]?.notesText : undefined;
+  if (!notes) {
+    return null;
+  }
   return (
     <details className="mt-3" data-testid={`${testIdPrefix}-notes`}>
       <summary data-testid={`${testIdPrefix}-notes-summary`}>
         Notes on TA/ULA tradeoffs
       </summary>
-      <div className="mt-2">
-        <p data-testid={`${testIdPrefix}-notes-costs`}>
-          Note that the current estimated cost of a TA is{" "}
-          <span data-testid={`${testIdPrefix}-notes-ta-cost`}>
-            {costDisplay(costs?.estimatedCostPerTA)}
-          </span>{" "}
-          while the estimated cost of a ULA is{" "}
-          <span data-testid={`${testIdPrefix}-notes-ula-cost`}>
-            {costDisplay(costs?.estimatedCostPerULA)}
-          </span>
-          . This means that on a cost basis, the ratio of TA to ULA is{" "}
-          <span data-testid={`${testIdPrefix}-notes-ratio`}>
-            {ratioDisplay(costs)}
-          </span>
-          .
-        </p>
-        <p>
-          On the other hand, TAs work 20 hours per week, while ULAs work 10
-          hours per week.
-        </p>
-        <p className="mb-0">
-          We are not always in a position to trade off TAs for ULAs in precisely
-          the way each faculty member would prefer; there are constraints other
-          than faculty preferences that we must satisfy. That being said, we
-          will do our best to take your preferences into consideration.
-        </p>
+      <div className="mt-2" data-testid={`${testIdPrefix}-notes-text`}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {fillFeedbackNotesFields(notes, {
+            quarter,
+            // Stryker disable next-line OptionalChaining : useNoticeFillIn is null only without a quarter, and one is always given
+            calendar: fillIn?.calendar,
+            costs,
+          })}
+        </ReactMarkdown>
       </div>
     </details>
   );

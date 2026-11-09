@@ -66,7 +66,24 @@ public class InstructorFeedbackController extends ApiController {
    * times the hours per ULA). Each is null while not yet entered.
    */
   public static record TradeoffCosts(
-      String quarter, BigDecimal estimatedCostPerTA, BigDecimal estimatedCostPerULA) {}
+      String quarter, BigDecimal estimatedCostPerTA, BigDecimal estimatedCostPerULA) {
+
+    /**
+     * The two figures of the quarter's budget, both null when it has none. Also the admin's preview
+     * on the Instructor Feedback Settings page (issue #429), which reads without creating.
+     */
+    static TradeoffCosts of(String quarter, BudgetRepository budgets) {
+      return budgets
+          .findById(quarter)
+          .map(
+              budget ->
+                  new TradeoffCosts(
+                      quarter,
+                      budget.getTaCostPerQuarter(),
+                      BudgetService.estimatedCostPerUla(budget)))
+          .orElse(new TradeoffCosts(quarter, null, null));
+    }
+  }
 
   @Operation(
       summary = "The signed-in instructor's allocation feedback",
@@ -86,15 +103,7 @@ public class InstructorFeedbackController extends ApiController {
   @GetMapping("/costs")
   public TradeoffCosts costs(@Parameter(name = "quarter") @RequestParam String quarter) {
     requireReleased(quarter, recruitmentsOf(taught(email())).values());
-    return budgetRepository
-        .findById(quarter)
-        .map(
-            budget ->
-                new TradeoffCosts(
-                    quarter,
-                    budget.getTaCostPerQuarter(),
-                    BudgetService.estimatedCostPerUla(budget)))
-        .orElse(new TradeoffCosts(quarter, null, null));
+    return TradeoffCosts.of(quarter, budgetRepository);
   }
 
   @Operation(

@@ -1,0 +1,62 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "069-create-instructor-feedback-settings",
+        "author": "pc",
+        "comment": "The Instructor Feedback Settings page (issue #429): one row per saved version, never updated, the id being the version number. notes_text (up to a million characters) is the Markdown of the 'Notes on TA/ULA tradeoffs' under the instructors' allocation feedback form, with ${field}s filled in for the quarter. created_at is Pacific wall-clock time set by the server; editor_email is the admin who saved it. Version 1 is inserted here: the text the notes showed before this change, written with the new fields, so instructors see no change on deploy; it has no editor. Later settings of the same page (issue #430) are added as columns. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "instructor_feedback_settings" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "instructor_feedback_settings",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "created_at",
+                    "type": "TIMESTAMP",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "editor_email", "type": "VARCHAR(255)" } },
+                {
+                  "column": {
+                    "name": "notes_text",
+                    "type": "VARCHAR(1000000)",
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "insert": {
+              "tableName": "instructor_feedback_settings",
+              "columns": [
+                { "column": { "name": "created_at", "valueComputed": "LOCALTIMESTAMP" } },
+                {
+                  "column": {
+                    "name": "notes_text",
+                    "value": "Note that the current estimated cost of a TA is ${estimatedCostPerTA} while the estimated cost of a ULA is ${estimatedCostPerULA}. This means that on a cost basis, the ratio of TA to ULA is ${taToUlaCostRatio}.\n\nOn the other hand, TAs work 20 hours per week, while ULAs work 10 hours per week.\n\nWe are not always in a position to trade off TAs for ULAs in precisely the way each faculty member would prefer; there are constraints other than faculty preferences that we must satisfy. That being said, we will do our best to take your preferences into consideration."
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "rollback": [{ "dropTable": { "tableName": "instructor_feedback_settings" } }]
+      }
+    }
+  ]
+}

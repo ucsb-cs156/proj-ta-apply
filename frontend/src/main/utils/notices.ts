@@ -14,8 +14,11 @@ export type NoticeVersion = {
 export const AGREEMENT_LABEL =
   "I have read and understood the text above, and I agree to the terms and conditions it specifies";
 
+/** What every versioned text has (issue #429): its version number and when it was saved. */
+export type SavedVersion = Pick<NoticeVersion, "id" | "createdAt">;
+
 /** "Version 3, saved 1/2/2026, 3:04:05 AM" for a card footer or a summary line. */
-export const describeVersion = (version: NoticeVersion): string =>
+export const describeVersion = (version: SavedVersion): string =>
   `Version ${version.id}, saved ${formatPacificDateTime(version.createdAt)}`;
 
 /** Where the Help page for each kind of application explains the notices and their version. */

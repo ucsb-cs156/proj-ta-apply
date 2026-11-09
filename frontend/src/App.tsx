@@ -29,6 +29,7 @@ import HelpAdminsPage from "main/pages/Help/HelpAdminsPage";
 import HelpDeveloperPage from "main/pages/Help/HelpDeveloperPage";
 import HelpNoticeFieldsPage from "main/pages/Help/HelpNoticeFieldsPage";
 import HelpCsvPage from "main/pages/Help/HelpCsvPage";
+import HelpInstructorFeedbackFieldsPage from "main/pages/Help/HelpInstructorFeedbackFieldsPage";
 import HelpRecruitmentStepsPage from "main/pages/Help/HelpRecruitmentStepsPage";
 import SignInPage from "main/pages/Auth/SignInPage";
 import SignInSuccessPage from "main/pages/Auth/SignInSuccessPage";
@@ -54,6 +55,7 @@ import RecruitmentHistoryPage from "main/pages/Admin/RecruitmentHistoryPage";
 import AdminApplicationEditPage from "main/pages/Admin/AdminApplicationEditPage";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
+import InstructorFeedbackSettingsPage from "main/pages/Admin/InstructorFeedbackSettingsPage";
 import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
 import AuditTrailPage from "main/pages/Admin/AuditTrailPage";
 import CandidateRankingPage from "main/pages/Instructor/CandidateRankingPage";
@@ -152,6 +154,16 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<HelpCsvPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/help/instructor-feedback-fields"
+            element={
+              <ProtectedPage
+                component={<HelpInstructorFeedbackFieldsPage />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />
@@ -440,6 +452,16 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<UlaAppSettingsPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/instructorFeedbackSettings"
+            element={
+              <ProtectedPage
+                component={<InstructorFeedbackSettingsPage />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />

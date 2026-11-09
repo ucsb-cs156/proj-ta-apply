@@ -82,6 +82,12 @@ export default function AppNavbar({
                   <NavDropdown.Item as={Link} to="/admin/settings/ula">
                     ULA App Settings
                   </NavDropdown.Item>
+                  <NavDropdown.Item
+                    as={Link}
+                    to="/admin/instructorFeedbackSettings"
+                  >
+                    Instructor Feedback Settings
+                  </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/admin/legacy-ta-application">
                     Legacy TA Application
                   </NavDropdown.Item>

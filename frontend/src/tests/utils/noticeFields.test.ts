@@ -200,4 +200,23 @@ describe("noticeFields (issue #150)", () => {
     );
     expect(markUnknownFields("plain")).toBe("plain");
   });
+
+  /** Issue #429: another text's fields can be given in place of a notice's. */
+  test("both take the known fields of another text when given", () => {
+    const known = ["quarter", "cost"];
+    expect(
+      findUnknownFields(
+        "${cost} ${primaryConsiderationDate} ${quarter}",
+        known,
+      ),
+    ).toEqual(["primaryConsiderationDate"]);
+    expect(
+      markUnknownFields(
+        "${cost} ${primaryConsiderationDate} ${quarter}",
+        known,
+      ),
+    ).toBe(
+      '${cost} [${primaryConsiderationDate}](# "unknown-notice-field") ${quarter}',
+    );
+  });
 });

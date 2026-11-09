@@ -85,6 +85,7 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           write comments of up to 2048 characters. Everything is saved as you
           go, and <strong>Last saved</strong> shows when. Under the form,{" "}
           <strong>Notes on TA/ULA tradeoffs</strong> opens to show the
+          admins&apos; notes on trading TAs for ULAs, which can include the
           quarter&apos;s estimated cost of a TA and of a ULA, and so how many
           ULAs cost the same as one TA.
         </p>
