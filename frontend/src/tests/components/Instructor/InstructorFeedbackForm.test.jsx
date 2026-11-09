@@ -684,6 +684,26 @@ describe("InstructorFeedbackForm (issue #425)", () => {
     ]);
   });
 
+  test("the notes are GitHub-flavoured Markdown: tables and strikethrough render", async () => {
+    renderForm({
+      settingsReply: [
+        {
+          ...instructorFeedbackSettingsFixtures.v2,
+          notesText:
+            "| Role | Cost |\n| --- | --- |\n| TA | ${estimatedCostPerTA} |\n\n~~Old note~~",
+        },
+      ],
+    });
+
+    const text = await screen.findByTestId(`${P}-notes-text`);
+    await waitFor(() =>
+      expect(text.querySelector("table td:last-child")).toHaveTextContent(
+        "$12,000.00",
+      ),
+    );
+    expect(text.querySelector("del")).toHaveTextContent("Old note");
+  });
+
   test("with no notes there is no notes section", async () => {
     renderForm({ settingsReply: [] });
 

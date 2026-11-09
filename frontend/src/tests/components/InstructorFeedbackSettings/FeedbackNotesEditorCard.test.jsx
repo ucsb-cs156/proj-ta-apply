@@ -157,7 +157,9 @@ describe("FeedbackNotesEditorCard (issue #429)", () => {
     expect(hint).toHaveTextContent(
       "Write ${estimatedCostPerTA}, ${estimatedCostPerULA} or ${taToUlaCostRatio} and each instructor sees",
     );
-    expect(hint).toHaveTextContent(/All the fields, with examples\.$/);
+    expect(hint.textContent).toMatch(
+      /chosen above it\. All the fields, with examples\.$/,
+    );
     expect(hint).toHaveClass("text-muted", "small");
     const fields = within(hint).getByRole("link", {
       name: "All the fields, with examples",
@@ -173,6 +175,7 @@ describe("FeedbackNotesEditorCard (issue #429)", () => {
 
     const box = screen.getByLabelText("Preview for quarter:");
     expect(box).toBe(screen.getByTestId("Card-preview-quarter"));
+    expect(box.id).toBe("Card-preview-quarter");
     expect(box).toHaveValue("20261");
     expect(box).toHaveClass("form-select-sm");
     expect(box.style.width).toBe("8em");
@@ -361,6 +364,18 @@ describe("FeedbackNotesEditorCard (issue #429)", () => {
       expect.stringContaining("Saved version"),
     );
     expect(editor).toHaveValue(v2.notesText + "!");
+  });
+
+  test("a saved version that ends in whitespace is unchanged until edited", async () => {
+    axiosMock
+      .onGet(HISTORY_URL)
+      .reply(200, [{ ...v2, notesText: "Saved notes  \n" }]);
+    renderCard();
+    const editor = await editorWith("Saved notes  \n");
+
+    expect(screen.getByTestId("Card-save-button")).toBeDisabled();
+    await userEvent.type(editor, "!");
+    expect(screen.getByTestId("Card-save-button")).toBeEnabled();
   });
 
   test("with no versions the editor is empty and says instructors see no notes", async () => {

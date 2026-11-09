@@ -121,6 +121,7 @@ function TradeoffNotes({
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {fillFeedbackNotesFields(notes, {
             quarter,
+            // Stryker disable next-line OptionalChaining : useNoticeFillIn is null only without a quarter, and one is always given
             calendar: fillIn?.calendar,
             costs,
           })}

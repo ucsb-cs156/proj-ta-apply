@@ -69,15 +69,14 @@ export default function FeedbackNotesEditorCard({
     // Stryker disable next-line ArrayDeclaration : a placeholder until the quarters arrive
     [],
   );
-  const quarters = (Array.isArray(quarterRows) ? quarterRows : []).map(
-    (row) => row.quarter,
-  );
+  const quarters = Array.isArray(quarterRows)
+    ? quarterRows.map((row) => row.quarter)
+    : [];
   const [chosen, setChosen] = useState<string | null>(null);
   const previewQuarter = chosen ?? quarters[0] ?? null;
 
-  const fillIn = useNoticeFillIn(
-    previewQuarter === null ? null : { quarter: previewQuarter },
-  );
+  // With no quarter, an empty one: the calendar is then not asked for, and not used.
+  const fillIn = useNoticeFillIn({ quarter: previewQuarter ?? "" });
   const { data: costs } = useBackend<TradeoffCosts | null>(
     [FEEDBACK_SETTINGS_COSTS_URL, previewQuarter],
     {
@@ -96,6 +95,7 @@ export default function FeedbackNotesEditorCard({
       ? text
       : fillFeedbackNotesFields(text, {
           quarter: previewQuarter,
+          // Stryker disable next-line OptionalChaining : useNoticeFillIn is null only without a quarter, and one is always given
           calendar: fillIn?.calendar,
           costs,
         });

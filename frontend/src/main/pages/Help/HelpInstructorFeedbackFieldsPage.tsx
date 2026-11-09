@@ -1,7 +1,6 @@
 import { Table } from "react-bootstrap";
 import { Link } from "react-router";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import QuarterFieldsTable from "main/components/Notices/QuarterFieldsTable";
 import {
@@ -120,7 +119,7 @@ export default function HelpInstructorFeedbackFieldsPage(): React.JSX.Element {
           className="border rounded-3 p-3"
           data-testid="HelpInstructorFeedbackFieldsPage-example-filled"
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          <ReactMarkdown>
             {fillFeedbackNotesFields(ORIGINAL_FEEDBACK_NOTES, SAMPLE_FILL_IN)}
           </ReactMarkdown>
         </div>
