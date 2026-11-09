@@ -304,6 +304,10 @@ allocation an admin can ask for from it.</div>
 <dd>
 <div class="block">Why a submission, or a draft, is refused once there is an application.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#ALREADY_DRAFTING" class="member-name-link">ALREADY_DRAFTING</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Why a cancelled application cannot become a draft beside the draft already there.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html#alreadyPresent()" class="member-name-link">alreadyPresent()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>alreadyPresent</code> record component.</div>
@@ -994,10 +998,6 @@ send in it.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html#count(java.lang.Long)" class="member-name-link">count(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#countByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">countByEmailAndRecruitmentId(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
-<dd>
-<div class="block">How many applications, cancelled or not, one person has made to one recruitment.</div>
-</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#countByRecruitmentId(java.lang.Long)" class="member-name-link">countByRecruitmentId(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
 <dd>
 <div class="block">How many drafts one recruitment has (issue #296).</div>
@@ -1244,6 +1244,11 @@ recruitment's courses, as the faculty would.</div>
 <dd>
 <div class="block">Records that the recruitment is being deleted and deletes it, in one transaction, and returns
 the row written.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/CandidateRankingRepository.html#deleteByApplicationId(java.lang.Long)" class="member-name-link">deleteByApplicationId(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/CandidateRankingRepository.html" title="interface in edu.ucsb.cs.taapply.repository">CandidateRankingRepository</a></dt>
+<dd>
+<div class="block">Removes every faculty ranking of one application, for when the application itself is deleted
+(issue #420).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/CoursesController.html#deleteCourse(java.lang.String)" class="member-name-link">deleteCourse(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/CoursesController.html" title="class in edu.ucsb.cs.taapply.controller">CoursesController</a></dt>
 <dd>&nbsp;</dd>
@@ -2053,6 +2058,8 @@ the stored PAT cannot reach).</div>
 <dt><a href="edu/ucsb/cs/taapply/models/ApplicantRecruitmentDto.html#from(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">from(Recruitment)</a> - Static method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/ApplicantRecruitmentDto.html" title="class in edu.ucsb.cs.taapply.models">ApplicantRecruitmentDto</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.html#from(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.models.UcsbCourseOffering)" class="member-name-link">from(String, String, UcsbCourseOffering)</a> - Static method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.html" title="class in edu.ucsb.cs.taapply.models">CourseSections</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#fromCancelled(java.lang.Long)" class="member-name-link">fromCancelled(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/FrontendController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">FrontendController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>&nbsp;</dd>
@@ -3095,6 +3102,11 @@ overwriting what is on file, and returns them oldest first (issue #151).</div>
 <dd>
 <div class="block">A ULA applicant rates each topic 1 (very comfortable), 2 (somewhat) or 3 (not familiar).</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#maxAttemptNumber(java.lang.String,java.lang.Long)" class="member-name-link">maxAttemptNumber(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
+<dd>
+<div class="block">The highest attempt number among one person's applications to one recruitment, cancelled or
+not, or 0 if they have none; a new application is one more (issue #318).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CourseRow.html#maxEnroll()" class="member-name-link">maxEnroll()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CourseRow.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CourseRow</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>maxEnroll</code> record component.</div>
@@ -3206,6 +3218,10 @@ trailing spaces removed.</div>
 <dd>
 <div class="block">The perm number as stored: trimmed and upper case; a blank one is no answer.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#NOT_CANCELLED" class="member-name-link">NOT_CANCELLED</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Why an application that is not cancelled cannot be turned back into a draft (issue #420).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html#NOT_HIRED" class="member-name-link">NOT_HIRED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/CourseInterest.html#NOT_INTERESTED" class="member-name-link">NOT_INTERESTED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></dt>
@@ -3215,6 +3231,10 @@ trailing spaces removed.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html#NOT_MAPPED" class="member-name-link">NOT_MAPPED</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService</a></dt>
 <dd>
 <div class="block">What an instructor's email reads when the catalog name maps to no, or several, instructors.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#NOT_OPEN" class="member-name-link">NOT_OPEN</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Why a cancelled application cannot become a draft once applications have closed.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/LanguageExamStatus.html#NOT_PASSED" class="member-name-link">NOT_PASSED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></dt>
 <dd>&nbsp;</dd>
@@ -3991,6 +4011,11 @@ column is refused with a clear message, never truncated.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/TaApplyApplication.html#restTemplate()" class="member-name-link">restTemplate()</a> - Method in class edu.ucsb.cs.taapply.<a href="edu/ucsb/cs/taapply/TaApplyApplication.html" title="class in edu.ucsb.cs.taapply">TaApplyApplication</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html#resumeCancelled(java.lang.String,java.lang.Long)" class="member-name-link">resumeCancelled(String, Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DraftApplicationService.html" title="class in edu.ucsb.cs.taapply.services">DraftApplicationService</a></dt>
+<dd>
+<div class="block">Turns one of the student's cancelled applications back into a draft (issue #420): "Create a new
+application".</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html#reviewStatus()" class="member-name-link">reviewStatus()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>reviewStatus</code> record component.</div>

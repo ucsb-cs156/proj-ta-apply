@@ -81,8 +81,11 @@ loadScripts(document, 'script');</script>
 <div class="block">Returns the value of the <code>draft</code> record component.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationsController.</span><code><a href="../../controller/DraftApplicationsController.html#openDraft(java.lang.Long)" class="member-name-link">openDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationsController.</span><code><a href="../../controller/DraftApplicationsController.html#fromCancelled(java.lang.Long)" class="member-name-link">fromCancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;applicationId)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">DraftApplicationsController.</span><code><a href="../../controller/DraftApplicationsController.html#openDraft(java.lang.Long)" class="member-name-link">openDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Methods in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> that return types with arguments of type <a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></span></div>
 <div class="summary-table three-column-summary">
@@ -157,8 +160,15 @@ loadScripts(document, 'script');</script>
 already have an application to it.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#save(edu.ucsb.cs.taapply.entity.DraftApplication)" class="member-name-link">save</a><wbr>(<a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&nbsp;draft)</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#resumeCancelled(java.lang.String,java.lang.Long)" class="member-name-link">resumeCancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;applicationId)</code></div>
 <div class="col-last odd-row-color">
+<div class="block">Turns one of the student's cancelled applications back into a draft (issue #420): "Create a new
+application".</div>
+</div>
+<div class="col-first even-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#save(edu.ucsb.cs.taapply.entity.DraftApplication)" class="member-name-link">save</a><wbr>(<a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&nbsp;draft)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Saves a draft; refused if the student already has an application to its recruitment.</div>
 </div>
 </div>

@@ -59,7 +59,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#findByEmailOrderByIdDesc(java.lang.String)" tabindex="0">findByEmailOrderByIdDesc(String)</a></li>
 <li><a href="#findByEmailAndRecruitmentIdOrderByIdDesc(java.lang.String,java.lang.Long)" tabindex="0">findByEmailAndRecruitmentIdOrderByIdDesc(String, Long)</a></li>
-<li><a href="#countByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" tabindex="0">countByEmailAndRecruitmentId(String, Long)</a></li>
+<li><a href="#maxAttemptNumber(java.lang.String,java.lang.Long)" tabindex="0">maxAttemptNumber(String, Long)</a></li>
 <li><a href="#existsByEmailAndRecruitmentIdAndStatusNot(java.lang.String,java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" tabindex="0">existsByEmailAndRecruitmentIdAndStatusNot(String, Long, ApplicationReviewStatus)</a></li>
 <li><a href="#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" tabindex="0">findByRecruitmentIdOrderByIdAsc(Long)</a></li>
 <li><a href="#existsByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" tabindex="0">existsByEmailAndRecruitmentId(String, Long)</a></li>
@@ -97,39 +97,40 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>long</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#countByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">countByEmailAndRecruitmentId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">How many applications, cancelled or not, one person has made to one recruitment.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#existsByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">existsByEmailAndRecruitmentId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#existsByEmailAndRecruitmentIdAndStatusNot(java.lang.String,java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" class="member-name-link">existsByEmailAndRecruitmentIdAndStatusNot</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#existsByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">existsByEmailAndRecruitmentId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#existsByEmailAndRecruitmentIdAndStatusNot(java.lang.String,java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" class="member-name-link">existsByEmailAndRecruitmentIdAndStatusNot</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  <a href="../enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a>&nbsp;status)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Whether the person has an application to the recruitment other than one with this status.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByEmailAndRecruitmentIdOrderByIdDesc(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentIdOrderByIdDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByEmailAndRecruitmentIdOrderByIdDesc(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentIdOrderByIdDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">One person's applications to one recruitment, newest first: several only when they cancelled
 and started again (issue #318).</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByEmailOrderByIdDesc(java.lang.String)" class="member-name-link">findByEmailOrderByIdDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByEmailOrderByIdDesc(java.lang.String)" class="member-name-link">findByEmailOrderByIdDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Every application belonging to one person, newest first.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Every application to one recruitment, in the order they were created.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#maxAttemptNumber(java.lang.String,java.lang.Long)" class="member-name-link">maxAttemptNumber</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">The highest attempt number among one person's applications to one recruitment, cancelled or
+not, or 0 if they have none; a new application is one more (issue #318).</div>
 </div>
 </div>
 </div>
@@ -169,12 +170,18 @@ and started again (issue #318).</div>
 </section>
 </li>
 <li>
-<section class="detail" id="countByEmailAndRecruitmentId(java.lang.String,java.lang.Long)">
-<h3>countByEmailAndRecruitmentId</h3>
+<section class="detail" id="maxAttemptNumber(java.lang.String,java.lang.Long)">
+<h3>maxAttemptNumber</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">countByEmailAndRecruitmentId</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+<div class="member-signature"><span class="annotations">@Query("select coalesce(max(a.attemptNumber), 0) from applications a where a.email = :email and a.recruitmentId = :recruitmentId")
+</span><span class="return-type">int</span>&nbsp;<span class="element-name">maxAttemptNumber</span><wbr><span class="parameters">(@Param("email")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+ @Param("recruitmentId")
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>
-<div class="block">How many applications, cancelled or not, one person has made to one recruitment.</div>
+<div class="block">The highest attempt number among one person's applications to one recruitment, cancelled or
+not, or 0 if they have none; a new application is one more (issue #318). Not the count: a
+cancelled application turned back into a draft is deleted (issue #420), and when it was not the
+newest, one more than the count is a number a later cancelled row still has.</div>
 </div>
 </section>
 </li>
