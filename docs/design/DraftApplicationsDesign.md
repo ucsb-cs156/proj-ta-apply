@@ -148,7 +148,7 @@ The card for an open recruitment shows, in the footer:
 | nothing | **Apply to be a TA** (or **ULA**) |
 | a draft | **Continue editing draft application**, with a red warning: *Your application is not yet complete; incomplete applications are not considered.* The badge says *Draft application, not submitted*. |
 | a submitted application | **View submitted application** (and Cancel my Application) |
-| a cancelled application | **View my Application** and, while applications are open, **Start a new application** (issue #318, below); with a new draft begun, **Continue editing draft application** instead |
+| a cancelled application | **View my Application** and, while applications are open, **Create a new application** (issues #318 and #420, below); with a draft begun, **Continue editing draft application** instead |
 
 A recruitment that is not open keeps its greyed-out Apply button; a draft for it offers nothing to
 continue, since it can no longer be saved.
@@ -159,7 +159,7 @@ Cancelling (#107) is final for the application cancelled: it cannot be edited, c
 brought back. It no longer locks the applicant out of the recruitment. While applications are open
 (the same rule as for any new application) a cancelled applicant may begin a new application "as if
 from scratch", through **Start a new application** on the home page card and on the cancelled
-application's page. Once applications have closed the button is not shown, and the server refuses
+application's page (replaced on 2026-11-08 by **Create a new application**; see issue #420 below). Once applications have closed the button is not shown, and the server refuses
 as it does for anyone.
 
 **One live application per person per recruitment, any number of cancelled ones.**
@@ -169,7 +169,8 @@ as it does for anyone.
   (`existsByEmailAndRecruitmentIdAndStatusNot`). Someone else's applications never matter.
 * *Uniqueness.* The old unique constraint on (email, recruitment) is replaced by one on (email,
   recruitment, `attempt_number`), changeset `060`. The first application is attempt 1; a new one is
-  one more than the number of applications the person already has there. The cancelled row is kept
+  one more than the number of applications the person already has there (since 2026-11-08, one
+  more than the highest attempt number they have there; see issue #420 below). The cancelled row is kept
   untouched (reason, time, answers). The database still refuses two simultaneous submissions,
   because both would compute the same attempt number. An admin's test application follows the same
   rule: cancelled test rows are set aside and the next test is a new row.
@@ -189,6 +190,64 @@ as it does for anyone.
 | counts, rankings, rankings CSV, assignments, course targets | the live application only (`ApplicationVisibility.real` already left out CANCELLED) |
 | the card's count (`applicationCounts`) | applicants, not rows: a person with a cancelled and a live application counts once |
 | faculty's **Cancelled applications** table | a person only while they have no live application (`ApplicationVisibility.cancelled`) |
+
+## Creating a new application from a cancelled one (issue #420)
+
+*Changed 2026-11-08 (issue #420).* The #318 button, **Start a new application**, which opened an
+empty draft and kept the cancelled row, is replaced by **Create a new application**, in the same
+two places (the home page card, test id `...-card-<id>-restart`, and the cancelled application's
+page, `ApplicationPage-restart`, with its note `ApplicationPage-restart-note`). There is one button,
+not two. It turns the cancelled application back into a draft holding its answers and removes the
+cancelled row, so "as if from scratch" and "the cancelled row is kept" in the section above now
+describe only what happened before this change; rows made that way are still on file and still
+behave as that section says.
+
+**`POST /api/draftApplications/fromCancelled?applicationId=`** (signed-in user) calls
+`DraftApplicationService.resumeCancelled(email, applicationId)`, one `@Transactional` method, which:
+
+1. refuses with 404 for an unknown application or recruitment, 403 for someone else's application,
+   and 400 unless the application is CANCELLED, its recruitment is accepting applications
+   (`ApplicationAccessService.acceptingApplications`), and the person has neither an application to
+   that recruitment that is not cancelled ("You already have an application for this recruitment")
+   nor a draft for it ("You already have a draft application for this recruitment");
+2. saves a draft built by `draftFrom(application)`: every field the two entities share (the
+   person, the recruitment, the notice version, every answer, the prior coursework rows copied
+   without their ids, and copies of the three maps). Not copied: the cancellation reason and time,
+   and what only a submitted application has (status, attempt number, origin, submission time,
+   post-application comments, the tentative assignment). The first name is stored as `""` if the
+   application had none, because the apply page treats a draft with a first name as one the form has
+   saved and starts from it (`draftWasSaved`) rather than from the prefill. A unit test compares the
+   two entities' fields reflectively, so a field added to one and not the other fails until someone
+   decides whether it carries over;
+3. moves the application's admin comments, if any, to a `draft_admin_comments` row for the new
+   draft (#296), which `submit` copies back to the application;
+4. deletes the faculty's rankings of the application (`CandidateRankingRepository
+   .deleteByApplicationId`; the foreign key would cascade anyway, and cancelled applications were
+   already left out of rankings and assignments);
+5. deletes the application (its coursework, interests and ratings go with it by cascade);
+6. returns the draft.
+
+If any step fails, all are rolled back: the cancelled application, its comments and its rankings
+stay, and there is no draft. `DraftApplicationServiceTransactionTests` forces the application
+delete, and separately the rankings delete, to fail against the real schema and checks that.
+
+**What is kept.** The audit trail of an admin's edits to the application (`audit_trail`) has no
+foreign key to the application, so its rows are left as they are, naming an id that no longer
+exists. That is history, and nothing else references an application.
+
+**Several cancelled rows.** Under #318 a person could have more than one cancelled application to a
+recruitment. The application page's button acts on the application shown; the card's on the newest
+cancelled one (the one the card shows). Only that row is deleted. Because an older row may now
+outlive a newer one, a new application's attempt number is one more than the **highest** attempt
+number the person has there (`ApplicationRepository.maxAttemptNumber`), no longer one more than the
+count, which could repeat a number still in use.
+
+**Frontend.** `useCreateFromCancelled` (in `main/utils`) posts the request, then navigates to
+`/apply/:recruitmentId`, where the draft opens as any draft does; a refusal is toasted in the
+server's words. It refreshes `/api/applications/mine` and `/api/draftApplications/mine`. The button
+is disabled while the request is under way. The application page also asks for the person's drafts
+and, if one exists for the recruitment, offers **Continue editing draft application** instead of the
+button, as the card already did.
 
 ## What an admin sees of drafts (issue #296)
 
@@ -272,6 +331,9 @@ one `@Transactional` method each:
   opening a draft was checked. In the usual case (a tab still open after submitting in another)
   submission has already deleted the draft, so that tab's save is a 404 before it gets here; the
   check is the backstop for a draft that is somehow still there.
+* `resumeCancelled(email, applicationId)` (issue #420, added 2026-11-08): checks, creates the draft
+  from a cancelled application, moves its admin comments, deletes its rankings and deletes it, in
+  one transaction; see "Creating a new application from a cancelled one" above.
 
 The controllers call these rather than being `@Transactional` themselves. `openDraft` has to catch
 the unique constraint failure when the same person's form opens twice at once and answer with the

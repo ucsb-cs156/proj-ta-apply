@@ -239,9 +239,34 @@ public class ApplicationRepositoryTests {
     assertEquals(2, both.size());
     assertEquals(2, both.get(0).getAttemptNumber());
     assertEquals(ApplicationReviewStatus.PENDING, both.get(0).getStatus());
-    assertEquals(2, applicationRepository.countByEmailAndRecruitmentId("grad@ucsb.edu", r.getId()));
-    assertEquals(
-        0, applicationRepository.countByEmailAndRecruitmentId("other@ucsb.edu", r.getId()));
+    assertEquals(2, applicationRepository.maxAttemptNumber("grad@ucsb.edu", r.getId()));
+    assertEquals(0, applicationRepository.maxAttemptNumber("other@ucsb.edu", r.getId()));
+  }
+
+  /**
+   * Issue #420: with attempt 1 deleted (turned back into a draft) and attempt 2 still on file, the
+   * highest is 2, not the count of 1, so the next attempt (3) is free.
+   */
+  @Test
+  public void max_attempt_number_is_the_highest_not_the_count() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Recruitment other = recruitment("20262", RecruitmentType.TA);
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(r.getId())
+            .email("grad@ucsb.edu")
+            .status(ApplicationReviewStatus.CANCELLED)
+            .attemptNumber(2)
+            .build());
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(other.getId())
+            .email("grad@ucsb.edu")
+            .attemptNumber(5)
+            .build());
+    entityManager.flush();
+
+    assertEquals(2, applicationRepository.maxAttemptNumber("grad@ucsb.edu", r.getId()));
   }
 
   @Test

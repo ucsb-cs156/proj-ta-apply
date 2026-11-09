@@ -21,6 +21,7 @@ const pastDeadline = { ...openUla, primaryConsiderationDate: "2000-01-20" };
 
 const common = [
   http.get("/api/applications/mine", () => HttpResponse.json([])),
+  http.get("/api/draftApplications/mine", () => HttpResponse.json([])),
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.userOnly),
   ),
@@ -145,12 +146,46 @@ AdminHasItOpen.parameters = {
 
 const cancelled = { ...applicationsFixtures.oneCancelledApplication, id: 2 };
 
-/** Issue #318: cancelled while applications are open, so Start a new application is offered. */
+/**
+ * Issues #318, #420: cancelled while applications are open, so Create a new application is
+ * offered; it turns this application back into a draft and opens the apply page.
+ */
 export const CancelledCanStartAgain = Template.bind({});
 CancelledCanStartAgain.parameters = {
   msw: {
     handlers: [
       http.get("/api/applications/mine", () => HttpResponse.json([cancelled])),
+      ...common,
+      http.get("/api/applications", () => HttpResponse.json(cancelled)),
+      http.get("/api/recruitments/applicable", () =>
+        HttpResponse.json([stillOpen]),
+      ),
+      http.post("/api/draftApplications/fromCancelled", () =>
+        HttpResponse.json({
+          id: 77,
+          recruitmentId: cancelled.recruitmentId,
+          email: cancelled.email,
+        }),
+      ),
+    ],
+  },
+};
+
+/** Issue #420: a draft is already begun, so the page offers it instead of the button. */
+export const CancelledWithADraft = Template.bind({});
+CancelledWithADraft.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/applications/mine", () => HttpResponse.json([cancelled])),
+      http.get("/api/draftApplications/mine", () =>
+        HttpResponse.json([
+          {
+            id: 77,
+            recruitmentId: cancelled.recruitmentId,
+            email: cancelled.email,
+          },
+        ]),
+      ),
       ...common,
       http.get("/api/applications", () => HttpResponse.json(cancelled)),
       http.get("/api/recruitments/applicable", () =>

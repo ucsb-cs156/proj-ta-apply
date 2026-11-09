@@ -134,11 +134,12 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
   }
 
   /**
-   * Issue #318: after cancelling, while applications are open, the applicant starts a new
-   * application from scratch; the cancelled one is kept, and only the new one is live.
+   * Issues #318, #420: after cancelling, while applications are open, Create a new application
+   * turns the cancelled application back into a draft with its answers (not the reason), removes
+   * the cancelled row, and opens the draft; submitting it leaves one application, not two.
    */
   @Test
-  public void an_applicant_who_cancelled_can_start_a_new_application() throws Exception {
+  public void an_applicant_who_cancelled_can_create_a_new_application_from_it() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
     seedTaLists();
 
@@ -154,40 +155,51 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
     page.getByTestId(modal + "reason").fill("Changed my mind");
     page.getByTestId(modal + "step2-yes").click();
     assertThat(page.getByTestId(card + "applied")).containsText("Application cancelled");
+    Long cancelledId = applicationRepository.findAll().iterator().next().getId();
 
-    // The cancelled application's own page offers the same button, and says the old one is kept.
+    // The cancelled application's own page offers the same button, and says what it does.
     page.getByTestId(card + "view").click();
-    assertThat(page.getByTestId("ApplicationPage-restart")).containsText("Start a new application");
-    assertThat(page.getByTestId("ApplicationPage-restart-note")).containsText("stays on file");
+    assertThat(page.getByTestId("ApplicationPage-restart"))
+        .containsText("Create a new application");
+    assertThat(page.getByTestId("ApplicationPage-restart-note"))
+        .containsText("back into a draft with your answers, but not your reason for cancelling");
     page.goBack();
 
-    assertThat(page.getByTestId(card + "restart")).containsText("Start a new application");
+    assertThat(page.getByTestId(card + "restart")).containsText("Create a new application");
     page.getByTestId(card + "restart").click();
 
-    // As if from scratch: nothing is copied from the cancelled application.
-    assertThat(page.getByTestId("ApplyPage-major")).hasValue("");
-    assertThat(page.getByTestId("ApplyPage-gpaMajor")).hasValue("");
-    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("0 of at least 3");
-    fillAndSubmit();
+    // The draft opens with the earlier answers, and the cancelled application is gone.
+    assertThat(page.getByTestId("ApplyPage-firstName")).hasValue("Chris");
+    assertThat(page.getByTestId("ApplyPage-major")).hasValue("Computer Science");
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).hasValue("3.9");
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("3 of at least 3");
+    assertThat(page.getByTestId("ApplyPage-notice-agree")).isChecked();
+    assertThat(page.getByText("Changed my mind")).hasCount(0);
+    assertEquals(0, applicationRepository.count());
+    var draft =
+        draftApplicationRepository
+            .findByEmailAndRecruitmentId("cgaucho@ucsb.edu", recruitment.getId())
+            .orElseThrow();
+    assertEquals("Gaucho", draft.getLastName());
 
-    // The new application is the one on file, and can be cancelled in turn.
+    page.getByTestId("ApplyPage-submit").click();
+
+    // One application on file, which can be cancelled in turn; no cancelled one beside it.
     assertThat(page.getByTestId(card + "applied")).containsText("Application on File");
     assertThat(page.getByTestId(card + "cancel")).isVisible();
     assertThat(page.getByTestId(card + "restart")).hasCount(0);
 
     List<Application> stored = new ArrayList<>();
     applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).forEach(stored::add);
-    assertEquals(2, stored.size());
-    assertEquals(ApplicationReviewStatus.CANCELLED, stored.get(0).getStatus());
-    assertEquals("Changed my mind", stored.get(0).getCancellationReason());
+    assertEquals(1, stored.size());
+    assertEquals(ApplicationReviewStatus.PENDING, stored.get(0).getStatus());
+    assertEquals(null, stored.get(0).getCancellationReason());
     assertEquals(1, stored.get(0).getAttemptNumber());
-    assertEquals(ApplicationReviewStatus.PENDING, stored.get(1).getStatus());
-    assertEquals(2, stored.get(1).getAttemptNumber());
+    assertEquals("Chris", stored.get(0).getFirstName());
+    assertEquals(0, draftApplicationRepository.count());
 
-    // The cancelled application's page now points to the new one instead of offering a button.
-    goTo("/applications/" + stored.get(0).getId());
-    assertThat(page.getByTestId("ApplicationPage-new-application-link")).isVisible();
-    assertThat(page.getByTestId("ApplicationPage-restart")).hasCount(0);
+    // The cancelled application's page is gone with it.
+    assertEquals(false, applicationRepository.existsById(cancelledId));
   }
 
   /** An admin reviews the applications to a recruitment and leaves comments on one (issue #49). */

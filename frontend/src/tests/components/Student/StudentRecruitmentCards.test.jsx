@@ -208,19 +208,57 @@ describe("StudentRecruitmentCards tests", () => {
 
   // ---- starting again after a cancellation (issue #318) ----
 
-  test("a cancelled application, while applications are open, offers Start a new application", () => {
-    renderCards([openUla], [applicationsFixtures.oneCancelledApplication]);
+  test("a cancelled application, while applications are open, offers Create a new application", () => {
+    const onRestartRequested = vi.fn();
+    render(
+      <MemoryRouter>
+        <StudentRecruitmentCards
+          recruitments={[openUla]}
+          applications={[applicationsFixtures.oneCancelledApplication]}
+          onRestartRequested={onRestartRequested}
+          testIdPrefix="S"
+        />
+      </MemoryRouter>,
+    );
 
     const restart = screen.getByTestId("S-card-2-restart");
-    expect(restart).toHaveTextContent("Start a new application");
-    expect(restart).toHaveAttribute("href", "/apply/2");
+    expect(restart).toHaveTextContent("Create a new application");
+    expect(restart.tagName).toBe("BUTTON");
     expect(restart).toHaveClass("btn", "btn-success");
+    expect(restart).toBeEnabled();
+    fireEvent.click(restart);
+    // Issue #420: the cancelled application itself is what becomes the draft.
+    expect(onRestartRequested).toHaveBeenCalledTimes(1);
+    expect(onRestartRequested).toHaveBeenCalledWith(
+      applicationsFixtures.oneCancelledApplication,
+    );
     // The cancelled one is still there to look at.
     expect(screen.getByTestId("S-card-2-view")).toHaveAttribute(
       "href",
       "/applications/4",
     );
     expect(screen.queryByTestId("S-card-2-draft")).toBeNull();
+  });
+
+  test("Create a new application is disabled while one is under way", () => {
+    render(
+      <MemoryRouter>
+        <StudentRecruitmentCards
+          recruitments={[openUla]}
+          applications={[applicationsFixtures.oneCancelledApplication]}
+          restarting
+          testIdPrefix="S"
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("S-card-2-restart")).toBeDisabled();
+  });
+
+  test("with no handler, Create a new application can still be clicked harmlessly", () => {
+    renderCards([openUla], [applicationsFixtures.oneCancelledApplication]);
+    const restart = screen.getByTestId("S-card-2-restart");
+    expect(restart).toBeEnabled();
+    fireEvent.click(restart);
   });
 
   test("once applications have closed a cancelled applicant is offered nothing", () => {

@@ -37,6 +37,7 @@ import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
@@ -81,6 +82,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @MockitoBean DraftAdminCommentRepository draftAdminCommentRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean NoticeVersionRepository noticeVersionRepository;
+  @MockitoBean CandidateRankingRepository candidateRankingRepository;
   @MockitoBean UserRepository userRepository;
 
   /** MockCurrentUserServiceImpl derives the email from the mock user's name. */
@@ -1111,7 +1113,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
             GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
         .thenReturn(false);
-    when(applicationRepository.countByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(1L);
+    when(applicationRepository.maxAttemptNumber(GRAD_EMAIL, 1L)).thenReturn(1);
 
     mockMvc
         .perform(
@@ -1137,7 +1139,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   public void an_applicant_who_cancelled_cannot_apply_again_once_applications_have_closed()
       throws Exception {
     when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
-    when(applicationRepository.countByEmailAndRecruitmentId(GRAD_EMAIL, 3L)).thenReturn(1L);
+    when(applicationRepository.maxAttemptNumber(GRAD_EMAIL, 3L)).thenReturn(1);
 
     MvcResult response =
         mockMvc
@@ -1709,7 +1711,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
     when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 1L))
         .thenReturn(List.of(cancelledTest));
-    when(applicationRepository.countByEmailAndRecruitmentId(ADMIN_EMAIL, 1L)).thenReturn(1L);
+    when(applicationRepository.maxAttemptNumber(ADMIN_EMAIL, 1L)).thenReturn(1);
 
     mockMvc
         .perform(

@@ -11,8 +11,11 @@ import {
   type DraftApplication,
 } from "main/utils/draftApplications";
 
-/** The button for an applicant who cancelled while applications are still open (issue #318). */
-export const RESTART_LABEL = "Start a new application";
+/**
+ * The button for an applicant who cancelled while applications are still open (issues #318,
+ * #420): it turns the cancelled application back into a draft holding its answers.
+ */
+export const RESTART_LABEL = "Create a new application";
 
 /** On the greyed-out Apply button of a closed recruitment. */
 export const NOT_OPEN_TOOLTIP = "Applications are not open yet";
@@ -28,6 +31,10 @@ type StudentRecruitmentCardsProps = {
     application: Application,
     recruitment: StudentRecruitment,
   ) => void;
+  /** Create a new application from a cancelled one (issue #420). */
+  onRestartRequested?: (application: Application) => void;
+  /** While a Create a new application request is under way, so it is not sent twice. */
+  restarting?: boolean;
   testIdPrefix?: string;
 };
 
@@ -37,7 +44,8 @@ type StudentRecruitmentCardsProps = {
  * fit: Apply to be a TA (or ULA) or, for an application begun and not submitted, Continue editing
  * draft application with a warning that it is not yet complete (issue #270); View submitted
  * application or View/Comment; and Cancel my Application. After a cancellation, while applications
- * are open, Start a new application begins again from scratch (issue #318).
+ * are open, Create a new application turns the newest cancelled application back into a draft
+ * with its answers (issues #318, #420).
  */
 export default function StudentRecruitmentCards({
   recruitments,
@@ -45,6 +53,8 @@ export default function StudentRecruitmentCards({
   // Stryker disable next-line all : don't test default value of empty list
   drafts = [],
   onCancelRequested = () => {},
+  onRestartRequested = () => {},
+  restarting = false,
   testIdPrefix = "StudentRecruitmentCards",
 }: StudentRecruitmentCardsProps): React.JSX.Element {
   const list = Array.isArray(recruitments) ? recruitments : [];
@@ -130,13 +140,14 @@ export default function StudentRecruitmentCards({
                 </div>
               )}
               {cancelled && open && draft === undefined && (
-                <Link
-                  className="btn btn-success"
-                  to={`/apply/${recruitment.id}`}
+                <Button
+                  variant="success"
+                  disabled={restarting}
+                  onClick={() => onRestartRequested(application)}
                   data-testid={id("restart")}
                 >
                   {RESTART_LABEL}
-                </Link>
+                </Button>
               )}
               {application === undefined &&
                 (open ? (

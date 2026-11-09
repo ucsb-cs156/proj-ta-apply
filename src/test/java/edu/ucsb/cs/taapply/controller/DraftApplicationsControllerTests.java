@@ -22,6 +22,7 @@ import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
 import edu.ucsb.cs.taapply.concurrency.OtherClient;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
@@ -36,6 +37,7 @@ import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -71,6 +73,7 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean DraftAdminCommentRepository draftAdminCommentRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
+  @MockitoBean CandidateRankingRepository candidateRankingRepository;
   @MockitoBean UserRepository userRepository;
   @org.springframework.beans.factory.annotation.Autowired ResettableDetector detector;
 
@@ -1337,5 +1340,220 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
     heartbeatAs(115L, "anonymous-tab").andExpect(status().is4xxClientError());
 
     assertEquals(List.of(), detector.othersActive("draft:115", "observer"));
+  }
+
+  // ---- POST /fromCancelled (issue #420) ----
+
+  /** The current user's cancelled application 50 to recruitment 1, with an admin's comment. */
+  private static Application cancelledApplication(String email) {
+    return Application.builder()
+        .id(50L)
+        .recruitmentId(1L)
+        .email(email)
+        .status(ApplicationReviewStatus.CANCELLED)
+        .attemptNumber(2)
+        .firstName("Ada")
+        .lastName("Lovelace")
+        .adminComments("Strong in 156")
+        .cancellationReason("Took an internship")
+        .cancelledAt(java.time.LocalDateTime.of(2026, 11, 1, 9, 30))
+        .postApplicationComments("Back from the internship")
+        .build();
+  }
+
+  /** Everything the endpoint asks about, set up so that the request may go ahead. */
+  private Application aCancelledApplicationMayBeResumed() {
+    Application application = cancelledApplication(EMAIL);
+    when(applicationRepository.findById(50L)).thenReturn(Optional.of(application));
+    when(recruitmentRepository.findById(1L))
+        .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
+    when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
+        .thenReturn(Optional.empty());
+    when(draftApplicationRepository.save(any(DraftApplication.class)))
+        .thenAnswer(
+            invocation -> {
+              DraftApplication d = invocation.getArgument(0);
+              d.setId(77L);
+              d.setVersion(0);
+              return d;
+            });
+    return application;
+  }
+
+  private org.springframework.test.web.servlet.ResultActions resume(long applicationId)
+      throws Exception {
+    return mockMvc.perform(
+        post("/api/draftApplications/fromCancelled?applicationId=" + applicationId).with(csrf()));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_makes_a_draft_from_the_answers_and_deletes_the_application()
+      throws Exception {
+    Application application = aCancelledApplicationMayBeResumed();
+
+    MvcResult response = resume(50L).andExpect(status().isOk()).andReturn();
+
+    ArgumentCaptor<DraftApplication> saved = ArgumentCaptor.forClass(DraftApplication.class);
+    org.mockito.InOrder inOrder =
+        org.mockito.Mockito.inOrder(
+            draftApplicationRepository,
+            draftAdminCommentRepository,
+            candidateRankingRepository,
+            applicationRepository);
+    inOrder.verify(draftApplicationRepository).save(saved.capture());
+    inOrder
+        .verify(draftAdminCommentRepository)
+        .save(new edu.ucsb.cs.taapply.entity.DraftAdminComment(77L, "Strong in 156"));
+    inOrder.verify(candidateRankingRepository).deleteByApplicationId(50L);
+    inOrder.verify(applicationRepository).delete(application);
+
+    DraftApplication draft = saved.getValue();
+    assertEquals(1L, draft.getRecruitmentId());
+    assertEquals(EMAIL, draft.getEmail());
+    assertEquals("Ada", draft.getFirstName());
+    assertEquals("Lovelace", draft.getLastName());
+    String body = response.getResponse().getContentAsString();
+    assertEquals(mapper.writeValueAsString(draft), body);
+    // Nothing about the cancellation, or the staff's notes, reaches the applicant.
+    assertEquals(false, body.contains("Took an internship"));
+    assertEquals(false, body.contains("Strong in 156"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_an_application_with_no_admin_comment_makes_no_comment_row()
+      throws Exception {
+    Application application = aCancelledApplicationMayBeResumed();
+    application.setAdminComments(null);
+
+    resume(50L).andExpect(status().isOk());
+
+    verify(draftAdminCommentRepository, never()).save(any());
+    verify(applicationRepository).delete(application);
+  }
+
+  /** What a refused request leaves: no draft, and the application and its rankings untouched. */
+  private void nothingChanged() {
+    verify(draftApplicationRepository, never()).save(any());
+    verify(draftAdminCommentRepository, never()).save(any());
+    verify(candidateRankingRepository, never()).deleteByApplicationId(any());
+    verify(applicationRepository, never()).delete(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_an_unknown_application_is_not_found() throws Exception {
+    when(applicationRepository.findById(50L)).thenReturn(Optional.empty());
+
+    MvcResult response = resume(50L).andExpect(status().isNotFound()).andReturn();
+
+    assertEquals("Application with id 50 not found", responseToJson(response).get("message"));
+    nothingChanged();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_someone_elses_application_is_forbidden() throws Exception {
+    aCancelledApplicationMayBeResumed();
+    when(applicationRepository.findById(50L))
+        .thenReturn(Optional.of(cancelledApplication("someone.else@example.org")));
+
+    MvcResult response = resume(50L).andExpect(status().isForbidden()).andReturn();
+
+    assertEquals(
+        "That application belongs to someone else", responseToJson(response).get("message"));
+    nothingChanged();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_an_application_that_is_not_cancelled_is_refused() throws Exception {
+    Application application = aCancelledApplicationMayBeResumed();
+    application.setStatus(ApplicationReviewStatus.PENDING);
+
+    MvcResult response = resume(50L).andExpect(status().isBadRequest()).andReturn();
+
+    assertEquals(DraftApplicationService.NOT_CANCELLED, responseToJson(response).get("message"));
+    nothingChanged();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_when_the_recruitment_is_gone_is_not_found() throws Exception {
+    aCancelledApplicationMayBeResumed();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.empty());
+
+    MvcResult response = resume(50L).andExpect(status().isNotFound()).andReturn();
+
+    assertEquals("Recruitment with id 1 not found", responseToJson(response).get("message"));
+    nothingChanged();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_once_applications_have_closed_is_refused() throws Exception {
+    aCancelledApplicationMayBeResumed();
+    when(recruitmentRepository.findById(1L))
+        .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.CLOSED)));
+
+    MvcResult response = resume(50L).andExpect(status().isBadRequest()).andReturn();
+
+    assertEquals(DraftApplicationService.NOT_OPEN, responseToJson(response).get("message"));
+    nothingChanged();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_beside_a_live_application_is_refused() throws Exception {
+    aCancelledApplicationMayBeResumed();
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(true);
+
+    MvcResult response = resume(50L).andExpect(status().isBadRequest()).andReturn();
+
+    assertEquals(DraftApplicationService.ALREADY_APPLIED, responseToJson(response).get("message"));
+    nothingChanged();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void resuming_beside_a_draft_is_refused() throws Exception {
+    aCancelledApplicationMayBeResumed();
+    when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
+        .thenReturn(Optional.of(draft(4L, EMAIL)));
+
+    MvcResult response = resume(50L).andExpect(status().isBadRequest()).andReturn();
+
+    assertEquals(DraftApplicationService.ALREADY_DRAFTING, responseToJson(response).get("message"));
+    nothingChanged();
+  }
+
+  @Test
+  public void resuming_needs_a_signed_in_user() throws Exception {
+    resume(50L).andExpect(status().is(403));
+    nothingChanged();
   }
 }

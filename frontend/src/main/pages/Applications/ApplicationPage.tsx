@@ -23,6 +23,8 @@ import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
 import { isConflict } from "main/utils/useDraftSaving";
 import { RESTART_LABEL } from "main/components/Student/StudentRecruitmentCards";
+import { useCreateFromCancelled } from "main/utils/useCreateFromCancelled";
+import { draftFor, type DraftApplication } from "main/utils/draftApplications";
 import {
   applicationHeartbeatUrl,
   applicationLeaveUrl,
@@ -58,8 +60,8 @@ export default function ApplicationPage(): React.JSX.Element {
     (r) => r.id === application?.recruitmentId,
   );
 
-  // An applicant who cancelled this application may begin another while applications are open,
-  // unless they already have (issue #318).
+  // An applicant who cancelled this application may, while applications are open, turn it back
+  // into a draft (issues #318, #420), unless they already have another application.
   const { data: mine, isFetched: mineFetched } = useBackend<Application[]>(
     ["/api/applications/mine"],
     { method: "GET", url: "/api/applications/mine" },
@@ -72,6 +74,23 @@ export default function ApplicationPage(): React.JSX.Element {
       a.recruitmentId === application?.recruitmentId &&
       a.status !== "CANCELLED",
   );
+  // A draft already begun for the recruitment is offered instead: the server will not make a
+  // second one from this application (issue #420).
+  const { data: myDrafts, isFetched: draftsFetched } = useBackend<
+    DraftApplication[]
+  >(
+    // Stryker disable next-line all : the cache key only shares the list with the home page
+    ["/api/draftApplications/mine"],
+    // Stryker disable next-line StringLiteral : axios reads a blank method as GET
+    { method: "GET", url: "/api/draftApplications/mine" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const draftHere =
+    application &&
+    // Stryker disable next-line all : myDrafts already defaults to an empty list
+    draftFor(myDrafts ?? [], application.recruitmentId);
+  const restartMutation = useCreateFromCancelled();
   const noticeFillIn = useNoticeFillIn(recruitment);
 
   const { data: courses } = useBackend<string[]>(
@@ -347,24 +366,43 @@ export default function ApplicationPage(): React.JSX.Element {
                       </Link>
                     </p>
                   ) : (
-                    recruitment?.applicationStatus === "OPEN" && (
-                      <p>
+                    recruitment?.applicationStatus === "OPEN" &&
+                    draftsFetched &&
+                    (draftHere ? (
+                      <p data-testid="ApplicationPage-draft">
                         <Link
                           className="btn btn-success"
                           to={`/apply/${application.recruitmentId}`}
+                          data-testid="ApplicationPage-continue-draft"
+                        >
+                          Continue editing draft application
+                        </Link>
+                        <span className="ms-2">
+                          You have since begun a new application. It is a draft
+                          until you submit it.
+                        </span>
+                      </p>
+                    ) : (
+                      <p>
+                        <Button
+                          variant="success"
+                          disabled={restartMutation.isPending}
+                          onClick={() => restartMutation.mutate(application.id)}
                           data-testid="ApplicationPage-restart"
                         >
                           {RESTART_LABEL}
-                        </Link>
+                        </Button>
                         <span
                           className="ms-2"
                           data-testid="ApplicationPage-restart-note"
                         >
-                          This one stays on file as cancelled. The new
-                          application starts empty, as if you had not applied.
+                          This turns the application back into a draft with your
+                          answers, but not your reason for cancelling, and this
+                          cancelled copy is removed. Review the draft, then
+                          submit it.
                         </span>
                       </p>
-                    )
+                    ))
                   ))}
                 {application.postApplicationComments && (
                   <p data-testid="ApplicationPage-saved-comments">

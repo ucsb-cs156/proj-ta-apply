@@ -119,6 +119,26 @@ public class DraftApplicationsController extends ApiController {
     }
   }
 
+  @Operation(
+      summary = "Turn a cancelled application back into a draft (Create a new application)",
+      description =
+          "Issue #420. In one transaction: creates the current user's draft for the application's"
+              + " recruitment holding the application's answers (not the reason for cancelling),"
+              + " moves the admin's comments on it to the draft, deletes the faculty's rankings of"
+              + " it, and deletes the application. Returns the draft. 404 for an unknown"
+              + " application, 403 for someone else's; 400 unless it is cancelled, the recruitment"
+              + " is open, and the user has neither an application that is not cancelled nor a"
+              + " draft for that recruitment.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @PostMapping("/fromCancelled")
+  public DraftApplication fromCancelled(
+      @Parameter(name = "applicationId") @RequestParam Long applicationId) {
+    // The checks, the new draft and the deletes are one transaction. Two requests at the same
+    // instant (the button is disabled while one is under way, so two tabs at most) cannot both
+    // succeed: the second breaks the draft's unique constraint and is rolled back.
+    return draftApplicationService.resumeCancelled(currentEmail(), applicationId);
+  }
+
   /**
    * Who the current user is to the detector (issue #273): the email address is the person, and the
    * label other people see is the email address followed by the full name in parentheses, or the

@@ -7,6 +7,7 @@ import PastRecruitmentsTable from "main/components/Student/PastRecruitmentsTable
 import StudentRecruitmentCards from "main/components/Student/StudentRecruitmentCards";
 import UpcomingRecruitmentsTable from "main/components/Student/UpcomingRecruitmentsTable";
 import { useBackendMutation } from "main/utils/useBackend";
+import { useCreateFromCancelled } from "main/utils/useCreateFromCancelled";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { classifyRecruitments } from "main/utils/studentRecruitments";
 import type { DraftApplication } from "main/utils/draftApplications";
@@ -65,6 +66,9 @@ export default function StudentDashboard({
     ["/api/applications/mine", "/api/applications"],
   );
 
+  // Create a new application: the cancelled one becomes a draft, which opens (issue #420).
+  const restartMutation = useCreateFromCancelled();
+
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
 
   return (
@@ -92,6 +96,10 @@ export default function StudentDashboard({
           onCancelRequested={(application, recruitment) =>
             setPendingCancel({ application, recruitment })
           }
+          onRestartRequested={(application) =>
+            restartMutation.mutate(application.id)
+          }
+          restarting={restartMutation.isPending}
           testIdPrefix={id("current")}
         />
       )}

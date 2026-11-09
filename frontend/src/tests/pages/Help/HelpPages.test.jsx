@@ -2267,9 +2267,9 @@ describe("Help pages (issue #140)", () => {
     );
   });
 
-  // Issue #318: cancelling, and starting a new application while applications are open.
+  // Issues #318, #420: cancelling, and creating a new application from the cancelled one.
   test.each(["Ta", "Ula"])(
-    "the %s applicants page explains cancelling and starting a new application (issue #318)",
+    "the %s applicants page explains cancelling and creating a new application (issues #318, #420)",
     async (type) => {
       const Page = type === "Ta" ? HelpTaApplicantsPage : HelpUlaApplicantsPage;
       renderPage(<Page />);
@@ -2278,17 +2278,17 @@ describe("Help pages (issue #140)", () => {
         "Cancelling, and applying again",
       );
       expect(screen.getByTestId(`${page}-start-again`).textContent).toMatch(
-        /Start a new application.*empty form, as if you had never applied.*the cancelled one stays on file.*Once applications have closed the button is gone/,
+        /show Create a new application\. It turns the cancelled application back into a draft with all your answers.*except your reason for cancelling.*The cancelled application is removed.*Once applications have closed the button is gone/,
       );
     },
   );
 
-  test("the admins page explains an applicant who cancelled and applied again (issue #318)", async () => {
+  test("the admins page explains an applicant who cancelled and applied again (issues #318, #420)", async () => {
     renderPage(<HelpAdminsPage />);
     expect(
       await screen.findByTestId("HelpAdminsPage-cancelled-and-new"),
     ).toHaveTextContent(
-      /Start a new application.*the same email address can appear twice.*Only the live one is counted, ranked and assigned.*counts once/,
+      /choose Create a new application, which turns the cancelled application back into a draft.*removes the cancelled row.*Your comments on the application move to the draft.*rankings of the cancelled application are removed.*audit trail is kept.*the same email address can appear twice.*Only the live one is counted, ranked and assigned.*counts once/,
     );
   });
 

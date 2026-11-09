@@ -20,6 +20,10 @@ export default {
         http.put("/api/applications/cancel", () =>
           HttpResponse.json(applicationsFixtures.oneCancelledApplication),
         ),
+        // Create a new application (issue #420): the cancelled one comes back as a draft.
+        http.post("/api/draftApplications/fromCancelled", () =>
+          HttpResponse.json(draftApplicationsFixtures.savedUlaDraft),
+        ),
       ],
     },
   },
@@ -57,7 +61,10 @@ OneCancelled.args = {
   ],
 };
 
-/** Issue #318: cancelled while applications are open, so Start a new application is offered. */
+/**
+ * Issues #318, #420: cancelled while applications are open, so Create a new application is
+ * offered; it turns the cancelled application back into a draft and opens it.
+ */
 export const CancelledCanStartAgain = Template.bind({});
 CancelledCanStartAgain.args = {
   recruitments: [openUla],

@@ -178,6 +178,32 @@ class CandidateRankingRepositoryTests {
     assertTrue(applications.findById(ids[2]).isPresent());
   }
 
+  /** Issue #420: one application's rankings go, another's stay. */
+  @Test
+  void delete_by_application_id_removes_only_that_application_s_rankings() {
+    Long[] ids = fixture();
+    Application other =
+        applications.save(
+            Application.builder().recruitmentId(ids[0]).email("other-candidate@ucsb.edu").build());
+    rankings.save(
+        CandidateRanking.builder().recruitmentCourseId(ids[1]).applicationId(ids[2]).build());
+    CandidateRanking kept =
+        rankings.save(
+            CandidateRanking.builder()
+                .recruitmentCourseId(ids[1])
+                .applicationId(other.getId())
+                .build());
+    entityManager.flush();
+
+    assertEquals(1, rankings.deleteByApplicationId(ids[2]));
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(
+        java.util.List.of(kept.getId()),
+        rankings.findByRecruitmentCourseId(ids[1]).stream().map(CandidateRanking::getId).toList());
+  }
+
   @Test
   void application_deletion_cascades() {
     Long[] ids = fixture();

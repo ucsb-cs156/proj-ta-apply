@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes, useParams } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
@@ -200,6 +200,90 @@ describe("StudentDashboard tests", () => {
       "Your application has been cancelled.",
     );
     expect(screen.getByTestId("D-cancel-step2")).toBeInTheDocument();
+  });
+
+  // ---- Create a new application (issue #420) ----
+
+  function ApplyStandIn() {
+    const { recruitmentId } = useParams();
+    return <div data-testid="apply-page">{recruitmentId}</div>;
+  }
+
+  /** The dashboard at /, with a stand-in for the apply page to see where the student is sent. */
+  function renderAtHome() {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <StudentDashboard
+                  recruitments={[openUla]}
+                  applications={[applicationsFixtures.oneCancelledApplication]}
+                  testIdPrefix="D"
+                />
+              }
+            />
+            <Route path="/apply/:recruitmentId" element={<ApplyStandIn />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  test("Create a new application turns the cancelled one into a draft and opens it", async () => {
+    axiosMock
+      .onPost("/api/draftApplications/fromCancelled")
+      .reply(200, { ...draftApplicationsFixtures.savedUlaDraft, id: 77 });
+    renderAtHome();
+
+    await userEvent.click(screen.getByTestId("D-current-card-2-restart"));
+
+    expect(await screen.findByTestId("apply-page")).toHaveTextContent(
+      String(draftApplicationsFixtures.savedUlaDraft.recruitmentId),
+    );
+    expect(axiosMock.history.post.length).toBe(1);
+    expect(axiosMock.history.post[0].params).toEqual({ applicationId: 4 });
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("Create a new application is disabled while the request is under way", async () => {
+    let answer;
+    axiosMock.onPost("/api/draftApplications/fromCancelled").reply(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+    );
+    renderAtHome();
+
+    await userEvent.click(screen.getByTestId("D-current-card-2-restart"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("D-current-card-2-restart")).toBeDisabled(),
+    );
+    answer([400, { message: "Applications are not currently open" }]);
+    await waitFor(() =>
+      expect(screen.getByTestId("D-current-card-2-restart")).toBeEnabled(),
+    );
+  });
+
+  test("a refused Create a new application toasts the server's reason and stays home", async () => {
+    axiosMock.onPost("/api/draftApplications/fromCancelled").reply(400, {
+      message: "You already have a draft application for this recruitment",
+    });
+    renderAtHome();
+
+    await userEvent.click(screen.getByTestId("D-current-card-2-restart"));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "You already have a draft application for this recruitment",
+      ),
+    );
+    expect(screen.queryByTestId("apply-page")).toBeNull();
+    expect(screen.getByTestId("D-current-card-2-card")).toBeInTheDocument();
   });
 
   test("uses StudentDashboard as the default test id prefix", () => {
