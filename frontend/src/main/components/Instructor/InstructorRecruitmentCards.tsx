@@ -5,13 +5,15 @@ import DetailsTable from "main/components/Common/DetailsTable";
 import { targetsColumns } from "main/utils/courseTargets";
 import {
   enrollmentColumns,
-  FEEDBACK_PLACEHOLDER,
   groupByQuarter,
   NOT_OPEN_NOTE,
   type CourseInRecruitment,
+  type InstructorQuarter,
   type InstructorRecruitment,
   type QuarterCourse,
 } from "main/utils/instructorQuarters";
+import { feedbackWaitingMessage } from "main/utils/instructorFeedback";
+import InstructorFeedbackForm from "main/components/Instructor/InstructorFeedbackForm";
 
 export type { InstructorRecruitment } from "main/utils/instructorQuarters";
 
@@ -151,16 +153,20 @@ function RecruitmentCard({
 /**
  * What a course's accordion item holds (issue #364): the enrollment table (always all six columns
  * since issue #410, Enrollment Estimate and the two Allocations reading TBD or N/A until there is a
- * number), the placeholder for the allocation feedback to come, then the TA card and the ULA card
- * for each recruitment it is in.
+ * number), the allocation feedback (issue #425: a note saying which allocations it waits for,
+ * then, once the quarter's are released, the form), then the TA card and the ULA card for each
+ * recruitment it is in.
  */
 function CourseBody({
+  quarter,
   course,
   testIdPrefix,
 }: {
+  quarter: InstructorQuarter;
   course: QuarterCourse;
   testIdPrefix: string;
 }): React.JSX.Element {
+  const waiting = feedbackWaitingMessage(quarter);
   return (
     <div className="d-flex flex-column gap-3">
       <DetailsTable
@@ -168,10 +174,23 @@ function CourseBody({
         columns={enrollmentColumns(course, testIdPrefix)}
       />
       <div
-        className="border rounded p-2 text-muted"
+        className="border rounded p-2"
         data-testid={`${testIdPrefix}-feedback`}
       >
-        {FEEDBACK_PLACEHOLDER}
+        {waiting === null ? (
+          <InstructorFeedbackForm
+            quarter={quarter}
+            course={course}
+            testIdPrefix={`${testIdPrefix}-feedback`}
+          />
+        ) : (
+          <span
+            className="text-muted"
+            data-testid={`${testIdPrefix}-feedback-waiting`}
+          >
+            {waiting}
+          </span>
+        )}
       </div>
       {course.ta && (
         <RecruitmentCard
@@ -242,6 +261,7 @@ export default function InstructorRecruitmentCards({
                       data-testid={id(`course-${course.id}-body`)}
                     >
                       <CourseBody
+                        quarter={quarter}
                         course={course}
                         testIdPrefix={id(`course-${course.id}`)}
                       />

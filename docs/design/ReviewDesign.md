@@ -30,7 +30,7 @@ On the Admins view of the recruitment, provide a button next to the facultyRanki
 When the faculty reviews are Open for a recruitment, provide a button on each of the rows that shows a course on the Instructor section of the home page 
 under that recruitment that says "Rank Candidates".
 
-(Since issue #364 the Instructor section is organized by quarter rather than by recruitment: one card per quarter, a drop-down per course the instructor teaches in that quarter's TA or ULA recruitment, and inside the course a TA card and/or a ULA card. The "Rank Candidates" / "View Candidate Rankings" button described here now sits in that TA or ULA card, in the first column of the course's targets table once the allocations are released, and alone until then.)
+(Since issue #364 the Instructor section is organized by quarter rather than by recruitment: one card per quarter, a drop-down per course the instructor teaches in that quarter's TA or ULA recruitment, and inside the course a TA card and/or a ULA card. The "Rank Candidates" / "View Candidate Rankings" button described here now sits in that TA or ULA card, in the first column of the course's targets table once the allocations are released, and alone until then. Since issue #425 each course also has a form for feedback on its allocation; see `InstructorFeedbackDesign.md`.)
 
 When the faculty reviews are closed for a recruitment, provide a button on each of the rows that says: "View Candidate Rankings".
 

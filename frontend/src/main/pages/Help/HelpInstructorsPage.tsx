@@ -27,10 +27,10 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           the allocations of either recruitment, an Allocation cell reads{" "}
           <strong>TBD</strong> until that recruitment&apos;s allocations are
           released, and <strong>N/A</strong> when the course is not in a
-          recruitment of that type), a note where you will one day be able to
-          comment on your allocations, and then a <strong>TA</strong> card
-          and/or a <strong>ULA</strong> card: one for each recruitment the
-          course is in, with that recruitment&apos;s status and dates.
+          recruitment of that type), a place to give feedback on your
+          allocations (see below), and then a <strong>TA</strong> card and/or a{" "}
+          <strong>ULA</strong> card: one for each recruitment the course is in,
+          with that recruitment&apos;s status and dates.
         </p>
         <p data-testid="HelpInstructorsPage-steps-link">
           Where your part fits in a recruitment, and what the admin does before
@@ -72,6 +72,21 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           Courses page, listing every course of a recruitment with its
           instructor, enrollment and meeting times, is being phased out and is
           no longer linked from the home page.
+        </p>
+        <p data-testid="HelpInstructorsPage-feedback">
+          Each course also has a <strong>feedback form</strong> on your
+          allocation. Until the admin releases the quarter&apos;s allocations
+          (the TA allocations in a quarter with only a TA recruitment, the ULA
+          ones in a quarter with only a ULA recruitment, and both in a quarter
+          with both), the course says what it is waiting for. Then the form
+          appears: tick at least one of the boxes (the allocation seems
+          reasonable; you would prefer a different number of TAs or of ULAs,
+          which then asks how many; you have other concerns) and, if you like,
+          write comments of up to 2048 characters. Everything is saved as you
+          go, and <strong>Last saved</strong> shows when. Under the form,{" "}
+          <strong>Notes on TA/ULA tradeoffs</strong> opens to show the
+          quarter&apos;s estimated cost of a TA and of a ULA, and so how many
+          ULAs cost the same as one TA.
         </p>
         <p>
           When faculty reviews are open, expand one of your listed courses and

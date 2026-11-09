@@ -4,7 +4,6 @@ import {
   allocationCell,
   enrollmentColumns,
   estimateCell,
-  FEEDBACK_PLACEHOLDER,
   groupByQuarter,
   isReleased,
   NOT_OPEN_NOTE,
@@ -17,9 +16,6 @@ const [s26Ta, w26Ta, w26Ula] = nothingReleased;
 
 describe("instructorQuarters tests", () => {
   test("the texts are as the issue words them", () => {
-    expect(FEEDBACK_PLACEHOLDER).toBe(
-      "Coming soon: the ability for faculty to provide feedback on allocations of TA/ULAs to their courses",
-    );
     expect(NOT_OPEN_NOTE).toBe(
       "Candidate rankings will be available when faculty reviews open.",
     );

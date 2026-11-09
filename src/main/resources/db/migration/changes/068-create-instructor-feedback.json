@@ -1,0 +1,117 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "068-create-instructor-feedback",
+        "author": "pc",
+        "comment": "An instructor's feedback on a course's TA/ULA allocation (issue #425): one row per quarter, instructor email and recruitment course (the TA row of the course if it has one, else the ULA row), so co-instructors each have their own. The quarter is the budget's key (YYYYQ), with a foreign key to budgets; the course has a foreign key to recruitment_courses. The four checkboxes are NOT NULL DEFAULT FALSE, the two preferred counts nullable, the comments up to 2048 characters, and last_updated is Pacific wall-clock time set by the server. Deleting the budget or the recruitment course deletes the feedback with it. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "instructor_feedback" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "instructor_feedback",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "quarter",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "email",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "recruitment_course_id",
+                    "type": "BIGINT",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "alloc_reasonable",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "different_ta_count",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "different_ula_count",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "other_concerns",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "num_tas_preferred", "type": "INT" } },
+                { "column": { "name": "num_ulas_preferred", "type": "INT" } },
+                { "column": { "name": "comments", "type": "VARCHAR(2048)" } },
+                { "column": { "name": "last_updated", "type": "TIMESTAMP" } }
+              ]
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "instructor_feedback",
+              "columnNames": "quarter, email, recruitment_course_id",
+              "constraintName": "uk_instructor_feedback_quarter_email_course"
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "instructor_feedback",
+              "baseColumnNames": "quarter",
+              "referencedTableName": "budgets",
+              "referencedColumnNames": "quarter",
+              "constraintName": "fk_instructor_feedback_budget",
+              "onDelete": "CASCADE"
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "instructor_feedback",
+              "baseColumnNames": "recruitment_course_id",
+              "referencedTableName": "recruitment_courses",
+              "referencedColumnNames": "id",
+              "constraintName": "fk_instructor_feedback_recruitment_course",
+              "onDelete": "CASCADE"
+            }
+          }
+        ],
+        "rollback": [{ "dropTable": { "tableName": "instructor_feedback" } }]
+      }
+    }
+  ]
+}
