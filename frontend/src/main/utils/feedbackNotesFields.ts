@@ -24,7 +24,69 @@ export type InstructorFeedbackSettings = SavedVersion & {
   editorEmail: string | null;
   /** Markdown. */
   notesText: string;
+  /**
+   * Issue #430: whether instructors are asked for feedback on their allocations; when false, their
+   * home page shows none of the feedback parts.
+   */
+  askForFeedback: boolean;
 };
+
+/**
+ * Whether instructors are asked for feedback (issue #430), from the settings in force (a list of
+ * zero or one): the newest version's setting, and yes when there is no version. Null while the
+ * settings have not loaded, so that nothing is shown that may have to disappear.
+ */
+export function askingForFeedback(
+  current: InstructorFeedbackSettings[] | null | undefined,
+): boolean | null {
+  if (!Array.isArray(current)) {
+    return null;
+  }
+  return current[0]?.askForFeedback ?? true;
+}
+
+/** "On" or "Off": how the history and the card name the setting's two values. */
+export const onOff = (askForFeedback: boolean): string =>
+  askForFeedback ? "On" : "Off";
+
+/**
+ * What each version changed from the one before it (issue #430), by id: since each save of the
+ * notes or of the checkbox is a new version of both, the history says which one it was. Versions
+ * are newest first, as the history endpoint returns them; the oldest is the one installed.
+ */
+export function versionChanges(
+  versions: InstructorFeedbackSettings[],
+): Map<number, string> {
+  return new Map(
+    versions.map((version, index) => {
+      const previous = versions[index + 1];
+      if (previous === undefined) {
+        return [version.id, "First version"];
+      }
+      const changes = [];
+      if (version.notesText !== previous.notesText) {
+        changes.push("Notes");
+      }
+      if (version.askForFeedback !== previous.askForFeedback) {
+        changes.push(`Asking for feedback: ${onOff(version.askForFeedback)}`);
+      }
+      return [version.id, changes.length > 0 ? changes.join("; ") : "Nothing"];
+    }),
+  );
+}
+
+/**
+ * The version that last set the checkbox to what it is now (issue #430), from the history newest
+ * first: the oldest of the newest run of versions with the same value. Undefined with no versions.
+ */
+export function lastAskChange(
+  versions: InstructorFeedbackSettings[],
+): InstructorFeedbackSettings | undefined {
+  const changed = versions.findIndex(
+    (version) => version.askForFeedback !== versions[0].askForFeedback,
+  );
+  return changed === -1 ? versions.at(-1) : versions[changed - 1];
+}
 
 /** Where an instructor reads the settings in force: a list of zero or one. */
 export const FEEDBACK_SETTINGS_URL = "/api/instructor/feedback/settings";

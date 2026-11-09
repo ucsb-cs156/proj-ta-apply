@@ -12,6 +12,7 @@ import {
   FEEDBACK_SETTINGS_SAVE_URL,
   fillFeedbackNotesFields,
   KNOWN_FEEDBACK_NOTES_FIELDS,
+  versionChanges,
   type InstructorFeedbackSettings,
 } from "main/utils/feedbackNotesFields";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -45,6 +46,8 @@ export default function FeedbackNotesEditorCard({
     [],
   );
   const versions = Array.isArray(history) ? history : [];
+  // A save of the checkbox (issue #430) is a version too: the history says what each one changed.
+  const changes = versionChanges(versions);
 
   const saveMutation = useBackendMutation<string, InstructorFeedbackSettings>(
     (notesText) => ({
@@ -119,7 +122,9 @@ export default function FeedbackNotesEditorCard({
             Markdown
           </a>
           ; the preview on the right is what instructors see. Each save is kept
-          as a new version; instructors always see the newest.
+          as a new version; instructors always see the newest. Turning
+          &ldquo;Ask faculty for feedback&rdquo; on or off is a version too,
+          with the same notes; the history says what each version changed.
         </p>
         <p className="text-muted small" data-testid={id("fields-hint")}>
           {FEEDBACK_NOTES_FIELDS_HINT}{" "}
@@ -172,7 +177,10 @@ export default function FeedbackNotesEditorCard({
           knownFields={KNOWN_FEEDBACK_NOTES_FIELDS}
           fieldsHelpPath={FEEDBACK_NOTES_FIELDS_HELP_PATH}
           noVersionMessage="No version saved yet: instructors are not shown any notes."
-          historyColumns={[{ header: "Editor", cell: editorOf }]}
+          historyColumns={[
+            { header: "Editor", cell: editorOf },
+            { header: "Changed", cell: (version) => changes.get(version.id) },
+          ]}
         />
       </Card.Body>
     </Card>

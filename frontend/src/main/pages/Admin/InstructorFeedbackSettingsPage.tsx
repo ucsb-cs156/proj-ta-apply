@@ -1,10 +1,11 @@
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
+import AskForFeedbackCard from "main/components/InstructorFeedbackSettings/AskForFeedbackCard";
 import FeedbackNotesEditorCard from "main/components/InstructorFeedbackSettings/FeedbackNotesEditorCard";
 
 /**
  * What instructors are shown around their allocation feedback form (issue #429):
- * /admin/instructorFeedbackSettings. Today the notes on TA/ULA tradeoffs; the page has room for
- * other settings of the same form, each a card.
+ * /admin/instructorFeedbackSettings. A card per setting: whether instructors are asked for feedback
+ * at all (issue #430), then the notes on TA/ULA tradeoffs.
  */
 export default function InstructorFeedbackSettingsPage(): React.JSX.Element {
   return (
@@ -16,6 +17,7 @@ export default function InstructorFeedbackSettingsPage(): React.JSX.Element {
           give feedback on their courses&apos; TA and ULA allocations. Changes
           take effect immediately.
         </p>
+        <AskForFeedbackCard testIdPrefix="InstructorFeedbackSettingsPage-ask" />
         <FeedbackNotesEditorCard testIdPrefix="InstructorFeedbackSettingsPage-notes" />
       </div>
     </BasicLayout>

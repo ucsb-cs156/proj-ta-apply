@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +18,8 @@ import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Against the Liquibase schema from changeset 069 (issue #429): the version it installs, a text far
- * longer than any VARCHAR the app uses, and "latest" meaning the highest id.
+ * longer than any VARCHAR the app uses, and "latest" meaning the highest id; and changeset 070's
+ * ask_for_feedback (issue #430).
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -33,6 +35,8 @@ public class InstructorFeedbackSettingsRepositoryTests {
 
     assertNull(first.getEditorEmail());
     assertNotNull(first.getCreatedAt());
+    // Changeset 070 (issue #430): the versions saved before it ask for feedback.
+    assertTrue(first.isAskForFeedback());
     assertEquals(
         "Note that the current estimated cost of a TA is ${estimatedCostPerTA} while the"
             + " estimated cost of a ULA is ${estimatedCostPerULA}. This means that on a cost"
@@ -61,6 +65,7 @@ public class InstructorFeedbackSettingsRepositoryTests {
                 .createdAt(LocalDateTime.of(2026, 11, 9, 9, 5))
                 .editorEmail("other@ucsb.edu")
                 .notesText(longText)
+                .askForFeedback(false)
                 .build());
     entityManager.flush();
     entityManager.clear();
@@ -70,6 +75,8 @@ public class InstructorFeedbackSettingsRepositoryTests {
     assertEquals(longText, latest.getNotesText());
     assertTrue(latest.getNotesText().length() > 100000);
     assertEquals("other@ucsb.edu", latest.getEditorEmail());
+    assertFalse(latest.isAskForFeedback());
+    assertTrue(repository.findById(a.getId()).orElseThrow().isAskForFeedback());
     assertEquals(LocalDateTime.of(2026, 11, 9, 9, 5), latest.getCreatedAt());
 
     List<Long> ids =

@@ -124,6 +124,50 @@ preview, the unknown-field messages, Save and the history are `MarkdownVersionEd
 of known fields, and `describeVersion` takes any `{id, createdAt}`. The quarter-fields table of the
 help pages is `QuarterFieldsTable`, shared by both.
 
+## Asking for feedback: on or off (issue #430, 2026-11-09)
+
+One global switch decides whether instructors are asked for feedback at all. It is the checkbox
+"Ask faculty for feedback on TA/ULA allocations after both have been released to instructors", in a
+card of its own (`AskForFeedbackCard`) at the top of the Instructor Feedback Settings page, above
+the notes. (The issue's title mentions the Allocation Visibility modal; its body, followed here,
+puts the checkbox on this page.)
+
+**Storage (changeset 070).** A column of `instructor_feedback_settings`, as planned above:
+`ask_for_feedback BOOLEAN NOT NULL DEFAULT TRUE`. TRUE rather than FALSE, so that every existing
+version, version 1 included, keeps asking, as instructors have been asked since #425; it stays on
+until an admin turns it off. With no version at all the setting also counts as on, on the server
+(`InstructorFeedbackSettings.askingForFeedback`) and in the browser (`askingForFeedback` in
+`feedbackNotesFields.ts`).
+
+**Saving.** A click saves at once, with a toast, as a new version whose body is only
+`{"askForFeedback": true|false}`; the notes are copied forward. The notes editor's body is only
+`{"notesText": "..."}`, and the checkbox is copied forward. Notes the body leaves out (or sends as
+null) are copied without being checked, so a checkbox-only save never fails over them, even with no
+version to copy from (the notes are then empty, and instructors see none); notes the body does send
+are trimmed and refused when blank or too long, as before.
+
+**The history.** Since a click of the checkbox is a version too, the notes card's version history
+gained a "Changed" column: "Notes", "Asking for feedback: On" or "Off", both joined by "; ",
+"Nothing" for a save that changed neither, and "First version" for the oldest. The checkbox card
+says what the setting is and which version set it: "Off since admin@ucsb.edu saved version 3, …",
+or "On since the app was installed (version 1, …)". That is the oldest version of the newest run
+with the current value, not the newest version, which may be a later save of the notes.
+
+**Off.** While the setting is off:
+
+- the instructor home page shows none of the feedback parts of any course: no waiting message, no
+  form and no "Notes on TA/ULA tradeoffs" (the bordered feedback box is not rendered at all). The
+  enrollment table and the TA and ULA cards are unchanged. `InstructorRecruitmentCards` reads
+  `/api/instructor/feedback/settings` once for the whole page, not per course, and shows no
+  feedback box until it has loaded, so that a box never appears and then vanishes;
+- `PUT /api/instructor/feedback` answers 403, "Feedback on TA/ULA allocations is not being collected
+  at this time: an admin has turned it off on the Instructor Feedback Settings page.", before
+  anything else is checked. `GET /api/instructor/feedback` and `/costs` still answer;
+- stored feedback is kept, never deleted. Turning the setting on again brings the form back with
+  the answers as they were. The admin's Instructor Feedback page (#427) is not affected.
+
+While it is on, everything is as before.
+
 ## Table `instructor_feedback` (changeset 068)
 
 | Column | Type | Notes |

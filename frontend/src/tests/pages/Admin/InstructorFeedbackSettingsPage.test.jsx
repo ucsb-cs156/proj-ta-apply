@@ -32,7 +32,7 @@ describe("InstructorFeedbackSettingsPage (issue #429)", () => {
     axiosMock.onGet("/api/admin/budget/quarters").reply(200, []);
   });
 
-  test("is titled Instructor Feedback Settings and holds the notes editor", async () => {
+  test("is titled Instructor Feedback Settings and holds the checkbox, then the notes editor", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter>
@@ -55,6 +55,18 @@ describe("InstructorFeedbackSettingsPage (issue #429)", () => {
     expect(
       screen.getByTestId("InstructorFeedbackSettingsPage-notes"),
     ).toHaveClass("card");
+    // Issue #430: the checkbox has a card of its own, at the top.
+    const ask = screen.getByTestId("InstructorFeedbackSettingsPage-ask");
+    expect(ask).toHaveClass("card");
+    expect(ask.nextElementSibling).toBe(
+      screen.getByTestId("InstructorFeedbackSettingsPage-notes"),
+    );
+    expect(ask.previousElementSibling.tagName).toBe("P");
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("InstructorFeedbackSettingsPage-ask-checkbox"),
+      ).toBeChecked(),
+    );
     await waitFor(() =>
       expect(
         screen.getByTestId(

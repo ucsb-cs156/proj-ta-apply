@@ -87,7 +87,9 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           <strong>Notes on TA/ULA tradeoffs</strong> opens to show the
           admins&apos; notes on trading TAs for ULAs, which can include the
           quarter&apos;s estimated cost of a TA and of a ULA, and so how many
-          ULAs cost the same as one TA.
+          ULAs cost the same as one TA. When the admins are not collecting
+          feedback, the courses show none of this, and answers you gave earlier
+          are kept for when they ask again.
         </p>
         <p>
           When faculty reviews are open, expand one of your listed courses and

@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -269,27 +270,141 @@ public class InstructorFeedbackSettingsControllerTests extends ControllerTestCas
     verify(instructorFeedbackSettingsRepository, never()).save(any());
   }
 
+  /**
+   * Issue #430: notes left out are copied, not checked, so the checkbox can be saved even with no
+   * version to copy notes from; the instructors are then shown no notes, as before.
+   */
   @WithMockUser(roles = {"USER", "ADMIN"})
   @Test
-  public void notes_left_out_with_no_version_to_copy_are_refused() throws Exception {
+  public void notes_left_out_with_no_version_to_copy_are_empty() throws Exception {
     when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
         .thenReturn(Optional.empty());
+    savesEcho();
 
-    save("{\"notesText\":null}").andExpect(status().is(400));
+    save("{\"notesText\":null,\"askForFeedback\":false}").andExpect(status().isOk());
 
-    verify(instructorFeedbackSettingsRepository, never()).save(any());
+    InstructorFeedbackSettings row = saved();
+    assertEquals("", row.getNotesText());
+    assertFalse(row.isAskForFeedback());
   }
 
   @WithMockUser(roles = {"USER", "ADMIN"})
   @Test
-  public void the_first_version_can_be_saved_when_there_is_none() throws Exception {
+  public void the_first_version_can_be_saved_when_there_is_none_and_asks_for_feedback()
+      throws Exception {
     when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
         .thenReturn(Optional.empty());
     savesEcho();
 
     save("{\"notesText\":\"First\"}").andExpect(status().isOk());
 
-    assertEquals("First", saved().getNotesText());
+    InstructorFeedbackSettings row = saved();
+    assertEquals("First", row.getNotesText());
+    assertTrue(row.isAskForFeedback(), "with no version, the setting counts as on");
+  }
+
+  // ---- issue #430: the checkbox ----
+
+  /** Saving the checkbox alone keeps the notes, even notes that a save could not send now. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void saving_only_the_checkbox_keeps_the_notes() throws Exception {
+    InstructorFeedbackSettings untrimmed = version(5L, ADMIN_EMAIL, "  Notes  ");
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(Optional.of(untrimmed));
+    savesEcho();
+
+    MvcResult response = save("{\"askForFeedback\":false}").andExpect(status().isOk()).andReturn();
+
+    InstructorFeedbackSettings row = saved();
+    assertEquals("  Notes  ", row.getNotesText());
+    assertFalse(row.isAskForFeedback());
+    assertEquals(ADMIN_EMAIL, row.getEditorEmail());
+    assertNull(row.getId());
+    assertFalse(
+        mapper
+            .readTree(response.getResponse().getContentAsString())
+            .get("askForFeedback")
+            .asBoolean());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void saving_only_the_notes_keeps_the_checkbox_off() throws Exception {
+    InstructorFeedbackSettings off = version(5L, ADMIN_EMAIL, "Notes");
+    off.setAskForFeedback(false);
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(Optional.of(off));
+    savesEcho();
+
+    save("{\"notesText\":\"New notes\"}").andExpect(status().isOk());
+
+    InstructorFeedbackSettings row = saved();
+    assertEquals("New notes", row.getNotesText());
+    assertFalse(row.isAskForFeedback());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void saving_only_the_notes_keeps_the_checkbox_on() throws Exception {
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(Optional.of(V2));
+    savesEcho();
+
+    save("{\"notesText\":\"New notes\",\"askForFeedback\":null}").andExpect(status().isOk());
+
+    assertTrue(saved().isAskForFeedback());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void the_checkbox_can_be_turned_back_on() throws Exception {
+    InstructorFeedbackSettings off = version(5L, ADMIN_EMAIL, "Notes");
+    off.setAskForFeedback(false);
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(Optional.of(off));
+    savesEcho();
+
+    save("{\"askForFeedback\":true}").andExpect(status().isOk());
+
+    InstructorFeedbackSettings row = saved();
+    assertTrue(row.isAskForFeedback());
+    assertEquals("Notes", row.getNotesText());
+  }
+
+  /** Only notes actually sent are checked: blank ones are refused with the checkbox too. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void blank_notes_sent_with_the_checkbox_are_refused() throws Exception {
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(Optional.of(V2));
+
+    MvcResult response =
+        save("{\"notesText\":\"\",\"askForFeedback\":false}")
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals("The notes cannot be blank", responseToJson(response).get("message"));
+    verify(instructorFeedbackSettingsRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
+  @Test
+  public void current_says_whether_feedback_is_asked_for() throws Exception {
+    InstructorFeedbackSettings off = version(5L, ADMIN_EMAIL, "Notes");
+    off.setAskForFeedback(false);
+    when(instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())
+        .thenReturn(Optional.of(off));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/feedback/settings"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    JsonNode json = mapper.readTree(response.getResponse().getContentAsString()).get(0);
+    assertFalse(json.get("askForFeedback").asBoolean());
+    assertEquals(5, json.size());
   }
 
   // ---- the preview's costs ----

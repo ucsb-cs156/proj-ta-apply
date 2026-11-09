@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  askingForFeedback,
   COST_FIELDS,
   FEEDBACK_NOTES_FIELDS_HELP_PATH,
   FEEDBACK_NOTES_FIELDS_HINT,
@@ -9,7 +10,11 @@ import {
   FEEDBACK_SETTINGS_URL,
   fillFeedbackNotesFields,
   KNOWN_FEEDBACK_NOTES_FIELDS,
+  lastAskChange,
+  onOff,
   ORIGINAL_FEEDBACK_NOTES,
+  versionChanges,
+  type InstructorFeedbackSettings,
 } from "main/utils/feedbackNotesFields";
 import {
   QUARTER_NOTICE_FIELDS,
@@ -114,5 +119,69 @@ describe("feedbackNotesFields (issue #429)", () => {
       "On the other hand, TAs work 20 hours per week, while ULAs work 10 hours per week.",
       "We are not always in a position to trade off TAs for ULAs in precisely the way each faculty member would prefer; there are constraints other than faculty preferences that we must satisfy. That being said, we will do our best to take your preferences into consideration.",
     ]);
+  });
+});
+
+describe("feedbackNotesFields: asking for feedback (issue #430)", () => {
+  const version = (
+    id: number,
+    askForFeedback: boolean,
+    notesText = "Notes",
+  ): InstructorFeedbackSettings => ({
+    id,
+    createdAt: "2026-11-09T08:00:00",
+    editorEmail: null,
+    notesText,
+    askForFeedback,
+  });
+
+  test("askingForFeedback: the newest version's setting, yes with none, null until loaded", () => {
+    expect(askingForFeedback([version(2, false)])).toBe(false);
+    expect(askingForFeedback([version(2, true)])).toBe(true);
+    expect(askingForFeedback([])).toBe(true);
+    expect(askingForFeedback(null)).toBeNull();
+    expect(askingForFeedback(undefined)).toBeNull();
+  });
+
+  test("onOff names the two values", () => {
+    expect(onOff(true)).toBe("On");
+    expect(onOff(false)).toBe("Off");
+  });
+
+  test("versionChanges: what each version changed from the one before it", () => {
+    const changes = versionChanges([
+      version(6, true, "Other"),
+      version(5, false, "Other"),
+      version(4, false, "Other"),
+      version(3, false, "Notes"),
+      version(2, true, "Notes"),
+      version(1, true, "First"),
+    ]);
+    expect([...changes.entries()]).toEqual([
+      [6, "Asking for feedback: On"],
+      [5, "Nothing"],
+      [4, "Notes"],
+      [3, "Asking for feedback: Off"],
+      [2, "Notes"],
+      [1, "First version"],
+    ]);
+    expect(
+      versionChanges([version(2, false, "B"), version(1, true, "A")]).get(2),
+    ).toBe("Notes; Asking for feedback: Off");
+    expect(versionChanges([]).size).toBe(0);
+  });
+
+  test("lastAskChange: the oldest of the newest run with the current value", () => {
+    const v1 = version(1, true);
+    const v2 = version(2, false);
+    const v3 = version(3, false);
+    const v4 = version(4, true);
+    const v5 = version(5, true);
+    expect(lastAskChange([v5, v4, v3, v2, v1])).toBe(v4);
+    expect(lastAskChange([v3, v2, v1])).toBe(v2);
+    expect(lastAskChange([v2, v1])).toBe(v2);
+    expect(lastAskChange([v1])).toBe(v1);
+    expect(lastAskChange([v5, v4, v1])).toBe(v1);
+    expect(lastAskChange([])).toBeUndefined();
   });
 });

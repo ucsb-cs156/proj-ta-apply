@@ -22,7 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * The Instructor Feedback Settings (issue #429), kept as an append-only history of versions: admins
  * read the history and save new versions; instructors read the newest, whose notes the allocation
- * feedback form shows as its "Notes on TA/ULA tradeoffs".
+ * feedback form shows as its "Notes on TA/ULA tradeoffs", and whose askForFeedback (issue #430)
+ * says whether the home page shows the feedback parts at all.
  */
 @Tag(name = "InstructorFeedbackSettings")
 @RequestMapping("/api")
@@ -34,9 +35,11 @@ public class InstructorFeedbackSettingsController extends ApiController {
 
   /**
    * The body of a save: the settings it changes. A field left out (or null) keeps the newest
-   * version's value, so a page that saves one setting at a time never overwrites the others.
+   * version's value, so a page that saves one setting at a time never overwrites the others: the
+   * notes editor sends only {@code notesText}, the checkbox (issue #430) only {@code
+   * askForFeedback}.
    */
-  public static record SettingsUpdate(String notesText) {}
+  public static record SettingsUpdate(String notesText, Boolean askForFeedback) {}
 
   @Operation(
       summary = "The settings in force, for an instructor, as a list of zero or one",
@@ -60,18 +63,35 @@ public class InstructorFeedbackSettingsController extends ApiController {
       summary = "Save a new version of the settings",
       description =
           "Every save is a new version with its own id, timestamp and editor; earlier versions are"
-              + " kept. A field the body leaves out keeps the newest version's value. 400 if the"
-              + " notes would be blank or longer than 1,000,000 characters.")
+              + " kept. Body: notesText (Markdown) and askForFeedback (true or false); a field the"
+              + " body leaves out, or sends as null, keeps the newest version's value. 400 if the"
+              + " notes sent are blank or longer than 1,000,000 characters.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PostMapping("/admin/instructorFeedbackSettings")
   public InstructorFeedbackSettings save(@RequestBody SettingsUpdate body) {
     Optional<InstructorFeedbackSettings> latest =
         instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc();
     String notesText =
-        Optional.ofNullable(body.notesText())
-            .or(() -> latest.map(InstructorFeedbackSettings::getNotesText))
-            .orElse("")
-            .strip();
+        body.notesText() == null
+            // Copied forward unchecked: a save of the checkbox alone must not fail over the notes,
+            // even when there is no version to copy them from (then there are none).
+            ? latest.map(InstructorFeedbackSettings::getNotesText).orElse("")
+            : checkedNotes(body.notesText());
+    boolean askForFeedback =
+        Optional.ofNullable(body.askForFeedback())
+            .orElseGet(() -> InstructorFeedbackSettings.askingForFeedback(latest));
+    return instructorFeedbackSettingsRepository.save(
+        InstructorFeedbackSettings.builder()
+            .createdAt(AppTime.now())
+            .editorEmail(getCurrentUser().getUser().getEmail())
+            .notesText(notesText)
+            .askForFeedback(askForFeedback)
+            .build());
+  }
+
+  /** Notes the admin typed: trimmed, and refused when blank or too long. */
+  private static String checkedNotes(String typed) {
+    String notesText = typed.strip();
     if (notesText.isEmpty()) {
       throw new IllegalArgumentException("The notes cannot be blank");
     }
@@ -81,12 +101,7 @@ public class InstructorFeedbackSettingsController extends ApiController {
               + InstructorFeedbackSettings.MAX_NOTES_LENGTH
               + " characters");
     }
-    return instructorFeedbackSettingsRepository.save(
-        InstructorFeedbackSettings.builder()
-            .createdAt(AppTime.now())
-            .editorEmail(getCurrentUser().getUser().getEmail())
-            .notesText(notesText)
-            .build());
+    return notesText;
   }
 
   @Operation(

@@ -3,11 +3,13 @@ package edu.ucsb.cs.taapply.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.InstructorFeedback;
+import edu.ucsb.cs.taapply.entity.InstructorFeedbackSettings;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.InstructorFeedbackRepository;
+import edu.ucsb.cs.taapply.repository.InstructorFeedbackSettingsRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -44,6 +46,10 @@ import org.springframework.web.bind.annotation.RestController;
  * holds a course the caller teaches (a TA-only quarter needs the TA allocations, a ULA-only quarter
  * the ULA ones, a quarter with both needs both).
  *
+ * <p>Saves are refused, and the home page shows no form, while an admin has turned off "Ask faculty
+ * for feedback" on the Instructor Feedback Settings page (issue #430). What was saved before is
+ * kept, and reading it is never refused.
+ *
  * <p>Each save changes only the fields present in its body, to absolute values, so saves of
  * different fields never overwrite each other. There is no version check and no multi-tab warning:
  * the row is one instructor's own, and the last save of a field wins.
@@ -59,6 +65,12 @@ public class InstructorFeedbackController extends ApiController {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired BudgetRepository budgetRepository;
   @Autowired BudgetCreationService budgetCreationService;
+  @Autowired InstructorFeedbackSettingsRepository instructorFeedbackSettingsRepository;
+
+  /** Why a save is refused while the Instructor Feedback Settings do not ask for feedback. */
+  static final String NOT_ASKING_MESSAGE =
+      "Feedback on TA/ULA allocations is not being collected at this time: an admin has turned it"
+          + " off on the Instructor Feedback Settings page.";
 
   /**
    * The two figures of the quarter's budget the "Notes on TA/ULA tradeoffs" need, and nothing else
@@ -113,13 +125,18 @@ public class InstructorFeedbackController extends ApiController {
               + " allocReasonable, differentTACount, differentULACount and otherConcerns (true or"
               + " false), numTAsPreferred and numULAsPreferred (a whole number, 0 or more, or"
               + " null), comments (at most 2048 characters, or null). Sets lastUpdated and answers"
-              + " with the row. 403 unless the caller teaches the course and the quarter's"
-              + " allocations are released; 400 for a value out of range.")
+              + " with the row. 403 while the Instructor Feedback Settings do not ask for feedback,"
+              + " and unless the caller teaches the course and the quarter's allocations are"
+              + " released; 400 for a value out of range.")
   @PreAuthorize("hasRole('ROLE_INSTRUCTOR')")
   @PutMapping("")
   public InstructorFeedback save(
       @Parameter(name = "recruitmentCourseId") @RequestParam Long recruitmentCourseId,
       @RequestBody JsonNode body) {
+    if (!InstructorFeedbackSettings.askingForFeedback(
+        instructorFeedbackSettingsRepository.findFirstByOrderByIdDesc())) {
+      throw new ForbiddenException(NOT_ASKING_MESSAGE);
+    }
     String email = email();
     List<RecruitmentCourse> taught = taught(email);
     RecruitmentCourse course =

@@ -1,0 +1,47 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "070-add-ask-for-feedback-to-instructor-feedback-settings",
+        "author": "pc",
+        "comment": "The global switch on the Instructor Feedback Settings page (issue #430): ask_for_feedback is whether instructors are asked for feedback on their TA/ULA allocations, i.e. whether their home page shows the feedback parts of each course and the server accepts their feedback. Like every column of this table it is saved with each version, copied forward when a save does not change it. Defaults to TRUE, the behaviour since issue #425, so every existing version (including version 1 from changeset 069) reads as asking. Roll back with liquibase rollback-count 1: the column is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "instructor_feedback_settings",
+                "columnName": "ask_for_feedback"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "instructor_feedback_settings",
+              "columns": [
+                {
+                  "column": {
+                    "name": "ask_for_feedback",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": true,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "rollback": [
+          {
+            "dropColumn": {
+              "tableName": "instructor_feedback_settings",
+              "columnName": "ask_for_feedback"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
