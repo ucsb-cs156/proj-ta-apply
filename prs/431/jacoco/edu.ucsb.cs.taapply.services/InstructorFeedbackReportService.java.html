@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InstructorFeedbackReportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">InstructorFeedbackReportService.java</span></div><h1>InstructorFeedbackReportService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.entity.InstructorFeedback;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.InstructorFeedbackRepository;
+import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * The admin's table of instructors' allocation feedback (issue #427): every {@link
+ * InstructorFeedback} row of a quarter, with the course, the instructor's catalog name and the
+ * course's current TA and ULA allocations joined in.
+ */
+@Service
+<span class="fc" id="L28">public class InstructorFeedbackReportService {</span>
+
+  @Autowired InstructorFeedbackRepository instructorFeedbackRepository;
+  @Autowired InstructorRepository instructorRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+
+  /**
+   * One feedback row as the admin's table shows it. The preferred counts are null unless their
+   * &quot;different number&quot; box is checked: an unchecked box keeps its number on file (issue #425), and
+   * that number is not meant. The allocations are null when the quarter has no recruitment of that
+   * type, or the course is not in it.
+   */
+<span class="fc" id="L41">  public static record Row(</span>
+      Long id,
+      String quarter,
+      String courseId,
+      String section,
+      String title,
+      String email,
+      String instructorName,
+      boolean allocReasonable,
+      boolean differentTACount,
+      boolean differentULACount,
+      boolean otherConcerns,
+      Integer taAllocation,
+      Integer ulaAllocation,
+      Integer numTAsPreferred,
+      Integer numULAsPreferred,
+      String comments,
+      LocalDateTime lastUpdated) {}
+
+  /**
+   * A section of a course: what pairs a course's TA row with its ULA row, as the home page does.
+   */
+<span class="fc" id="L63">  private static record SectionKey(String courseId, String section) {</span>
+    static SectionKey of(RecruitmentCourse row) {
+<span class="fc" id="L65">      return new SectionKey(row.getCourseId(), row.getSection());</span>
+    }
+  }
+
+  /**
+   * Every feedback row of the quarter (YYYYQ), by course id, section and email. A row whose course
+   * is gone (which the foreign key's cascade should not allow) is left out.
+   */
+  public List&lt;Row&gt; rows(String quarter) {
+<span class="fc" id="L74">    List&lt;InstructorFeedback&gt; feedback = instructorFeedbackRepository.findByQuarter(quarter);</span>
+<span class="fc" id="L75">    Map&lt;Long, RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L76">        byId(</span>
+<span class="fc" id="L77">            recruitmentCourseRepository.findAllById(</span>
+<span class="fc" id="L78">                feedback.stream()</span>
+<span class="fc" id="L79">                    .map(InstructorFeedback::getRecruitmentCourseId)</span>
+<span class="fc" id="L80">                    .distinct()</span>
+<span class="fc" id="L81">                    .toList()),</span>
+            RecruitmentCourse::getId);
+<span class="fc" id="L83">    Map&lt;String, Instructor&gt; instructors =</span>
+<span class="fc" id="L84">        byId(</span>
+<span class="fc" id="L85">            instructorRepository.findAllById(</span>
+<span class="fc" id="L86">                feedback.stream().map(InstructorFeedback::getEmail).distinct().toList()),</span>
+            Instructor::getEmail);
+<span class="fc" id="L88">    Map&lt;SectionKey, Integer&gt; ta = allocations(quarter, RecruitmentType.TA);</span>
+<span class="fc" id="L89">    Map&lt;SectionKey, Integer&gt; ula = allocations(quarter, RecruitmentType.ULA);</span>
+<span class="fc" id="L90">    return feedback.stream()</span>
+<span class="fc" id="L91">        .filter(row -&gt; courses.containsKey(row.getRecruitmentCourseId()))</span>
+<span class="fc" id="L92">        .map(</span>
+            row -&gt; {
+<span class="fc" id="L94">              RecruitmentCourse course = courses.get(row.getRecruitmentCourseId());</span>
+<span class="fc" id="L95">              SectionKey key = SectionKey.of(course);</span>
+<span class="fc" id="L96">              return new Row(</span>
+<span class="fc" id="L97">                  row.getId(),</span>
+<span class="fc" id="L98">                  row.getQuarter(),</span>
+<span class="fc" id="L99">                  course.getCourseId(),</span>
+<span class="fc" id="L100">                  course.getSection(),</span>
+<span class="fc" id="L101">                  course.getTitle(),</span>
+<span class="fc" id="L102">                  row.getEmail(),</span>
+<span class="fc" id="L103">                  Optional.ofNullable(instructors.get(row.getEmail()))</span>
+<span class="fc" id="L104">                      .map(Instructor::getCatalogName)</span>
+<span class="fc" id="L105">                      .orElse(null),</span>
+<span class="fc" id="L106">                  row.isAllocReasonable(),</span>
+<span class="fc" id="L107">                  row.isDifferentTACount(),</span>
+<span class="fc" id="L108">                  row.isDifferentULACount(),</span>
+<span class="fc" id="L109">                  row.isOtherConcerns(),</span>
+<span class="fc" id="L110">                  ta.get(key),</span>
+<span class="fc" id="L111">                  ula.get(key),</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">                  row.isDifferentTACount() ? row.getNumTAsPreferred() : null,</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">                  row.isDifferentULACount() ? row.getNumULAsPreferred() : null,</span>
+<span class="fc" id="L114">                  row.getComments(),</span>
+<span class="fc" id="L115">                  row.getLastUpdated());</span>
+            })
+<span class="fc" id="L117">        .sorted(</span>
+<span class="fc" id="L118">            Comparator.comparing(Row::courseId)</span>
+<span class="fc" id="L119">                .thenComparing(Row::section, Comparator.nullsFirst(Comparator.naturalOrder()))</span>
+<span class="fc" id="L120">                .thenComparing(Row::email))</span>
+<span class="fc" id="L121">        .toList();</span>
+  }
+
+  /**
+   * The allocation of each section in the quarter's recruitment of one type, leaving out the
+   * courses an admin removed; none when the quarter has no such recruitment.
+   */
+  private Map&lt;SectionKey, Integer&gt; allocations(String quarter, RecruitmentType type) {
+<span class="fc" id="L129">    return recruitmentRepository</span>
+<span class="fc" id="L130">        .findByQuarterAndType(quarter, type)</span>
+<span class="fc" id="L131">        .map(</span>
+            recruitment -&gt;
+<span class="fc" id="L133">                recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                    .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L135">                    .collect(</span>
+<span class="fc" id="L136">                        Collectors.toMap(</span>
+                            SectionKey::of,
+                            RecruitmentCourse::getAllocation,
+                            // Two rows of one section cannot both be on file (the enroll code
+                            // is unique per recruitment), but keep the first all the same.
+<span class="fc" id="L141">                            (first, second) -&gt; first)))</span>
+<span class="fc" id="L142">        .orElse(Map.of());</span>
+  }
+
+  /** The rows a findAllById returns (each id at most once), by their id. */
+  private static &lt;K, V&gt; Map&lt;K, V&gt; byId(Iterable&lt;V&gt; values, Function&lt;V, K&gt; key) {
+<span class="fc" id="L147">    return StreamSupport.stream(values.spliterator(), false)</span>
+<span class="fc" id="L148">        .collect(Collectors.toMap(key, Function.identity()));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

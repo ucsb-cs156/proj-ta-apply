@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InstructorFeedbackController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">InstructorFeedbackController.java</span></div><h1>InstructorFeedbackController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.entity.InstructorFeedback;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
+import edu.ucsb.cs.taapply.repository.InstructorFeedbackRepository;
+import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.BudgetCreationService;
+import edu.ucsb.cs.taapply.services.BudgetService;
+import edu.ucsb.cs.taapply.time.AppTime;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Instructors' feedback on the TA/ULA allocation of their courses (issue #425): the form in each
+ * course's drop-down on the instructor home page.
+ *
+ * &lt;p&gt;Who may save is decided as the home page decides what to show: the caller's email maps to a
+ * catalog name (issue #120), and the course must be a non-removed recruitment course whose
+ * instructor of record is that name. The form opens, and saves are accepted, only once the
+ * quarter's allocations are released: the allocations of every recruitment of the quarter that
+ * holds a course the caller teaches (a TA-only quarter needs the TA allocations, a ULA-only quarter
+ * the ULA ones, a quarter with both needs both).
+ *
+ * &lt;p&gt;Each save changes only the fields present in its body, to absolute values, so saves of
+ * different fields never overwrite each other. There is no version check and no multi-tab warning:
+ * the row is one instructor's own, and the last save of a field wins.
+ */
+@Tag(name = &quot;InstructorFeedback&quot;)
+@RequestMapping(&quot;/api/instructor/feedback&quot;)
+@RestController
+<span class="fc" id="L54">public class InstructorFeedbackController extends ApiController {</span>
+
+  @Autowired InstructorFeedbackRepository instructorFeedbackRepository;
+  @Autowired InstructorRepository instructorRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired BudgetRepository budgetRepository;
+  @Autowired BudgetCreationService budgetCreationService;
+
+  /**
+   * The two figures of the quarter's budget the &quot;Notes on TA/ULA tradeoffs&quot; need, and nothing else
+   * of the budget: the estimated cost per TA and the estimated cost per ULA (the ULA hourly rate
+   * times the hours per ULA). Each is null while not yet entered.
+   */
+<span class="fc" id="L68">  public static record TradeoffCosts(</span>
+      String quarter, BigDecimal estimatedCostPerTA, BigDecimal estimatedCostPerULA) {}
+
+  @Operation(
+      summary = &quot;The signed-in instructor's allocation feedback&quot;,
+      description = &quot;Every row of the caller's own, in every quarter (issue #425).&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_INSTRUCTOR')&quot;)
+  @GetMapping(&quot;&quot;)
+  public List&lt;InstructorFeedback&gt; mine() {
+<span class="fc" id="L77">    return instructorFeedbackRepository.findByEmail(email());</span>
+  }
+
+  @Operation(
+      summary = &quot;The estimated cost per TA and per ULA of a quarter, for the tradeoff notes&quot;,
+      description =
+          &quot;Only for a quarter in which the caller teaches a course and whose allocations are&quot;
+              + &quot; released (otherwise 403). A figure not yet entered is null.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_INSTRUCTOR')&quot;)
+  @GetMapping(&quot;/costs&quot;)
+  public TradeoffCosts costs(@Parameter(name = &quot;quarter&quot;) @RequestParam String quarter) {
+<span class="fc" id="L88">    requireReleased(quarter, recruitmentsOf(taught(email())).values());</span>
+<span class="fc" id="L89">    return budgetRepository</span>
+<span class="fc" id="L90">        .findById(quarter)</span>
+<span class="fc" id="L91">        .map(</span>
+            budget -&gt;
+<span class="fc" id="L93">                new TradeoffCosts(</span>
+                    quarter,
+<span class="fc" id="L95">                    budget.getTaCostPerQuarter(),</span>
+<span class="fc" id="L96">                    BudgetService.estimatedCostPerUla(budget)))</span>
+<span class="fc" id="L97">        .orElse(new TradeoffCosts(quarter, null, null));</span>
+  }
+
+  @Operation(
+      summary = &quot;Save some fields of the caller's feedback on a course&quot;,
+      description =
+          &quot;Creates the row the first time. Only the fields present in the JSON body change:&quot;
+              + &quot; allocReasonable, differentTACount, differentULACount and otherConcerns (true or&quot;
+              + &quot; false), numTAsPreferred and numULAsPreferred (a whole number, 0 or more, or&quot;
+              + &quot; null), comments (at most 2048 characters, or null). Sets lastUpdated and answers&quot;
+              + &quot; with the row. 403 unless the caller teaches the course and the quarter's&quot;
+              + &quot; allocations are released; 400 for a value out of range.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_INSTRUCTOR')&quot;)
+  @PutMapping(&quot;&quot;)
+  public InstructorFeedback save(
+      @Parameter(name = &quot;recruitmentCourseId&quot;) @RequestParam Long recruitmentCourseId,
+      @RequestBody JsonNode body) {
+<span class="fc" id="L114">    String email = email();</span>
+<span class="fc" id="L115">    List&lt;RecruitmentCourse&gt; taught = taught(email);</span>
+<span class="fc" id="L116">    RecruitmentCourse course =</span>
+<span class="fc" id="L117">        taught.stream()</span>
+<span class="fc" id="L118">            .filter(row -&gt; row.getId().equals(recruitmentCourseId))</span>
+<span class="fc" id="L119">            .findFirst()</span>
+<span class="fc" id="L120">            .orElseThrow(</span>
+                () -&gt;
+<span class="fc" id="L122">                    new ForbiddenException(</span>
+                        &quot;This recruitment course is not assigned to the authenticated&quot;
+                            + &quot; instructor.&quot;));
+<span class="fc" id="L125">    Map&lt;Long, Recruitment&gt; recruitments = recruitmentsOf(taught);</span>
+<span class="fc" id="L126">    String quarter = recruitments.get(course.getRecruitmentId()).getQuarter();</span>
+<span class="fc" id="L127">    requireReleased(quarter, recruitments.values());</span>
+
+<span class="fc" id="L129">    InstructorFeedback feedback =</span>
+        instructorFeedbackRepository
+<span class="fc" id="L131">            .findByQuarterAndEmailAndRecruitmentCourseId(quarter, email, recruitmentCourseId)</span>
+<span class="fc" id="L132">            .orElseGet(</span>
+                () -&gt;
+<span class="fc" id="L134">                    InstructorFeedback.builder()</span>
+<span class="fc" id="L135">                        .quarter(quarter)</span>
+<span class="fc" id="L136">                        .email(email)</span>
+<span class="fc" id="L137">                        .recruitmentCourseId(recruitmentCourseId)</span>
+<span class="fc" id="L138">                        .build());</span>
+<span class="fc" id="L139">    apply(feedback, body);</span>
+    // The row's parent; it exists once the quarter has a course, but make sure of it.
+<span class="fc" id="L141">    budgetCreationService.findOrCreate(quarter);</span>
+<span class="fc" id="L142">    feedback.setLastUpdated(AppTime.now());</span>
+<span class="fc" id="L143">    return instructorFeedbackRepository.save(feedback);</span>
+  }
+
+  /**
+   * Sets the fields present in the body, after checking every one of them, so that a body with one
+   * bad value changes nothing.
+   */
+  static void apply(InstructorFeedback feedback, JsonNode body) {
+<span class="fc bfc" id="L151" title="All 4 branches covered.">    if (body == null || !body.isObject()) {</span>
+<span class="fc" id="L152">      throw new IllegalArgumentException(&quot;The body must be a JSON object.&quot;);</span>
+    }
+<span class="fc" id="L154">    Boolean allocReasonable = flag(body, &quot;allocReasonable&quot;);</span>
+<span class="fc" id="L155">    Boolean differentTACount = flag(body, &quot;differentTACount&quot;);</span>
+<span class="fc" id="L156">    Boolean differentULACount = flag(body, &quot;differentULACount&quot;);</span>
+<span class="fc" id="L157">    Boolean otherConcerns = flag(body, &quot;otherConcerns&quot;);</span>
+<span class="fc" id="L158">    Integer numTAsPreferred = count(body, &quot;numTAsPreferred&quot;);</span>
+<span class="fc" id="L159">    Integer numULAsPreferred = count(body, &quot;numULAsPreferred&quot;);</span>
+<span class="fc" id="L160">    String comments = comments(body);</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">    if (allocReasonable != null) {</span>
+<span class="fc" id="L162">      feedback.setAllocReasonable(allocReasonable);</span>
+    }
+<span class="fc bfc" id="L164" title="All 2 branches covered.">    if (differentTACount != null) {</span>
+<span class="fc" id="L165">      feedback.setDifferentTACount(differentTACount);</span>
+    }
+<span class="fc bfc" id="L167" title="All 2 branches covered.">    if (differentULACount != null) {</span>
+<span class="fc" id="L168">      feedback.setDifferentULACount(differentULACount);</span>
+    }
+<span class="fc bfc" id="L170" title="All 2 branches covered.">    if (otherConcerns != null) {</span>
+<span class="fc" id="L171">      feedback.setOtherConcerns(otherConcerns);</span>
+    }
+<span class="fc bfc" id="L173" title="All 2 branches covered.">    if (body.has(&quot;numTAsPreferred&quot;)) {</span>
+<span class="fc" id="L174">      feedback.setNumTAsPreferred(numTAsPreferred);</span>
+    }
+<span class="fc bfc" id="L176" title="All 2 branches covered.">    if (body.has(&quot;numULAsPreferred&quot;)) {</span>
+<span class="fc" id="L177">      feedback.setNumULAsPreferred(numULAsPreferred);</span>
+    }
+<span class="fc bfc" id="L179" title="All 2 branches covered.">    if (body.has(&quot;comments&quot;)) {</span>
+<span class="fc" id="L180">      feedback.setComments(comments);</span>
+    }
+<span class="fc" id="L182">  }</span>
+
+  /** A checkbox's value: null when absent, else it must be true or false. */
+  private static Boolean flag(JsonNode body, String field) {
+<span class="fc" id="L186">    JsonNode value = body.get(field);</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">    if (value == null) {</span>
+<span class="fc" id="L188">      return null;</span>
+    }
+<span class="fc bfc" id="L190" title="All 2 branches covered.">    if (!value.isBoolean()) {</span>
+<span class="fc" id="L191">      throw new IllegalArgumentException(field + &quot; must be true or false.&quot;);</span>
+    }
+<span class="fc" id="L193">    return value.booleanValue();</span>
+  }
+
+  /** A preferred count: null when absent or null, else a whole number, 0 or more. */
+  private static Integer count(JsonNode body, String field) {
+<span class="fc" id="L198">    JsonNode value = body.get(field);</span>
+<span class="fc bfc" id="L199" title="All 4 branches covered.">    if (value == null || value.isNull()) {</span>
+<span class="fc" id="L200">      return null;</span>
+    }
+<span class="fc bfc" id="L202" title="All 6 branches covered.">    if (!value.isIntegralNumber() || !value.canConvertToInt() || value.intValue() &lt; 0) {</span>
+<span class="fc" id="L203">      throw new IllegalArgumentException(field + &quot; must be a whole number, 0 or more, or null.&quot;);</span>
+    }
+<span class="fc" id="L205">    return value.intValue();</span>
+  }
+
+  /** The comments: null when absent or null, else text of at most 2048 characters. */
+  private static String comments(JsonNode body) {
+<span class="fc" id="L210">    JsonNode value = body.get(&quot;comments&quot;);</span>
+<span class="fc bfc" id="L211" title="All 4 branches covered.">    if (value == null || value.isNull()) {</span>
+<span class="fc" id="L212">      return null;</span>
+    }
+<span class="fc bfc" id="L214" title="All 2 branches covered.">    if (!value.isTextual()) {</span>
+<span class="fc" id="L215">      throw new IllegalArgumentException(&quot;comments must be text or null.&quot;);</span>
+    }
+<span class="fc" id="L217">    String text = value.textValue();</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">    if (text.length() &gt; InstructorFeedback.MAX_COMMENTS) {</span>
+<span class="fc" id="L219">      throw new IllegalArgumentException(</span>
+          &quot;comments may be at most &quot; + InstructorFeedback.MAX_COMMENTS + &quot; characters.&quot;);
+    }
+<span class="fc" id="L222">    return text;</span>
+  }
+
+  /** The signed-in user's email. */
+  private String email() {
+<span class="fc" id="L227">    return getCurrentUser().getUser().getEmail();</span>
+  }
+
+  /**
+   * The non-removed recruitment courses whose instructor of record is the caller's catalog name:
+   * the courses the home page shows them. None without a catalog name.
+   */
+  private List&lt;RecruitmentCourse&gt; taught(String email) {
+<span class="fc" id="L235">    return instructorRepository</span>
+<span class="fc" id="L236">        .findByEmail(email)</span>
+<span class="fc" id="L237">        .map(Instructor::getCatalogName)</span>
+<span class="fc" id="L238">        .map(</span>
+            name -&gt;
+<span class="fc" id="L240">                recruitmentCourseRepository.findByInstructor(name).stream()</span>
+<span class="fc bfc" id="L241" title="All 2 branches covered.">                    .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L242">                    .toList())</span>
+<span class="fc" id="L243">        .orElse(List.of());</span>
+  }
+
+  /** The recruitments those courses are in, by id. */
+  private Map&lt;Long, Recruitment&gt; recruitmentsOf(List&lt;RecruitmentCourse&gt; taught) {
+<span class="fc" id="L248">    return StreamSupport.stream(</span>
+            recruitmentRepository
+<span class="fc" id="L250">                .findAllById(</span>
+<span class="fc" id="L251">                    taught.stream()</span>
+<span class="fc" id="L252">                        .map(RecruitmentCourse::getRecruitmentId)</span>
+<span class="fc" id="L253">                        .collect(Collectors.toSet()))</span>
+<span class="fc" id="L254">                .spliterator(),</span>
+            false)
+<span class="fc" id="L256">        .collect(Collectors.toMap(Recruitment::getId, Function.identity()));</span>
+  }
+
+  /**
+   * Throws unless the caller teaches in the quarter and every recruitment of the quarter they teach
+   * in has released its allocations to faculty.
+   */
+  private static void requireReleased(String quarter, Collection&lt;Recruitment&gt; recruitments) {
+<span class="fc" id="L264">    List&lt;Recruitment&gt; ofQuarter =</span>
+<span class="fc" id="L265">        recruitments.stream().filter(r -&gt; quarter.equals(r.getQuarter())).toList();</span>
+<span class="fc bfc" id="L266" title="All 2 branches covered.">    if (ofQuarter.isEmpty()) {</span>
+<span class="fc" id="L267">      throw new ForbiddenException(&quot;The authenticated instructor teaches no course in &quot; + quarter);</span>
+    }
+<span class="fc bfc" id="L269" title="All 2 branches covered.">    if (!ofQuarter.stream().allMatch(InstructorRecruitmentsController::allocationsVisible)) {</span>
+<span class="fc" id="L270">      throw new ForbiddenException(</span>
+          &quot;Feedback opens once the quarter's allocations have been released to faculty.&quot;);
+    }
+<span class="fc" id="L273">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
