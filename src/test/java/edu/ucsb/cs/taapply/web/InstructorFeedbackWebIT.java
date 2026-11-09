@@ -123,6 +123,26 @@ public class InstructorFeedbackWebIT extends WebTestCase {
                 new Page.GetByRoleOptions().setName("Instructor Feedback for W26")))
         .isVisible();
 
+    // The stacked headings really are smaller than Course Name's in the app (index.css's
+    // .instructor-feedback-stacked-heading is not overridden), one word per line.
+    Locator stacked =
+        page.getByTestId(TABLE + "-header-differentTACount-sort-header")
+            .locator(".instructor-feedback-stacked-heading");
+    assertThat(stacked).hasCount(1);
+    double stackedSize =
+        Double.parseDouble(
+            ((String) stacked.evaluate("e => getComputedStyle(e).fontSize")).replace("px", ""));
+    double courseSize =
+        Double.parseDouble(
+            ((String)
+                    page.getByTestId(TABLE + "-header-course-sort-header")
+                        .evaluate("e => getComputedStyle(e).fontSize"))
+                .replace("px", ""));
+    org.junit.jupiter.api.Assertions.assertTrue(
+        stackedSize < courseSize,
+        "stacked " + stackedSize + "px, Course Name " + courseSize + "px");
+    assertThat(stacked.locator("br")).hasCount(2);
+
     // One row per record; each found by its course name.
     Locator rows = page.locator("[data-testid^='" + TABLE + "-row-']");
     assertThat(rows).hasCount(2);
