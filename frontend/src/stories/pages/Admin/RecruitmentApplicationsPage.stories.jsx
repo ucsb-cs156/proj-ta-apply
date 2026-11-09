@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router";
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import draftConflictsFixtures from "fixtures/draftConflictsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
@@ -46,6 +47,10 @@ const common = [
   ),
   http.get("/api/admin/recruitments/all", () =>
     HttpResponse.json(recruitmentsFixtures.threeRecruitments),
+  ),
+  // Issue #417: normally no one has both a draft and an application, so there is no warning.
+  http.get("/api/admin/applications/draftConflicts", () =>
+    HttpResponse.json(draftConflictsFixtures.none),
   ),
 ];
 
@@ -108,6 +113,32 @@ NothingYet.parameters = {
     handlers: [
       ...common,
       http.get("/api/admin/applications/all", () => HttpResponse.json([])),
+    ],
+  },
+};
+
+/**
+ * Issue #417: two students with both a draft and an application, which should never happen. The
+ * warning sits above everything else on the page, with links to each draft and application.
+ */
+export const DraftConflicts = Template.bind({});
+DraftConflicts.parameters = {
+  reactRouter: {
+    initialEntries: ["/admin/recruitments/1/applications"],
+  },
+  msw: {
+    handlers: [
+      // Ahead of common's, so this answer is the one given.
+      http.get("/api/admin/applications/draftConflicts", () =>
+        HttpResponse.json(draftConflictsFixtures.two),
+      ),
+      ...common,
+      http.get("/api/admin/applications/all", () =>
+        HttpResponse.json([
+          applicationsFixtures.oneTaApplication,
+          applicationsFixtures.oneTestApplication,
+        ]),
+      ),
     ],
   },
 };

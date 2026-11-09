@@ -36,10 +36,12 @@ import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.DraftApplicationService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,12 +62,14 @@ import org.springframework.test.web.servlet.MvcResult;
 @Import({
   edu.ucsb.cs.taapply.testconfig.TestConfig.class,
   ApplicationAccessService.class,
+  DraftApplicationService.class,
   DraftApplicationsControllerTests.DetectorConfig.class
 })
 public class DraftApplicationsControllerTests extends ControllerTestCase {
 
   @MockitoBean DraftApplicationRepository draftApplicationRepository;
   @MockitoBean ApplicationRepository applicationRepository;
+  @MockitoBean DraftAdminCommentRepository draftAdminCommentRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean UserRepository userRepository;
   @org.springframework.beans.factory.annotation.Autowired ResettableDetector detector;
@@ -389,6 +393,60 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(post("/api/draftApplications/open?recruitmentId=1").with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "You already have an application for this recruitment",
+        responseToJson(response).get("message"));
+    verify(draftApplicationRepository, never()).save(any());
+  }
+
+  /** Issue #318: one who cancelled may start again, so a cancelled application does not block. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void opening_after_cancelling_creates_a_new_draft() throws Exception {
+    when(recruitmentRepository.findById(1L))
+        .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
+    when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
+        .thenReturn(Optional.empty());
+    when(draftApplicationRepository.save(any(DraftApplication.class)))
+        .thenAnswer(
+            invocation -> invocation.<DraftApplication>getArgument(0).toBuilder().id(9L).build());
+
+    mockMvc
+        .perform(post("/api/draftApplications/open?recruitmentId=1").with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(draftApplicationRepository).save(any(DraftApplication.class));
+  }
+
+  /**
+   * Issue #417: a draft is not saved once its student has an application to the recruitment, even
+   * if the form was opened before they submitted (another tab or window, say).
+   */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void saving_a_draft_once_an_application_is_submitted_is_refused() throws Exception {
+    draftIsOpenAndSaves(5L);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(true);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/draftApplications?id=5&version=3")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(NEARLY_EMPTY))
+                    .with(csrf()))
             .andExpect(status().is(400))
             .andReturn();
 

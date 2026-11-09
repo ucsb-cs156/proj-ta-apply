@@ -10,13 +10,12 @@ import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.User;
-import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
-import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.DraftApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,7 +56,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DraftApplicationsController extends ApiController {
 
   @Autowired DraftApplicationRepository draftApplicationRepository;
-  @Autowired ApplicationRepository applicationRepository;
+  @Autowired DraftApplicationService draftApplicationService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationAccessService applicationAccessService;
   @Autowired ClientActivityDetector clientActivityDetector;
@@ -107,25 +106,13 @@ public class DraftApplicationsController extends ApiController {
           "Applications are not currently open for this recruitment");
     }
     String email = currentEmail();
+    // The check that they have no application yet and the insert are one transaction (issue #417).
     // A cancelled application does not stop them starting a new one (issue #318).
-    if (applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
-        email, recruitmentId, ApplicationReviewStatus.CANCELLED)) {
-      throw new IllegalArgumentException("You already have an application for this recruitment");
-    }
-    return draftApplicationRepository
-        .findByEmailAndRecruitmentId(email, recruitmentId)
-        .orElseGet(() -> createDraft(email, recruitmentId));
-  }
-
-  /**
-   * A new empty draft. If the same person's form opened twice at once, the second insert breaks the
-   * unique constraint; the draft the first one made is the answer.
-   */
-  private DraftApplication createDraft(String email, Long recruitmentId) {
     try {
-      return draftApplicationRepository.save(
-          DraftApplication.builder().email(email).recruitmentId(recruitmentId).build());
+      return draftApplicationService.open(email, recruitmentId);
     } catch (DataIntegrityViolationException e) {
+      // The same person's form opened twice at once, and the second insert broke the unique
+      // constraint: the draft the first one made is the answer.
       return draftApplicationRepository
           .findByEmailAndRecruitmentId(email, recruitmentId)
           .orElseThrow(() -> e);
@@ -171,7 +158,8 @@ public class DraftApplicationsController extends ApiController {
               + " for as long as the recruitment is open. The version is the one the form last"
               + " saw (from opening the draft or from its last save); if the draft has been saved"
               + " since, by another tab or window, nothing is changed and the answer is 409"
-              + " Conflict with the draft as it now stands. A successful save returns the draft"
+              + " Conflict with the draft as it now stands. Refused (400) once they have an"
+              + " application to the recruitment that is not cancelled (issue #417). A successful save returns the draft"
               + " with its new version. A save that names its client (X-Client-Id) also tells the server this tab or"
               + " window is working on the draft, for the multi-tab warning; see the heartbeat.")
   @PreAuthorize("hasRole('ROLE_USER')")
@@ -192,7 +180,9 @@ public class DraftApplicationsController extends ApiController {
     ApplicationsController.requireCourseworkLengths(fields);
     apply(fields, draft);
     try {
-      return ResponseEntity.ok(draftApplicationRepository.save(draft));
+      // Refused (400) if they have submitted an application since, checked in the save's own
+      // transaction (issue #417).
+      return ResponseEntity.ok(draftApplicationService.save(draft));
     } catch (ObjectOptimisticLockingFailureException e) {
       // Another save got in between reading the draft and writing it.
       return conflict(draftApplicationRepository.findById(id).orElseThrow(() -> e));

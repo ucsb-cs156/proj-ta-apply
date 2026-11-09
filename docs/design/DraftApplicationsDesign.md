@@ -38,13 +38,13 @@ form as one.
 |---|---|
 | `GET /api/draftApplications/mine` | The current user's drafts, newest first. |
 | `POST /api/draftApplications/open?recruitmentId=` | The user's draft for the recruitment, creating an empty one if there is none. Refused (400) if the recruitment is not open or the user already has an application for it. |
-| `PUT /api/draftApplications?id=&version=` | Replaces what the draft holds with the form's answers, and returns the draft with its new version. **Nothing is validated** except that a prior course's grade, term and text fields fit their columns (400 if not, issue #323). Refused (403) once applications close, and (409) if the version is out of date; see Concurrent edits. |
+| `PUT /api/draftApplications?id=&version=` | Replaces what the draft holds with the form's answers, and returns the draft with its new version. **Nothing is validated** except that a prior course's grade, term and text fields fit their columns (400 if not, issue #323). Refused (403) once applications close, (409) if the version is out of date (see Concurrent edits), and (400) once the user has an application for the recruitment that is not cancelled (issue #417). |
 
 A draft belongs to its owner alone: reading or saving someone else's is a 403. All the rules about
 a complete application apply, unchanged, at submission.
 
-Submitting an application (`POST /api/applications/post`) deletes the draft it grew from, after the
-application has been saved. A refused submission keeps the draft.
+Submitting an application (`POST /api/applications/post`) deletes the draft it grew from, in the
+same transaction that saves the application (issue #417). A refused submission keeps the draft.
 
 ## The form
 
@@ -247,6 +247,66 @@ reason, including the recruitment being deleted.
 A draft appears in the list as soon as the applicant opens the form, even if empty, and leaves it
 when submitted. There is no CSV of drafts: they may be empty or half finished, and the CSV writer is
 built for submitted applications of one form type.
+
+## Never a draft and an application at once (issue #417)
+
+**The invariant.** No student has both a draft and a finalized application to the same
+recruitment. "Finalized" means an `applications` row whose status is not `CANCELLED`: one who
+cancelled may start again (issue #318) with a new draft, so a cancelled application beside a draft
+is legitimate. Applications of every origin count (a real applicant's, an admin's test one, a
+Developer Mode fake), as the admin's Applications page lists them all.
+
+**Transaction boundaries.** The writes that could break the rule live in `DraftApplicationService`,
+one `@Transactional` method each:
+
+* `submit(application)`: finds the draft, copies its admin comments to the application, saves the
+  application, deletes the comments row and deletes the draft. If any of these fails, all are
+  rolled back, so there is never a new application beside a draft that should have gone (or a
+  draft gone with no application to show for it). `DraftApplicationServiceTransactionTests` forces
+  the draft delete, and separately the comment delete, to fail against the real schema and checks
+  that the application is not in the database afterwards.
+* `open(email, recruitmentId)`: refuses (400, "You already have an application for this
+  recruitment") a student with a finalized application, then returns their draft or inserts an
+  empty one, in the same transaction.
+* `save(draft)`: the same check, then the save, in one transaction. This is new: before, only
+  opening a draft was checked. In the usual case (a tab still open after submitting in another)
+  submission has already deleted the draft, so that tab's save is a 404 before it gets here; the
+  check is the backstop for a draft that is somehow still there.
+
+The controllers call these rather than being `@Transactional` themselves. `openDraft` has to catch
+the unique constraint failure when the same person's form opens twice at once and answer with the
+other request's draft; a constraint failure inside a transaction marks it rollback-only, so the
+catch must be outside it. `saveDraft` likewise catches the optimistic lock failure outside the
+transaction, where it surfaces. `postApplication` still checks for an existing application first,
+before the form's rules, so that is the message a second submission gets.
+
+The check and the write are atomic against failures, not against every race: at the databases'
+default isolation (read committed), a submission and a draft save in two tabs at the same instant
+could each miss the other's row. That window is milliseconds, and the warning below reports it if
+it is ever hit.
+
+**The warning.** `GET /api/admin/applications/draftConflicts?recruitmentId=` (admin-only; 404 for
+an unknown recruitment) returns `{email, draftApplicationId, applicationId}` for each draft and
+finalized application pair in the recruitment, by email then application id. It is one JPQL join of
+`draft_applications` and `applications` on email and recruitment
+(`DraftApplicationRepository.findConflictsWithApplications`), so only the conflicts are loaded.
+`DraftConflictWarning`, used at the very top of both `/admin/recruitments/:id/applications` and
+`/admin/recruitments/:id/draft-applications`, fetches it on every load and, when the list is not
+empty, shows a red Bootstrap alert headed **WARNING** with a table (`email | draft application |
+finalized application`) whose ids link to `/admin/draft-applications/:id` and
+`/admin/applications/:id`. When the list is empty nothing is rendered. It only reports; nothing is
+repaired automatically.
+
+**No database constraint.** The rule spans two tables, and neither a `UNIQUE` constraint nor a
+foreign key can say "no row in the other table with the same email and recruitment" (and the
+application side would need the status condition too, since cancelled rows are allowed). A `CHECK`
+constraint cannot contain a subquery in Postgres. What remains is a trigger on both tables, which
+would have to be written twice, as plpgsql for Postgres in production and as a Java trigger class
+for H2 in development and the tests, with the two kept in step by hand, and a Postgres-only trigger
+would mean the tests no longer exercise what production does. Merging drafts into the
+`applications` table (a draft as a status) would make it a single-table rule, but undoes the reason
+drafts are a separate table (see What a draft is). So no migration was added; the transactions,
+the draft-save check and the warning are the enforcement.
 
 ## Not done
 

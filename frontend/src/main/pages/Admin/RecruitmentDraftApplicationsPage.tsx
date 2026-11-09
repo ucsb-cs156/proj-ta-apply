@@ -10,6 +10,7 @@ import RecruitmentTable, {
   type Recruitment,
 } from "main/components/Recruitments/RecruitmentTable";
 import AdminApplicationTable from "main/components/Applications/AdminApplicationTable";
+import DraftConflictWarning from "main/components/Applications/DraftConflictWarning";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import {
   adminApplicationUrls,
@@ -79,6 +80,11 @@ export default function RecruitmentDraftApplicationsPage(): React.JSX.Element {
   return (
     <BasicLayout>
       <div className="pt-2">
+        {/* Issue #417: students with both a draft and an application, which should never happen */}
+        <DraftConflictWarning
+          recruitmentId={recruitmentId}
+          testIdPrefix="RecruitmentDraftApplicationsPage-draft-conflicts"
+        />
         <div className="d-flex align-items-center flex-wrap gap-2 mb-3">
           <h1 className="me-auto mb-0">
             {`Draft Applications${

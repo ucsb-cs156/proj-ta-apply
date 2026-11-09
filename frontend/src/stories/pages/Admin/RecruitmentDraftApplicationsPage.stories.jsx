@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router";
 import RecruitmentDraftApplicationsPage from "main/pages/Admin/RecruitmentDraftApplicationsPage";
 import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import draftConflictsFixtures from "fixtures/draftConflictsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
@@ -28,6 +29,10 @@ const common = [
   ),
   http.get("/api/admin/recruitments/all", () =>
     HttpResponse.json(recruitmentsFixtures.threeRecruitments),
+  ),
+  // Issue #417: normally no one has both a draft and an application, so there is no warning.
+  http.get("/api/admin/applications/draftConflicts", () =>
+    HttpResponse.json(draftConflictsFixtures.none),
   ),
 ];
 
@@ -102,6 +107,35 @@ NoDrafts.parameters = {
     handlers: [
       ...common,
       http.get("/api/admin/draftApplications/all", () => HttpResponse.json([])),
+    ],
+  },
+};
+
+/**
+ * Issue #417: two students with both a draft and an application, which should never happen. The
+ * warning sits above everything else on the page, with links to each draft and application.
+ */
+export const DraftConflicts = Template.bind({});
+DraftConflicts.parameters = {
+  reactRouter: routeTo(1),
+  msw: {
+    handlers: [
+      // Ahead of common's, so this answer is the one given.
+      http.get("/api/admin/applications/draftConflicts", () =>
+        HttpResponse.json(draftConflictsFixtures.two),
+      ),
+      ...common,
+      http.get("/api/admin/draftApplications/all", () =>
+        HttpResponse.json([
+          draftApplicationsFixtures.adminSavedTaDraft,
+          {
+            ...draftApplicationsFixtures.adminSavedTaDraft,
+            id: 23,
+            firstName: "Uma",
+            email: "uma@ucsb.edu",
+          },
+        ]),
+      ),
     ],
   },
 };

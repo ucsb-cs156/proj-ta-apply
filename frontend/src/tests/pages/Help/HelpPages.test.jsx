@@ -1886,6 +1886,10 @@ describe("Help pages (issue #140)", () => {
     expect(draftApplications).toHaveTextContent(
       "Above the table, when there are drafts, a Copy emails of draft applicants to clipboard button copies the email address of everyone with a draft, one per line, so that a day or two before applications close you can paste them into an email reminding those students to log in and submit before the primary consideration date, since drafts are not considered.",
     );
+    // Issue #417: the warning about a student with both a draft and an application.
+    expect(draftApplications).toHaveTextContent(
+      "A student never has both a draft and a submitted application to the same recruitment (one who cancelled may start a new draft). If one ever does, which would be a bug, a red WARNING at the top of this page and of the Applications page lists them, with links to the draft and the application.",
+    );
     expect(
       screen.getByTestId("HelpAdminsPage-recruitment-buttons"),
     ).toHaveTextContent("Draft Applications. The applications students");

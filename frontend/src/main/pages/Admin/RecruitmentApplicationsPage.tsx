@@ -9,6 +9,7 @@ import RecruitmentTable, {
   type Recruitment,
 } from "main/components/Recruitments/RecruitmentTable";
 import AdminApplicationTable from "main/components/Applications/AdminApplicationTable";
+import DraftConflictWarning from "main/components/Applications/DraftConflictWarning";
 import ApplicationsPageHeader from "main/components/Applications/ApplicationsPageHeader";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -84,6 +85,11 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
   return (
     <BasicLayout>
       <div className="pt-2">
+        {/* Issue #417: students with both a draft and an application, which should never happen */}
+        <DraftConflictWarning
+          recruitmentId={recruitmentId}
+          testIdPrefix="RecruitmentApplicationsPage-draft-conflicts"
+        />
         <ApplicationsPageHeader
           // Stryker disable next-line StringLiteral : the route always supplies the id
           recruitmentId={recruitmentId ?? ""}

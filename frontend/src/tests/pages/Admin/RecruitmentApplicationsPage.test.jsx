@@ -8,6 +8,7 @@ import AxiosMockAdapter from "axios-mock-adapter";
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import draftConflictsFixtures from "fixtures/draftConflictsFixtures";
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -76,6 +77,63 @@ describe("RecruitmentApplicationsPage tests", () => {
       .reply(200, defaultHiddenColumns("ULA"));
     axiosMock.onPut("/api/admin/hiddencolumns/all").reply(200, []);
     axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
+    // Issue #417: normally no one has both a draft and an application.
+    axiosMock
+      .onGet("/api/admin/applications/draftConflicts")
+      .reply(200, draftConflictsFixtures.none);
+  });
+
+  // ---- issue #417: students with both a draft and an application ----
+
+  test("shows no warning when no one has both a draft and an application", async () => {
+    renderPage(1);
+
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Applications: TA positions, W26",
+    });
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/applications/draftConflicts",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.get.find(
+        (r) => r.url === "/api/admin/applications/draftConflicts",
+      ).params,
+    ).toEqual({ recruitmentId: "1" });
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-draft-conflicts"),
+    ).toBeNull();
+  });
+
+  test("warns about the students with both, above the heading, with links to both", async () => {
+    // The same matcher as the one in beforeEach, so this answer replaces that one.
+    axiosMock
+      .onGet("/api/admin/applications/draftConflicts")
+      .reply(200, draftConflictsFixtures.one);
+
+    renderPage(1);
+
+    const warning = await screen.findByTestId(
+      "RecruitmentApplicationsPage-draft-conflicts",
+    );
+    expect(warning).toHaveTextContent("WARNING");
+    expect(screen.getByRole("link", { name: "13" })).toHaveAttribute(
+      "href",
+      "/admin/draft-applications/13",
+    );
+    expect(screen.getByRole("link", { name: "17" })).toHaveAttribute(
+      "href",
+      "/admin/applications/17",
+    );
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(
+      warning.compareDocumentPosition(heading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   const hiddenColumnGets = () =>

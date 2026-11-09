@@ -22,8 +22,10 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.models.DraftConflict;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAuditService;
@@ -62,6 +64,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
   @Autowired DraftApplicationsControllerTests.ResettableDetector detector;
   @MockitoBean ApplicationRepository applicationRepository;
+  @MockitoBean DraftApplicationRepository draftApplicationRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean UserRepository userRepository;
   @MockitoBean AuditTrailRepository auditTrailRepository;
@@ -97,6 +100,9 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
   public void logged_out_users_are_refused_everywhere() throws Exception {
     mockMvc.perform(get("/api/admin/applications/all?recruitmentId=1")).andExpect(status().is(403));
     mockMvc.perform(get("/api/admin/applications?id=1")).andExpect(status().is(403));
+    mockMvc
+        .perform(get("/api/admin/applications/draftConflicts?recruitmentId=1"))
+        .andExpect(status().is(403));
     mockMvc.perform(get("/api/admin/applications/csv?recruitmentId=1")).andExpect(status().is(403));
     mockMvc
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
@@ -115,6 +121,9 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
   public void applicants_and_instructors_are_refused_everywhere() throws Exception {
     mockMvc.perform(get("/api/admin/applications/all?recruitmentId=1")).andExpect(status().is(403));
     mockMvc.perform(get("/api/admin/applications?id=1")).andExpect(status().is(403));
+    mockMvc
+        .perform(get("/api/admin/applications/draftConflicts?recruitmentId=1"))
+        .andExpect(status().is(403));
     mockMvc.perform(get("/api/admin/applications/csv?recruitmentId=1")).andExpect(status().is(403));
     mockMvc
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
@@ -267,6 +276,47 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals("Recruitment with id 99 not found", responseToJson(response).get("message"));
     verify(applicationRepository, never()).findByRecruitmentIdOrderByIdAsc(any());
+  }
+
+  // ---- students with both a draft and an application (issue #417) ----
+
+  /** The pairs the repository finds, as JSON; the query leaves out cancelled applications. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_sees_the_students_with_both_a_draft_and_an_application() throws Exception {
+    when(recruitmentRepository.existsById(7L)).thenReturn(true);
+    when(draftApplicationRepository.findConflictsWithApplications(
+            7L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(
+            List.of(
+                new DraftConflict("ada@ucsb.edu", 13L, 17L),
+                new DraftConflict("bob@ucsb.edu", 14L, 21L)));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/applications/draftConflicts?recruitmentId=7"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(
+        "[{\"email\":\"ada@ucsb.edu\",\"draftApplicationId\":13,\"applicationId\":17},"
+            + "{\"email\":\"bob@ucsb.edu\",\"draftApplicationId\":14,\"applicationId\":21}]",
+        response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void draft_conflicts_for_an_unknown_recruitment_are_a_404() throws Exception {
+    when(recruitmentRepository.existsById(99L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/applications/draftConflicts?recruitmentId=99"))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("Recruitment with id 99 not found", responseToJson(response).get("message"));
+    verify(draftApplicationRepository, never()).findConflictsWithApplications(any(), any());
   }
 
   // ---- one application ----
