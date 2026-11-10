@@ -23,6 +23,20 @@ export const DEFAULT_NON_ADMIN_TIMING: RefreshTiming = { base: 15, jitter: 5 };
 /** No wait is ever shorter than this, whatever the settings say. */
 export const MIN_WAIT_SECONDS = 1;
 
+/**
+ * The mean wait of the Budget page and the Combined Allocation page (issue #426), in seconds. An
+ * admin often has the two open side by side, changing allocations on one and watching the totals
+ * on the other, so they refresh on their own at this pace instead of the admin one.
+ */
+export const SIDE_BY_SIDE_REFRESH_SEC = 10;
+
+/**
+ * A timing with another mean wait and the same jitter, never more than the new mean (issue #426).
+ */
+export function withBase(timing: RefreshTiming, base: number): RefreshTiming {
+  return { base, jitter: Math.min(timing.jitter, base) };
+}
+
 const isNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 

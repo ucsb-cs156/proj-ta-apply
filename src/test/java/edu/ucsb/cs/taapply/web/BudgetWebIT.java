@@ -128,6 +128,53 @@ public class BudgetWebIT extends WebTestCase {
   }
 
   /**
+   * Issue #426: the Budget page and the Combined Allocation page of one quarter, side by side in
+   * one browser, follow each other's changes within about 10 seconds, with no reload and no click
+   * into the other window.
+   */
+  @Test
+  public void the_budget_page_and_the_combined_page_side_by_side_follow_each_other()
+      throws Exception {
+    recruitmentWithOneCourse(RecruitmentType.TA);
+    recruitmentWithOneCourse(RecruitmentType.ULA);
+    setupAdminUser();
+    String base = page.url().replaceAll("(http://localhost:\\d+).*", "$1");
+    page.navigate(base + "/admin/budget/F26");
+    assertThat(page.getByTestId("BudgetPage-target-ta-allocated"))
+        .hasText("TAs allocated to courses so far: 0");
+
+    com.microsoft.playwright.Page combined = newPage(page.context());
+    combined.navigate(base + "/admin/allocations/F26");
+    assertThat(combined.getByTestId("CombinedAllocationTable-row-0")).isVisible();
+    // Nothing has computed the share yet: it is computed when the hiring target is saved.
+    assertThat(combined.getByTestId("CombinedAllocationTable-cell-row-0-col-taUnroundedAllocation"))
+        .hasText("—");
+    page.evaluate("() => { window.__issue426 = true; }");
+    combined.evaluate("() => { window.__issue426 = true; }");
+
+    var soon =
+        new com.microsoft.playwright.assertions.LocatorAssertions.HasTextOptions()
+            .setTimeout(15000);
+
+    // An allocation changed on the combined page shows in the Budget page's totals.
+    combined.getByTestId("CombinedAllocationTable-cell-row-0-TA-allocation").fill("4");
+    assertThat(page.getByTestId("BudgetPage-target-ta-allocated"))
+        .hasText("TAs allocated to courses so far: 4", soon);
+    assertThat(page.getByTestId("BudgetPage-target-ta-difference"))
+        .hasText("Difference (allocated minus target): +3", soon);
+
+    // A hiring target changed on the Budget page shows in the combined page's unrounded allocation.
+    page.getByTestId("BudgetPage-target-ta-input").fill("6");
+    assertThat(combined.getByTestId("CombinedAllocationTable-cell-row-0-col-taUnroundedAllocation"))
+        .hasText("6.0", soon);
+    // Neither window was reloaded: the marker each was given at the start is still there.
+    org.junit.jupiter.api.Assertions.assertEquals(
+        true, page.evaluate("() => window.__issue426 === true"));
+    org.junit.jupiter.api.Assertions.assertEquals(
+        true, combined.evaluate("() => window.__issue426 === true"));
+  }
+
+  /**
    * Issue #358 part 2: the Combined Allocation page heartbeats under each recruitment's Courses
    * edit page key, so it and a recruitment's edit page warn each other about the same allocations.
    */

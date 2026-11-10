@@ -43,6 +43,8 @@ import {
   useClientActivity,
 } from "main/concurrency";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
+import { SIDE_BY_SIDE_REFRESH_SEC } from "main/utils/refreshInterval";
 import { qyyToYyyyq } from "main/utils/quarterUtilities";
 import { formatDollars } from "main/utils/currency";
 import {
@@ -103,12 +105,21 @@ function CombinedAllocationsForQuarter({
 }): React.JSX.Element {
   const yyyyq = qyyToYyyyq(qyy);
 
-  const { data: summary, isError } = useBackend<BudgetSummary | null>(
+  // The summary, both course lists and the recruitments are re-read in the background about every
+  // 10 seconds (issue #426), so that a change made on the Budget page in a window beside this one
+  // shows here without a click. The ranking counts are not: they are computed from every
+  // application and ranking of the recruitment, and nothing on either page changes them.
+  const {
+    data: summary,
+    isError,
+    dataUpdatedAt,
+  } = useRefreshingBackend<BudgetSummary | null>(
     [BUDGET_KEY, yyyyq],
     { method: "GET", url: BUDGET_KEY, params: { quarter: yyyyq } },
     null,
     false,
     { enabled: yyyyq !== null },
+    SIDE_BY_SIDE_REFRESH_SEC,
   );
   const taId = summary?.ta?.recruitmentId;
   const ulaId = summary?.ula?.recruitmentId;
@@ -143,27 +154,32 @@ function CombinedAllocationsForQuarter({
   });
   const taQuery = courseQuery(taId);
   const ulaQuery = courseQuery(ulaId);
-  const { data: taCourses } = useBackend<RecruitmentCourse[]>(
+  const { data: taCourses } = useRefreshingBackend<RecruitmentCourse[]>(
     taQuery.key,
     taQuery.axios,
     [],
     false,
     { enabled: taId !== undefined },
+    SIDE_BY_SIDE_REFRESH_SEC,
   );
-  const { data: ulaCourses } = useBackend<RecruitmentCourse[]>(
+  const { data: ulaCourses } = useRefreshingBackend<RecruitmentCourse[]>(
     ulaQuery.key,
     ulaQuery.axios,
     // Stryker disable next-line ArrayDeclaration : until the summary names the recruitments, both queries are one disabled cache entry, and the first one's initial data is the one it has
     [],
     false,
     { enabled: ulaId !== undefined },
+    SIDE_BY_SIDE_REFRESH_SEC,
   );
   // Each allocation edit proves the recruitment's Auto Allocate count it was made against.
-  const { data: recruitments } = useBackend<Recruitment[]>(
+  const { data: recruitments } = useRefreshingBackend<Recruitment[]>(
     ["/api/admin/recruitments/all"],
     { method: "GET", url: "/api/admin/recruitments/all" },
     // Stryker disable next-line all : replaced by the answer; until then no edit is in progress
     [],
+    false,
+    {},
+    SIDE_BY_SIDE_REFRESH_SEC,
   );
   const bulkVersionOf = (id: number | undefined) =>
     // Stryker disable next-line OptionalChaining : the initial data is a list, never undefined
@@ -298,11 +314,8 @@ function CombinedAllocationsForQuarter({
     [taCourses, ulaCourses],
   );
 
-  const { conflicts, save, takeTheirs, overwrite } = useBudgetSaves(
-    yyyyq,
-    summary,
-    NO_HEADERS,
-  );
+  const { conflicts, save, takeTheirs, overwrite, startEditing, stopEditing } =
+    useBudgetSaves(yyyyq, summary, NO_HEADERS, dataUpdatedAt);
 
   // Developer mode's fake data (issue #225), for every recruitment of the quarter at once: a
   // hiring target and allocations for each that has a course.
@@ -478,6 +491,8 @@ function CombinedAllocationsForQuarter({
               width="10em"
               inline
               onSave={(factor) => save("conversionTAtoULA", factor)}
+              onEdit={() => startEditing("conversionTAtoULA")}
+              onEditEnd={() => stopEditing("conversionTAtoULA")}
             />
           </>
         )}

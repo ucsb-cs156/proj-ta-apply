@@ -18,7 +18,8 @@ import {
   MultipleTabsModal,
   useClientActivity,
 } from "main/concurrency";
-import { useBackend } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
+import { SIDE_BY_SIDE_REFRESH_SEC } from "main/utils/refreshInterval";
 import { qyyToYyyyq } from "main/utils/quarterUtilities";
 import { isValidHiringTarget } from "main/utils/allocations";
 import {
@@ -39,8 +40,9 @@ const TYPE_OF: Record<Side, "TA" | "ULA"> = { ta: "TA", ula: "ULA" };
  * temp subzero lines and the other funds for ASEs.
  * Then the hiring targets of both recruitments beside what has been allocated so far, the
  * enrollment totals and ratios, and the anticipated expenses, funds and bottom line. Every box saves
- * as it is typed and the whole page recomputes from the backend. At the bottom, closed by default,
- * the Audit Trail card of the two hiring targets' changes (issue #391).
+ * as it is typed and the whole page recomputes from the backend. The summary is re-read in the
+ * background about every 10 seconds (issue #426); what is being typed in a box stays. At the
+ * bottom, closed by default, the Audit Trail card of the two hiring targets' changes (issue #391).
  */
 export default function BudgetPage(): React.JSX.Element {
   const { qyy } = useParams();
@@ -55,13 +57,17 @@ function BudgetForQuarter({
 }): React.JSX.Element {
   const yyyyq = qyyToYyyyq(qyy);
 
-  const { data: summary } = useBackend<BudgetSummary | null>(
-    [BUDGET_KEY, yyyyq],
-    { method: "GET", url: BUDGET_KEY, params: { quarter: yyyyq } },
-    null,
-    false,
-    { enabled: yyyyq !== null },
-  );
+  // Re-read in the background about every 10 seconds (issue #426), so that a change made on the
+  // Combined Allocation page in a window beside this one shows here without a click.
+  const { data: summary, dataUpdatedAt } =
+    useRefreshingBackend<BudgetSummary | null>(
+      [BUDGET_KEY, yyyyq],
+      { method: "GET", url: BUDGET_KEY, params: { quarter: yyyyq } },
+      null,
+      false,
+      { enabled: yyyyq !== null },
+      SIDE_BY_SIDE_REFRESH_SEC,
+    );
 
   // Tells the server this tab is on this quarter's budget, and learns whether another one is
   // (issues #277, #284). It starts once the quarter is known to exist.
@@ -70,11 +76,8 @@ function BudgetForQuarter({
     leaveUrl: summary ? `${BUDGET_KEY}/leave?quarter=${yyyyq}` : null,
   });
   const navigate = useNavigate();
-  const { conflicts, save, takeTheirs, overwrite } = useBudgetSaves(
-    yyyyq,
-    summary,
-    activity.headers,
-  );
+  const { conflicts, save, takeTheirs, overwrite, startEditing, stopEditing } =
+    useBudgetSaves(yyyyq, summary, activity.headers, dataUpdatedAt);
 
   if (yyyyq === null) {
     return (
@@ -131,6 +134,8 @@ function BudgetForQuarter({
       }
       isValid={isValidDollars}
       onSave={(amount) => save(line, amount)}
+      onEdit={() => startEditing(line)}
+      onEditEnd={() => stopEditing(line)}
     />
   );
 
@@ -184,6 +189,8 @@ function BudgetForQuarter({
           isValid={isValidHiringTarget}
           width="6em"
           onSave={(target) => save(`target-${which}`, target)}
+          onEdit={() => startEditing(`target-${which}`)}
+          onEditEnd={() => stopEditing(`target-${which}`)}
         />
         <div data-testid={`BudgetPage-target-${which}-allocated`}>
           {type}s allocated to courses so far: {s.totalAllocation}

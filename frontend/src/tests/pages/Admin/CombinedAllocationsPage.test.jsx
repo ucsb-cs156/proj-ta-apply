@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -10,7 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import CombinedAllocationsPage from "main/pages/Admin/CombinedAllocationsPage";
 import budgetFixtures from "fixtures/budgetFixtures";
@@ -27,13 +28,12 @@ vi.mock("react-toastify", async (importOriginal) => ({
 
 const axiosMock = new AxiosMockAdapter(axios);
 
-function renderPage(qyy = "F26") {
+const newClient = () =>
+  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+function renderPage(qyy = "F26", client = newClient()) {
   return render(
-    <QueryClientProvider
-      client={
-        new QueryClient({ defaultOptions: { queries: { retry: false } } })
-      }
-    >
+    <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[`/admin/allocations/${qyy}`]}>
         <Routes>
           <Route
@@ -1262,6 +1262,197 @@ describe("CombinedAllocationsPage tests", () => {
           "Unable to copy to clipboard. Check your browser clipboard permissions.",
         ),
       );
+    });
+  });
+
+  describe("the background refresh (issue #426)", () => {
+    const RANKINGS = /\/admin-course-rankings$/;
+    const rankingGets = () =>
+      axiosMock.history.get.filter((r) => RANKINGS.test(r.url));
+    const counts = () => [
+      gets(BUDGET).length,
+      gets(COURSES).length,
+      gets("/api/admin/recruitments/all").length,
+      rankingGets().length,
+    ];
+    /** Re-reads every query of the page, as the background refresh does. */
+    const refresh = (client) => act(() => client.refetchQueries());
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("the summary, both course lists and the recruitments are re-read about every 10 seconds; the ranking counts are not", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      axiosMock.onGet("/api/systemInfo").reply(200, {
+        ...systemInfoFixtures.showingNeither,
+        adminRefreshSec: 5,
+        adminRefreshJitter: 0,
+      });
+      renderPage("F26");
+      await screen.findByTestId("CombinedAllocationTable");
+      await waitFor(() => expect(counts()).toEqual([1, 2, 1, 2]));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(8000);
+      });
+      expect(counts()).toEqual([1, 2, 1, 2]);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+      await waitFor(() => expect(counts()).toEqual([2, 4, 2, 2]));
+    });
+
+    test("a factor being typed survives a refresh that brings another tab's factor, and its next save is still refused and asks", async () => {
+      const theirs = {
+        ...budgetFixtures.bothTypes,
+        budget: {
+          ...budgetFixtures.bothTypes.budget,
+          conversionTAtoULA: 5,
+          conversionVersion: 2,
+        },
+      };
+      let reads = 0;
+      axiosMock.onGet(BUDGET, { params: { quarter: "20264" } }).reply(() => {
+        reads += 1;
+        return [200, reads === 1 ? budgetFixtures.bothTypes : theirs];
+      });
+      axiosMock.onPut(BUDGET).reply((config) =>
+        config.params.conversionVersion < 2
+          ? [
+              409,
+              {
+                message: "stale",
+                version: 3,
+                conversionVersion: 2,
+                summary: theirs,
+              },
+            ]
+          : [200, theirs],
+      );
+      const client = newClient();
+      renderPage("F26", client);
+      const box = await factorBox();
+      // Emptied: the box is being edited from the factor of 3, at count 1.
+      await userEvent.clear(box);
+
+      await refresh(client);
+      // The ratios follow their factor of 5; the box keeps what is typed.
+      await waitFor(() => expect(td(2, "aseRatio")).toHaveTextContent("1:24"));
+      expect(box).toHaveValue("");
+
+      await userEvent.type(box, "2");
+
+      expect(
+        await screen.findByTestId(
+          "CombinedAllocationsPage-conflict-conversionTAtoULA-message",
+        ),
+      ).toHaveTextContent(
+        "The TA to ULA conversion factor was changed in another tab or window. It is now 5; you entered 2.",
+      );
+      expect(budgetPuts().map((r) => r.params.conversionVersion)).toEqual([1]);
+      expect(box).toHaveValue("2");
+    });
+
+    test("an allocation being typed survives a refresh, and its next save carries the row's version and Auto Allocate count it started from", async () => {
+      let saves = 0;
+      axiosMock.onPut("/api/recruitmentcourses/allocation").reply(() => {
+        saves += 1;
+        return saves === 1
+          ? [
+              200,
+              {
+                ...combinedAllocationsFixtures.taCourses[0],
+                allocation: 5,
+                allocationVersion: 5,
+              },
+            ]
+          : [409, { message: "Changed elsewhere." }];
+      });
+      const client = newClient();
+      renderPage("F26", client);
+      const box = await screen.findByTestId(
+        "CombinedAllocationTable-cell-row-2-TA-allocation",
+      );
+      await waitFor(() => expect(box).toHaveValue(3));
+      fireEvent.change(box, { target: { value: "5" } });
+      await waitFor(() => expect(allocationPuts()).toHaveLength(1));
+
+      // Another tab set the row to 8, changed another row and ran Auto Allocate.
+      axiosMock
+        .onGet(COURSES, { params: { recruitmentId: 5, includeRemoved: false } })
+        .reply(200, [
+          {
+            ...combinedAllocationsFixtures.taCourses[0],
+            allocation: 8,
+            allocationVersion: 9,
+          },
+          {
+            ...combinedAllocationsFixtures.taCourses[1],
+            allocation: 4,
+            allocationVersion: 2,
+          },
+        ]);
+      axiosMock.onGet("/api/admin/recruitments/all").reply(
+        200,
+        combinedAllocationsFixtures.recruitments.map((r) => ({
+          ...r,
+          allocationBulkVersion: r.allocationBulkVersion + 1,
+        })),
+      );
+      await refresh(client);
+      // A box that is not being edited shows the refreshed value; this one keeps what is typed.
+      await waitFor(() =>
+        expect(
+          screen.getByTestId(
+            "CombinedAllocationTable-cell-row-0-TA-allocation",
+          ),
+        ).toHaveValue(4),
+      );
+      expect(box).toHaveValue(5);
+
+      fireEvent.change(box, { target: { value: "56" } });
+
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith("Changed elsewhere."),
+      );
+      expect(allocationPuts()[1].params).toEqual({
+        id: 1,
+        allocation: 56,
+        expectedVersion: 5,
+        expectedBulkVersion: 7,
+      });
+    });
+
+    test("an estimate being typed survives a refresh; the other estimates show the refreshed values", async () => {
+      axiosMock
+        .onPut("/api/recruitmentcourses/enrollmentEstimate")
+        .reply(200, {});
+      const client = newClient();
+      renderPage("F26", client);
+      const box = await screen.findByTestId(
+        "CombinedAllocationTable-cell-row-2-enrollmentEstimate",
+      );
+      const other = screen.getByTestId(
+        "CombinedAllocationTable-cell-row-0-enrollmentEstimate",
+      );
+      await waitFor(() => expect(box).toHaveValue(100));
+      fireEvent.change(box, { target: { value: "1" } });
+
+      axiosMock
+        .onGet(COURSES, { params: { recruitmentId: 5, includeRemoved: false } })
+        .reply(
+          200,
+          combinedAllocationsFixtures.taCourses.map((c) => ({
+            ...c,
+            enrollmentEstimate: 200,
+          })),
+        );
+      await refresh(client);
+
+      await waitFor(() => expect(other).toHaveValue(200));
+      expect(box).toHaveValue(1);
     });
   });
 });

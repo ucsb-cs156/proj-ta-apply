@@ -534,7 +534,10 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           of settings below; instructors and students use the second. A hidden
           tab does not refresh (<code>refetchIntervalInBackground</code> is
           false) and a tab that is shown or focused again refetches at once.
-          Options passed by a caller win over these.
+          Options passed by a caller win over these. The Budget page and the
+          Combined Allocation page pass a mean of 10 seconds instead (
+          <code>SIDE_BY_SIDE_REFRESH_SEC</code>, issue #426) and keep the
+          jitter, so the two can be watched side by side.
         </p>
         <Table
           striped

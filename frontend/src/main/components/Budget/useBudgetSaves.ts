@@ -79,6 +79,11 @@ const isConflict = (error: unknown): boolean =>
 
 const isLine = (field: FieldKey): field is BudgetLine => !field.includes("-");
 
+/** The count that guards a budget line (issue #375): the factor's own, or the lines' version. */
+type Counter = "version" | "conversionVersion";
+const counterOf = (line: BudgetLine): Counter =>
+  line === "conversionTAtoULA" ? "conversionVersion" : "version";
+
 /**
  * A figure as it reads in a sentence: dollars for money, the plain number for a target, the hours
  * per ULA or the conversion factor.
@@ -96,6 +101,17 @@ type Held = {
   version: number;
   /** The one the next conversion-factor save carries (issue #375); it only goes up too. */
   conversionVersion: number;
+  /**
+   * The boxes being edited (issue #426): from the first keystroke in a box until it loses focus.
+   * A background refresh does not change what such a box's next save expects.
+   */
+  editing: Partial<Record<FieldKey, true>>;
+  /**
+   * The count each budget line being edited started from (issue #426). Its saves carry this, not
+   * the newest count a refresh brought, so that a value changed in another tab meanwhile is still
+   * refused. Only this tab's own saves move it on.
+   */
+  pins: Partial<Record<FieldKey, number>>;
   /** The value each recruitment figure had when the page last knew it, for the next save. */
   expected: Partial<Record<FieldKey, string>>;
   recruitmentIds: Partial<Record<FieldKey, number>>;
@@ -118,6 +134,11 @@ type Held = {
  * - A recruitment's hiring target carries the value the page last saw (`expected`); the server
  *   applies the save only if that is still the stored value.
  *
+ * While a box is being edited (from its first keystroke until it loses focus; `startEditing` and
+ * `stopEditing`), its saves keep the count or value it started from, whatever a background refresh
+ * brings meanwhile (issue #426), and only this tab's own saves move it on. So a value changed in
+ * another tab while the admin is typing over it is still refused, and the admin is asked.
+ *
  * A refused save changes nothing. It leaves a {@link BudgetConflict} saying what is stored now and
  * what the user entered. Further typing in that box is remembered but not sent, until the user
  * chooses `takeTheirs` or `overwrite`. A refused budget line also brings the whole
@@ -127,11 +148,19 @@ export function useBudgetSaves(
   yyyyq: string | null,
   summary: BudgetSummary | null | undefined,
   headers: Record<string, string>,
+  /**
+   * When the summary was last read (react-query's `dataUpdatedAt`). A re-read whose answer is the
+   * same as before keeps the same summary object, and is still news to a box that has stopped
+   * being edited since (issue #426).
+   */
+  readAt: number,
 ) {
   const queryClient = useQueryClient();
   const held = useRef<Held>({
     version: 0,
     conversionVersion: 0,
+    editing: {},
+    pins: {},
     expected: {},
     recruitmentIds: {},
     conflicts: {},
@@ -151,46 +180,82 @@ export function useBudgetSaves(
     );
   };
 
-  // What the page knows starts from the first summary it gets for the quarter (the page is made
-  // afresh for each quarter, so this never carries over from another). After that the
-  // counts only go up, and a recruitment's figure is only taken the first time, so that a
-  // refetch that began before one of this page's own saves finished cannot take either back.
+  // What the page knows comes from every summary it gets for the quarter, the background refresh's
+  // included (issue #426; the page is made afresh for each quarter, so nothing carries over from
+  // another). The counts only go up, so a refetch that began before one of this page's own saves
+  // finished cannot take them back. A box that is not being edited shows the summary's value, so
+  // that is what its next save expects; a box being edited keeps what it started from (`pins`, and
+  // `expected` left alone), so a change made in another tab meanwhile is still refused.
   useEffect(() => {
     if (!summary) {
       return;
     }
     const state = held.current;
     learnCounts(summary.budget);
-    // The first value seen for a figure is the one the next save expects.
-    const learn = (key: FieldKey, value: string | undefined) => {
-      if (!(key in state.expected)) {
-        state.expected[key] = value;
-      }
-    };
     (["ta", "ula"] as const).forEach((side) => {
       const row = summary[side];
       if (row === null) {
         return;
       }
-      state.recruitmentIds[`target-${side}`] = row.recruitmentId;
-      learn(`target-${side}`, String(row.totalHiringTarget));
+      const key: FieldKey = `target-${side}`;
+      state.recruitmentIds[key] = row.recruitmentId;
+      if (!state.editing[key]) {
+        state.expected[key] = String(row.totalHiringTarget);
+        // What Use theirs takes, should the box be in conflict: what the page now shows.
+        state.stored[key] = String(row.totalHiringTarget);
+      }
     });
-  }, [summary]);
+  }, [summary, readAt]);
+
+  /** The count a save of this line carries: the one it started from while it is being edited. */
+  const countFor = (line: BudgetLine): number =>
+    held.current.pins[line] ?? held.current[counterOf(line)];
+
+  /**
+   * This tab's own save moved a count from `sent` to `now`: every box being edited that started
+   * from `sent` has seen nothing else change since, so it moves on with it. A box that started from
+   * an older count keeps it, since someone else changed the budget after it began.
+   */
+  const advancePins = (counter: Counter, sent: number, now: number) => {
+    const pins = held.current.pins;
+    (Object.keys(pins) as BudgetLine[]).forEach((line) => {
+      if (counterOf(line) === counter && pins[line] === sent) {
+        pins[line] = now;
+      }
+    });
+  };
+
+  /** A keystroke in a box (issue #426): the first one pins the count the box started from. */
+  const startEditing = (field: FieldKey) => {
+    const state = held.current;
+    state.editing[field] = true;
+    // Stryker disable next-line ConditionalExpression : a recruitment figure's pin would never be read, as its save carries `expected` instead
+    if (isLine(field)) {
+      state.pins[field] ??= state[counterOf(field)];
+    }
+  };
+
+  /** The box lost focus: it shows the stored value again, and saves from what is stored. */
+  const stopEditing = (field: FieldKey) => {
+    const state = held.current;
+    delete state.editing[field];
+    delete state.pins[field];
+  };
 
   const show = () => setConflicts(Object.values(held.current.conflicts));
 
-  const request = (field: FieldKey, value: string): AxiosRequestConfig => {
+  const request = (
+    field: FieldKey,
+    value: string,
+    count: number | undefined,
+  ): AxiosRequestConfig => {
     const state = held.current;
     if (isLine(field)) {
       // Each figure carries the count that guards it, and only that one (issue #375).
-      const count =
-        field === "conversionTAtoULA"
-          ? { conversionVersion: state.conversionVersion }
-          : { version: state.version };
       return {
         method: "PUT",
         url: BUDGET_KEY,
-        params: { quarter: yyyyq, [field]: value, ...count },
+        params: { quarter: yyyyq, [field]: value, [counterOf(field)]: count },
         headers,
       };
     }
@@ -233,11 +298,15 @@ export function useBudgetSaves(
   const enqueue = (field: FieldKey, value: string) => {
     const state = held.current;
     state.queue = state.queue.then(async () => {
+      const sent = isLine(field) ? countFor(field) : undefined;
       try {
-        const response = await axios(request(field, value));
+        const response = await axios(request(field, value, sent));
         if (isLine(field)) {
           queryClient.setQueryData([BUDGET_KEY, yyyyq], response.data);
-          learnCounts((response.data as BudgetSummary).budget);
+          const answer = (response.data as BudgetSummary).budget;
+          learnCounts(answer);
+          const counter = counterOf(field);
+          advancePins(counter, sent as number, answer[counter]);
         } else {
           state.expected[field] = value;
           // Issue #391: the target's change is audited; an open Audit Trail card shows it.
@@ -275,6 +344,8 @@ export function useBudgetSaves(
   const settle = (field: FieldKey) => {
     const state = held.current;
     delete state.conflicts[field];
+    // Whatever was being typed is settled too: the next save starts from what is stored now.
+    stopEditing(field);
     // Only a recruitment figure has a stored value to expect; for a budget line this is unused.
     state.expected[field] = state.stored[field];
     show();
@@ -290,5 +361,5 @@ export function useBudgetSaves(
     enqueue(field, value as string);
   };
 
-  return { conflicts, save, takeTheirs, overwrite };
+  return { conflicts, save, takeTheirs, overwrite, startEditing, stopEditing };
 }

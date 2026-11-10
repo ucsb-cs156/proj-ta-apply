@@ -507,11 +507,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           are adjusted on the{" "}
           <Link to="#combined-allocations">Combined Allocation page</Link>,
           which the <em>Combined allocations</em> link at the top of the Budget
-          page opens. The enrollment totals and ratios are over each
-          recruitment&apos;s own courses, which may differ between TAs and ULAs.
-          A new quarter&apos;s budget starts as a copy of the most recent
-          earlier quarter&apos;s: its costs, funds and conversion factor, and
-          each recruitment&apos;s hiring target from the same type of
+          page opens. Both pages refresh themselves about every 10 seconds, so
+          you can keep them open side by side in two windows: a change made in
+          one shows in the other without clicking into it. A refresh never
+          replaces what you are typing in a box; if someone changed that figure
+          meanwhile, your save brings up <strong>Use theirs</strong> and{" "}
+          <strong>Overwrite</strong> (for an allocation, the change is refused
+          and the numbers are read again). The enrollment totals and ratios are
+          over each recruitment&apos;s own courses, which may differ between TAs
+          and ULAs. A new quarter&apos;s budget starts as a copy of the most
+          recent earlier quarter&apos;s: its costs, funds and conversion factor,
+          and each recruitment&apos;s hiring target from the same type of
           recruitment in that quarter; change whatever differs. At the bottom of
           the page, a closed <strong>Audit Trail</strong> card (&ldquo;Track
           changes to hiring targets&rdquo;) opens to list every change to the

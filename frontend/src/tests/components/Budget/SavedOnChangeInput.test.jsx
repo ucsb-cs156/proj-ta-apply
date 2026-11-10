@@ -172,4 +172,67 @@ describe("SavedOnChangeInput tests", () => {
       screen.getByTestId("Box").closest("[title]"),
     );
   });
+
+  test("every keystroke, valid or not, says the box is being edited, before it is saved; leaving it says the editing is over (issue #426)", async () => {
+    const calls = [];
+    renderInput({
+      onSave: (value) => calls.push(`save ${value}`),
+      onEdit: () => calls.push("edit"),
+      onEditEnd: () => calls.push("end"),
+    });
+    const box = screen.getByTestId("Box");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "5");
+    expect(calls).toEqual(["edit", "edit", "save 5"]);
+    await userEvent.tab();
+
+    expect(calls).toEqual(["edit", "edit", "save 5", "end"]);
+  });
+
+  test("what is typed stays in the box when the stored value changes, until the box is left (issue #426)", async () => {
+    const props = {
+      id: "Box",
+      label: "Amount:",
+      isValid: isValidDollars,
+      onSave: vi.fn(),
+    };
+    const { rerender } = render(<SavedOnChangeInput {...props} stored="12" />);
+    const box = screen.getByTestId("Box");
+    await userEvent.clear(box);
+    await userEvent.type(box, "5");
+
+    rerender(<SavedOnChangeInput {...props} stored="45" />);
+    expect(box).toHaveValue("5");
+
+    await userEvent.tab();
+    expect(box).toHaveValue("45");
+  });
+
+  test("a box that has focus but nothing typed shows a changed stored value (issue #426)", async () => {
+    const props = {
+      id: "Box",
+      label: "Amount:",
+      isValid: isValidDollars,
+      onSave: vi.fn(),
+    };
+    const { rerender } = render(<SavedOnChangeInput {...props} stored="12" />);
+    await userEvent.click(screen.getByTestId("Box"));
+
+    rerender(<SavedOnChangeInput {...props} stored="45" />);
+
+    expect(screen.getByTestId("Box")).toHaveFocus();
+    expect(screen.getByTestId("Box")).toHaveValue("45");
+  });
+
+  test("works without the editing callbacks", async () => {
+    const onSave = renderInput();
+    const box = screen.getByTestId("Box");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "5");
+    await userEvent.tab();
+
+    expect(onSave).toHaveBeenCalledWith("5");
+  });
 });

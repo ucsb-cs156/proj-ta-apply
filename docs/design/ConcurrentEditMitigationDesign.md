@@ -509,6 +509,38 @@ heartbeat's entries are `{label, samePerson, admin}`; the page does not act on t
 budget saves write the `budgets` row and two columns of a `recruitments` row, never an application.
 This change adds no dates or times, so the Pacific-time rules do not apply to it.
 
+**Background refresh (#426).** Admins often have the Budget page and the Combined Allocation page
+for the same quarter open side by side, changing allocations on one and watching the totals on the
+other. Both pages therefore re-read the quarter's summary on their own about every **10 seconds**
+(see (e) for the mechanism), so a change made in one window shows in the other without a click.
+Since a refresh now brings other tabs' versions in while the admin may be typing, `useBudgetSaves`
+follows one rule for every save-as-you-type box (the budget lines, the hiring targets, and the
+conversion factor on the combined page):
+
+* A box is **being edited** from its first keystroke, valid or not, until it loses focus
+  (`SavedOnChangeInput`'s `onEdit` and `onEditEnd`). Focus alone does not count: a box that has
+  focus but nothing typed shows the refreshed value, and the admin starts from that.
+* A box being edited **keeps its text** (it was already so: what is typed stays in the box until it
+  loses focus) and **keeps what it started from**: a budget line keeps the count it began at (its
+  pin), and a hiring target keeps its `expected`. A refresh does not move either, so if another
+  tab changed the stored value meanwhile, the next save is a `409` and the admin gets **Use
+  theirs** / **Overwrite**. Only this tab's own saves move a pin on: a save from count *n* that
+  comes back with *n + 1* moves every pin that was at *n*, so a box begun while another box's save
+  was on its way is not refused for this tab's own change.
+* A box **not** being edited shows the refreshed value and **adopts** what came with it: the
+  newest counts (never back down, as before) and, for a hiring target, the refreshed value as its
+  `expected`. Before #426 a target only ever learned the value it first saw, which was right while
+  nothing refreshed the page but would now make a target shown as refreshed refuse a save made from
+  it. The page passes the summary's read time with it, so that a re-read whose answer is the same
+  as before (react-query keeps the same object) still counts for a box that has stopped being
+  edited since.
+
+The budget lines share one version, so a line being edited is refused when another tab changed any
+line since the box began, not only the same one. That is as it was before #426 (the version only
+moved forward when the page was read again), and the Combined Allocation page's factor has its own
+count (#375), so the two pages side by side never refuse each other. No server-side lock between the
+two pages was added; the version checks and compare-and-set stay the guard.
+
 **Risks.** Low. The budget is a planning figure and "changes are not audited" (see the `Budget`
 class comment), so there is no history to reconcile. The hiring target is shared with the
 allocations (see (b)), so a conflict on it should refresh the allocation summary too.
@@ -695,6 +727,30 @@ as well was considered and rejected for the same reason in reverse: every Budget
 warn whenever anyone had the combined page open. Admin-only, as the edit pages are. The Web IT
 `BudgetWebIT.the_combined_page_and_a_courses_edit_page_warn_each_other` opens the combined page and
 one recruitment's edit page in two windows and sees both banners, with only the later window asked.
+
+**Background refresh of the Combined Allocation page (#426).** The page re-reads in the background
+about every **10 seconds** (see (e)): the quarter's summary, both recruitments' course lists
+(`/api/recruitmentcourses/all`) and the recruitments list (for `allocationBulkVersion` and the
+review status). The two ranking summaries
+(`/api/instructor/recruitments/{id}/admin-course-rankings`) are **not** refreshed: for each course
+they load the recruitment's applications, work out who is eligible and read the course's rankings
+(one query per course), the kind of count-computing read that (e) keeps out of the background
+refresh, and nothing on this page or the Budget page changes them. They are read when the page
+opens and when the window gets focus. The boxes follow the rule given in (a):
+
+* An **allocation** box being edited (from its first keystroke until it loses focus) keeps what is
+  typed, and keeps the row's `allocationVersion` and the recruitment's
+  `allocationBulkVersion` it started from (`useAllocationSaves`); a refresh does not move them, so a
+  row changed or an Auto Allocate run in another tab meanwhile still makes the next save a `409`.
+  Only this tab's own saves move the row's version on. The conflict is handled as before: a toast,
+  the row as it now is, the lists read again and what was typed dropped, not **Use theirs** /
+  **Overwrite** (see "On conflict" above). A box not being edited shows the refreshed row and saves
+  from it.
+* An **estimate** box being edited keeps what is typed, as before (`useEstimateSaves` keeps the
+  box's draft until it loses focus). The estimates are not versioned (see above), so there is no
+  version to keep; the multi-tab warning stays their guard.
+* The **conversion factor** is a `SavedOnChangeInput` and follows (a) exactly, under
+  `conversionVersion`.
 
 ### (c) The faculty rankings for a recruitment course (#279)
 
@@ -896,6 +952,11 @@ few and need the freshest picture. Instructors and students are many, so they wa
 | Admins | 5 s | 3 s | 2 to 8 s | `ADMIN_REFRESH_SEC=5`, `ADMIN_REFRESH_JITTER=3` |
 | Instructors and students | 15 s | 5 s | 10 to 20 s | `NON_ADMIN_REFRESH=15`, `NON_ADMIN_JITTER=5` |
 
+The Budget page and the Combined Allocation page (#426) use a mean of **10 seconds** instead, with
+the admin jitter (so 7 to 13 s by default), a jitter never larger than the 10 seconds. The number is
+`SIDE_BY_SIDE_REFRESH_SEC` in `refreshInterval.ts`, passed as `baseSeconds` to `refreshOptions` /
+`useRefreshingBackend`; it is not a server setting. Every other page keeps the timing above.
+
 All four are environment variables, with the values above as the defaults, so the load can be tuned
 without a release. A value that is missing, not a number, zero or negative (for a base), or a jitter
 that is negative or larger than its base is replaced by the safe default, so a typing mistake in the
@@ -909,6 +970,17 @@ mechanism, not intervals scattered through the pages:
   a `refetchInterval` **function**. react-query asks the function again after every fetch, so each
   wait is a new draw. `refetchIntervalInBackground` is false and `refetchOnWindowFocus` is true.
   Options passed by the caller win. #282 uses the same hook.
+* **One draw per read (#426).** react-query asks for the interval again on every render of every
+  page that uses the query (`setOptions`), and restarts the timer whenever the answer differs. A
+  fresh draw on every question therefore restarted the wait at every render, and a page that
+  renders more often than it waits never refreshed at all; the Budget page, which renders on each
+  heartbeat, was one. `refreshOptions` now keeps the draw for each query (a `WeakMap`) until the
+  query is read again, or the timing changes (the user and `/api/systemInfo` arrive after the first
+  ask), so the wait still counts from the last read and is still a new draw after each one. This
+  fixes the refresh of every page that uses the hook, not only the two of #426.
+* A window that is visible but does not have focus keeps refreshing: react-query's
+  `refetchIntervalInBackground: false` stops only a hidden tab (its focus manager reads the page's
+  visibility, not the window's focus). That is the side-by-side case of #426, and it has a test.
 * `nextRefreshMs(timing, random)` (`main/utils/refreshInterval.ts`) makes the draw. The random source
   is an argument so tests are deterministic. A wait is never under 1 second.
 * The four settings are read by the server (`application.properties`, `RefreshSetting`) and sent to
@@ -934,6 +1006,9 @@ refreshed:
 | `GET /api/applications/mine`, `GET /api/draftApplications/mine` | Student home section | Small | Yes |
 | `GET /api/instructor/recruitments/{id}/courses/{cid}/ranking` | Faculty ranking page header | Small | Yes |
 | Application page (`/applications/{id}`) list of recruitments | Student editing a submitted application | Small | **No**: a closed recruitment would swap the form for a read-only view and lose unsaved edits |
+| `GET /api/admin/budget?quarter=` | Budget page and Combined Allocation page (#426) | One budget row, two recruitments and their courses | Yes, about every 10 s |
+| `GET /api/recruitmentcourses/all`, `GET /api/admin/recruitments/all` | Combined Allocation page (#426) | One table read each | Yes, about every 10 s |
+| `GET /api/instructor/recruitments/{id}/admin-course-rankings` | Combined Allocation page | Loads the recruitment's applications and each course's rankings | **No**, read on open and on focus |
 
 Step actions on the server: `PUT /api/admin/recruitments/status` re-stamped `actualClosingDate` on
 every Close; it now returns the recruitment untouched, with nothing saved or recorded, if the status
