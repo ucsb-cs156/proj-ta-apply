@@ -165,7 +165,7 @@ describe("useAllocationSaves: the edit pages' safety net (issues #278, #358)", (
     ]);
   });
 
-  test("after the saves are done, the next edit uses the version of the row as it was last read", async () => {
+  test("after the box is left and its saves are done, the next edit uses the version of the row as it was last read", async () => {
     axiosMock
       .onPut("/api/recruitmentcourses/allocation")
       .reply(200, { ...rows[0], allocationVersion: 5 });
@@ -174,8 +174,9 @@ describe("useAllocationSaves: the edit pages' safety net (issues #278, #358)", (
     fireEvent.change(box(0), { target: { value: "1" } });
     await waitFor(() => expect(allocationPuts()).toHaveLength(1));
     expect(allocationPuts()[0].params.expectedVersion).toBe(4);
-    // Let the chain finish.
+    // Let the chain finish, and leave the box.
     await new Promise((resolve) => setTimeout(resolve, 20));
+    fireEvent.blur(box(0));
 
     // Another tab changed the row meanwhile and the page read it again.
     const newer = rows.map((r) => ({ ...r, allocationVersion: 9 }));
@@ -184,10 +185,164 @@ describe("useAllocationSaves: the edit pages' safety net (issues #278, #358)", (
         <Boxes courses={newer} />
       </QueryClientProvider>,
     );
-    fireEvent.change(box(0), { target: { value: "2" } });
+    fireEvent.change(box(0), { target: { value: "3" } });
 
     await waitFor(() => expect(allocationPuts()).toHaveLength(2));
     expect(allocationPuts()[1].params.expectedVersion).toBe(9);
+  });
+
+  /** Re-renders the boxes as a background refresh would, with rows another tab has changed. */
+  const refreshWith = (rerender, queryClient, props) =>
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <Boxes {...props} />
+      </QueryClientProvider>,
+    );
+
+  test("a refresh while a box is being edited keeps what is typed, and the version and Auto Allocate count it started from (issue #426)", async () => {
+    axiosMock
+      .onPut("/api/recruitmentcourses/allocation")
+      .reply(200, { ...rows[0], allocation: 1, allocationVersion: 5 });
+    const queryClient = new QueryClient();
+    const { rerender } = renderBoxes({ allocationBulkVersion: 2 }, queryClient);
+    fireEvent.change(box(0), { target: { value: "1" } });
+    await waitFor(() => expect(allocationPuts()).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    // Another tab changed the row and ran Auto Allocate; the refresh brings both, mid-edit.
+    refreshWith(rerender, queryClient, {
+      courses: rows.map((r) => ({ ...r, allocation: 8, allocationVersion: 9 })),
+      allocationBulkVersion: 3,
+    });
+    expect(box(0)).toHaveValue(1);
+    // A box that is not being edited shows the refreshed value.
+    expect(box(1)).toHaveValue(8);
+    fireEvent.change(box(0), { target: { value: "12" } });
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(2));
+    // This tab's own save moved the version on to 5; the refresh's 9 and 3 are not taken, so the
+    // server can refuse the save.
+    expect(allocationPuts()[1].params).toEqual({
+      id: 1,
+      allocation: 12,
+      expectedVersion: 5,
+      expectedBulkVersion: 2,
+    });
+  });
+
+  test("a box that is not being edited saves from the refreshed row and count (issue #426)", async () => {
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, rows[1]);
+    const queryClient = new QueryClient();
+    const { rerender } = renderBoxes({ allocationBulkVersion: 2 }, queryClient);
+    refreshWith(rerender, queryClient, {
+      courses: rows.map((r) => ({ ...r, allocationVersion: 9 })),
+      allocationBulkVersion: 3,
+    });
+
+    fireEvent.change(box(1), { target: { value: "6" } });
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(1));
+    expect(allocationPuts()[0].params.expectedVersion).toBe(9);
+    expect(allocationPuts()[0].params.expectedBulkVersion).toBe(3);
+  });
+
+  test("an invalid first keystroke already pins what the row showed (issue #426)", async () => {
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, rows[0]);
+    const queryClient = new QueryClient();
+    const { rerender } = renderBoxes({ allocationBulkVersion: 2 }, queryClient);
+    fireEvent.change(box(0), { target: { value: "" } });
+    refreshWith(rerender, queryClient, {
+      courses: rows.map((r) => ({ ...r, allocationVersion: 9 })),
+      allocationBulkVersion: 3,
+    });
+
+    fireEvent.change(box(0), { target: { value: "6" } });
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(1));
+    expect(allocationPuts()[0].params.expectedVersion).toBe(4);
+    expect(allocationPuts()[0].params.expectedBulkVersion).toBe(2);
+  });
+
+  test("a box left while its save is still waiting keeps its version until the save is done", async () => {
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    let first = true;
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(async () => {
+      if (first) {
+        first = false;
+        await gate;
+      }
+      return [200, { ...rows[0], allocationVersion: 5 }];
+    });
+    renderBoxes();
+    fireEvent.change(box(0), { target: { value: "1" } });
+    fireEvent.blur(box(0));
+    // Back in the box before the first save has come back.
+    fireEvent.change(box(0), { target: { value: "3" } });
+    release();
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(2));
+    expect(allocationPuts().map((r) => r.params.expectedVersion)).toEqual([
+      4, 5,
+    ]);
+  });
+
+  test("an answer that comes after the box was left is put in the lists, with no pin to move", async () => {
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const saved = { ...rows[0], allocation: 1, allocationVersion: 5 };
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(async () => {
+      await gate;
+      return [200, saved];
+    });
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["/api/recruitmentcourses/all", false], rows);
+    renderBoxes({}, queryClient);
+    fireEvent.change(box(0), { target: { value: "1" } });
+    fireEvent.blur(box(0));
+    release();
+
+    await waitFor(() =>
+      expect(
+        queryClient
+          .getQueryData(["/api/recruitmentcourses/all", false])
+          .find((c) => c.id === 1),
+      ).toEqual(saved),
+    );
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("after a refused edit, the next keystroke starts from the row as it now is", async () => {
+    let first = true;
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(() => {
+      if (first) {
+        first = false;
+        return [409, { message: "Changed elsewhere." }];
+      }
+      return [200, { ...rows[0], allocationVersion: 10 }];
+    });
+    const queryClient = new QueryClient();
+    const { rerender } = renderBoxes({ allocationBulkVersion: 2 }, queryClient);
+    fireEvent.change(box(0), { target: { value: "1" } });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Changed elsewhere."),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    // The lists are read again; the box still has focus.
+    refreshWith(rerender, queryClient, {
+      courses: rows.map((r) => ({ ...r, allocationVersion: 9 })),
+      allocationBulkVersion: 3,
+    });
+
+    fireEvent.change(box(0), { target: { value: "6" } });
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(2));
+    expect(allocationPuts()[1].params.expectedVersion).toBe(9);
+    expect(allocationPuts()[1].params.expectedBulkVersion).toBe(3);
   });
 
   test("a saved row goes straight into every cached course list, and the lists are read again", async () => {

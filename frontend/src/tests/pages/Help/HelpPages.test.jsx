@@ -602,6 +602,10 @@ describe("Help pages (issue #140)", () => {
     expect(heading.nextElementSibling).toHaveTextContent(
       "The hiring targets of both recruitments are entered here, beside what has been allocated to courses so far; when the two do not agree, the page says so and links to that recruitment's Courses page. The allocations themselves are adjusted on the Combined Allocation page, which the Combined allocations link at the top of the Budget page opens.",
     );
+    // Issue #426: the two pages refresh themselves, and typing is never replaced.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "Both pages refresh themselves about every 10 seconds, so you can keep them open side by side in two windows: a change made in one shows in the other without clicking into it. A refresh never replaces what you are typing in a box; if someone changed that figure meanwhile, your save brings up Use theirs and Overwrite (for an allocation, the change is refused and the numbers are read again).",
+    );
     const lines = screen.getByTestId("HelpAdminsPage-budget-lines");
     expect(lines.id).toBe("budget-lines");
     expect(lines).toHaveTextContent(

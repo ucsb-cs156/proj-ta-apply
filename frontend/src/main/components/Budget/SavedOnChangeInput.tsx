@@ -14,6 +14,13 @@ type SavedOnChangeInputProps = {
   isValid: (value: string) => boolean;
   /** Called with every valid value as it is typed. */
   onSave: (value: string) => void;
+  /**
+   * Called on every keystroke, valid or not, before `onSave` (issue #426): the box is being edited
+   * from then until it loses focus, and its saves keep the version it started from.
+   */
+  onEdit?: () => void;
+  /** Called when the box loses focus: the editing that `onEdit` began is over. */
+  onEditEnd?: () => void;
   disabled?: boolean;
   /** Text before the box, such as "$". */
   prefix?: string;
@@ -33,6 +40,9 @@ type SavedOnChangeInputProps = {
  * #174): a valid value is sent at once, an invalid one is flagged and never sent, and the stored
  * value comes back when the box loses focus. Used for every figure on the Budget for Quarter page
  * (issue #177).
+ *
+ * What has been typed stays in the box until it loses focus, whatever the stored value does: a
+ * background refresh (issue #426) changes what a box shows only while nothing has been typed in it.
  */
 export default function SavedOnChangeInput({
   id,
@@ -40,6 +50,8 @@ export default function SavedOnChangeInput({
   stored,
   isValid,
   onSave,
+  onEdit,
+  onEditEnd,
   disabled = false,
   prefix,
   width = "10em",
@@ -52,6 +64,7 @@ export default function SavedOnChangeInput({
   const [draft, setDraft] = useState<string | null>(null);
 
   const onChange = (value: string) => {
+    onEdit?.();
     setDraft(value);
     if (isValid(value)) {
       onSave(value);
@@ -80,7 +93,10 @@ export default function SavedOnChangeInput({
           disabled={disabled}
           isInvalid={draft !== null && !isValid(draft)}
           onChange={(e) => onChange(e.target.value)}
-          onBlur={() => setDraft(null)}
+          onBlur={() => {
+            setDraft(null);
+            onEditEnd?.();
+          }}
           data-testid={id}
         />
         {invalidMessage !== undefined && (

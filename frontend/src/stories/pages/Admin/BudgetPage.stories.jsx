@@ -62,6 +62,40 @@ BothRecruitments.parameters = {
   msw: { handlers: handlers(budgetFixtures.bothTypes) },
 };
 
+/**
+ * Issue #426: the page re-reads the summary on its own about every 10 seconds. Here every read
+ * after the first brings a change made in another window, the TAs-only budget up by $1,000 and the
+ * TA hiring target up by one, so the figures move without a click. Type in a box and wait: what is
+ * typed stays.
+ */
+export const ChangedInAnotherWindow = Template.bind({});
+ChangedInAnotherWindow.parameters = {
+  reactRouter: { initialEntries: ["/admin/budget/F26"] },
+  msw: {
+    handlers: (() => {
+      let reads = 0;
+      const next = () => {
+        const step = reads;
+        reads += 1;
+        const { budget, ta } = budgetFixtures.bothTypes;
+        return {
+          ...budgetFixtures.bothTypes,
+          budget: {
+            ...budget,
+            tasOnlyBudget: budget.tasOnlyBudget + 1000 * step,
+            version: budget.version + step,
+          },
+          ta: { ...ta, totalHiringTarget: ta.totalHiringTarget + step },
+        };
+      };
+      return [
+        http.get("/api/admin/budget", () => HttpResponse.json(next())),
+        ...handlers(budgetFixtures.bothTypes),
+      ];
+    })(),
+  },
+};
+
 export const UlaOnlyNothingEntered = Template.bind({});
 UlaOnlyNothingEntered.parameters = {
   reactRouter: { initialEntries: ["/admin/budget/S26"] },

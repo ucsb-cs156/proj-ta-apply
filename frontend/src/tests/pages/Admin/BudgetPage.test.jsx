@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -31,13 +32,12 @@ vi.mock("react-router", async (importOriginal) => ({
 
 const axiosMock = new AxiosMockAdapter(axios);
 
-function renderPage(qyy = "F26") {
+function renderPage(
+  qyy = "F26",
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
-    <QueryClientProvider
-      client={
-        new QueryClient({ defaultOptions: { queries: { retry: false } } })
-      }
-    >
+    <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[`/admin/budget/${qyy}`]}>
         <Routes>
           <Route path="/admin/budget/:qyy" element={<BudgetPage />} />
@@ -1203,34 +1203,327 @@ describe("BudgetPage tests", () => {
     expect(userGets()).toHaveLength(1);
   });
 
-  test("a figure changed by a re-read is still compared with the value first seen", async () => {
+  /** A query client the test can ask for a re-read, as the background refresh does (#426). */
+  const newClient = () =>
+    new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const refresh = (client) =>
+    act(() => client.refetchQueries({ queryKey: ["/api/admin/budget"] }));
+
+  test("the summary is re-read on its own about every 10 seconds, not at the admin pace, and the page shows it (issue #426)", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      axiosMock.onGet("/api/systemInfo").reply(200, {
+        ...systemInfoFixtures.showingNeither,
+        adminRefreshSec: 5,
+        adminRefreshJitter: 0,
+      });
+      laterReadsAre(theirs);
+      renderPage("F26");
+      await screen.findByTestId("BudgetPage-bottom-line");
+      await waitFor(() => expect(budgetGets()).toHaveLength(1));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(8000);
+      });
+      expect(budgetGets()).toHaveLength(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+      await waitFor(() => expect(budgetGets()).toHaveLength(2));
+      await waitFor(() =>
+        expect(screen.getByTestId("BudgetPage-tasOnlyBudget")).toHaveValue(
+          "45000",
+        ),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("a target not being edited takes the value a re-read shows; one being edited keeps what it started from (issue #426)", async () => {
     laterReadsAre({
       ...budgetFixtures.bothTypes,
       ta: { ...budgetFixtures.bothTypes.ta, totalHiringTarget: 5 },
       ula: { ...budgetFixtures.bothTypes.ula, totalHiringTarget: 11 },
     });
-    renderPage("F26");
+    const client = newClient();
+    renderPage("F26", client);
+    const taTarget = await screen.findByTestId("BudgetPage-target-ta-input");
+    const ulaTarget = screen.getByTestId("BudgetPage-target-ula-input");
+    await userEvent.clear(taTarget);
+    await userEvent.type(taTarget, "9");
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(1));
+    // Another tab set the TA target to 5 and the ULA target to 11; the re-read arrives while the
+    // TA box is still being edited.
+    await refresh(client);
+    await waitFor(() => expect(ulaTarget).toHaveValue("11"));
+    expect(taTarget).toHaveValue("9");
+    await userEvent.type(taTarget, "7");
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(2));
+
+    // The ULA box was not being edited: it shows 11, so its save expects 11.
+    await userEvent.clear(ulaTarget);
+    await userEvent.type(ulaTarget, "4");
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(3));
+    expect(
+      puts(TARGET).map((r) => [
+        r.params.id,
+        r.params.totalHiringTarget,
+        r.params.expected,
+      ]),
+    ).toEqual([
+      [5, 9, "8"],
+      // The TA box kept what its own save set, never the re-read's 5, so the server can refuse
+      // the save.
+      [5, 97, "9"],
+      [6, 4, "11"],
+    ]);
+  });
+
+  test("a target the admin has left takes what the next re-read shows (issue #426)", async () => {
+    laterReadsAre({
+      ...budgetFixtures.bothTypes,
+      ta: { ...budgetFixtures.bothTypes.ta, totalHiringTarget: 5 },
+    });
+    const client = newClient();
+    renderPage("F26", client);
     const taTarget = await screen.findByTestId("BudgetPage-target-ta-input");
     await userEvent.clear(taTarget);
     await userEvent.type(taTarget, "9");
     await userEvent.tab();
-    // The save brought a re-read, which shows another value once the box loses focus...
+    await refresh(client);
     await waitFor(() => expect(taTarget).toHaveValue("5"));
 
-    const ulaTarget = screen.getByTestId("BudgetPage-target-ula-input");
-    await userEvent.clear(ulaTarget);
-    await userEvent.type(ulaTarget, "4");
     await userEvent.clear(taTarget);
     await userEvent.type(taTarget, "6");
 
-    await waitFor(() => expect(puts(TARGET)).toHaveLength(3));
-    // ...but the first save of each figure expected what was first seen, and the next what that
-    // save set, never what the re-read showed.
-    expect(puts(TARGET).map((r) => [r.params.id, r.params.expected])).toEqual([
-      [5, "8"],
-      [6, "10"],
-      [5, "9"],
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(2));
+    expect(puts(TARGET)[1].params.expected).toBe("5");
+  });
+
+  test("Use theirs on a target takes the value the page shows now, even one a re-read brought after the refusal (issue #426)", async () => {
+    let saves = 0;
+    axiosMock.onPut(TARGET).reply(() => {
+      saves += 1;
+      return saves === 1
+        ? [409, { message: "stale", recruitment: { totalHiringTarget: 9 } }]
+        : [200, {}];
+    });
+    laterReadsAre({
+      ...budgetFixtures.bothTypes,
+      ula: { ...budgetFixtures.bothTypes.ula, totalHiringTarget: 12 },
+    });
+    const client = newClient();
+    renderPage("F26", client);
+    const box = await screen.findByTestId("BudgetPage-target-ula-input");
+    await userEvent.clear(box);
+    await userEvent.type(box, "1");
+    await screen.findByTestId("BudgetPage-conflict-target-ula");
+    await userEvent.tab();
+    await refresh(client);
+    await waitFor(() => expect(box).toHaveValue("12"));
+
+    await userEvent.click(
+      screen.getByTestId("BudgetPage-conflict-target-ula-theirs"),
+    );
+    await userEvent.clear(box);
+    await userEvent.type(box, "7");
+
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(2));
+    expect(puts(TARGET)[1].params.expected).toBe("12");
+  });
+
+  /** A refusal of a stale budget line: the server is at version 4, as `theirs` left it. */
+  const staleLine = [
+    409,
+    { message: "stale", version: 4, conversionVersion: 1, summary: theirs },
+  ];
+
+  /** Refuses any budget-line save that carries a lines' version older than 4, as the server does. */
+  function serverAtVersion4() {
+    axiosMock
+      .onPut("/api/admin/budget")
+      .reply((config) =>
+        config.params.version < 4 ? staleLine : [200, theirs],
+      );
+  }
+
+  test("typing survives a re-read that brings another tab's change, and the next save is still refused and asks (issue #426)", async () => {
+    // The first save is taken: nothing else has changed yet.
+    let first = true;
+    axiosMock.onPut("/api/admin/budget").reply((config) => {
+      if (first) {
+        first = false;
+        return [200, budgetFixtures.bothTypes];
+      }
+      return config.params.version < 4 ? staleLine : [200, theirs];
+    });
+    laterReadsAre(theirs);
+    const client = newClient();
+    renderPage("F26", client);
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(1));
+
+    // Another tab set the TAs-only budget to 45,000 (version 4); the re-read comes mid-edit.
+    await refresh(client);
+    await waitFor(() =>
+      expect(screen.getByTestId("BudgetPage-funds-tasOnly")).toHaveTextContent(
+        "TAs only budget$45,000.00",
+      ),
+    );
+    // What is typed stays in the box; a box that is not being edited shows the re-read's value.
+    expect(box).toHaveValue("4");
+    expect(
+      screen.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter"),
+    ).toHaveValue("120");
+
+    await userEvent.type(box, "0");
+
+    // The save carried the version the box started from, so it is refused and the admin is asked.
+    expect(
+      await screen.findByTestId("BudgetPage-conflict-tasOnlyBudget-message"),
+    ).toHaveTextContent(
+      "The TAs-only budget was changed in another tab or window. It is now $45,000.00; you entered $40.00.",
+    );
+    expect(puts("/api/admin/budget").map((r) => r.params.version)).toEqual([
+      3, 3,
     ]);
+    expect(box).toHaveValue("40");
+    expect(
+      screen.getByTestId("BudgetPage-conflict-tasOnlyBudget-overwrite"),
+    ).toBeInTheDocument();
+  });
+
+  test("a box that is not being edited saves against the version a re-read brought (issue #426)", async () => {
+    serverAtVersion4();
+    laterReadsAre(theirs);
+    const client = newClient();
+    renderPage("F26", client);
+    const box = await screen.findByTestId("BudgetPage-unrestrictedBudget");
+    await refresh(client);
+    await waitFor(() =>
+      expect(screen.getByTestId("BudgetPage-funds-tasOnly")).toHaveTextContent(
+        "TAs only budget$45,000.00",
+      ),
+    );
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "5");
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(1));
+    expect(puts("/api/admin/budget")[0].params.version).toBe(4);
+    expect(screen.queryByTestId(/^BudgetPage-conflict-/)).toBeNull();
+  });
+
+  test("a budget line left and then refreshed starts again from the refreshed version (issue #426)", async () => {
+    let first = true;
+    axiosMock.onPut("/api/admin/budget").reply((config) => {
+      if (first) {
+        first = false;
+        return [200, budgetFixtures.bothTypes];
+      }
+      return config.params.version < 4 ? staleLine : [200, theirs];
+    });
+    laterReadsAre(theirs);
+    const client = newClient();
+    renderPage("F26", client);
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(1));
+    await userEvent.tab();
+    await refresh(client);
+    await waitFor(() => expect(box).toHaveValue("45000"));
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "5");
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget").map((r) => r.params.version)).toEqual([
+      3, 4,
+    ]);
+    expect(screen.queryByTestId(/^BudgetPage-conflict-/)).toBeNull();
+  });
+
+  test("an invalid first keystroke already pins the version the box started from (issue #426)", async () => {
+    serverAtVersion4();
+    laterReadsAre(theirs);
+    const client = newClient();
+    renderPage("F26", client);
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    // Emptied: not a valid amount, so nothing is sent, but the box is being edited.
+    await userEvent.clear(box);
+    await refresh(client);
+    await waitFor(() =>
+      expect(screen.getByTestId("BudgetPage-funds-tasOnly")).toHaveTextContent(
+        "TAs only budget$45,000.00",
+      ),
+    );
+
+    await userEvent.type(box, "4");
+
+    await screen.findByTestId("BudgetPage-conflict-tasOnlyBudget");
+    expect(puts("/api/admin/budget").map((r) => r.params.version)).toEqual([3]);
+  });
+
+  test("a box begun while another box's save is on its way moves on with that save (issue #426)", async () => {
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    let saves = 0;
+    axiosMock.onPut("/api/admin/budget").reply(async (config) => {
+      saves += 1;
+      if (saves === 1) {
+        await gate;
+      }
+      return [
+        200,
+        {
+          ...budgetFixtures.bothTypes,
+          budget: {
+            ...budgetFixtures.bothTypes.budget,
+            version: config.params.version + 1,
+          },
+        },
+      ];
+    });
+    renderPage("F26");
+    const first = await screen.findByTestId("BudgetPage-unrestrictedBudget");
+    const second = screen.getByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(first);
+    await userEvent.type(first, "5");
+    // On to the next box before the first one's save has come back.
+    await userEvent.clear(second);
+    await userEvent.type(second, "6");
+    release();
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    // The second box began at version 3, while the first box's save was on its way; that save
+    // took the version to 4, so the second carries 4 and is not refused for this tab's own change.
+    expect(puts("/api/admin/budget").map((r) => r.params.version)).toEqual([
+      3, 4,
+    ]);
+  });
+
+  test("Overwrite settles the box even if it still has focus, and saves against the version stored now (issue #426)", async () => {
+    refuseFirstBudgetSave();
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+    await screen.findByTestId("BudgetPage-conflict-tasOnlyBudget");
+
+    // A click that does not take the focus from the box.
+    fireEvent.click(
+      screen.getByTestId("BudgetPage-conflict-tasOnlyBudget-overwrite"),
+    );
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget")[1].params.version).toBe(4);
   });
 
   test("a refused budget line with no figures in the answer is shown as zero", async () => {
