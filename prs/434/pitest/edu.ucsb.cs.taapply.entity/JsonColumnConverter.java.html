@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>JsonColumnConverter.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.entity;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.fasterxml.jackson.core.JsonProcessingException;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.fasterxml.jackson.core.type.TypeReference;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.fasterxml.jackson.databind.ObjectMapper;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import jakarta.persistence.AttributeConverter;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.function.Supplier;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Stores a collection as JSON text in one column.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;Used by {@link DraftApplication}, whose collections (prior coursework, topic ratings, interest</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * levels, course interests) are only ever read and written whole, so they need no tables of their</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * own. A null or blank column reads back as an empty collection, never as null, so the form always</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * has something to iterate over.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public abstract class JsonColumnConverter&#60;T&#62; implements AttributeConverter&#60;T, String&#62; {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  private static final ObjectMapper MAPPER = new ObjectMapper();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private final TypeReference&#60;T&#62; type;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private final Supplier&#60;T&#62; empty;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  protected JsonColumnConverter(TypeReference&#60;T&#62; type, Supplier&#60;T&#62; empty) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    this.type = type;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    this.empty = empty;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Override</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public String convertToDatabaseColumn(T value) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_31'/>
+31
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_31'>1</a>
+<span>
+1. convertToDatabaseColumn : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (value == null) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_32'/>
+32
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_32'>1</a>
+<span>
+1. convertToDatabaseColumn : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToDatabaseColumn &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return null;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    try {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_35'/>
+35
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_35'>1</a>
+<span>
+1. convertToDatabaseColumn : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToDatabaseColumn &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return MAPPER.writeValueAsString(value);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    } catch (JsonProcessingException e) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalStateException(&#34;Could not write the collection as JSON&#34;, e);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Override</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public T convertToEntityAttribute(String json) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_43'/>
+43
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_43'>2</a>
+<span>
+1. convertToEntityAttribute : negated conditional &rarr; KILLED<br/>
+2. convertToEntityAttribute : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (json == null || json.isBlank()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_44'/>
+44
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_44'>1</a>
+<span>
+1. convertToEntityAttribute : replaced return value with null for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToEntityAttribute &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return empty.get();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    try {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_47'/>
+47
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_47'>1</a>
+<span>
+1. convertToEntityAttribute : replaced return value with null for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToEntityAttribute &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return MAPPER.readValue(json, type);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    } catch (JsonProcessingException e) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalStateException(&#34;Could not read the collection from JSON&#34;, e);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@7edc11ab_52'/>
+52
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_52'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@7edc11ab_31'>31</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_31'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>convertToDatabaseColumn<br/><b>Killed by : </b>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:null_is_stored_as_null()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@7edc11ab_32'>32</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_32'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>convertToDatabaseColumn<br/><b>Killed by : </b>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:null_is_stored_as_null()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToDatabaseColumn &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@7edc11ab_35'>35</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_35'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>convertToDatabaseColumn<br/><b>Killed by : </b>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:a_map_is_written_as_json_and_read_back()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToDatabaseColumn &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@7edc11ab_43'>43</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_43'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>convertToEntityAttribute<br/><b>Killed by : </b>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:unreadable_json_is_an_error_not_an_empty_collection()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>convertToEntityAttribute<br/><b>Killed by : </b>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:unreadable_json_is_an_error_not_an_empty_collection()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@7edc11ab_44'>44</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_44'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>convertToEntityAttribute<br/><b>Killed by : </b>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:nothing_stored_reads_as_an_empty_collection_that_can_be_changed()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToEntityAttribute &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@7edc11ab_47'>47</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@7edc11ab_47'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>convertToEntityAttribute<br/><b>Killed by : </b>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:a_map_is_written_as_json_and_read_back()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/entity/JsonColumnConverter::convertToEntityAttribute &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:null_is_stored_as_null()] (0 ms)</li><li>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:unreadable_json_is_an_error_not_an_empty_collection()] (0 ms)</li><li>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:a_map_is_written_as_json_and_read_back()] (0 ms)</li><li>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:course_interests_keep_their_enum_values()] (0 ms)</li><li>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:nothing_stored_reads_as_an_empty_collection_that_can_be_changed()] (0 ms)</li><li>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:coursework_rows_round_trip_without_ids()] (0 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:deleting_a_recruitment_deletes_its_drafts()] (9 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:a_person_has_at_most_one_draft_per_recruitment()] (9 ms)</li><li>edu.ucsb.cs.taapply.repository.PacificTimestampsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.PacificTimestampsTests]/[method:a_draft_is_restamped_when_it_is_saved_again()] (7 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:an_empty_draft_needs_only_a_person_and_a_recruitment()] (8 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests]/[method:comments_are_kept_per_draft_and_found_for_several_at_once()] (9 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests]/[method:deleting_a_draft_deletes_its_comments()] (13 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:the_version_starts_at_zero_and_counts_the_saves()] (11 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests]/[method:saving_comments_again_replaces_them_and_leaves_the_draft_s_version_alone()] (11 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:a_save_made_from_an_older_version_is_refused_and_changes_nothing()] (12 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:changing_a_collection_is_saved()] (11 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:finders_use_the_person_and_the_recruitment()] (16 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftAdminCommentRepositoryTests]/[method:drafts_are_listed_and_counted_for_their_own_recruitment_only()] (18 ms)</li><li>edu.ucsb.cs.taapply.repository.PacificTimestampsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.PacificTimestampsTests]/[test-template:rows_are_stamped_in_pacific_time_whatever_the_jvm_zone(java.lang.String)]/[test-template-invocation:#4] (5 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:each_application_beside_a_draft_is_its_own_row_by_application_id()] (14 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:opening_returns_the_draft_already_on_file()] (17 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:a_draft_beside_an_application_is_a_conflict_and_nothing_else_is()] (14 ms)</li><li>edu.ucsb.cs.taapply.repository.PacificTimestampsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.PacificTimestampsTests]/[test-template:rows_are_stamped_in_pacific_time_whatever_the_jvm_zone(java.lang.String)]/[test-template-invocation:#3] (7 ms)</li><li>edu.ucsb.cs.taapply.repository.PacificTimestampsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.PacificTimestampsTests]/[test-template:rows_are_stamped_in_pacific_time_whatever_the_jvm_zone(java.lang.String)]/[test-template-invocation:#1] (8 ms)</li><li>edu.ucsb.cs.taapply.repository.PacificTimestampsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.PacificTimestampsTests]/[test-template:rows_are_stamped_in_pacific_time_whatever_the_jvm_zone(java.lang.String)]/[test-template-invocation:#2] (8 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:when_the_draft_s_comment_cannot_be_deleted_nothing_is_kept()] (13 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:when_the_draft_cannot_be_deleted_the_application_is_rolled_back()] (14 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:submitting_saves_the_application_and_deletes_the_draft_and_its_comment()] (13 ms)</li><li>edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.DraftApplicationRepositoryTests]/[method:every_column_round_trips()] (11 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:a_draft_is_not_opened_once_there_is_an_application()] (15 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:a_draft_is_not_saved_once_there_is_an_application()] (19 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:a_draft_is_saved_beside_a_cancelled_application()] (25 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:a_draft_is_opened_after_a_cancelled_application()] (26 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:when_the_rankings_cannot_be_deleted_nothing_is_kept()] (24 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:when_the_application_cannot_be_deleted_nothing_is_kept()] (24 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:resuming_turns_the_cancelled_application_into_a_draft()] (25 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:submitting_after_resuming_an_older_cancelled_application_does_not_collide()] (85 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#6] (68 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#5] (73 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#2] (83 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#1] (127 ms)</li><li>edu.ucsb.cs.taapply.entity.JsonColumnConverterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.JsonColumnConverterTests]/[method:a_value_that_cannot_be_written_is_an_error()] (3 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
