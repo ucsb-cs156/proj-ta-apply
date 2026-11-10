@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/426-refresh-budget-allocations","number":434,"title":"Refresh the Budget and Combined Allocation pages every 10 seconds (closes #426)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/434"}]
+pull_requests: []
