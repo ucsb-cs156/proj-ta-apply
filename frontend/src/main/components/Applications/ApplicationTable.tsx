@@ -34,6 +34,12 @@ export type Application = {
    * Mode's generator (issue #219).
    */
   origin: ApplicationOrigin;
+  /**
+   * Whether an admin has hidden the application (issue #440): listed apart on the admin's
+   * Applications page, and left out of the rankings and the course assignments. Only an admin is
+   * ever told; an applicant's own copy never says so.
+   */
+  hidden?: boolean;
   firstName: string | null;
   middleName: string | null;
   lastName: string | null;

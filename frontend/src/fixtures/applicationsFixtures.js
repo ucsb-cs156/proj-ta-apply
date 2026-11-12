@@ -194,4 +194,15 @@ applicationsFixtures.oneCancelledTaApplication = {
   cancelledAt: "2026-02-04T09:30:00",
 };
 
+/** Issue #440: one an admin has hidden, as only the admin's endpoints ever say. */
+applicationsFixtures.oneHiddenApplication = {
+  ...applicationsFixtures.oneTaApplication,
+  id: 6,
+  email: "gsr@ucsb.edu",
+  firstName: "Grace",
+  middleName: null,
+  lastName: "Hopper",
+  hidden: true,
+};
+
 export default applicationsFixtures;

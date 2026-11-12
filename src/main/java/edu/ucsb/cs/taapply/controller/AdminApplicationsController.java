@@ -256,6 +256,39 @@ public class AdminApplicationsController extends ApiController {
   }
 
   @Operation(
+      summary = "Hide an application, or show it again (issue #440)",
+      description =
+          "A hidden application, for instance one from an applicant now known to be a GSR, stays on"
+              + " file but is listed apart on the Applications page and left out of the faculty"
+              + " rankings and the course assignments; hidden=false puts it back. The change is"
+              + " recorded in the audit trail with the admin who made it; asking for the state the"
+              + " application is already in changes and records nothing. 404 for an application"
+              + " that does not exist.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/hidden")
+  public Application setHidden(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "hidden") @RequestParam boolean hidden) {
+    Application application =
+        applicationRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Application.class, id));
+    if (application.isHidden() == hidden) {
+      return application;
+    }
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(application.getRecruitmentId())
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));
+    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);
+    application.setHidden(hidden);
+    // The save and its audit row are one transaction (issue #377).
+    return applicationAuditService.saveAndRecord(before, application, recruitment.getType());
+  }
+
+  @Operation(
       summary = "Save the admin's comments on an application",
       description =
           "Free text, kept apart from the applicant's own answers; replaces the earlier text.")

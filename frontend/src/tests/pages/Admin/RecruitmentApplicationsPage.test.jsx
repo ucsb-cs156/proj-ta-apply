@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
+import { vi } from "vitest";
 
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
@@ -13,6 +14,12 @@ import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixture
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+
+const mockToast = vi.fn();
+vi.mock("react-toastify", async (importOriginal) => ({
+  ...(await importOriginal()),
+  toast: (x) => mockToast(x),
+}));
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -39,6 +46,7 @@ function renderPage(recruitmentId = 1) {
 describe("RecruitmentApplicationsPage tests", () => {
   beforeEach(() => {
     localStorage.clear();
+    mockToast.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -178,6 +186,8 @@ describe("RecruitmentApplicationsPage tests", () => {
       "id",
       "view",
       "edit",
+      // Issue #440: the Hide button.
+      "hiding",
       "name",
       "submittedAt",
       "email",
@@ -527,13 +537,220 @@ describe("RecruitmentApplicationsPage tests", () => {
         (request) => request.url === "/api/admin/recruitmentaudittrail/all",
       ),
     ).toHaveLength(0);
-    // The applications table is the last thing on the page.
+    // The applications table is followed only by the hidden applications (issue #440), which are
+    // the last thing on the page.
     const table = screen.getByTestId(
       "RecruitmentApplicationsPage-applications",
     );
+    const hidden = screen.getByTestId("RecruitmentApplicationsPage-hidden");
+    expect(table.closest(".pt-2").lastElementChild).toBe(hidden);
+    expect(hidden.previousElementSibling.contains(table)).toBeTruthy();
+  });
+
+  // ---- issue #440: hiding applications ----
+
+  const hiddenPuts = () =>
+    axiosMock.history.put.filter(
+      (r) => r.url === "/api/admin/applications/hidden",
+    );
+  const applicationGets = () =>
+    axiosMock.history.get.filter(
+      (r) => r.url === "/api/admin/applications/all",
+    );
+
+  test("with nothing hidden, the hidden list says so and the count has no note", async () => {
+    renderPage(1);
+    await screen.findByTestId(
+      "RecruitmentApplicationsPage-applications-cell-row-1-col-id-link",
+    );
+
+    const section = screen.getByTestId("RecruitmentApplicationsPage-hidden");
+    expect(section).toHaveAttribute("id", "hidden-applications");
+    expect(section).toHaveAttribute("aria-label", "Hidden applications");
+    expect(section).toHaveClass("mt-4");
+    const heading = screen.getByTestId(
+      "RecruitmentApplicationsPage-hidden-count",
+    );
+    expect(heading.tagName).toBe("H2");
+    expect(heading).toHaveClass("h4");
+    expect(heading).toHaveTextContent("0 Hidden Applications");
+    const why = screen.getByTestId("RecruitmentApplicationsPage-hidden-why");
+    expect(why).toHaveClass("small", "text-muted");
+    expect(why).toHaveTextContent(
+      "An application you hide, for instance one from an applicant who is now a GSR, moves to this list. Hidden applications are not shown to faculty for ranking and are left out of the Course Assignments. Unhide moves an application back to the list above.",
+    );
     expect(
-      table.closest(".pt-2").lastElementChild.contains(table),
-    ).toBeTruthy();
+      screen.getByTestId("RecruitmentApplicationsPage-hidden-empty"),
+    ).toHaveTextContent("No application is hidden.");
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-hidden-applications"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-hidden-among"),
+    ).toBeNull();
+  });
+
+  test("hidden applications are listed apart at the bottom, with the same columns and an Unhide button", async () => {
+    axiosMock
+      .onGet("/api/admin/applications/all", { params: { recruitmentId: "1" } })
+      .reply(200, [
+        applicationsFixtures.oneTaApplication,
+        applicationsFixtures.oneHiddenApplication,
+        applicationsFixtures.oneTestApplication,
+      ]);
+    renderPage(1);
+
+    const unhide = await screen.findByTestId(
+      "RecruitmentApplicationsPage-hidden-applications-cell-row-0-col-hiding-button",
+    );
+    expect(unhide).toHaveTextContent("Unhide");
+    expect(
+      screen.getByTestId(
+        "RecruitmentApplicationsPage-hidden-applications-cell-row-0-col-id-link",
+      ),
+    ).toHaveAttribute("href", "/admin/applications/6");
+    expect(
+      screen.queryByTestId(
+        "RecruitmentApplicationsPage-hidden-applications-cell-row-1-col-id-link",
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-hidden-empty"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-hidden-count"),
+    ).toHaveTextContent("1 Hidden Application");
+
+    // The main table has the other two, each with a Hide button, and not the hidden one.
+    expect(
+      screen.getByTestId(
+        "RecruitmentApplicationsPage-applications-cell-row-0-col-id-link",
+      ),
+    ).toHaveTextContent("1");
+    expect(
+      screen.getByTestId(
+        "RecruitmentApplicationsPage-applications-cell-row-1-col-id-link",
+      ),
+    ).toHaveTextContent("3");
+    expect(
+      screen.queryByTestId(
+        "RecruitmentApplicationsPage-applications-cell-row-2-col-id-link",
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByTestId(
+        "RecruitmentApplicationsPage-applications-cell-row-0-col-hiding-button",
+      ),
+    ).toHaveTextContent("Hide");
+
+    // The count is of every application on file, and says how many of them are hidden.
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-count"),
+    ).toHaveTextContent("2 Applications Received (plus 1 test application)");
+    const among = screen.getByTestId(
+      "RecruitmentApplicationsPage-hidden-among",
+    );
+    expect(among).toHaveClass("small", "text-muted");
+    expect(among).toHaveTextContent(
+      "1 of them is hidden; see the hidden applications at the bottom of this page.",
+    );
+    expect(among.querySelector("a")).toHaveAttribute(
+      "href",
+      "#hidden-applications",
+    );
+
+    // The hidden table follows the admin's column choices, but has no hide links of its own.
+    const hiddenHeaders = [
+      ...screen
+        .getByTestId("RecruitmentApplicationsPage-hidden-applications")
+        .querySelectorAll("th"),
+    ].map((th) => th.textContent);
+    expect(hiddenHeaders).toEqual([
+      "id",
+      "View",
+      "Edit",
+      "Unhide",
+      "Name",
+      "Submitted",
+      "Email",
+      "Major",
+      "Level",
+    ]);
+    expect(
+      screen.getByTestId(
+        "RecruitmentApplicationsPage-applications-header-major-hide",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(
+        "RecruitmentApplicationsPage-hidden-applications-header-major-hide",
+      ),
+    ).toBeNull();
+  });
+
+  test("a hidden ULA application is listed with the ULA columns", async () => {
+    axiosMock
+      .onGet("/api/admin/applications/all", { params: { recruitmentId: "2" } })
+      .reply(200, [
+        { ...applicationsFixtures.oneUlaApplication, hidden: true },
+      ]);
+    renderPage(2);
+
+    const table = await screen.findByTestId(
+      "RecruitmentApplicationsPage-hidden-applications",
+    );
+    await waitFor(() => expect(table).toHaveTextContent("Expected Graduation"));
+    expect(table).not.toHaveTextContent("Level");
+  });
+
+  test("Hide asks the backend to hide that application, says so, and re-reads the list", async () => {
+    axiosMock.onPut("/api/admin/applications/hidden").reply(200, {
+      ...applicationsFixtures.oneTestApplication,
+      hidden: true,
+    });
+    renderPage(1);
+    const hide = await screen.findByTestId(
+      "RecruitmentApplicationsPage-applications-cell-row-1-col-hiding-button",
+    );
+    await waitFor(() => expect(applicationGets()).toHaveLength(1));
+    expect(hiddenPuts()).toHaveLength(0);
+
+    await userEvent.click(hide);
+
+    await waitFor(() => expect(hiddenPuts()).toHaveLength(1));
+    expect(hiddenPuts()[0].params).toEqual({ id: 3, hidden: true });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Application 3 is now hidden."),
+    );
+    await waitFor(() => expect(applicationGets()).toHaveLength(2));
+  });
+
+  test("Unhide asks the backend to show that application again, and says so", async () => {
+    axiosMock
+      .onGet("/api/admin/applications/all", { params: { recruitmentId: "1" } })
+      .reply(200, [
+        applicationsFixtures.oneTaApplication,
+        applicationsFixtures.oneHiddenApplication,
+      ]);
+    axiosMock.onPut("/api/admin/applications/hidden").reply(200, {
+      ...applicationsFixtures.oneHiddenApplication,
+      hidden: false,
+    });
+    renderPage(1);
+
+    await userEvent.click(
+      await screen.findByTestId(
+        "RecruitmentApplicationsPage-hidden-applications-cell-row-0-col-hiding-button",
+      ),
+    );
+
+    await waitFor(() => expect(hiddenPuts()).toHaveLength(1));
+    expect(hiddenPuts()[0].params).toEqual({ id: 6, hidden: false });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Application 6 is no longer hidden.",
+      ),
+    );
   });
 
   test("the hide link over a column hides it like the menu, and the id and name columns have none (issue #314)", async () => {

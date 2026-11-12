@@ -41,7 +41,9 @@ public class DraftApplicationServiceTests {
   /**
    * What an application has that its draft does not: the review, the cancellation, the staff's
    * notes and plans, and the bookkeeping of the submitted row. The admin comments travel
-   * separately, to the draft's own comment row.
+   * separately, to the draft's own comment row. Whether an admin hid the application (issue #440)
+   * does not travel: a draft is on no list an application can be hidden from, and the application
+   * submitted from it is a new one.
    */
   private static final Set<String> APPLICATION_ONLY =
       Set.of(
@@ -53,6 +55,7 @@ public class DraftApplicationServiceTests {
           "submittedAt",
           "adminComments",
           "origin",
+          "hidden",
           "cancellationReason",
           "cancelledAt",
           "tentativeAssignmentId");

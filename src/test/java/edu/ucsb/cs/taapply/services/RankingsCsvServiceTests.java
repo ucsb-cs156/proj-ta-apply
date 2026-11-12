@@ -188,8 +188,13 @@ class RankingsCsvServiceTests {
     Application cancelledApplicant = applicant(6);
     cancelledApplicant.setStatus(ApplicationReviewStatus.CANCELLED);
     cancelledApplicant.setTentativeAssignmentId(10L);
+    // Issue #440: an application an admin hid is no row of the export and is not counted.
+    Application hidden = applicant(7);
+    hidden.setHidden(true);
+    hidden.setTentativeAssignmentId(40L);
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L))
-        .thenReturn(List.of(first, test, applicant(3), blank, noInterests, cancelledApplicant));
+        .thenReturn(
+            List.of(first, test, applicant(3), blank, noInterests, cancelledApplicant, hidden));
     when(candidateRankingRepository.findByRecruitmentCourseId(10L))
         .thenReturn(List.of(rank(10, 1, 2), rank(10, 3, 2), rank(10, 2, 1), rank(10, 999, 99)));
     when(candidateRankingRepository.findByRecruitmentCourseId(20L))

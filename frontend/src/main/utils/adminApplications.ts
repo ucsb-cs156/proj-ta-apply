@@ -26,6 +26,26 @@ export const receivedText = (applications: Application[]): string => {
   return extras.length === 0 ? base : `${base} (plus ${extras.join(" and ")})`;
 };
 
+/** "3 Hidden Applications" or "1 Hidden Application", over the hidden list (issue #440). */
+export const hiddenText = (count: number): string =>
+  `${count} Hidden ${count === 1 ? "Application" : "Applications"}`;
+
+/**
+ * Issue #440: the line under the page's count when some of the applications are hidden, which says
+ * that the count includes them: "1 of them is hidden" or "3 of them are hidden".
+ */
+export const hiddenAmongText = (count: number): string =>
+  `${count} of them ${count === 1 ? "is" : "are"} hidden`;
+
+/** Issue #440: the toast once an application has been hidden, or unhidden. */
+export const hiddenChangedText = (application: {
+  id: number;
+  hidden?: boolean;
+}): string =>
+  application.hidden
+    ? `Application ${application.id} is now hidden.`
+    : `Application ${application.id} is no longer hidden.`;
+
 /** The long name of where an application came from; blank for a real applicant's own. */
 export const originLabel = (origin: ApplicationOrigin): string => {
   switch (origin) {

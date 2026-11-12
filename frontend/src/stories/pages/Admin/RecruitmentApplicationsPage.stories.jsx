@@ -88,6 +88,37 @@ TaRound.parameters = {
   },
 };
 
+/**
+ * Issue #440: the TA round with one application hidden, which is listed apart at the bottom. Hide
+ * and Unhide answer as the backend would, though the list in this story does not change.
+ */
+export const WithAHiddenApplication = Template.bind({});
+WithAHiddenApplication.parameters = {
+  reactRouter: {
+    initialEntries: ["/admin/recruitments/1/applications"],
+  },
+  msw: {
+    handlers: [
+      ...common,
+      http.get("/api/admin/applications/all", () =>
+        HttpResponse.json([
+          applicationsFixtures.oneTaApplication,
+          applicationsFixtures.oneCancelledTaApplication,
+          applicationsFixtures.oneHiddenApplication,
+        ]),
+      ),
+      http.put("/api/admin/applications/hidden", ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          ...applicationsFixtures.oneTaApplication,
+          id: Number(params.get("id")),
+          hidden: params.get("hidden") === "true",
+        });
+      }),
+    ],
+  },
+};
+
 /** The ULA round with id 2: the Expected Graduation column. */
 export const UlaRound = Template.bind({});
 UlaRound.parameters = {

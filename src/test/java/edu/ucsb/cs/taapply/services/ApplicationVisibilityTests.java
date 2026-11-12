@@ -78,6 +78,55 @@ public class ApplicationVisibilityTests {
     assertEquals(List.of(), ids(ApplicationVisibility.cancelled(all, true)));
   }
 
+  /** Issue #440: a hidden application is neither ranked or assigned nor listed as cancelled. */
+  @Test
+  public void hidden_applications_are_neither_real_nor_cancelled() {
+    Application hidden = app(2, ApplicationOrigin.APPLICANT);
+    hidden.setHidden(true);
+    Application hiddenCancelled = app(3, ApplicationOrigin.APPLICANT);
+    hiddenCancelled.setStatus(ApplicationReviewStatus.CANCELLED);
+    hiddenCancelled.setHidden(true);
+    Application cancelled = app(4, ApplicationOrigin.APPLICANT);
+    cancelled.setStatus(ApplicationReviewStatus.CANCELLED);
+    List<Application> all =
+        List.of(app(1, ApplicationOrigin.APPLICANT), hidden, hiddenCancelled, cancelled);
+
+    assertEquals(List.of(1L), ids(ApplicationVisibility.real(all, false)));
+    assertEquals(List.of(4L), ids(ApplicationVisibility.cancelled(all, false)));
+  }
+
+  /**
+   * Hiding the application that replaced a cancelled one does not list the applicant as withdrawn.
+   */
+  @Test
+  public void hiding_a_replacement_does_not_list_the_application_cancelled_before_it() {
+    Application first = app(1, ApplicationOrigin.APPLICANT);
+    first.setStatus(ApplicationReviewStatus.CANCELLED);
+    Application second =
+        app(2, ApplicationOrigin.APPLICANT).toBuilder()
+            .email(first.getEmail())
+            .hidden(true)
+            .build();
+    List<Application> all = List.of(first, second);
+
+    assertEquals(List.of(), ids(ApplicationVisibility.real(all, false)));
+    assertEquals(List.of(), ids(ApplicationVisibility.cancelled(all, false)));
+  }
+
+  @Test
+  public void isShown_is_isReal_for_an_application_that_is_not_hidden() {
+    Application shown = app(1, ApplicationOrigin.APPLICANT);
+    Application hidden = app(2, ApplicationOrigin.APPLICANT);
+    hidden.setHidden(true);
+    Application test = app(3, ApplicationOrigin.ADMIN_TEST);
+
+    assertTrue(ApplicationVisibility.isShown(shown, false));
+    assertFalse(ApplicationVisibility.isShown(hidden, false));
+    assertFalse(ApplicationVisibility.isShown(hidden, true));
+    assertFalse(ApplicationVisibility.isShown(test, false));
+    assertTrue(ApplicationVisibility.isShown(test, true));
+  }
+
   private static List<Long> ids(List<Application> applications) {
     return applications.stream().map(Application::getId).toList();
   }

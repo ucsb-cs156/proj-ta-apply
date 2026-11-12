@@ -202,6 +202,82 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
     assertEquals(false, applicationRepository.existsById(cancelledId));
   }
 
+  /**
+   * Issue #440: Hide moves an application to the list at the bottom of the page and out of what is
+   * ranked and assigned; Unhide moves it back.
+   */
+  @Test
+  public void an_admin_can_hide_an_application_and_unhide_it() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    Long gsrId =
+        applicationRepository
+            .save(
+                Application.builder()
+                    .recruitmentId(recruitment.getId())
+                    .email("gsr@ucsb.edu")
+                    .firstName("Grace")
+                    .lastName("Hopper")
+                    .build())
+            .getId();
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email("grad@ucsb.edu")
+            .firstName("Ada")
+            .lastName("Lovelace")
+            .build());
+
+    setupAdminUser();
+    goTo("/");
+    page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
+
+    // Nothing is hidden yet: both applications are in the table, and the hidden list is empty.
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-name"))
+        .containsText("Grace Hopper");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-hidden-count"))
+        .hasText("0 Hidden Applications");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-hidden-empty")).isVisible();
+
+    page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-hiding-button")
+        .click();
+
+    // The row has moved to the hidden list, and the one left is the other applicant's.
+    assertThat(
+            page.getByTestId("RecruitmentApplicationsPage-hidden-applications-cell-row-0-col-name"))
+        .containsText("Grace Hopper");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-name"))
+        .containsText("Ada Lovelace");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-1-col-name"))
+        .hasCount(0);
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-hidden-count"))
+        .hasText("1 Hidden Application");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-count"))
+        .containsText("2 Applications Received");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-hidden-among"))
+        .containsText("1 of them is hidden");
+    assertEquals(true, applicationRepository.findById(gsrId).orElseThrow().isHidden());
+    // What faculty rank and admins assign no longer includes it.
+    assertEquals(
+        List.of("grad@ucsb.edu"),
+        edu.ucsb.cs.taapply.services.ApplicationVisibility.real(
+                applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()), false)
+            .stream()
+            .map(Application::getEmail)
+            .toList());
+
+    page.getByTestId("RecruitmentApplicationsPage-hidden-applications-cell-row-0-col-hiding-button")
+        .click();
+
+    // Back where it was.
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-hidden-empty")).isVisible();
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-name"))
+        .containsText("Grace Hopper");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-1-col-name"))
+        .containsText("Ada Lovelace");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-hidden-among")).hasCount(0);
+    assertEquals(false, applicationRepository.findById(gsrId).orElseThrow().isHidden());
+  }
+
   /** An admin reviews the applications to a recruitment and leaves comments on one (issue #49). */
   @Test
   public void an_admin_can_review_the_applications_and_comment_on_one() throws Exception {

@@ -92,6 +92,17 @@ public class Application {
   private String adminComments;
 
   /**
+   * Whether an admin has hidden the application (issue #440), for instance because the applicant is
+   * now known to be a GSR. A hidden application stays on file and is listed apart on the admin's
+   * Applications page, where it can be unhidden; it is left out of the faculty rankings and the
+   * course assignments (see {@code ApplicationVisibility}). Staff bookkeeping, like the admin
+   * comments: the applicant is never told.
+   */
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean hidden = false;
+
+  /**
    * Where the application came from (issue #219): a real applicant, an admin previewing the form (a
    * "test application"), or Developer Mode's fake data. Test and fake applications are stored
    * alongside real ones so the whole path is exercised, but anything that reviews or counts

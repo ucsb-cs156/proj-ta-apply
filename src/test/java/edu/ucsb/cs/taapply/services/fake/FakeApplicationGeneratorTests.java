@@ -551,7 +551,8 @@ public class FakeApplicationGeneratorTests {
     withSettings();
 
     assertEquals(
-        List.of(-1378083815, -106656864, 1703775240, 2142202316),
+        // Re-pinned for issue #440: the same applications, each now with hidden=false in its text.
+        List.of(-140874799, -1506589584, 1187073112, -1901760668),
         List.of(
             fingerprint(RecruitmentType.TA, FakeCoverage.ALL),
             fingerprint(RecruitmentType.TA, FakeCoverage.SPARSE),

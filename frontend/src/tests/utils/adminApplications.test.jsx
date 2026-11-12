@@ -4,6 +4,9 @@ import {
   draftEmailsCopiedText,
   draftEmailsTooltip,
   draftsText,
+  hiddenAmongText,
+  hiddenChangedText,
+  hiddenText,
   adminApplicationPath,
   applicationsListPath,
   receivedText,
@@ -95,6 +98,30 @@ describe("adminApplications utils", () => {
       all: "/api/admin/draftApplications/all",
       comments: "/api/admin/draftApplications/adminComments",
     });
+  });
+
+  // Issue #440: the hidden list's heading, the line under the count and the toast.
+  test("hiddenText counts, with the singular for one", () => {
+    expect(hiddenText(0)).toBe("0 Hidden Applications");
+    expect(hiddenText(1)).toBe("1 Hidden Application");
+    expect(hiddenText(2)).toBe("2 Hidden Applications");
+  });
+
+  test("hiddenAmongText counts, with the singular for one", () => {
+    expect(hiddenAmongText(1)).toBe("1 of them is hidden");
+    expect(hiddenAmongText(2)).toBe("2 of them are hidden");
+  });
+
+  test("hiddenChangedText says which way the application went", () => {
+    expect(hiddenChangedText({ id: 6, hidden: true })).toBe(
+      "Application 6 is now hidden.",
+    );
+    expect(hiddenChangedText({ id: 6, hidden: false })).toBe(
+      "Application 6 is no longer hidden.",
+    );
+    expect(hiddenChangedText({ id: 7 })).toBe(
+      "Application 7 is no longer hidden.",
+    );
   });
 
   test("draftsText counts, with the singular for one", () => {

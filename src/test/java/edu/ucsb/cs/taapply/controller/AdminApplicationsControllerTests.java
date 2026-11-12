@@ -108,6 +108,9 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
         .andExpect(status().is(403));
     mockMvc
+        .perform(put("/api/admin/applications/hidden?id=1&hidden=true").with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc
         .perform(
             put("/api/admin/applications?id=1&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -127,6 +130,9 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/admin/applications/csv?recruitmentId=1")).andExpect(status().is(403));
     mockMvc
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc
+        .perform(put("/api/admin/applications/hidden?id=1&hidden=true").with(csrf()))
         .andExpect(status().is(403));
     mockMvc
         .perform(
@@ -604,6 +610,119 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals("Recruitment with id 7 not found", responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- hiding and unhiding (issue #440) ----
+
+  /** Hiding saves the application as hidden and records who did it; nothing else changes. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_can_hide_an_application() throws Exception {
+    when(applicationRepository.findById(5L))
+        .thenReturn(Optional.of(application(5L, 7L, "someone@ucsb.edu", false)));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.TA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/admin/applications/hidden?id=5&hidden=true").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+    verify(applicationRepository, times(1)).save(captor.capture());
+    Application expected = application(5L, 7L, "someone@ucsb.edu", false);
+    expected.setHidden(true);
+    assertEquals(expected, captor.getValue());
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+    assertEquals(true, responseToJson(response).get("hidden"));
+    assertEquals(List.of(change(5L, null, "hidden", "false", "true")), audited());
+  }
+
+  /** Unhiding puts it back, recorded against the ULA application it is. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_can_unhide_an_application() throws Exception {
+    Application existing = application(5L, 7L, "someone@ucsb.edu", false);
+    existing.setHidden(true);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.ULA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/admin/applications/hidden?id=5&hidden=false").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+    verify(applicationRepository, times(1)).save(captor.capture());
+    Application expected = application(5L, 7L, "someone@ucsb.edu", false);
+    assertEquals(expected, captor.getValue());
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+    assertEquals(List.of(change(null, 5L, "hidden", "true", "false")), audited());
+  }
+
+  /** Asking for the state it is already in saves and records nothing, either way round. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void hiding_a_hidden_application_or_unhiding_a_shown_one_changes_nothing()
+      throws Exception {
+    Application hidden = application(5L, 7L, "someone@ucsb.edu", false);
+    hidden.setHidden(true);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(hidden));
+    when(applicationRepository.findById(6L))
+        .thenReturn(Optional.of(application(6L, 7L, "other@ucsb.edu", false)));
+
+    MvcResult stillHidden =
+        mockMvc
+            .perform(put("/api/admin/applications/hidden?id=5&hidden=true").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    MvcResult stillShown =
+        mockMvc
+            .perform(put("/api/admin/applications/hidden?id=6&hidden=false").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(true, responseToJson(stillHidden).get("hidden"));
+    assertEquals(false, responseToJson(stillShown).get("hidden"));
+    verify(applicationRepository, never()).save(any());
+    verify(auditTrailRepository, never()).saveAll(any());
+    verify(recruitmentRepository, never()).findById(any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void hiding_a_missing_application_is_a_404() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/admin/applications/hidden?id=5&hidden=true").with(csrf()))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("Application with id 5 not found", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void hiding_an_application_whose_recruitment_is_gone_is_a_404() throws Exception {
+    when(applicationRepository.findById(5L))
+        .thenReturn(Optional.of(application(5L, 7L, "someone@ucsb.edu", false)));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/admin/applications/hidden?id=5&hidden=true").with(csrf()))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("Recruitment with id 7 not found", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+    verify(auditTrailRepository, never()).saveAll(any());
   }
 
   // ---- admin comments ----
