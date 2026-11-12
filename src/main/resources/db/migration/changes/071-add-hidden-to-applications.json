@@ -1,0 +1,47 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "071-add-hidden-to-applications",
+        "author": "pc",
+        "comment": "An admin may hide an application (issue #440), for instance one from an applicant now known to be a GSR: hidden is whether the application is set aside, in which case it is listed apart at the bottom of the admin's Applications page and left out of the faculty rankings and the course assignments. Defaults to FALSE, so every existing application stays where it was. Roll back with liquibase rollback-count 1: the column is dropped, and every hidden application is shown again.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "applications",
+                "columnName": "hidden"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "hidden",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "rollback": [
+          {
+            "dropColumn": {
+              "tableName": "applications",
+              "columnName": "hidden"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -104,6 +104,7 @@ public class ApplicationCsvService {
           new Column("comments", Application::getComments),
           new Column("postApplicationComments", Application::getPostApplicationComments),
           new Column("adminComments", Application::getAdminComments),
+          new Column("hidden", Application::isHidden),
           new Column("noticeVersionId", Application::getNoticeVersionId),
           new Column("cancellationReason", Application::getCancellationReason),
           new Column("cancelledAt", Application::getCancelledAt));

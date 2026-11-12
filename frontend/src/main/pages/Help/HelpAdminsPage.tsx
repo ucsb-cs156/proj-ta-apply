@@ -911,6 +911,23 @@ export default function HelpAdminsPage(): React.JSX.Element {
           </li>
         </ul>
 
+        <p id="hidden-applications" data-testid="HelpAdminsPage-hidden">
+          <strong>Hiding an application.</strong> When an applicant should no
+          longer be considered, for instance one who is now known to be a GSR,
+          use the <strong>Hide</strong> button on their row of the Applications
+          page. The application moves to the{" "}
+          <strong>Hidden Applications</strong> list at the bottom of that page,
+          where <strong>Unhide</strong> moves it back. A hidden application
+          stays on file, and still counts in the number on the
+          recruitment&apos;s card and at the top of the Applications page, but
+          faculty no longer see it among the candidates they rank, and it is
+          left out of the Assignments page, the published assignments and the
+          rankings CSV. Its rankings and any tentative assignment are kept, so
+          they return if it is unhidden. Hiding and unhiding are recorded in the
+          Audit Trail (field <em>hidden</em>), and the applications CSV has a{" "}
+          <em>hidden</em> column. The applicant is not told.
+        </p>
+
         <p
           id="cancelled-and-new"
           data-testid="HelpAdminsPage-cancelled-and-new"

@@ -68,6 +68,7 @@ public class ApplicationCsvServiceTests {
           "comments",
           "postApplicationComments",
           "adminComments",
+          "hidden",
           "noticeVersionId",
           "cancellationReason",
           "cancelledAt");
@@ -223,6 +224,8 @@ public class ApplicationCsvServiceTests {
             "Happy to help, \"either\" one",
             "Still keen",
             "Interview Tuesday",
+            // Not hidden by an admin (issue #440).
+            "false",
             "40",
             // Not cancelled: both cancellation columns blank (issue #107).
             "",
@@ -302,9 +305,11 @@ public class ApplicationCsvServiceTests {
     assertEquals("x@ucsb.edu", row[2]);
     assertEquals("PENDING", row[3]); // the builder default
     assertEquals("APPLICANT", row[4]); // the builder default origin
-    // The four availability answers are primitive booleans, so they read false rather than blank.
+    // The availability answers, the first-quarter box and the admin's hidden flag (issue #440) are
+    // primitive booleans, so they read false rather than blank.
     List<String> primitiveBooleans =
         List.of(
+            "hidden",
             "firstQuarter",
             "availableForLecturesFirstChoice",
             "availableForDiscussionFirstChoice",

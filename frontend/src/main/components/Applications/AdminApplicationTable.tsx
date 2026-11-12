@@ -30,7 +30,18 @@ type AdminApplicationTableProps = {
   hiddenColumns?: string[];
   /** The "hide" links over the hideable columns' headings (issue #314). */
   hideLinks?: HideLinks;
+  /**
+   * A button on every row that hides the application, or, in the list of hidden ones, unhides it
+   * (issue #440). The table has no such column without it.
+   */
+  hiding?: ApplicationHiding;
   testIdPrefix?: string;
+};
+
+/** What the Hide (or Unhide) button of each row says and does (issue #440). */
+export type ApplicationHiding = {
+  label: "Hide" | "Unhide";
+  onClick: (application: ApplicationRow) => void;
 };
 
 /**
@@ -63,7 +74,9 @@ const toLegacyColumn = (column: ApplicationColumn): LegacyColumn => ({
  * buttons and the name first, then the submission time and every answer on the form, each a
  * column the admin can hide or show. The table takes its natural width. Test applications an
  * admin entered are listed too, marked as such, so the admin can tell them from the real ones; an
- * application the applicant cancelled is marked beside its id too (issue #322).
+ * application the applicant cancelled is marked beside its id too (issue #322). The Applications
+ * page uses it twice, for the applications and for the ones an admin has hidden (issue #440), each
+ * with a button that moves a row to the other.
  */
 export default function AdminApplicationTable({
   applications,
@@ -72,8 +85,30 @@ export default function AdminApplicationTable({
   // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
   hiddenColumns = [],
   hideLinks,
+  hiding,
   testIdPrefix = "AdminApplicationTable",
 }: AdminApplicationTableProps): React.JSX.Element {
+  // Issue #440. No accessor, so it never sorts; a real button, since it changes something.
+  const hidingColumns: LegacyColumn[] = hiding
+    ? [
+        {
+          header: hiding.label,
+          id: "hiding",
+          meta: shrinkToContent,
+          cell: ({ cell }: { cell: Cell<ApplicationRow, unknown> }) => (
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              aria-label={`${hiding.label} application ${cell.row.original.id}`}
+              onClick={() => hiding.onClick(cell.row.original)}
+              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-hiding-button`}
+            >
+              {hiding.label}
+            </button>
+          ),
+        },
+      ]
+    : [];
   const editColumn: LegacyColumn = {
     header: "Edit",
     id: "edit",
@@ -141,6 +176,7 @@ export default function AdminApplicationTable({
     },
     // An admin comments on a draft but never edits it (issue #296).
     ...(draft ? [] : [editColumn]),
+    ...hidingColumns,
     {
       header: "Name",
       id: "name",

@@ -95,6 +95,8 @@ public class ApplicationAuditService {
     FIELDS.put("trainingCommitmentExplanation", Application::getTrainingCommitmentExplanation);
     FIELDS.put("changingMajor", Application::getChangingMajor);
     FIELDS.put("noticeVersionId", Application::getNoticeVersionId);
+    // Not on the form: changed by the Hide and Unhide buttons of the Applications page (#440).
+    FIELDS.put("hidden", Application::isHidden);
   }
 
   /** Asked on the ULA form only (issue #76), so a TA application's audit trail leaves them out. */

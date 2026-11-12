@@ -81,7 +81,8 @@ public class RankingsCsvService {
     writer.writeNext(assignedRow);
     writer.writeNext(leftRow);
     for (Application application : applications) {
-      if (ApplicationVisibility.isReal(application, developerModeOn)) {
+      // Hidden applications are left out, as on the Assignments page (issue #440).
+      if (ApplicationVisibility.isShown(application, developerModeOn)) {
         writer.writeNext(
             columns.stream()
                 .map(c -> ApplicationCsvService.text(c.value().apply(application)))

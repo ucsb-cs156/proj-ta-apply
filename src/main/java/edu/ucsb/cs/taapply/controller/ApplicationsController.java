@@ -158,11 +158,12 @@ public class ApplicationsController extends ApiController {
 
   /**
    * An application as its applicant may see it: without the admin comments, which are the staff's
-   * notes about them. A copy, so the stored row is untouched; every applicant-facing response goes
-   * through here (issue #75).
+   * notes about them, and never marked hidden (issue #440), which is the staff's bookkeeping too. A
+   * copy, so the stored row is untouched; every applicant-facing response goes through here (issue
+   * #75).
    */
   static Application forApplicant(Application application) {
-    return application.toBuilder().adminComments(null).build();
+    return application.toBuilder().adminComments(null).hidden(false).build();
   }
 
   /** Loads an application, refusing anyone else's rather than merely not finding it. */

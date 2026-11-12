@@ -2298,6 +2298,15 @@ describe("Help pages (issue #140)", () => {
     },
   );
 
+  test("the admins page explains hiding an application (issue #440)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const hidden = await screen.findByTestId("HelpAdminsPage-hidden");
+    expect(hidden).toHaveAttribute("id", "hidden-applications");
+    expect(hidden).toHaveTextContent(
+      /Hiding an application\..*now known to be a GSR.*use the Hide button on their row of the Applications page.*Hidden Applications list at the bottom of that page, where Unhide moves it back.*stays on file.*faculty no longer see it among the candidates they rank.*left out of the Assignments page, the published assignments and the rankings CSV.*rankings and any tentative assignment are kept.*recorded in the Audit Trail \(field hidden\).*applications CSV has a hidden column.*The applicant is not told\./,
+    );
+  });
+
   test("the admins page explains an applicant who cancelled and applied again (issues #318, #420)", async () => {
     renderPage(<HelpAdminsPage />);
     expect(

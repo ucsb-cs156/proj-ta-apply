@@ -379,6 +379,79 @@ describe("AdminApplicationTable tests", () => {
     expect(button).toHaveAttribute("href", `/admin/applications/${ta.id}/edit`);
   });
 
+  // ---- issue #440: the Hide (or Unhide) button ----
+
+  test("without hiding, the table has no Hide column", () => {
+    renderTable();
+
+    expect(
+      screen.queryByTestId("AdminApplicationTable-header-hiding"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId(
+        "AdminApplicationTable-cell-row-0-col-hiding-button",
+      ),
+    ).toBeNull();
+  });
+
+  test("with hiding, each row has a Hide button after Edit that hands over its application", async () => {
+    const onClick = vi.fn();
+    renderTable({
+      applications: [ta, cancelledTa],
+      hiddenColumns: defaultHiddenColumns("TA"),
+      hiding: { label: "Hide", onClick },
+    });
+
+    expect(
+      [...screen.getAllByRole("columnheader")]
+        .map((th) => th.textContent)
+        .slice(0, 5),
+    ).toEqual(["id", "View", "Edit", "Hide", "Name"]);
+    // Like View and Edit, it shrinks to its content and does not sort.
+    const heading = screen.getByTestId("AdminApplicationTable-header-hiding");
+    expect(heading.style.width).toBe("1%");
+    expect(heading.style.whiteSpace).toBe("nowrap");
+    expect(
+      screen.getByTestId("AdminApplicationTable-header-hiding-sort-header")
+        .style.cursor,
+    ).toBe("");
+
+    const button = screen.getByTestId(
+      "AdminApplicationTable-cell-row-1-col-hiding-button",
+    );
+    expect(button).toHaveTextContent("Hide");
+    expect(button).toHaveAttribute("type", "button");
+    expect(button).toHaveClass("btn", "btn-outline-secondary", "btn-sm");
+    expect(button).toHaveAccessibleName(`Hide application ${cancelledTa.id}`);
+    expect(onClick).not.toHaveBeenCalled();
+
+    await userEvent.click(button);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledWith(cancelledTa);
+  });
+
+  test("the button says Unhide in a table of hidden applications", async () => {
+    const hidden = applicationsFixtures.oneHiddenApplication;
+    const onClick = vi.fn();
+    renderTable({
+      applications: [hidden],
+      hiding: { label: "Unhide", onClick },
+      testIdPrefix: "Hidden",
+    });
+
+    expect(screen.getByTestId("Hidden-header-hiding")).toHaveTextContent(
+      "Unhide",
+    );
+    const button = screen.getByTestId("Hidden-cell-row-0-col-hiding-button");
+    expect(button).toHaveTextContent("Unhide");
+    expect(button).toHaveAccessibleName(`Unhide application ${hidden.id}`);
+
+    await userEvent.click(button);
+
+    expect(onClick).toHaveBeenCalledWith(hidden);
+  });
+
   test("a ULA table with the default columns hidden swaps Level for Expected Graduation", () => {
     renderTable({
       applications: [ula],

@@ -3528,6 +3528,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   public void forApplicant_blanks_only_the_admin_comments_on_a_copy() {
     Application stored = withAdminComments(application(5L, 1L, GRAD_EMAIL));
     stored.setComments("Happy to help");
+    // Issue #440: nor is the applicant told that an admin hid the application.
+    stored.setHidden(true);
 
     Application shown = ApplicationsController.forApplicant(stored);
 
@@ -3536,7 +3538,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(5L, shown.getId());
     assertEquals(GRAD_EMAIL, shown.getEmail());
     assertEquals("Happy to help", shown.getComments());
-    assertEquals(stored.toBuilder().adminComments(null).build(), shown);
+    assertFalse(shown.isHidden());
+    assertTrue(stored.isHidden());
+    assertEquals(stored.toBuilder().adminComments(null).hidden(false).build(), shown);
   }
 
   @WithMockUser(
