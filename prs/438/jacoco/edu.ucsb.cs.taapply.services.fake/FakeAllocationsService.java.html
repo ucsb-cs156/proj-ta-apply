@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FakeAllocationsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services.fake</a> &gt; <span class="el_source">FakeAllocationsService.java</span></div><h1>FakeAllocationsService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services.fake;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.AllocationVisibilityService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Developer Mode's &quot;fake hiring targets and allocations&quot; (issue #225). No new generator: the real
+ * planning features already turn a hiring target and enrollment estimates into a plausible
+ * allocation, so this runs them in order for a test instance: set the target, fill the enrollment
+ * estimates, auto-allocate, and optionally let each faculty member see their own courses'
+ * allocations (the audited change an admin would make by hand).
+ */
+@Service
+<span class="fc" id="L25">public class FakeAllocationsService {</span>
+
+  /** Where the enrollment estimates come from; KEEP leaves the ones already entered. */
+<span class="fc" id="L28">  public enum Estimates {</span>
+<span class="fc" id="L29">    MAX,</span>
+<span class="fc" id="L30">    ACTUAL,</span>
+<span class="fc" id="L31">    KEEP</span>
+  }
+
+  /** The largest hiring target offered, as a multiple of the recruitment's courses. */
+  public static final int MAX_TARGET_PER_COURSE = 3;
+
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired AllocationService allocationService;
+  @Autowired AllocationVisibilityService allocationVisibilityService;
+  @Autowired BudgetCourseService budgetCourseService;
+
+  /**
+   * Fakes the recruitment's hiring target and allocations.
+   *
+   * @param hiringTarget from 1 to {@link #MAX_TARGET_PER_COURSE} times the non-removed courses
+   * @param estimates where the enrollment estimates come from
+   * @param setVisibility whether faculty then see the allocations of their own courses
+   * @return the non-removed courses in page order, with their new allocations
+   * @throws EntityNotFoundException for an unknown recruitment
+   * @throws IllegalArgumentException for a target out of range, or a recruitment with no courses
+   */
+  public List&lt;RecruitmentCourse&gt; fake(
+      Long recruitmentId, int hiringTarget, Estimates estimates, boolean setVisibility) {
+<span class="fc" id="L55">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L57">            .findById(recruitmentId)</span>
+<span class="fc" id="L58">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L59">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L60">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            .filter(course -&gt; !course.isRemoved())</span>
+<span class="fc" id="L62">            .toList();</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">    if (courses.isEmpty()) {</span>
+<span class="fc" id="L64">      throw new IllegalArgumentException(&quot;This recruitment has no courses to allocate to&quot;);</span>
+    }
+<span class="fc" id="L66">    int max = MAX_TARGET_PER_COURSE * courses.size();</span>
+<span class="fc bfc" id="L67" title="All 4 branches covered.">    if (hiringTarget &lt; 1 || hiringTarget &gt; max) {</span>
+<span class="fc" id="L68">      throw new IllegalArgumentException(&quot;hiringTarget must be between 1 and &quot; + max);</span>
+    }
+
+<span class="fc" id="L71">    recruitment.setTotalHiringTarget(hiringTarget);</span>
+    // Every allocation is about to be overwritten, as by Auto Allocate (issue #278).
+<span class="fc" id="L73">    recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);</span>
+<span class="fc" id="L74">    recruitmentRepository.save(recruitment);</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">    if (estimates != Estimates.KEEP) {</span>
+      // The estimates are the quarter's (issue #363): a section with no figure keeps its estimate,
+      // and the other recruitment's shares move too.
+<span class="fc" id="L78">      budgetCourseService.fillEstimates(</span>
+<span class="fc" id="L79">          recruitment.getQuarter(),</span>
+          courses,
+<span class="fc bfc" id="L81" title="All 2 branches covered.">          estimates == Estimates.MAX</span>
+<span class="fc" id="L82">              ? EnrollmentEstimateSource.MAX</span>
+<span class="fc" id="L83">              : EnrollmentEstimateSource.ACTUAL);</span>
+<span class="fc" id="L84">      allocationService.recomputeQuarter(recruitment.getQuarter());</span>
+    }
+<span class="fc" id="L86">    List&lt;RecruitmentCourse&gt; allocated = allocationService.autoAllocate(recruitment);</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">    if (setVisibility) {</span>
+<span class="fc" id="L88">      allocationVisibilityService.change(recruitment, AllocationVisibility.OWN_COURSES);</span>
+    }
+<span class="fc" id="L90">    return allocated;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
