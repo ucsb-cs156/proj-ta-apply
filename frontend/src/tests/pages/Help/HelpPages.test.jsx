@@ -505,6 +505,23 @@ describe("Help pages (issue #140)", () => {
     ).toBeTruthy();
   });
 
+  test("the help pages say that an admin can enter or change a course's rankings (issue #439)", async () => {
+    const { unmount } = renderPage(<HelpAdminsPage />);
+    expect(
+      await screen.findByTestId("HelpAdminsPage-faculty-rankings"),
+    ).toHaveTextContent(
+      /The number links to the ranking page; sections with no entered rankings link with a zero\. As an admin you can enter or change the rankings there yourself, for instance for a course whose instructor is still TBD, or to adjust a ranking after faculty reviews have closed: what you save is the course's faculty ranking, the one its instructor sees, and a note on the page says when you are editing as an admin\. Only the rankings of a course that has been removed, or is stale or cancelled, stay read-only\./,
+    );
+    unmount();
+
+    renderPage(<HelpInstructorsPage />);
+    expect(
+      await screen.findByTestId("HelpInstructorsPage-who-ranks"),
+    ).toHaveTextContent(
+      /Only instructors assigned to a section may edit its rankings while reviews are Open.*Once reviews are closed the rankings are read-only for instructors\. An admin can also enter or change a course's rankings, whether or not reviews are open, for instance when a course has no instructor yet\./,
+    );
+  });
+
   test("the admins page explains the prerequisites of releasing hiring decisions and the Tentative note (issue #237)", async () => {
     renderPage(<HelpAdminsPage />);
     await screen.findByRole("heading", { level: 1, name: "For Admins" });
@@ -2298,23 +2315,6 @@ describe("Help pages (issue #140)", () => {
       );
     },
   );
-
-  test("the help pages say that an admin can enter or change a course's rankings (issue #439)", async () => {
-    const { unmount } = renderPage(<HelpAdminsPage />);
-    expect(
-      await screen.findByTestId("HelpAdminsPage-faculty-rankings"),
-    ).toHaveTextContent(
-      /The number links to the ranking page; sections with no entered rankings link with a zero\. As an admin you can enter or change the rankings there yourself, for instance for a course whose instructor is still TBD, or to adjust a ranking after faculty reviews have closed: what you save is the course's faculty ranking, the one its instructor sees, and a note on the page says when you are editing as an admin\. Only the rankings of a course that has been removed, or is stale or cancelled, stay read-only\./,
-    );
-    unmount();
-
-    renderPage(<HelpInstructorsPage />);
-    expect(
-      await screen.findByTestId("HelpInstructorsPage-who-ranks"),
-    ).toHaveTextContent(
-      /Only instructors assigned to a section may edit its rankings while reviews are Open.*Once reviews are closed the rankings are read-only for instructors\. An admin can also enter or change a course's rankings, whether or not reviews are open, for instance when a course has no instructor yet\./,
-    );
-  });
 
   test("the admins page explains an applicant who cancelled and applied again (issues #318, #420)", async () => {
     renderPage(<HelpAdminsPage />);
