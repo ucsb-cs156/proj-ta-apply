@@ -256,6 +256,39 @@ import org.springframework.web.multipart.MultipartFile;
   }
 
   @Operation(
+      summary = &quot;Hide an application, or show it again (issue #440)&quot;,
+      description =
+          &quot;A hidden application, for instance one from an applicant now known to be a GSR, stays on&quot;
+              + &quot; file but is listed apart on the Applications page and left out of the faculty&quot;
+              + &quot; rankings and the course assignments; hidden=false puts it back. The change is&quot;
+              + &quot; recorded in the audit trail with the admin who made it; asking for the state the&quot;
+              + &quot; application is already in changes and records nothing. 404 for an application&quot;
+              + &quot; that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/hidden&quot;)
+  public Application setHidden(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;hidden&quot;) @RequestParam boolean hidden) {
+<span class="fc" id="L272">    Application application =</span>
+        applicationRepository
+<span class="fc" id="L274">            .findById(id)</span>
+<span class="fc" id="L275">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc bfc" id="L276" title="All 2 branches covered.">    if (application.isHidden() == hidden) {</span>
+<span class="fc" id="L277">      return application;</span>
+    }
+<span class="fc" id="L279">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L281">            .findById(application.getRecruitmentId())</span>
+<span class="fc" id="L282">            .orElseThrow(</span>
+                () -&gt;
+<span class="fc" id="L284">                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
+<span class="fc" id="L285">    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);</span>
+<span class="fc" id="L286">    application.setHidden(hidden);</span>
+    // The save and its audit row are one transaction (issue #377).
+<span class="fc" id="L288">    return applicationAuditService.saveAndRecord(before, application, recruitment.getType());</span>
+  }
+
+  @Operation(
       summary = &quot;Save the admin's comments on an application&quot;,
       description =
           &quot;Free text, kept apart from the applicant's own answers; replaces the earlier text.&quot;)
@@ -264,13 +297,13 @@ import org.springframework.web.multipart.MultipartFile;
   public Application updateAdminComments(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;adminComments&quot;) @RequestParam String adminComments) {
-<span class="fc" id="L267">    Application application =</span>
+<span class="fc" id="L300">    Application application =</span>
         applicationRepository
-<span class="fc" id="L269">            .findById(id)</span>
-<span class="fc" id="L270">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
-<span class="fc" id="L271">    application.setAdminComments(adminComments);</span>
-<span class="fc" id="L272">    applicationRepository.save(application);</span>
-<span class="fc" id="L273">    return application;</span>
+<span class="fc" id="L302">            .findById(id)</span>
+<span class="fc" id="L303">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L304">    application.setAdminComments(adminComments);</span>
+<span class="fc" id="L305">    applicationRepository.save(application);</span>
+<span class="fc" id="L306">    return application;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

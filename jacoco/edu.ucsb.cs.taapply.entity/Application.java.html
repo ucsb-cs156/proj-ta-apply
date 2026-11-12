@@ -92,6 +92,17 @@ public class Application {
   private String adminComments;
 
   /**
+   * Whether an admin has hidden the application (issue #440), for instance because the applicant is
+   * now known to be a GSR. A hidden application stays on file and is listed apart on the admin's
+   * Applications page, where it can be unhidden; it is left out of the faculty rankings and the
+   * course assignments (see {@code ApplicationVisibility}). Staff bookkeeping, like the admin
+   * comments: the applicant is never told.
+   */
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean hidden = false;
+
+  /**
    * Where the application came from (issue #219): a real applicant, an admin previewing the form (a
    * &quot;test application&quot;), or Developer Mode's fake data. Test and fake applications are stored
    * alongside real ones so the whole path is exercised, but anything that reviews or counts
@@ -300,7 +311,7 @@ public class Application {
   /** Stamps the Pacific time at which the row is first saved (issue #293). */
   @PrePersist
   void stampSubmitted() {
-<span class="fc" id="L303">    submittedAt = AppTime.now();</span>
-<span class="fc" id="L304">  }</span>
+<span class="fc" id="L314">    submittedAt = AppTime.now();</span>
+<span class="fc" id="L315">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
