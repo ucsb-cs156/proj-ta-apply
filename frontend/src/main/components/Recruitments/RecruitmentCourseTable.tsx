@@ -211,6 +211,84 @@ export function StatusCell({
   );
 }
 
+/** A row of the table: the course, with its ranking count and instructor email from the review. */
+type Row = RecruitmentCourse & {
+  rankingCount: number | null;
+  instructorEmail: string | null;
+};
+
+/** What the cells with a link or a button need, handed to them through the column's meta. */
+type ControlMeta = {
+  testIdPrefix: string;
+  onCopyEmail: (email: string) => void;
+  onToggleRemoved: (course: RecruitmentCourse) => void;
+};
+
+const controlMeta = (cell: Cell<Row, unknown>) =>
+  cell.column.columnDef.meta as ControlMeta;
+
+/*
+ * The cells with something to focus (a link or a button) are module-level components (issue
+ * #437). A cell function written inside the table is a new component on every render, so React
+ * made the link or button anew each time the page re-read the courses in the background, and a
+ * keyboard user lost the focus. What changes from render to render comes through the meta.
+ */
+
+/** The Faculty Rankings column's cell: the count, linking to the course's ranking page. */
+function RankingsColumnCell({
+  cell,
+}: {
+  cell: Cell<Row, unknown>;
+}): React.JSX.Element {
+  return (
+    <RankingCountCell
+      course={cell.row.original}
+      rankingCount={cell.row.original.rankingCount}
+      index={cell.row.index}
+      testIdPrefix={controlMeta(cell).testIdPrefix}
+    />
+  );
+}
+
+/** The Email column's cell: the email and its copy control, or the link to map one. */
+function EmailColumnCell({
+  cell,
+}: {
+  cell: Cell<Row, unknown>;
+}): React.JSX.Element {
+  const meta = controlMeta(cell);
+  return (
+    <InstructorEmailCell
+      email={cell.row.original.instructorEmail}
+      index={cell.row.index}
+      testIdPrefix={meta.testIdPrefix}
+      onCopyEmail={meta.onCopyEmail}
+    />
+  );
+}
+
+/**
+ * The Remove / Unremove button. Its own label and colour say whether the row is removed, so no
+ * separate status column is needed; removed rows only appear when "show removed" is on.
+ */
+function RemoveColumnCell({
+  cell,
+}: {
+  cell: Cell<Row, unknown>;
+}): React.JSX.Element {
+  const meta = controlMeta(cell);
+  const course = cell.row.original;
+  return (
+    <Button
+      variant={course.removed ? "success" : "danger"}
+      onClick={() => meta.onToggleRemoved(course)}
+      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-col-removed-button`}
+    >
+      {course.removed ? "Unremove" : "Remove"}
+    </Button>
+  );
+}
+
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
   /** The recruitment's type, for the headings and tooltips that name it (issue #176). */
@@ -285,12 +363,18 @@ export default function RecruitmentCourseTable({
     pick: (course: RecruitmentCourse) => number | null | undefined,
   ) => counted.reduce((sum, course) => sum + (pick(course) ?? 0), 0);
 
-  const rows = list.map((course) => ({
+  const rows: Row[] = list.map((course) => ({
     ...course,
     rankingCount: rankingSummaryByCourse.get(course.id)?.rankingCount ?? null,
     instructorEmail:
       rankingSummaryByCourse.get(course.id)?.instructorEmail ?? null,
   }));
+
+  const controls: ControlMeta = {
+    testIdPrefix,
+    onCopyEmail,
+    onToggleRemoved: (course) => mutation.mutate(course),
+  };
 
   const columns = [
     ...(showRankings
@@ -300,25 +384,8 @@ export default function RecruitmentCourseTable({
             // its counts.
             header: stacked("Faculty", "Rankings"),
             accessorKey: "rankingCount",
-            meta: numeric,
-            cell: ({
-              cell,
-            }: {
-              cell: Cell<
-                RecruitmentCourse & {
-                  rankingCount: number | null;
-                  instructorEmail: string | null;
-                },
-                unknown
-              >;
-            }) => (
-              <RankingCountCell
-                course={cell.row.original}
-                rankingCount={cell.row.original.rankingCount}
-                index={cell.row.index}
-                testIdPrefix={testIdPrefix}
-              />
-            ),
+            meta: { ...numeric, ...controls },
+            cell: RankingsColumnCell,
           },
         ]
       : []),
@@ -371,27 +438,8 @@ export default function RecruitmentCourseTable({
     {
       header: "Email",
       accessorKey: "instructorEmail",
-      meta: shrinkToContent,
-      cell: ({
-        cell,
-      }: {
-        cell: Cell<
-          RecruitmentCourse & {
-            rankingCount: number | null;
-            instructorEmail: string | null;
-          },
-          unknown
-        >;
-      }) => {
-        return (
-          <InstructorEmailCell
-            email={cell.row.original.instructorEmail}
-            index={cell.row.index}
-            testIdPrefix={testIdPrefix}
-            onCopyEmail={onCopyEmail}
-          />
-        );
-      },
+      meta: { ...shrinkToContent, ...controls },
+      cell: EmailColumnCell,
     },
     { header: "Days", accessorKey: "days", meta: shrinkToContent },
     { header: "Time", accessorKey: "time", meta: shrinkToContent },
@@ -521,21 +569,8 @@ export default function RecruitmentCourseTable({
             // so the column needs no accessor.
             header: "",
             id: "removed",
-            meta: shrinkToContent,
-            // The button's own label and colour say whether the row is removed, so no separate
-            // status column is needed. Removed rows only appear when "show removed" is on.
-            cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => {
-              const course = cell.row.original;
-              return (
-                <Button
-                  variant={course.removed ? "success" : "danger"}
-                  onClick={() => mutation.mutate(course)}
-                  data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-removed-button`}
-                >
-                  {course.removed ? "Unremove" : "Remove"}
-                </Button>
-              );
-            },
+            meta: { ...shrinkToContent, ...controls },
+            cell: RemoveColumnCell,
           },
         ]),
   ];
@@ -551,6 +586,10 @@ export default function RecruitmentCourseTable({
         [...hiddenColumns, ...omitColumns].map((id) => [id, false]),
       )}
       hideLinks={hideLinks}
+      // A row is its course (issues #435, #437): now that the links and buttons keep the focus
+      // across a re-read, a course added or removed before the focused one must not hand that
+      // focus, and the next key press, to another course.
+      getRowId={(row) => String(row.id)}
     />
   );
 }

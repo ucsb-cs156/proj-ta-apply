@@ -6,6 +6,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.assertions.LocatorAssertions;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
@@ -70,6 +72,40 @@ public class CoursesWebIT extends WebTestCase {
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-needsUla-checkbox"))
         .not()
         .isChecked();
+  }
+
+  /**
+   * Issue #437: a checkbox keeps the keyboard focus across the page's background refresh, even one
+   * that brings a course sorting above it, and Space then ticks that course and no other.
+   */
+  @Test
+  public void a_focused_checkbox_keeps_the_focus_across_a_background_refresh() throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").build());
+
+    setupAdminUser();
+    goToCoursesPage();
+    Locator box =
+        page.getByLabel("TA for CMPSC   156", new Page.GetByLabelOptions().setExact(true));
+    assertThat(box).not().isChecked();
+    box.focus();
+
+    // Another admin's change: a course that sorts above it, shown by the background refresh.
+    courseRepository.save(Course.builder().courseId("CMPSC     8").title("INTRO").build());
+    assertThat(page.getByTestId("CoursesIndexPage-cell-row-1-col-courseId"))
+        .containsText("CMPSC   156", new LocatorAssertions.ContainsTextOptions().setTimeout(20000));
+
+    org.junit.jupiter.api.Assertions.assertEquals(
+        "TA for CMPSC   156",
+        page.evaluate("() => document.activeElement.getAttribute('aria-label')"));
+    page.keyboard().press(" ");
+
+    assertThat(box).isChecked();
+    awaitSettled(page);
+    org.junit.jupiter.api.Assertions.assertTrue(
+        courseRepository.findById("CMPSC   156").orElseThrow().isNeedsTa());
+    org.junit.jupiter.api.Assertions.assertFalse(
+        courseRepository.findById("CMPSC     8").orElseThrow().isNeedsTa());
   }
 
   @Test
