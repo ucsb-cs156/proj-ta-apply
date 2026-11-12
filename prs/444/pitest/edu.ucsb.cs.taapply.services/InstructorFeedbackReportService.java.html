@@ -1,0 +1,3783 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>InstructorFeedbackReportService.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.services;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.Instructor;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.InstructorFeedback;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.RecruitmentCourse;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.RecruitmentType;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.InstructorFeedbackRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.InstructorRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.RecruitmentRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.time.LocalDateTime;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.ArrayList;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Comparator;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.HashMap;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.LinkedHashMap;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.List;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Map;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Optional;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Set;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.TreeSet;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.function.Function;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.stream.Collectors;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.stream.StreamSupport;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.beans.factory.annotation.Autowired;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.stereotype.Service;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The admin&#39;s table of instructors&#39; allocation feedback (issue #427): every {@link</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * InstructorFeedback} row of a quarter, with the course, the instructor&#39;s catalog name and the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * course&#39;s current TA and ULA allocations joined in.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>@Service</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public class InstructorFeedbackReportService {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired InstructorFeedbackRepository instructorFeedbackRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired InstructorRepository instructorRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired RecruitmentRepository recruitmentRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * One feedback row as the admin&#39;s table shows it. The preferred counts are null unless their</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * &#34;different number&#34; box is checked: an unchecked box keeps its number on file (issue #425), and</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * that number is not meant. The allocations are null when the quarter has no recruitment of that</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * type, or the course is not in it.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public static record Row(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Long id,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String quarter,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String courseId,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String section,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String title,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_52'/>
+52
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_52'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String email,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String instructorName,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_54'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      boolean allocReasonable,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_55'/>
+55
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_55'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      boolean differentTACount,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_56'/>
+56
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_56'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      boolean differentULACount,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_57'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      boolean otherConcerns,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_58'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Integer taAllocation,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_59'/>
+59
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_59'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Integer ulaAllocation,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_60'/>
+60
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_60'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Integer numTAsPreferred,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_61'/>
+61
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_61'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Integer numULAsPreferred,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_62'/>
+62
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_62'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String comments,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_63'/>
+63
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_63'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      LocalDateTime lastUpdated) {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_64'/>
+64
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_64'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_65'/>
+65
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_65'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_66'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * One instructor of a course of the quarter who has not checked any of the four boxes (issue</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_67'/>
+67
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_67'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * #427): the course (as the feedback names it), the instructor&#39;s catalog name and email. The</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_68'/>
+68
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_68'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * email is null when the Instructors list has no email for that catalog name.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_69'/>
+69
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_69'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_70'/>
+70
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_70'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public static record MissingRow(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_71'/>
+71
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_71'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String courseId, String section, String title, String instructorName, String email) {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_72'/>
+72
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_72'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_73'/>
+73
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_73'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Who has answered about which course: a feedback row with at least one box checked. */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_74'/>
+74
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_74'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  private static record Responder(Long recruitmentCourseId, String email) {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_75'/>
+75
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_75'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_76'/>
+76
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_76'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_77'/>
+77
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_77'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * A section of a course: what pairs a course&#39;s TA row with its ULA row, as the home page does.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_78'/>
+78
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_78'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_79'/>
+79
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_79'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  private static record SectionKey(String courseId, String section) {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_80'/>
+80
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_80'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    static SectionKey of(RecruitmentCourse row) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_81'/>
+81
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_81'>1</a>
+<span>
+1. of : replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService$SectionKey::of &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return new SectionKey(row.getCourseId(), row.getSection());</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_82'/>
+82
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_82'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_83'/>
+83
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_83'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_84'/>
+84
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_84'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_85'/>
+85
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_85'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_86'/>
+86
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_86'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Every feedback row of the quarter (YYYYQ), by course id, section and email. A row whose course</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_87'/>
+87
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_87'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * is gone (which the foreign key&#39;s cascade should not allow) is left out.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_88'/>
+88
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_88'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_89'/>
+89
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_89'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public List&#60;Row&#62; rows(String quarter) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_90'/>
+90
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_90'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    List&#60;InstructorFeedback&#62; feedback = instructorFeedbackRepository.findByQuarter(quarter);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_91'/>
+91
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_91'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;Long, RecruitmentCourse&#62; courses =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_92'/>
+92
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_92'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        byId(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_93'/>
+93
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_93'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            recruitmentCourseRepository.findAllById(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_94'/>
+94
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_94'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                feedback.stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_95'/>
+95
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_95'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                    .map(InstructorFeedback::getRecruitmentCourseId)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_96'/>
+96
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_96'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                    .distinct()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_97'/>
+97
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_97'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                    .toList()),</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_98'/>
+98
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_98'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            RecruitmentCourse::getId);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_99'/>
+99
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_99'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;String, Instructor&#62; instructors =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_100'/>
+100
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_100'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        byId(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_101'/>
+101
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_101'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            instructorRepository.findAllById(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_102'/>
+102
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_102'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                feedback.stream().map(InstructorFeedback::getEmail).distinct().toList()),</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_103'/>
+103
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_103'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            Instructor::getEmail);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_104'/>
+104
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_104'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;SectionKey, Integer&#62; ta = allocations(quarter, RecruitmentType.TA);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_105'/>
+105
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_105'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;SectionKey, Integer&#62; ula = allocations(quarter, RecruitmentType.ULA);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_106'/>
+106
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_106'>1</a>
+<span>
+1. rows : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::rows &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return feedback.stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_107'/>
+107
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_107'>2</a>
+<span>
+1. lambda$rows$0 : replaced boolean return with false for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$rows$0 &rarr; KILLED<br/>
+2. lambda$rows$0 : replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$rows$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        .filter(row -&#62; courses.containsKey(row.getRecruitmentCourseId()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_108'/>
+108
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_108'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .map(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_109'/>
+109
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_109'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            row -&#62; {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_110'/>
+110
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_110'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>              RecruitmentCourse course = courses.get(row.getRecruitmentCourseId());</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_111'/>
+111
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_111'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>              SectionKey key = SectionKey.of(course);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_112'/>
+112
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_112'>1</a>
+<span>
+1. lambda$rows$1 : replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$rows$1 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>              return new Row(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_113'/>
+113
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_113'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.getId(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_114'/>
+114
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_114'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.getQuarter(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_115'/>
+115
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_115'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  course.getCourseId(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_116'/>
+116
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_116'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  course.getSection(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_117'/>
+117
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_117'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  course.getTitle(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_118'/>
+118
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_118'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.getEmail(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_119'/>
+119
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_119'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  Optional.ofNullable(instructors.get(row.getEmail()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_120'/>
+120
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_120'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                      .map(Instructor::getCatalogName)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_121'/>
+121
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_121'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                      .orElse(null),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_122'/>
+122
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_122'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.isAllocReasonable(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_123'/>
+123
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_123'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.isDifferentTACount(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_124'/>
+124
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_124'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.isDifferentULACount(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_125'/>
+125
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_125'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.isOtherConcerns(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_126'/>
+126
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_126'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  ta.get(key),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_127'/>
+127
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_127'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  ula.get(key),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_128'/>
+128
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_128'>1</a>
+<span>
+1. lambda$rows$1 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                  row.isDifferentTACount() ? row.getNumTAsPreferred() : null,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_129'/>
+129
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_129'>1</a>
+<span>
+1. lambda$rows$1 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                  row.isDifferentULACount() ? row.getNumULAsPreferred() : null,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_130'/>
+130
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_130'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.getComments(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_131'/>
+131
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_131'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                  row.getLastUpdated());</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_132'/>
+132
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_132'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            })</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_133'/>
+133
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_133'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .sorted(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_134'/>
+134
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_134'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            Comparator.comparing(Row::courseId)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_135'/>
+135
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_135'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                .thenComparing(Row::section, Comparator.nullsFirst(Comparator.naturalOrder()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_136'/>
+136
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_136'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                .thenComparing(Row::email))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_137'/>
+137
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_137'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .toList();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_138'/>
+138
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_138'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_139'/>
+139
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_139'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_140'/>
+140
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_140'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_141'/>
+141
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_141'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Every instructor of a course of the quarter who has not checked any of the four boxes: those</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_142'/>
+142
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_142'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * with no feedback row for the course, and those whose row has all four unchecked (whatever its</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_143'/>
+143
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_143'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * counts or comments). The courses are the non-removed rows of the quarter&#39;s TA and ULA</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_144'/>
+144
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_144'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * recruitments, a section in both once (named by its TA row, as the feedback is). A course&#39;s</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_145'/>
+145
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_145'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * instructors are the emails the Instructors list maps its instructors of record&#39;s catalog names</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_146'/>
+146
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_146'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * to, as the feedback form decides who teaches a course (issue #425); a catalog name with no</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_147'/>
+147
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_147'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * email is listed once with a null email. By course id, section, email (no email last) and name.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_148'/>
+148
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_148'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_149'/>
+149
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_149'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public List&#60;MissingRow&#62; missing(String quarter) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_150'/>
+150
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_150'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;SectionKey, RecruitmentCourse&#62; courses = new LinkedHashMap&#60;&#62;();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_151'/>
+151
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_151'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;SectionKey, Set&#60;String&#62;&#62; names = new HashMap&#60;&#62;();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_152'/>
+152
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_152'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    List&#60;RecruitmentCourse&#62; rows = new ArrayList&#60;&#62;(sectionRows(quarter, RecruitmentType.TA));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_153'/>
+153
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_153'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    rows.addAll(sectionRows(quarter, RecruitmentType.ULA));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_154'/>
+154
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_154'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    for (RecruitmentCourse row : rows) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_155'/>
+155
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_155'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      SectionKey key = SectionKey.of(row);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_156'/>
+156
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_156'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      courses.putIfAbsent(key, row);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_157'/>
+157
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_157'>1</a>
+<span>
+1. missing : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      if (row.getInstructor() != null) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_158'/>
+158
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_158'>1</a>
+<span>
+1. lambda$missing$0 : replaced return value with Collections.emptySet for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$missing$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        names.computeIfAbsent(key, k -&#62; new TreeSet&#60;&#62;()).add(row.getInstructor());</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_159'/>
+159
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_159'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_160'/>
+160
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_160'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_161'/>
+161
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_161'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;String, List&#60;String&#62;&#62; emails =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_162'/>
+162
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_162'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_163'/>
+163
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_163'>2</a>
+<span>
+1. lambda$missing$1 : negated conditional &rarr; KILLED<br/>
+2. lambda$missing$1 : replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$missing$1 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            .filter(instructor -&#62; instructor.getCatalogName() != null)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_164'/>
+164
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_164'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .collect(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_165'/>
+165
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_165'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                Collectors.groupingBy(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_166'/>
+166
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_166'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                    Instructor::getCatalogName,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_167'/>
+167
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_167'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_168'/>
+168
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_168'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Set&#60;Responder&#62; responded =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_169'/>
+169
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_169'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        instructorFeedbackRepository.findByQuarter(quarter).stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_170'/>
+170
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_170'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .filter(InstructorFeedbackReportService::anyChecked)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_171'/>
+171
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_171'>1</a>
+<span>
+1. lambda$missing$2 : replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$missing$2 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            .map(row -&#62; new Responder(row.getRecruitmentCourseId(), row.getEmail()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_172'/>
+172
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_172'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .collect(Collectors.toSet());</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_173'/>
+173
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_173'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_174'/>
+174
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_174'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    List&#60;MissingRow&#62; missing = new ArrayList&#60;&#62;();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_175'/>
+175
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_175'>1</a>
+<span>
+1. missing : removed call to java/util/Map::forEach &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    courses.forEach(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_176'/>
+176
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_176'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        (key, course) -&#62; {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_177'/>
+177
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_177'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>          for (String name : names.getOrDefault(key, Set.of())) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_178'/>
+178
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_178'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            List&#60;String&#62; theirs = emails.getOrDefault(name, List.of());</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_179'/>
+179
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_179'>1</a>
+<span>
+1. lambda$missing$3 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            if (theirs.isEmpty()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_180'/>
+180
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_180'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>              missing.add(missingRow(course, name, null));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_181'/>
+181
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_181'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_182'/>
+182
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_182'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            for (String email : theirs) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_183'/>
+183
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_183'>1</a>
+<span>
+1. lambda$missing$3 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>              if (!responded.contains(new Responder(course.getId(), email))) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_184'/>
+184
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_184'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                missing.add(missingRow(course, name, email));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_185'/>
+185
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_185'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>              }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_186'/>
+186
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_186'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_187'/>
+187
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_187'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>          }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_188'/>
+188
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_188'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        });</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_189'/>
+189
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_189'>1</a>
+<span>
+1. missing : removed call to java/util/List::sort &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    missing.sort(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_190'/>
+190
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_190'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        Comparator.comparing(MissingRow::courseId)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_191'/>
+191
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_191'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .thenComparing(MissingRow::section, Comparator.nullsFirst(Comparator.naturalOrder()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_192'/>
+192
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_192'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .thenComparing(MissingRow::email, Comparator.nullsLast(Comparator.naturalOrder()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_193'/>
+193
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_193'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .thenComparing(MissingRow::instructorName));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_194'/>
+194
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_194'>1</a>
+<span>
+1. missing : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::missing &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return missing;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_195'/>
+195
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_195'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_196'/>
+196
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_196'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_197'/>
+197
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_197'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static MissingRow missingRow(RecruitmentCourse course, String name, String email) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_198'/>
+198
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_198'>1</a>
+<span>
+1. missingRow : replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::missingRow &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return new MissingRow(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_199'/>
+199
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_199'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        course.getCourseId(), course.getSection(), course.getTitle(), name, email);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_200'/>
+200
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_200'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_201'/>
+201
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_201'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_202'/>
+202
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_202'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Whether the instructor checked at least one of the four boxes. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_203'/>
+203
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_203'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static boolean anyChecked(InstructorFeedback row) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_204'/>
+204
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_204'>2</a>
+<span>
+1. anyChecked : replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::anyChecked &rarr; KILLED<br/>
+2. anyChecked : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return row.isAllocReasonable()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_205'/>
+205
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_205'>1</a>
+<span>
+1. anyChecked : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        || row.isDifferentTACount()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_206'/>
+206
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_206'>1</a>
+<span>
+1. anyChecked : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        || row.isDifferentULACount()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_207'/>
+207
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_207'>1</a>
+<span>
+1. anyChecked : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        || row.isOtherConcerns();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_208'/>
+208
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_208'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_209'/>
+209
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_209'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_210'/>
+210
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_210'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_211'/>
+211
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_211'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * The non-removed rows of the quarter&#39;s recruitment of one type; none when the quarter has no</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_212'/>
+212
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_212'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * such recruitment.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_213'/>
+213
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_213'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_214'/>
+214
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_214'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private List&#60;RecruitmentCourse&#62; sectionRows(String quarter, RecruitmentType type) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_215'/>
+215
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_215'>1</a>
+<span>
+1. sectionRows : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::sectionRows &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return recruitmentRepository</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_216'/>
+216
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_216'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .findByQuarterAndType(quarter, type)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_217'/>
+217
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_217'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .map(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_218'/>
+218
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_218'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            recruitment -&#62;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_219'/>
+219
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_219'>1</a>
+<span>
+1. lambda$sectionRows$0 : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$sectionRows$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_220'/>
+220
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_220'>2</a>
+<span>
+1. lambda$sectionRows$1 : replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$sectionRows$1 &rarr; KILLED<br/>
+2. lambda$sectionRows$1 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                    .filter(row -&#62; !row.isRemoved())</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_221'/>
+221
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_221'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                    .toList())</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_222'/>
+222
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_222'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .orElse(List.of());</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_223'/>
+223
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_223'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_224'/>
+224
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_224'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_225'/>
+225
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_225'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The allocation of each section in the quarter&#39;s recruitment of one type (see sectionRows). */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_226'/>
+226
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_226'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private Map&#60;SectionKey, Integer&#62; allocations(String quarter, RecruitmentType type) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_227'/>
+227
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_227'>1</a>
+<span>
+1. allocations : replaced return value with Collections.emptyMap for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::allocations &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return sectionRows(quarter, type).stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_228'/>
+228
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_228'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .collect(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_229'/>
+229
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_229'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            Collectors.toMap(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_230'/>
+230
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_230'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                SectionKey::of,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_231'/>
+231
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_231'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                RecruitmentCourse::getAllocation,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_232'/>
+232
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_232'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                // Two rows of one section cannot both be on file (the enroll code is unique per</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_233'/>
+233
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_233'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                // recruitment), but keep the first all the same.</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_234'/>
+234
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_234'>1</a>
+<span>
+1. lambda$allocations$0 : replaced Integer return value with 0 for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$allocations$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                (first, second) -&#62; first));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_235'/>
+235
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_235'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_236'/>
+236
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_236'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_237'/>
+237
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_237'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The rows a findAllById returns (each id at most once), by their id. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_238'/>
+238
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_238'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static &#60;K, V&#62; Map&#60;K, V&#62; byId(Iterable&#60;V&#62; values, Function&#60;V, K&#62; key) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_239'/>
+239
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_239'>1</a>
+<span>
+1. byId : replaced return value with Collections.emptyMap for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::byId &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return StreamSupport.stream(values.spliterator(), false)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_240'/>
+240
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_240'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .collect(Collectors.toMap(key, Function.identity()));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_241'/>
+241
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_241'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_242'/>
+242
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_242'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_81'>81</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_81'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>of<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService$SectionKey::of &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_106'>106</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_106'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>rows<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::rows &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_107'>107</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_107'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$rows$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced boolean return with false for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$rows$0 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$rows$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:feedback_whose_course_is_gone_is_left_out()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$rows$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_112'>112</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_112'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$rows$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$rows$1 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_128'>128</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_128'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$rows$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_unchecked_box_hides_its_stored_count()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_129'>129</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_129'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$rows$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_unchecked_box_hides_its_stored_count()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_157'>157</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_157'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>missing<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:removed_rows_and_rows_with_no_instructor_are_not_listed()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_158'>158</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_158'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$missing$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()]</span></span> replaced return value with Collections.emptySet for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$missing$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_163'>163</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_163'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$missing$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$missing$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_email_is_listed_without_one_and_last()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$missing$1 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_171'>171</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_171'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$missing$2<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_co_taught_course_lists_only_the_instructor_who_did_not_respond()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$missing$2 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_175'>175</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_175'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>missing<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()]</span></span> removed call to java/util/Map::forEach &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_179'>179</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_179'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$missing$3<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_183'>183</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_183'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$missing$3<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_189'>189</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_189'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>missing<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_course_in_both_recruitments_is_listed_once_by_its_ta_row()]</span></span> removed call to java/util/List::sort &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_194'>194</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_194'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>missing<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::missing &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_198'>198</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_198'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>missingRow<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::missingRow &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_204'>204</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_204'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>anyChecked<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_row_with_no_box_checked_is_listed_whatever_its_counts_and_comments()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::anyChecked &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>anyChecked<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_row_with_no_box_checked_is_listed_whatever_its_counts_and_comments()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_205'>205</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_205'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>anyChecked<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_row_with_no_box_checked_is_listed_whatever_its_counts_and_comments()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_206'>206</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_206'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>anyChecked<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_row_with_no_box_checked_is_listed_whatever_its_counts_and_comments()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_207'>207</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_207'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>anyChecked<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_row_with_no_box_checked_is_listed_whatever_its_counts_and_comments()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_215'>215</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_215'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>sectionRows<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::sectionRows &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_219'>219</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_219'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$sectionRows$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$sectionRows$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_220'>220</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_220'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$sectionRows$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:removed_rows_and_rows_with_no_instructor_are_not_listed()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$sectionRows$1 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$sectionRows$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:removed_rows_and_rows_with_no_instructor_are_not_listed()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_227'>227</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_227'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>allocations<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced return value with Collections.emptyMap for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::allocations &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_234'>234</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_234'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$allocations$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:two_rows_of_one_section_keep_the_first()]</span></span> replaced Integer return value with 0 for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::lambda$allocations$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@67f5dc0a_239'>239</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@67f5dc0a_239'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>byId<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()]</span></span> replaced return value with Collections.emptyMap for edu/ucsb/cs/taapply/services/InstructorFeedbackReportService::byId &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_feedback_row_is_listed()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_course_in_both_recruitments_is_listed_once_by_its_ta_row()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_instructor_with_no_email_is_listed_without_one_and_last()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:the_list_is_by_course_id_then_section_nulls_first_then_email()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:feedback_on_the_ula_row_of_a_course_with_a_ta_row_does_not_count()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_row_with_no_box_checked_is_listed_whatever_its_counts_and_comments()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_co_taught_course_lists_only_the_instructor_who_did_not_respond()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:any_one_box_checked_counts_as_feedback()] (2 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_quarter_without_recruitments_lists_no_one()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:removed_rows_and_rows_with_no_instructor_are_not_listed()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_ula_only_course_has_no_ta_allocation_and_an_unlisted_instructor_has_no_name()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_quarter_without_a_ula_recruitment_has_no_ula_allocations()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:an_unchecked_box_hides_its_stored_count()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:feedback_whose_course_is_gone_is_left_out()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:rows_come_by_course_id_then_section_nulls_first_then_email()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:the_ids_looked_up_are_each_named_once()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_course_in_both_recruitments_gets_both_allocations_and_every_field()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:another_section_and_a_removed_row_do_not_pair()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:two_rows_of_one_section_keep_the_first()] (3 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:a_quarter_with_no_feedback_has_no_rows()] (0 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
