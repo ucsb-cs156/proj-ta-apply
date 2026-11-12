@@ -281,6 +281,10 @@ export default function AssignmentsTable({
         hiddenColumns.map((id) => [id, false]),
       )}
       hideLinks={hideLinks}
+      // A row is its applicant (issue #435): a refused move puts the view as it now stands in the
+      // page, which may have applicants added or gone, and a dropdown that keeps focus must stay
+      // its applicant's, since an arrow key there assigns at once.
+      getRowId={(row) => String(row.applicationId)}
     />
   );
 }

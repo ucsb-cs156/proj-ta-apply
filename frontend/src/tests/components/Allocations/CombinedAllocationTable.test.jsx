@@ -1338,3 +1338,181 @@ describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and
     expect(ids[ids.length - 2]).toBe("status");
   });
 });
+
+/**
+ * Issue #435: a row is its section, not its position. A re-read that adds or removes a course
+ * before the box being typed in used to hand that box, and the next keystroke, to another course.
+ */
+describe("CombinedAllocationTable: rows stay their sections when the list changes (issue #435)", () => {
+  const row = {
+    ...base,
+    recruitmentId: 5,
+    section: "0100",
+    instructor: "X",
+    title: "T",
+    unroundedAllocation: null,
+    enrollmentEstimate: 10,
+    allocationVersion: 1,
+  };
+  const cs8 = {
+    ...row,
+    id: 1,
+    courseId: "CMPSC     8",
+    enrollCode: "00001",
+    allocation: 1,
+  };
+  const cs24 = {
+    ...row,
+    id: 2,
+    courseId: "CMPSC    24",
+    enrollCode: "00002",
+    allocation: 2,
+  };
+  const cs156 = {
+    ...row,
+    id: 3,
+    courseId: "CMPSC   156",
+    enrollCode: "00003",
+    allocation: 3,
+  };
+
+  const table = (client, courses) => (
+    <QueryClientProvider client={client}>
+      <CombinedAllocationTable
+        courses={combineCourses(courses, [])}
+        hasTa
+        hasUla={false}
+        conversionFactor={3}
+        taBulkVersion={0}
+      />
+    </QueryClientProvider>
+  );
+  // By the exact label: the course numbers keep the API's padding, which a label query collapses.
+  const labelled = (label) => {
+    const box = document.querySelector(`[aria-label="${label}"]`);
+    expect(box).not.toBeNull();
+    return box;
+  };
+  const allocationBox = (courseId) =>
+    labelled(`TA allocation for ${courseId} section 0100`);
+  const estimateBox = (courseId) =>
+    labelled(`Enrollment estimate for ${courseId} section 0100`);
+  const allocationPuts = () =>
+    axiosMock.history.put
+      .filter((r) => r.url === "/api/recruitmentcourses/allocation")
+      .map((r) => [r.params.id, r.params.allocation]);
+
+  beforeEach(() => {
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply((config) => [
+      200,
+      {
+        ...[cs8, cs24, cs156].find((c) => c.id === config.params.id),
+        allocation: config.params.allocation,
+        allocationVersion: 2,
+      },
+    ]);
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, {});
+  });
+
+  test("a course added before the box being typed in leaves the box, its text and its next save with its own course", async () => {
+    const client = new QueryClient();
+    const { rerender } = render(table(client, [cs24, cs156]));
+    const box = allocationBox("CMPSC    24");
+    box.focus();
+    fireEvent.change(box, { target: { value: "25" } });
+
+    // Another tab added CMPSC 8, which comes before CMPSC 24.
+    rerender(table(client, [cs8, cs24, cs156]));
+
+    expect(allocationBox("CMPSC    24")).toBe(box);
+    expect(box).toHaveFocus();
+    expect(box).toHaveValue(25);
+    expect(allocationBox("CMPSC     8")).toHaveValue(1);
+    fireEvent.change(document.activeElement, { target: { value: "251" } });
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(2));
+    expect(allocationPuts()).toEqual([
+      [2, 25],
+      [2, 251],
+    ]);
+  });
+
+  test("a course removed before the box being typed in leaves the box, its text and its next save with its own course", async () => {
+    const client = new QueryClient();
+    const { rerender } = render(table(client, [cs8, cs24, cs156]));
+    const box = allocationBox("CMPSC   156");
+    box.focus();
+    fireEvent.change(box, { target: { value: "7" } });
+
+    // Another tab removed CMPSC 8.
+    rerender(table(client, [cs24, cs156]));
+
+    expect(allocationBox("CMPSC   156")).toBe(box);
+    expect(box).toHaveFocus();
+    expect(box).toHaveValue(7);
+    expect(allocationBox("CMPSC    24")).toHaveValue(2);
+    fireEvent.change(document.activeElement, { target: { value: "72" } });
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(2));
+    expect(allocationPuts()).toEqual([
+      [3, 7],
+      [3, 72],
+    ]);
+  });
+
+  test("an estimate being typed stays with its section when a course is added before it", async () => {
+    const client = new QueryClient();
+    const { rerender } = render(table(client, [cs24, cs156]));
+    const box = estimateBox("CMPSC    24");
+    box.focus();
+    fireEvent.change(box, { target: { value: "4" } });
+
+    rerender(table(client, [cs8, cs24, cs156]));
+
+    expect(estimateBox("CMPSC    24")).toBe(box);
+    expect(box).toHaveFocus();
+    expect(box).toHaveValue(4);
+    expect(estimateBox("CMPSC     8")).toHaveValue(10);
+    fireEvent.change(document.activeElement, { target: { value: "45" } });
+    fireEvent.blur(document.activeElement);
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put
+          .filter((r) => r.url === "/api/recruitmentcourses/enrollmentEstimate")
+          .map((r) => r.params),
+      ).toEqual([{ id: 2, enrollmentEstimate: 45 }]),
+    );
+  });
+
+  test("sorted by a column a re-read changes, the box being typed in still stays with its course", async () => {
+    const client = new QueryClient();
+    const { rerender } = render(table(client, [cs8, cs24, cs156]));
+    fireEvent.click(
+      screen.getByTestId(
+        "CombinedAllocationTable-header-taAllocation-sort-header",
+      ),
+    );
+    const box = allocationBox("CMPSC    24");
+    box.focus();
+    fireEvent.change(box, { target: { value: "25" } });
+
+    // CMPSC 8's allocation rose in another tab, so it moves to the top of the descending sort.
+    rerender(table(client, [{ ...cs8, allocation: 9 }, cs24, cs156]));
+
+    expect(allocationBox("CMPSC    24")).toBe(box);
+    expect(box).toHaveFocus();
+    expect(box).toHaveValue(25);
+    fireEvent.change(document.activeElement, { target: { value: "251" } });
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(2));
+    expect(allocationPuts()).toEqual([
+      [2, 25],
+      [2, 251],
+    ]);
+  });
+});

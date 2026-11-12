@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
@@ -765,5 +765,38 @@ describe("AssignmentsTable tests (issue #179)", () => {
     expect(
       screen.getByTestId("T-cell-row-0-tentative-select"),
     ).toBeInTheDocument();
+  });
+
+  test("a dropdown with focus stays its applicant's when the view comes back with someone before them (issue #435)", () => {
+    const onAssign = vi.fn();
+    const { rerender } = render(
+      <AssignmentsTable data={page} onAssign={onAssign} testIdPrefix="T" />,
+    );
+    const select = screen.getByLabelText(
+      "Tentative assignment for grace@ucsb.edu",
+    );
+    select.focus();
+
+    // A refused move puts the view as it now stands in the page: a new applicant comes first.
+    const newcomer = {
+      ...page.rows[0],
+      applicationId: 99,
+      identity: { ...page.rows[0].identity, email: "aaron@ucsb.edu" },
+      tentativeAssignment: null,
+    };
+    rerender(
+      <AssignmentsTable
+        data={{ ...page, rows: [newcomer, ...page.rows] }}
+        onAssign={onAssign}
+        testIdPrefix="T"
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("Tentative assignment for grace@ucsb.edu"),
+    ).toBe(select);
+    expect(select).toHaveFocus();
+    fireEvent.change(document.activeElement, { target: { value: "30" } });
+    expect(onAssign).toHaveBeenCalledWith(2, 30);
   });
 });

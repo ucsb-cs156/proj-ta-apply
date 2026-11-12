@@ -486,6 +486,10 @@ export default function CombinedAllocationTable({
         hiddenColumns.map((id) => [id, false]),
       )}
       hideLinks={hideLinks}
+      // A row is its section, found by enroll code as combineCourses finds it (issue #435): when a
+      // re-read adds or removes a course before the box being typed in, the box stays its
+      // section's, and so do its draft and its next save.
+      getRowId={(row) => row.enrollCode}
     />
   );
 }

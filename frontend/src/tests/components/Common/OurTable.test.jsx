@@ -611,4 +611,67 @@ describe("OurTable tests", () => {
     );
     expect(screen.queryByTestId("nh-header-name-hide")).not.toBeInTheDocument();
   });
+
+  describe("row ids (issue #435)", () => {
+    const columns = [
+      { header: "Name", accessorKey: "name" },
+      {
+        header: "Box",
+        id: "box",
+        cell: ({ cell }) => (
+          <input aria-label={`box for ${cell.row.original.name}`} />
+        ),
+      },
+    ];
+    const ann = { name: "Ann" };
+    const bob = { name: "Bob" };
+    const cy = { name: "Cy" };
+
+    test("with getRowId, a row and the controls in it stay together when a row is added before it; the test ids keep the position", () => {
+      const getRowId = vi.fn((row) => row.name);
+      const { rerender } = render(
+        <OurTable
+          data={[bob, cy]}
+          columns={columns}
+          testid="ids"
+          getRowId={getRowId}
+        />,
+      );
+      const box = screen.getByLabelText("box for Bob");
+      box.focus();
+
+      rerender(
+        <OurTable
+          data={[ann, bob, cy]}
+          columns={columns}
+          testid="ids"
+          getRowId={getRowId}
+        />,
+      );
+
+      expect(screen.getByLabelText("box for Bob")).toBe(box);
+      expect(box).toHaveFocus();
+      expect(screen.getByTestId("ids-cell-row-1-col-box")).toContainElement(
+        box,
+      );
+      expect(getRowId).toHaveBeenCalledWith(ann, 0, undefined);
+    });
+
+    test("without getRowId, a row is its position, as before", () => {
+      const { rerender } = render(
+        <OurTable data={[bob, cy]} columns={columns} testid="pos" />,
+      );
+      const first = screen.getByLabelText("box for Bob");
+
+      rerender(
+        <OurTable data={[ann, bob, cy]} columns={columns} testid="pos" />,
+      );
+
+      // The first row's elements are kept and now show the row in that position.
+      expect(screen.getByLabelText("box for Ann")).toBe(first);
+      expect(screen.getByTestId("pos-cell-row-0-col-box")).toContainElement(
+        first,
+      );
+    });
+  });
 });

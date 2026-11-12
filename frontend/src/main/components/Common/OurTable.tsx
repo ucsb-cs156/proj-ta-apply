@@ -78,6 +78,13 @@ type OurTableProps<T extends object> = {
   centerHeaders?: boolean;
   /** A "hide" link over each hideable column's heading (issue #314); none when absent. */
   hideLinks?: HideLinks;
+  /**
+   * What identifies a row whatever its position (issue #435), such as a course's enroll code. Each
+   * row is rendered under this key, so a box in a row stays that row's box when a re-read adds or
+   * removes rows before it. Without it a row is its position in `data`, which is enough for a
+   * table whose rows never change while someone types in one. The test ids keep the position.
+   */
+  getRowId?: (row: T, index: number) => string;
 };
 
 export default function OurTable<T extends object>({
@@ -89,6 +96,7 @@ export default function OurTable<T extends object>({
   columnVisibility = {},
   centerHeaders = false,
   hideLinks,
+  getRowId,
 }: OurTableProps<T>): React.JSX.Element {
   const newColumns = convertOldStyleColumnsToNewStyle(columns);
   const memoizedData = useMemo(() => data, [data]);
@@ -108,6 +116,8 @@ export default function OurTable<T extends object>({
     enableColumnResizing: true,
     columnResizeMode: "onChange",
     state: { columnVisibility },
+    // Without it TanStack's row id is the row's position in `data`.
+    getRowId,
   });
 
   /** Nudge a column by the keyboard, the alternative to dragging its handle. */
@@ -245,16 +255,18 @@ export default function OurTable<T extends object>({
           return (
             <tr
               data-testid={rowTestId}
-              // Stryker disable next-line StringLiteral : React key property not exposed in dom
-              key={rowTestId}
+              // The row's id, not its position (issue #435): a row and the boxes in it stay
+              // together when rows are added or removed before it.
+              key={row.id}
             >
               {row.getVisibleCells().map((cell) => {
                 const testId = `${testid}-cell-row-${cell.row.index}-col-${cell.column.id}`;
                 return (
                   <td
                     data-testid={testId}
-                    // Stryker disable next-line StringLiteral : React key property not exposed in dom
-                    key={testId}
+                    // The row's id and the column's (issue #435), so the cell, and a box in it,
+                    // is not made anew when the row's position changes.
+                    key={cell.id}
                     className={classOf(cell.column.columnDef.meta)}
                     style={{
                       ...styleOf(cell.column.columnDef.meta),
