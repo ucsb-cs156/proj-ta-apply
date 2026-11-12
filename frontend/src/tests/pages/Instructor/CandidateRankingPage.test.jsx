@@ -249,6 +249,80 @@ describe("CandidateRankingPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  // ---- issue #439: an admin enters or changes a course's rankings ----
+
+  test("an admin who may rank only as an admin gets the boxes and a note saying so", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      reviewStatus: "Open",
+      canRank: true,
+      rankingAsAdmin: true,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByRole("spinbutton", {
+        name: "Ranking for Ada Lovelace",
+      }),
+    ).toHaveValue(1);
+    expect(
+      screen.queryByText("Rankings are read-only."),
+    ).not.toBeInTheDocument();
+    const note = screen.getByTestId("CandidateRankingPage-ranking-as-admin");
+    expect(note).toHaveAttribute("role", "note");
+    expect(note).toHaveClass("alert", "alert-info");
+    expect(note).toHaveTextContent(
+      "You can enter and change the rankings for this course because you are an admin. What you save here is the course's faculty ranking, the same one its instructor sees. Faculty reviews are open, so the instructor can change it too.",
+    );
+  });
+
+  test("once reviews are closed the note says the instructor can no longer change the ranking", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      reviewStatus: "Closed",
+      canRank: true,
+      rankingAsAdmin: true,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("CandidateRankingPage-ranking-as-admin"),
+    ).toHaveTextContent(
+      "Faculty reviews are closed, so the instructor can no longer change it.",
+    );
+    expect(
+      await screen.findByRole("spinbutton", {
+        name: "Ranking for Ada Lovelace",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  test("someone ranking as the course's instructor, or only reading, gets no such note", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      reviewStatus: "Open",
+      canRank: true,
+      rankingAsAdmin: false,
+    });
+    const { unmount } = renderPage();
+    await screen.findByRole("spinbutton", { name: "Ranking for Ada Lovelace" });
+    expect(
+      screen.queryByTestId("CandidateRankingPage-ranking-as-admin"),
+    ).toBeNull();
+    unmount();
+
+    // A response from before the field existed says nothing either way.
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      canRank: false,
+    });
+    renderPage();
+    await screen.findByText("Rankings are read-only.");
+    expect(
+      screen.queryByTestId("CandidateRankingPage-ranking-as-admin"),
+    ).toBeNull();
+  });
+
   test("successful null candidate response is an error, not infinite loading", async () => {
     axiosMock
       .onGet(rankingUrl)

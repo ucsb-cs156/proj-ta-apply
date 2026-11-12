@@ -816,10 +816,10 @@ The warning uses the shared hook, banner and modal with the noun `ranking` and t
 `ranking:<recruitmentCourseId>`: `POST .../courses/{id}/ranking/heartbeat` and `.../ranking/leave`,
 and the `X-Client-Id` on every rank save. The newest tab is asked (Leave this page, Wait, Continue
 anyway) and older tabs get the banner alone, as for drafts (#285). Authorization comes first: the
-heartbeat, the goodbye and the save are allowed only to someone who may rank the course, the
-instructor of record while reviews are Open (an admin who also teaches it included). An instructor
-of another course, and an admin who does not teach the course, get `403` and are neither recorded nor
-told who is there. A page that is read-only sends no heartbeat, so it never warns and is never named.
+heartbeat, the goodbye and the save are allowed only to someone who may rank the course: the
+instructor of record while reviews are Open, or (since issue #439) an admin, for any course still on
+offer, whether reviews are Open or Closed. An instructor of another course gets `403` and is neither
+recorded nor told who is there. A page that is read-only sends no heartbeat, so it never warns and is never named.
 Two instructors of a co-taught course (two emails with the same catalog name) and an admin who
 teaches the course see each other by name; a different course never warns, and neither does the same
 person on two courses.

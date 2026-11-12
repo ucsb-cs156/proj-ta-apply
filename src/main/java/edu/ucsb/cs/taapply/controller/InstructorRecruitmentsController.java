@@ -231,9 +231,12 @@ public class InstructorRecruitmentsController extends ApiController {
    * allocation} is how many TAs or ULAs the course was allocated: present for admins, and for
    * instructors only once the admin shows allocations to faculty (issue #178); otherwise null.
    * {@code canRank} is whether this user may enter rankings here: the course's instructor of record
-   * while reviews are Open, whether or not they are also an admin (issue #202). {@code targets} is
-   * the course's hiring figures (issue #224), present on the same terms as {@code allocation}.
-   * {@code hasRankedNotInterested} is whether any real, non-cancelled applicant who did not express
+   * while reviews are Open (issue #202), or an admin, for any course still on offer, whether
+   * reviews are Open or Closed (issue #439). {@code rankingAsAdmin} is whether it is only as an
+   * admin that they may: true for an admin who is not the course's instructor, or once reviews are
+   * Closed, so the page can say whose rankings they are changing. {@code targets} is the course's
+   * hiring figures (issue #224), present on the same terms as {@code allocation}. {@code
+   * hasRankedNotInterested} is whether any real, non-cancelled applicant who did not express
    * interest in the course has a ranking for it (issue #221): the page then always shows that tier.
    */
   public static record CandidateRankingPage(
@@ -251,6 +254,7 @@ public class InstructorRecruitmentsController extends ApiController {
       List<CourseDetails> otherCourses,
       Integer allocation,
       boolean canRank,
+      boolean rankingAsAdmin,
       CourseTargets targets,
       boolean hasRankedNotInterested) {}
 
@@ -332,7 +336,10 @@ public class InstructorRecruitmentsController extends ApiController {
   @Operation(
       summary = "Get the course-scoped candidate ranking page",
       description =
-          "Instructors may read only their own active recruitment courses. Admins may read any course.")
+          "Instructors may read only their own active recruitment courses. Admins may read any"
+              + " course. canRank says whether this user may also change the rankings, and"
+              + " rankingAsAdmin whether it is as an admin rather than as the course's instructor"
+              + " that they may (issue #439).")
   @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
   @GetMapping("/{recruitmentId}/courses/{recruitmentCourseId}/ranking")
   public CandidateRankingPage candidateRankingPage(
@@ -367,6 +374,7 @@ public class InstructorRecruitmentsController extends ApiController {
         otherCourses,
         scope.isAdmin() || allocationsVisible(recruitment) ? course.getAllocation() : null,
         scope.canRank(),
+        scope.rankingAsAdmin(),
         scope.isAdmin() || allocationsVisible(recruitment)
             ? courseTargetsService.targetsFor(recruitmentId, course)
             : null,
@@ -487,8 +495,10 @@ public class InstructorRecruitmentsController extends ApiController {
   /**
    * Who is looking at a course's rankings and what they may do. {@code isInstructor} is whether the
    * user's catalog name is the course's instructor of record; that, not the absence of the admin
-   * role, is what allows ranking (issue #202): an admin who also teaches the course ranks it like
-   * any other instructor, while an admin who does not sees it read-only.
+   * role, is what allows an instructor to rank (issue #202). An admin may enter or change the
+   * rankings of any course still on offer (issue #439), for instance one whose instructor is TBD,
+   * and may do so after reviews are Closed, when the instructor no longer can; a course that has
+   * been removed, or is stale or cancelled, stays read-only for everyone.
    */
   private record RankingScope(
       Recruitment recruitment,
@@ -496,8 +506,18 @@ public class InstructorRecruitmentsController extends ApiController {
       String catalogName,
       boolean isAdmin,
       boolean isInstructor) {
-    boolean canRank() {
+    /** Whether the course's own instructor may rank now: only while reviews are Open. */
+    boolean canRankAsInstructor() {
       return isInstructor && "Open".equals(recruitment.getReviewStatus());
+    }
+
+    /** Whether being an admin is what lets this user rank: the instructor's own right is absent. */
+    boolean rankingAsAdmin() {
+      return isAdmin && course.isOnOffer() && !canRankAsInstructor();
+    }
+
+    boolean canRank() {
+      return canRankAsInstructor() || rankingAsAdmin();
     }
   }
 
@@ -529,7 +549,8 @@ public class InstructorRecruitmentsController extends ApiController {
                 .anyMatch("ROLE_ADMIN"::equals);
 
     // Admins may inspect historical rankings for stale, cancelled, or removed rows, but those
-    // rows remain unavailable to instructors and this read exception never grants edit access.
+    // rows remain unavailable to instructors and this read exception never grants edit access:
+    // an admin edits only the rankings of a course still on offer (issue #439).
     if (!course.isOnOffer() && !isAdmin) {
       throw new ForbiddenException(
           "This recruitment course has been removed or is no longer available.");
@@ -549,7 +570,10 @@ public class InstructorRecruitmentsController extends ApiController {
     RankingScope scope = new RankingScope(recruitment, course, catalogName, isAdmin, isInstructor);
     if (editing && !scope.canRank()) {
       throw new ForbiddenException(
-          "Only assigned instructors may rank candidates while reviews are Open.");
+          scope.isAdmin()
+              ? "Rankings of a course that has been removed or is no longer available cannot be"
+                  + " changed."
+              : "Only assigned instructors may rank candidates while reviews are Open.");
     }
     return scope;
   }
@@ -673,7 +697,9 @@ public class InstructorRecruitmentsController extends ApiController {
   @Operation(
       summary = "Rank a candidate for a course",
       description =
-          "Sets, or with null clears, one candidate's rank. The version is the one the page last"
+          "Sets, or with null clears, one candidate's rank. Allowed to the course's instructor while"
+              + " reviews are Open, and to an admin, for a course still on offer, while reviews are"
+              + " Open or Closed (issue #439); 403 for anyone else. The version is the one the page last"
               + " saw (from the candidates or from its last save): if the course's ranking list has"
               + " changed since, by another tab, another instructor or Developer Mode, nothing is"
               + " changed and the answer is 409 Conflict with the list's current version. A save"
@@ -756,8 +782,8 @@ public class InstructorRecruitmentsController extends ApiController {
               + " here, and answers with the other people who are ranking the same course (a label"
               + " for each, and whether it is the same person in another tab or window) and how"
               + " often to send this. Only someone who may rank the course (its instructor, while"
-              + " reviews are Open) may ask; for anyone else the answer is 403 and nothing is"
-              + " recorded or told.")
+              + " reviews are Open, or an admin) may ask; for anyone else the answer is 403 and"
+              + " nothing is recorded or told.")
   @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
   @PostMapping("/{recruitmentId}/courses/{recruitmentCourseId}/ranking/heartbeat")
   public Presence heartbeat(

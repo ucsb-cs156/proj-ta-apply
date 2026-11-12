@@ -342,12 +342,36 @@ public class RankingWarningControllerTests extends ControllerTestCase {
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
-  void an_admin_who_does_not_teach_the_course_is_refused_too() throws Exception {
+  void an_admin_who_does_not_teach_the_course_is_ranking_it_too() throws Exception {
+    // Issue #439: an admin may change any course's rankings, so they warn and are warned like
+    // an instructor of the course.
+    signInAs("faculty@ucsb.edu", "Fay Faculty", "CONRAD P", "ROLE_INSTRUCTOR");
+    heartbeat(COURSE, "fay-tab");
     signInAs("admin@ucsb.edu", "Ada Admin", null, "ROLE_ADMIN");
 
-    heartbeat(COURSE, "admin-tab").andExpect(status().isForbidden());
+    heartbeat(COURSE, "admin-tab")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.others[0].label").value("faculty@ucsb.edu (Fay Faculty)"))
+        .andExpect(jsonPath("$.others[0].samePerson").value(false));
 
-    assertEquals(0, others("20", "observer"));
+    assertEquals(2, others("20", "observer"));
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void an_admin_is_still_ranking_once_reviews_are_closed_but_not_a_course_off_offer()
+      throws Exception {
+    signInAs("admin@ucsb.edu", "Ada Admin", null, "ROLE_ADMIN");
+    recruitment.setReviewStatus("Closed");
+
+    heartbeat(COURSE, "admin-tab").andExpect(status().isOk());
+    assertEquals(1, others("20", "observer"));
+
+    RecruitmentCourse removed = course(20L, "CMPSC   156", "CONRAD P");
+    removed.setRemoved(true);
+    when(recruitmentCourseRepository.findById(20L)).thenReturn(Optional.of(removed));
+    heartbeat(COURSE, "second-tab").andExpect(status().isForbidden());
+    assertEquals(1, others("20", "observer"));
   }
 
   @Test

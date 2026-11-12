@@ -134,14 +134,15 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           appears once per group, under its last row. Use ties only when you
           have absolutely no preference between those candidates.
         </p>
-        <p>
+        <p data-testid="HelpInstructorsPage-who-ranks">
           Only instructors assigned to a section may edit its rankings while
           reviews are Open; the deadline is informational until an admin closes
-          reviews. Rankings can be entered only by the course&apos;s instructor
-          of record while reviews are open, admin or not; closed reviews, and
-          the view of an admin who does not teach the course, are read-only.
-          Click either name to open the full, read-only application in a new
-          tab, without staff-only notes or editing controls.
+          reviews. Once reviews are closed the rankings are read-only for
+          instructors. An admin can also enter or change a course&apos;s
+          rankings, whether or not reviews are open, for instance when a course
+          has no instructor yet. Click either name to open the full, read-only
+          application in a new tab, without staff-only notes or editing
+          controls.
         </p>
         <p data-testid="HelpInstructorsPage-interest">
           The <strong>Course Preference</strong> cell of each candidate is

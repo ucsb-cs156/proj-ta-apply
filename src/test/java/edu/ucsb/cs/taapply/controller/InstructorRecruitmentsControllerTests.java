@@ -380,6 +380,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
                 new CourseDetails(2L, "CMPSC   156", "0200", "TITLE 2", "CONRAD P")),
             null,
             true,
+            // Ranking as the course's instructor, not as an admin (issue #439).
+            false,
             null,
             false);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
@@ -521,6 +523,14 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     return mapper.readTree(response.getResponse().getContentAsString()).get("canRank").asBoolean();
   }
 
+  /** Issue #439: whether it is as an admin, not as the course's instructor, that they may rank. */
+  private boolean rankingAsAdminFrom(MvcResult response) throws Exception {
+    return mapper
+        .readTree(response.getResponse().getContentAsString())
+        .get("rankingAsAdmin")
+        .asBoolean();
+  }
+
   /** The bug of issue #202: the admin role must not hide the ranking boxes from the instructor. */
   @WithMockUser(roles = {"ADMIN", "INSTRUCTOR"})
   @Test
@@ -536,11 +546,35 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertTrue(canRankFrom(response));
+    // As the course's instructor: nothing here is owed to the admin role.
+    assertFalse(rankingAsAdminFrom(response));
   }
 
+  /**
+   * Issue #439: once reviews are Closed the instructor's right is gone, and the admin's remains.
+   */
+  @WithMockUser(roles = {"ADMIN", "INSTRUCTOR"})
+  @Test
+  public void an_admin_who_teaches_the_course_ranks_as_an_admin_once_reviews_are_closed()
+      throws Exception {
+    adminWhoIsAlsoInstructor();
+    instructorWithCatalogName("CONRAD P");
+    rankingPageSetup("Closed");
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertTrue(canRankFrom(response));
+    assertTrue(rankingAsAdminFrom(response));
+  }
+
+  /** Issue #439: an admin may enter or change the rankings of a course they do not teach. */
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void an_admin_who_does_not_teach_the_course_cannot_rank() throws Exception {
+  public void an_admin_who_does_not_teach_the_course_can_rank_as_an_admin() throws Exception {
     currentUser(EMAIL, true);
     instructorWithCatalogName("SOMEONE ELSE");
     rankingPageSetup("Open");
@@ -551,15 +585,40 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .andExpect(status().isOk())
             .andReturn();
 
-    assertFalse(canRankFrom(response));
+    assertTrue(canRankFrom(response));
+    assertTrue(rankingAsAdminFrom(response));
   }
 
+  /** Issue #439: nor does the admin need to be an instructor at all, or reviews to be Open. */
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void an_admin_with_no_catalog_name_cannot_rank() throws Exception {
+  public void an_admin_with_no_catalog_name_can_rank_as_an_admin_even_after_reviews_close()
+      throws Exception {
     currentUser(EMAIL, true);
     when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
-    rankingPageSetup("Open");
+    rankingPageSetup("Closed");
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertTrue(canRankFrom(response));
+    assertTrue(rankingAsAdminFrom(response));
+  }
+
+  /** Issue #439: a course no longer on offer is history, which an admin reads but does not edit. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_cannot_rank_a_course_that_is_no_longer_on_offer() throws Exception {
+    currentUser(EMAIL, true);
+    when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", true)));
 
     MvcResult response =
         mockMvc
@@ -568,6 +627,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertFalse(canRankFrom(response));
+    assertFalse(rankingAsAdminFrom(response));
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
@@ -584,6 +644,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertFalse(canRankFrom(response));
+    assertFalse(rankingAsAdminFrom(response));
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
