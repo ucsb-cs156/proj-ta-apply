@@ -96,13 +96,17 @@ loadScripts(document, 'script');</script>
  <a href="../../controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">AdminApplicationsController.</span><code><a href="../../controller/AdminApplicationsController.html#updateAdminComments(java.lang.Long,java.lang.String)" class="member-name-link">updateAdminComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;adminComments)</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AdminApplicationsController.</span><code><a href="../../controller/AdminApplicationsController.html#setHidden(java.lang.Long,boolean)" class="member-name-link">setHidden</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ boolean&nbsp;hidden)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code><a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationsController.</span><code><a href="../../controller/ApplicationsController.html#updateComments(java.lang.Long,java.lang.String)" class="member-name-link">updateComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;postApplicationComments)</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AdminApplicationsController.</span><code><a href="../../controller/AdminApplicationsController.html#updateAdminComments(java.lang.Long,java.lang.String)" class="member-name-link">updateAdminComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;adminComments)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationsController.</span><code><a href="../../controller/ApplicationsController.html#updateComments(java.lang.Long,java.lang.String)" class="member-name-link">updateComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;postApplicationComments)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Methods in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> that return types with arguments of type <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
 <div class="summary-table three-column-summary">
@@ -198,7 +202,8 @@ stays on file for the admin's table and CSV.</div>
 <div class="col-second odd-row-color"><span class="type-name-label">ApplicationVisibility.</span><code><a href="../../services/ApplicationVisibility.html#real(java.util.List,boolean)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
  boolean&nbsp;developerModeOn)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">The applications that count and that the applicant has not cancelled.</div>
+<div class="block">The applications that count, that the applicant has not cancelled and that no admin has hidden:
+the ones faculty rank and admins assign.</div>
 </div>
 <div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#real(java.util.List,boolean)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
@@ -230,42 +235,48 @@ they were created.</div>
 <div class="col-last even-row-color">
 <div class="block">Whether the application counts as a real one, ignoring whether it was cancelled.</div>
 </div>
-<div class="col-first odd-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#preference(edu.ucsb.cs.taapply.entity.Application,java.lang.String)" class="member-name-link">preference</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
+<div class="col-first odd-row-color"><code>static boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationVisibility.</span><code><a href="../../services/ApplicationVisibility.html#isShown(edu.ucsb.cs.taapply.entity.Application,boolean)" class="member-name-link">isShown</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
+ boolean&nbsp;developerModeOn)</code></div>
 <div class="col-last odd-row-color">
+<div class="block">Whether the application counts and no admin has hidden it, cancelled or not.</div>
+</div>
+<div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#preference(edu.ucsb.cs.taapply.entity.Application,java.lang.String)" class="member-name-link">preference</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
+<div class="col-last even-row-color">
 <div class="block">How interested an applicant is in a course: their first or second choice, or the interest they
 marked for it, or null when they marked nothing or "Not Interested/Not Applicable" (the default
 answer, never stored).</div>
 </div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../AuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">AuditTrail</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record</a><wbr>(<a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../AuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">AuditTrail</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record</a><wbr>(<a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
  <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;after,
  <a href="../../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
-<div class="col-last even-row-color">
+<div class="col-last odd-row-color">
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
 is now, each row naming the logged-in user as its editor, and returns the rows written (empty
 when nothing changed).</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#saveAndRecord(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">saveAndRecord</a><wbr>(<a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
+<div class="col-first even-row-color"><code><a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#saveAndRecord(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">saveAndRecord</a><wbr>(<a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
  <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
  <a href="../../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-last even-row-color">
 <div class="block">Saves the edited application and records every difference from the snapshot taken before the
 edit, in one database transaction, and returns the application as saved.</div>
 </div>
-<div class="col-first even-row-color"><code>static <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">TaSeedFromUla.</span><code><a href="../../services/TaSeedFromUla.html#seed(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">seed</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;ula)</code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>static <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">TaSeedFromUla.</span><code><a href="../../services/TaSeedFromUla.html#seed(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">seed</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;ula)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">The ULA application's carried-over answers, as an unsaved TA-shaped application.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">snapshot</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>void</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#submit(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">submit</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application)</code></div>
-<div class="col-last even-row-color">
+<div class="col-first even-row-color"><code><a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">snapshot</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>void</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationService.</span><code><a href="../../services/DraftApplicationService.html#submit(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">submit</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Saves a newly submitted application and deletes the draft it grew from, in one transaction.</div>
 </div>
 </div>
@@ -298,7 +309,8 @@ stays on file for the admin's table and CSV.</div>
 <div class="col-second odd-row-color"><span class="type-name-label">ApplicationVisibility.</span><code><a href="../../services/ApplicationVisibility.html#real(java.util.List,boolean)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
  boolean&nbsp;developerModeOn)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">The applications that count and that the applicant has not cancelled.</div>
+<div class="block">The applications that count, that the applicant has not cancelled and that no admin has hidden:
+the ones faculty rank and admins assign.</div>
 </div>
 <div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#real(java.util.List,boolean)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,

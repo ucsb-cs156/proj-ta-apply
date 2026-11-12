@@ -3023,6 +3023,10 @@ have logged in: until then both names are null.</div>
 <dd>
 <div class="block">Whether the application counts as a real one, ignoring whether it was cancelled.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html#isShown(edu.ucsb.cs.taapply.entity.Application,boolean)" class="member-name-link">isShown(Application, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services">ApplicationVisibility</a></dt>
+<dd>
+<div class="block">Whether the application counts and no admin has hidden it, cancelled or not.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/HiringDecisions.html#isTentative(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">isTentative(Recruitment)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/HiringDecisions.html" title="class in edu.ucsb.cs.taapply.services">HiringDecisions</a></dt>
 <dd>
 <div class="block">Whether the released hiring decisions are now tentative: they were released, and applications
@@ -3945,7 +3949,8 @@ on a rank edit.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html#real(java.util.List,boolean)" class="member-name-link">real(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services">ApplicationVisibility</a></dt>
 <dd>
-<div class="block">The applications that count and that the applicant has not cancelled.</div>
+<div class="block">The applications that count, that the applicant has not cancelled and that no admin has hidden:
+the ones faculty rank and admins assign.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#real(java.util.List,boolean)" class="member-name-link">real(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>
@@ -4431,6 +4436,8 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 so with no source; creates the row if need be.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html#setFileOpener(liquibase.resource.ResourceAccessor)" class="member-name-link">setFileOpener(ResourceAccessor)</a> - Method in class edu.ucsb.cs.taapply.migration.<a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html" title="class in edu.ucsb.cs.taapply.migration">UtcToPacificTimestamps</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#setHidden(java.lang.Long,boolean)" class="member-name-link">setHidden(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html#setHidden(java.lang.String,java.lang.Long,java.lang.String,boolean)" class="member-name-link">setHidden(String, Long, String, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></dt>
 <dd>&nbsp;</dd>

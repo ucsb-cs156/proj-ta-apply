@@ -70,6 +70,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#uploadLegacyUlaCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" tabindex="0">uploadLegacyUlaCsv(String, MultipartFile)</a></li>
 <li><a href="#getApplication(java.lang.Long)" tabindex="0">getApplication(Long)</a></li>
 <li><a href="#editApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" tabindex="0">editApplication(Long, Integer, String, ApplicationsController.ApplicationFields)</a></li>
+<li><a href="#setHidden(java.lang.Long,boolean)" tabindex="0">setHidden(Long, boolean)</a></li>
 <li><a href="#updateAdminComments(java.lang.Long,java.lang.String)" tabindex="0">updateAdminComments(Long, String)</a></li>
 </ol>
 </li>
@@ -141,17 +142,21 @@ and the admin's own comments on it. Nothing here changes what the applicant wrot
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplication(java.lang.Long)" class="member-name-link">getApplication</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAdminComments(java.lang.Long,java.lang.String)" class="member-name-link">updateAdminComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;adminComments)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setHidden(java.lang.Long,boolean)" class="member-name-link">setHidden</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ boolean&nbsp;hidden)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uploadLegacyCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadLegacyCsv</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAdminComments(java.lang.Long,java.lang.String)" class="member-name-link">updateAdminComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;adminComments)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uploadLegacyCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadLegacyCsv</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ org.springframework.web.multipart.MultipartFile&nbsp;file)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../services/LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uploadLegacyUlaCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadLegacyUlaCsv</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  org.springframework.web.multipart.MultipartFile&nbsp;file)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../services/LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uploadLegacyUlaCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadLegacyUlaCsv</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
- org.springframework.web.multipart.MultipartFile&nbsp;file)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -289,6 +294,19 @@ com.opencsv.exceptions.CsvException</span></div>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
  @RequestBody
  <a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setHidden(java.lang.Long,boolean)">
+<h3>setHidden</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PutMapping("/hidden")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span>&nbsp;<span class="element-name">setHidden</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ @RequestParam
+ boolean&nbsp;hidden)</span></div>
 </div>
 </section>
 </li>

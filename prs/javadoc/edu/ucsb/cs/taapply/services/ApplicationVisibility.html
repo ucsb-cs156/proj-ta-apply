@@ -58,6 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#isReal(edu.ucsb.cs.taapply.entity.Application,boolean)" tabindex="0">isReal(Application, boolean)</a></li>
+<li><a href="#isShown(edu.ucsb.cs.taapply.entity.Application,boolean)" tabindex="0">isShown(Application, boolean)</a></li>
 <li><a href="#real(java.util.List,boolean)" tabindex="0">real(List, boolean)</a></li>
 <li><a href="#cancelled(java.util.List,boolean)" tabindex="0">cancelled(List, boolean)</a></li>
 </ol>
@@ -81,7 +82,10 @@ loadScripts(document, 'script');</script>
 always counts. Test applications entered by an admin and fake ones made by Developer Mode count
 only while Developer Mode is on, so that every feature of the app can be tried on test data; with
 it off, which is the only state production can be in, they are left out of every count, ranking,
-assignment and export, as test applications always were.</div>
+assignment and export, as test applications always were.
+
+<p>An application an admin has hidden (issue #440) still counts as one on file, but takes no part
+in ranking or assignment: it is in neither <a href="#real(java.util.List,boolean)"><code>real(List, boolean)</code></a> nor <a href="#cancelled(java.util.List,boolean)"><code>cancelled(List, boolean)</code></a>.</div>
 </div>
 </section>
 <section class="summary">
@@ -112,11 +116,18 @@ stays on file for the admin's table and CSV.</div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Whether the application counts as a real one, ignoring whether it was cancelled.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#real(java.util.List,boolean)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isShown(edu.ucsb.cs.taapply.entity.Application,boolean)" class="member-name-link">isShown</a><wbr>(<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
  boolean&nbsp;developerModeOn)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">The applications that count and that the applicant has not cancelled.</div>
+<div class="block">Whether the application counts and no admin has hidden it, cancelled or not.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#real(java.util.List,boolean)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
+ boolean&nbsp;developerModeOn)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">The applications that count, that the applicant has not cancelled and that no admin has hidden:
+the ones faculty rank and admins assign.</div>
 </div>
 </div>
 </div>
@@ -146,12 +157,23 @@ stays on file for the admin's table and CSV.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="isShown(edu.ucsb.cs.taapply.entity.Application,boolean)">
+<h3>isShown</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isShown</span><wbr><span class="parameters">(<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
+ boolean&nbsp;developerModeOn)</span></div>
+<div class="block">Whether the application counts and no admin has hidden it, cancelled or not.</div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="real(java.util.List,boolean)">
 <h3>real</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">real</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
  boolean&nbsp;developerModeOn)</span></div>
-<div class="block">The applications that count and that the applicant has not cancelled.</div>
+<div class="block">The applications that count, that the applicant has not cancelled and that no admin has hidden:
+the ones faculty rank and admins assign.</div>
 </div>
 </section>
 </li>
@@ -164,7 +186,9 @@ stays on file for the admin's table and CSV.</div>
 <div class="block">The applications that count and that the applicant cancelled and has not since replaced: an
 applicant who cancelled and then started a new application (issue #318) is on the lists of
 people who are applying, not on the list of people who withdrew, and the cancelled application
-stays on file for the admin's table and CSV.</div>
+stays on file for the admin's table and CSV. Hidden applications are not listed, and one whose
+new application is hidden is still someone who is applying, so the application they cancelled
+before it is not listed either: hiding an applicant never moves them to this list.</div>
 </div>
 </section>
 </li>
