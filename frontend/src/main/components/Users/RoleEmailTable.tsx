@@ -199,6 +199,10 @@ export default function RoleEmailTable({
         columns={columns}
         testid={testIdPrefix}
         fitContent
+        // A row is its person (issue #435): the Instructors page re-reads the list in the
+        // background, and a dropdown that has focus holds what it shows, so a person added or
+        // removed before it must not hand that dropdown, or its next choice, to someone else.
+        getRowId={(row) => row.email}
       />
     </CatalogNameContext.Provider>
   );

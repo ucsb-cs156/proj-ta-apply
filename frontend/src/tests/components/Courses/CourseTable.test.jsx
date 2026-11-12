@@ -80,6 +80,48 @@ describe("CourseTable tests", () => {
     });
   });
 
+  // Issue #435: the table's cells are made anew on every render, so a re-read takes the focus
+  // away instead of handing it to another course. Whatever the reason, a key pressed after the
+  // re-read must never toggle another course.
+  test("a key pressed after a re-read adds a course before the focused checkbox never toggles another course (issue #435)", async () => {
+    const client = new QueryClient();
+    const table = (courses) => (
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <CourseTable courses={courses} testIdPrefix="CourseTable" />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    // By the exact label: the course numbers keep the API's padding.
+    const taBox = (courseId) =>
+      document.querySelector(`[aria-label="TA for ${courseId}"]`);
+    const { rerender } = render(table(coursesFixtures.threeCourses));
+    const box = taBox("CMPSC   156");
+    box.focus();
+
+    // The Courses page's background re-read brings a course that sorts first.
+    rerender(
+      table([
+        {
+          courseId: "CMPSC     9",
+          title: "Intro",
+          needsTa: false,
+          needsUla: false,
+        },
+        ...coursesFixtures.threeCourses,
+      ]),
+    );
+
+    // The new course's box is not the one that has focus.
+    expect(taBox("CMPSC     9")).not.toHaveFocus();
+    await userEvent.keyboard(" ");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(
+      axiosMock.history.put.filter((r) => r.params.courseId !== "CMPSC   156"),
+    ).toEqual([]);
+  });
+
   test("unticking the ULA box PUTs both flags, flipping only ULA", async () => {
     renderTable();
 

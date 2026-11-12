@@ -275,6 +275,42 @@ describe("RoleEmailTable", () => {
 
   // ---- the Catalog Name column (issue #120) ----
 
+  test("a dropdown with focus stays its person's when a re-read adds someone before them (issue #435)", () => {
+    const onChange = vi.fn();
+    const table = (people) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable
+            data={people}
+            catalogNames={["CONRAD P", "GAUCHO C"]}
+            onCatalogNameChange={onChange}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { rerender } = render(
+      table([{ email: "zed@ucsb.edu", catalogName: "CONRAD P" }]),
+    );
+    const select = screen.getByLabelText("Catalog name for zed@ucsb.edu");
+    select.focus();
+
+    // The Instructors page's background re-read brings someone who sorts first.
+    rerender(
+      table([
+        { email: "amy@ucsb.edu", catalogName: null },
+        { email: "zed@ucsb.edu", catalogName: "CONRAD P" },
+      ]),
+    );
+
+    expect(screen.getByLabelText("Catalog name for zed@ucsb.edu")).toBe(select);
+    expect(select).toHaveFocus();
+    expect(screen.getByLabelText("Catalog name for amy@ucsb.edu")).toHaveValue(
+      "",
+    );
+    fireEvent.change(document.activeElement, { target: { value: "GAUCHO C" } });
+    expect(onChange).toHaveBeenCalledWith("zed@ucsb.edu", "GAUCHO C");
+  });
+
   test("without a catalog-name handler there is no Catalog Name column", () => {
     render(
       <QueryClientProvider client={queryClient}>
