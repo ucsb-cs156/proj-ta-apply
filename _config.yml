@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/435-stable-row-ids","number":436,"title":"Stable row ids so a refresh can't send a keystroke to the wrong course (closes #435)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/436"}]
+pull_requests: []
