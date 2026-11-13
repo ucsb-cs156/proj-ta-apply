@@ -1,4 +1,5 @@
 import CandidateTable from "main/components/Instructor/CandidateTable";
+import InterestLegend from "main/components/Common/InterestLegend";
 import candidatesFixtures from "fixtures/candidatesFixtures";
 import { http, HttpResponse } from "msw";
 
@@ -97,5 +98,31 @@ export const TiedWithColumnsHidden = {
       );
       return <Story />;
     },
+  ],
+};
+
+/**
+ * Issue #441: a filled-in table with every level of interest (1st choice, 2nd choice,
+ * Enthusiastic, Would Consider, Not Interested), each Course Preference cell in its pastel
+ * colour, the two candidates tied at rank 1 in yellow, and the legend underneath to compare the
+ * cells against. If the cells lose their colours (as they did once Bootstrap's table rule
+ * outranked the colour classes), this story's Chromatic snapshot shows plain white cells beside
+ * coloured swatches.
+ */
+export const InterestColours = {
+  parameters: { chromatic: { delay: 2500 } },
+  args: {
+    candidates: candidatesFixtures.map((candidate, i) => ({
+      ...candidate,
+      rank: i < 2 ? 1 : i + 1,
+    })),
+  },
+  decorators: [
+    (Story) => (
+      <>
+        <Story />
+        <InterestLegend testIdPrefix="CandidateTable-story-legend" />
+      </>
+    ),
   ],
 };
