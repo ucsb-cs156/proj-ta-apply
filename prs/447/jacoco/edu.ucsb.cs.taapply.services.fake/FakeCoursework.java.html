@@ -3,6 +3,7 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -26,45 +27,45 @@ import org.springframework.stereotype.Component;
 public class FakeCoursework {
 
   /** A course at another school, from {@code other_undergrad_courses.json}. */
-<span class="fc" id="L29">  public record OtherCourse(String school, String number, String title) {}</span>
+<span class="fc" id="L30">  public record OtherCourse(String school, String number, String title) {}</span>
 
-<span class="fc" id="L31">  static final List&lt;String&gt; GRADES = List.of(&quot;B-&quot;, &quot;B&quot;, &quot;B+&quot;, &quot;A-&quot;, &quot;A&quot;, &quot;A+&quot;);</span>
+<span class="fc" id="L32">  static final List&lt;String&gt; GRADES = List.of(&quot;B-&quot;, &quot;B&quot;, &quot;B+&quot;, &quot;A-&quot;, &quot;A&quot;, &quot;A+&quot;);</span>
 
   private final JsonNode prereqCourses;
   private final List&lt;List&lt;OtherCourse&gt;&gt; domesticSchools;
   private final List&lt;List&lt;OtherCourse&gt;&gt; internationalSchools;
 
-<span class="fc" id="L37">  public FakeCoursework() {</span>
-<span class="fc" id="L38">    ObjectMapper mapper = new ObjectMapper();</span>
-<span class="fc" id="L39">    this.prereqCourses = read(mapper, &quot;data/cmpsc_prereqs.json&quot;).get(&quot;courses&quot;);</span>
-<span class="fc" id="L40">    JsonNode other = read(mapper, &quot;data/other_undergrad_courses.json&quot;);</span>
-<span class="fc" id="L41">    this.domesticSchools = schools(other.get(&quot;domestic&quot;));</span>
-<span class="fc" id="L42">    this.internationalSchools = schools(other.get(&quot;international&quot;));</span>
-<span class="fc" id="L43">  }</span>
+<span class="fc" id="L38">  public FakeCoursework() {</span>
+<span class="fc" id="L39">    ObjectMapper mapper = new ObjectMapper();</span>
+<span class="fc" id="L40">    this.prereqCourses = read(mapper, &quot;data/cmpsc_prereqs.json&quot;).get(&quot;courses&quot;);</span>
+<span class="fc" id="L41">    JsonNode other = read(mapper, &quot;data/other_undergrad_courses.json&quot;);</span>
+<span class="fc" id="L42">    this.domesticSchools = schools(other.get(&quot;domestic&quot;));</span>
+<span class="fc" id="L43">    this.internationalSchools = schools(other.get(&quot;international&quot;));</span>
+<span class="fc" id="L44">  }</span>
 
   static JsonNode read(ObjectMapper mapper, String path) {
-<span class="fc" id="L46">    try (InputStream in = new ClassPathResource(path).getInputStream()) {</span>
-<span class="fc" id="L47">      return mapper.readTree(in);</span>
-<span class="fc" id="L48">    } catch (IOException e) {</span>
-<span class="fc" id="L49">      throw new UncheckedIOException(&quot;Cannot read &quot; + path, e);</span>
+<span class="fc" id="L47">    try (InputStream in = new ClassPathResource(path).getInputStream()) {</span>
+<span class="fc" id="L48">      return mapper.readTree(in);</span>
+<span class="fc" id="L49">    } catch (IOException e) {</span>
+<span class="fc" id="L50">      throw new UncheckedIOException(&quot;Cannot read &quot; + path, e);</span>
     }
   }
 
   /** One list of courses per school. */
   private static List&lt;List&lt;OtherCourse&gt;&gt; schools(JsonNode schools) {
-<span class="fc" id="L55">    List&lt;List&lt;OtherCourse&gt;&gt; all = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L56" title="All 2 branches covered.">    for (JsonNode school : schools) {</span>
-<span class="fc" id="L57">      List&lt;OtherCourse&gt; courses = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L58" title="All 2 branches covered.">      for (JsonNode course : school.get(&quot;courses&quot;)) {</span>
-<span class="fc" id="L59">        courses.add(</span>
+<span class="fc" id="L56">    List&lt;List&lt;OtherCourse&gt;&gt; all = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">    for (JsonNode school : schools) {</span>
+<span class="fc" id="L58">      List&lt;OtherCourse&gt; courses = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">      for (JsonNode course : school.get(&quot;courses&quot;)) {</span>
+<span class="fc" id="L60">        courses.add(</span>
             new OtherCourse(
-<span class="fc" id="L61">                school.get(&quot;school&quot;).asText(),</span>
-<span class="fc" id="L62">                course.get(&quot;number&quot;).asText(),</span>
-<span class="fc" id="L63">                course.get(&quot;title&quot;).asText()));</span>
-<span class="fc" id="L64">      }</span>
-<span class="fc" id="L65">      all.add(courses);</span>
-<span class="fc" id="L66">    }</span>
-<span class="fc" id="L67">    return all;</span>
+<span class="fc" id="L62">                school.get(&quot;school&quot;).asText(),</span>
+<span class="fc" id="L63">                course.get(&quot;number&quot;).asText(),</span>
+<span class="fc" id="L64">                course.get(&quot;title&quot;).asText()));</span>
+<span class="fc" id="L65">      }</span>
+<span class="fc" id="L66">      all.add(courses);</span>
+<span class="fc" id="L67">    }</span>
+<span class="fc" id="L68">    return all;</span>
   }
 
   /**
@@ -74,19 +75,19 @@ public class FakeCoursework {
    * which makes April to August quarter 2.
    */
   public static int latestQuarter(LocalDate today) {
-<span class="fc" id="L77">    int month = today.getMonthValue();</span>
-<span class="fc bfc" id="L78" title="All 4 branches covered.">    return today.getYear() * 10 + (month &lt;= 3 ? 1 : month &lt;= 8 ? 2 : 4);</span>
+<span class="fc" id="L78">    int month = today.getMonthValue();</span>
+<span class="fc bfc" id="L79" title="All 4 branches covered.">    return today.getYear() * 10 + (month &lt;= 3 ? 1 : month &lt;= 8 ? 2 : 4);</span>
   }
 
   /** The graduate (200-level and up) CMPSC courses, in catalog order. */
   public List&lt;String&gt; graduateCourses() {
-<span class="fc" id="L83">    List&lt;String&gt; graduate = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L84" title="All 2 branches covered.">    for (Map.Entry&lt;String, JsonNode&gt; entry : prereqCourses.properties()) {</span>
-<span class="fc bfc" id="L85" title="All 2 branches covered.">      if (Integer.parseInt(entry.getKey().replaceAll(&quot;\\D&quot;, &quot;&quot;)) &gt; 199) {</span>
-<span class="fc" id="L86">        graduate.add(entry.getKey());</span>
+<span class="fc" id="L84">    List&lt;String&gt; graduate = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    for (Map.Entry&lt;String, JsonNode&gt; entry : prereqCourses.properties()) {</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">      if (Integer.parseInt(entry.getKey().replaceAll(&quot;\\D&quot;, &quot;&quot;)) &gt; 199) {</span>
+<span class="fc" id="L87">        graduate.add(entry.getKey());</span>
       }
-<span class="fc" id="L88">    }</span>
-<span class="fc" id="L89">    return graduate;</span>
+<span class="fc" id="L89">    }</span>
+<span class="fc" id="L90">    return graduate;</span>
   }
 
   /**
@@ -98,53 +99,66 @@ public class FakeCoursework {
    * {@code latestQuarter}.
    */
   public List&lt;PriorCoursework&gt; ucsb(Random random, int wanted, int latestQuarter) {
-<span class="fc bfc" id="L101" title="All 2 branches covered.">    String start = random.nextBoolean() ? &quot;8&quot; : &quot;16&quot;;</span>
-<span class="fc" id="L102">    Set&lt;String&gt; seen = new LinkedHashSet&lt;&gt;(List.of(start));</span>
-<span class="fc" id="L103">    List&lt;String&gt; frontier = new ArrayList&lt;&gt;(List.of(start));</span>
-<span class="fc" id="L104">    List&lt;String&gt; taken = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L105" title="All 4 branches covered.">    while (taken.size() &lt; wanted &amp;&amp; !frontier.isEmpty()) {</span>
-<span class="fc" id="L106">      String next = frontier.remove(random.nextInt(frontier.size()));</span>
-<span class="fc" id="L107">      taken.add(next);</span>
-<span class="fc bfc" id="L108" title="All 2 branches covered.">      for (Map.Entry&lt;String, JsonNode&gt; entry : prereqCourses.properties()) {</span>
-<span class="fc bfc" id="L109" title="All 4 branches covered.">        if (!seen.contains(entry.getKey()) &amp;&amp; lists(entry.getValue(), next)) {</span>
-<span class="fc" id="L110">          seen.add(entry.getKey());</span>
-<span class="fc" id="L111">          frontier.add(entry.getKey());</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">    String start = random.nextBoolean() ? &quot;8&quot; : &quot;16&quot;;</span>
+<span class="fc" id="L103">    Set&lt;String&gt; seen = new LinkedHashSet&lt;&gt;(List.of(start));</span>
+<span class="fc" id="L104">    List&lt;String&gt; frontier = new ArrayList&lt;&gt;(List.of(start));</span>
+<span class="fc" id="L105">    List&lt;String&gt; taken = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L106" title="All 4 branches covered.">    while (taken.size() &lt; wanted &amp;&amp; !frontier.isEmpty()) {</span>
+<span class="fc" id="L107">      String next = frontier.remove(random.nextInt(frontier.size()));</span>
+<span class="fc" id="L108">      taken.add(next);</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">      for (Map.Entry&lt;String, JsonNode&gt; entry : prereqCourses.properties()) {</span>
+<span class="fc bfc" id="L110" title="All 4 branches covered.">        if (!seen.contains(entry.getKey()) &amp;&amp; lists(entry.getValue(), next)) {</span>
+<span class="fc" id="L111">          seen.add(entry.getKey());</span>
+<span class="fc" id="L112">          frontier.add(entry.getKey());</span>
         }
-<span class="fc" id="L113">      }</span>
-<span class="fc" id="L114">    }</span>
-<span class="fc" id="L115">    return ucsbRows(random, taken, latestQuarter);</span>
+<span class="fc" id="L114">      }</span>
+<span class="fc" id="L115">    }</span>
+<span class="fc" id="L116">    return ucsbRows(random, taken, latestQuarter);</span>
   }
 
   private static boolean lists(JsonNode course, String prerequisite) {
-<span class="fc bfc" id="L119" title="All 2 branches covered.">    for (JsonNode prereq : course.get(&quot;prereqs&quot;)) {</span>
-<span class="fc bfc" id="L120" title="All 2 branches covered.">      if (prereq.asText().equals(prerequisite)) {</span>
-<span class="fc" id="L121">        return true;</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">    for (JsonNode prereq : course.get(&quot;prereqs&quot;)) {</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">      if (prereq.asText().equals(prerequisite)) {</span>
+<span class="fc" id="L122">        return true;</span>
       }
-<span class="fc" id="L123">    }</span>
-<span class="fc" id="L124">    return false;</span>
+<span class="fc" id="L124">    }</span>
+<span class="fc" id="L125">    return false;</span>
   }
 
   /** Up to {@code wanted} graduate UCSB courses, chosen at random, each with a recent term. */
   public List&lt;PriorCoursework&gt; ucsbGraduate(Random random, int wanted, int latestQuarter) {
-<span class="fc" id="L129">    List&lt;String&gt; graduate = graduateCourses();</span>
-<span class="fc" id="L130">    Collections.shuffle(graduate, random);</span>
-<span class="fc" id="L131">    return ucsbRows(random, graduate.subList(0, Math.min(wanted, graduate.size())), latestQuarter);</span>
+<span class="fc" id="L130">    List&lt;String&gt; graduate = graduateCourses();</span>
+<span class="fc" id="L131">    Collections.shuffle(graduate, random);</span>
+<span class="fc" id="L132">    return ucsbRows(random, graduate.subList(0, Math.min(wanted, graduate.size())), latestQuarter);</span>
   }
 
   private List&lt;PriorCoursework&gt; ucsbRows(Random random, List&lt;String&gt; numbers, int latestQuarter) {
-<span class="fc" id="L135">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L136">    int quarter = walkBack(latestQuarter, numbers.size() - 1);</span>
-<span class="fc bfc" id="L137" title="All 2 branches covered.">    for (String number : numbers) {</span>
-<span class="fc" id="L138">      rows.add(</span>
-<span class="fc" id="L139">          PriorCoursework.builder()</span>
-<span class="fc" id="L140">              .ucsbCourse(true)</span>
-<span class="fc" id="L141">              .courseNumber(&quot;CMPSC &quot; + number)</span>
-<span class="fc" id="L142">              .term(term(quarter))</span>
-<span class="fc" id="L143">              .grade(pickGrade(random))</span>
-<span class="fc" id="L144">              .build());</span>
-<span class="fc" id="L145">      quarter = next(quarter);</span>
-<span class="fc" id="L146">    }</span>
-<span class="fc" id="L147">    return rows;</span>
+<span class="fc" id="L136">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L137">    int quarter = walkBack(latestQuarter, numbers.size() - 1);</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">    for (String number : numbers) {</span>
+<span class="fc" id="L139">      rows.add(</span>
+<span class="fc" id="L140">          PriorCoursework.builder()</span>
+<span class="fc" id="L141">              .ucsbCourse(true)</span>
+<span class="fc" id="L142">              .courseNumber(&quot;CMPSC &quot; + number)</span>
+<span class="fc" id="L143">              .term(term(quarter))</span>
+<span class="fc" id="L144">              .grade(pickGrade(random))</span>
+<span class="fc" id="L145">              .build());</span>
+<span class="fc" id="L146">      quarter = next(quarter);</span>
+<span class="fc" id="L147">    }</span>
+<span class="fc" id="L148">    return rows;</span>
+  }
+
+  /**
+   * The applicant's UCSB row for one course (issue #448), written as an applicant would (&quot;CMPSC
+   * 156&quot;), in one of the six quarters up to {@code latestQuarter}, with a passing grade.
+   */
+  public PriorCoursework ucsbCourse(Random random, String courseId, int latestQuarter) {
+<span class="fc" id="L156">    return PriorCoursework.builder()</span>
+<span class="fc" id="L157">        .ucsbCourse(true)</span>
+<span class="fc" id="L158">        .courseNumber(CourseMatching.display(courseId))</span>
+<span class="fc" id="L159">        .term(term(walkBack(latestQuarter, random.nextInt(6))))</span>
+<span class="fc" id="L160">        .grade(pickGrade(random))</span>
+<span class="fc" id="L161">        .build();</span>
   }
 
   /**
@@ -153,56 +167,74 @@ public class FakeCoursework {
    */
   public List&lt;PriorCoursework&gt; other(
       Random random, int wanted, boolean international, int latestQuarter) {
-<span class="fc bfc" id="L156" title="All 2 branches covered.">    List&lt;List&lt;OtherCourse&gt;&gt; schools = international ? internationalSchools : domesticSchools;</span>
-<span class="fc" id="L157">    List&lt;OtherCourse&gt; pool = new ArrayList&lt;&gt;(schools.get(random.nextInt(schools.size())));</span>
-<span class="fc" id="L158">    Collections.shuffle(pool, random);</span>
-<span class="fc" id="L159">    List&lt;OtherCourse&gt; chosen = pool.subList(0, Math.min(wanted, pool.size()));</span>
-<span class="fc" id="L160">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L161">    int quarter = walkBack(latestQuarter, chosen.size() - 1);</span>
-<span class="fc bfc" id="L162" title="All 2 branches covered.">    for (OtherCourse course : chosen) {</span>
-<span class="fc" id="L163">      rows.add(</span>
-<span class="fc" id="L164">          PriorCoursework.builder()</span>
-<span class="fc" id="L165">              .ucsbCourse(false)</span>
-<span class="fc" id="L166">              .otherSchool(course.school())</span>
-<span class="fc" id="L167">              .courseNumber(course.number())</span>
-<span class="fc" id="L168">              .courseTitle(course.title())</span>
-<span class="fc" id="L169">              .term(term(quarter))</span>
-<span class="fc" id="L170">              .grade(pickGrade(random))</span>
-<span class="fc" id="L171">              .build());</span>
-<span class="fc" id="L172">      quarter = next(quarter);</span>
-<span class="fc" id="L173">    }</span>
-<span class="fc" id="L174">    return rows;</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">    List&lt;List&lt;OtherCourse&gt;&gt; schools = international ? internationalSchools : domesticSchools;</span>
+<span class="fc" id="L171">    List&lt;OtherCourse&gt; pool = new ArrayList&lt;&gt;(schools.get(random.nextInt(schools.size())));</span>
+<span class="fc" id="L172">    Collections.shuffle(pool, random);</span>
+<span class="fc" id="L173">    List&lt;OtherCourse&gt; chosen = pool.subList(0, Math.min(wanted, pool.size()));</span>
+<span class="fc" id="L174">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L175">    int quarter = walkBack(latestQuarter, chosen.size() - 1);</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">    for (OtherCourse course : chosen) {</span>
+<span class="fc" id="L177">      rows.add(</span>
+<span class="fc" id="L178">          PriorCoursework.builder()</span>
+<span class="fc" id="L179">              .ucsbCourse(false)</span>
+<span class="fc" id="L180">              .otherSchool(course.school())</span>
+<span class="fc" id="L181">              .courseNumber(course.number())</span>
+<span class="fc" id="L182">              .courseTitle(course.title())</span>
+<span class="fc" id="L183">              .term(term(quarter))</span>
+<span class="fc" id="L184">              .grade(pickGrade(random))</span>
+<span class="fc" id="L185">              .build());</span>
+<span class="fc" id="L186">      quarter = next(quarter);</span>
+<span class="fc" id="L187">    }</span>
+<span class="fc" id="L188">    return rows;</span>
   }
 
   private static String pickGrade(Random random) {
-<span class="fc" id="L178">    return GRADES.get(random.nextInt(GRADES.size()));</span>
+<span class="fc" id="L192">    return GRADES.get(random.nextInt(GRADES.size()));</span>
   }
 
   private static int walkBack(int yyyyq, int steps) {
-<span class="fc" id="L182">    int quarter = yyyyq;</span>
-<span class="fc bfc" id="L183" title="All 2 branches covered.">    for (int i = 0; i &lt; steps; i++) {</span>
-<span class="fc" id="L184">      quarter = previous(quarter);</span>
+<span class="fc" id="L196">    int quarter = yyyyq;</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">    for (int i = 0; i &lt; steps; i++) {</span>
+<span class="fc" id="L198">      quarter = previous(quarter);</span>
     }
-<span class="fc" id="L186">    return quarter;</span>
+<span class="fc" id="L200">    return quarter;</span>
   }
 
   /** The quarter before, skipping summer (3): 20261 to 20254, 20244 to 20242. */
   static int previous(int yyyyq) {
-<span class="fc" id="L191">    int q = yyyyq % 10;</span>
-<span class="fc bfc" id="L192" title="All 2 branches covered.">    int result = q == 1 ? (yyyyq / 10 - 1) * 10 + 4 : yyyyq - 1;</span>
-<span class="fc bfc" id="L193" title="All 2 branches covered.">    return result % 10 == 3 ? result - 1 : result;</span>
+<span class="fc" id="L205">    int q = yyyyq % 10;</span>
+<span class="fc bfc" id="L206" title="All 2 branches covered.">    int result = q == 1 ? (yyyyq / 10 - 1) * 10 + 4 : yyyyq - 1;</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">    return result % 10 == 3 ? result - 1 : result;</span>
   }
 
   /** The quarter after, skipping summer (3): 20242 to 20244. */
   static int next(int yyyyq) {
-<span class="fc" id="L198">    int q = yyyyq % 10;</span>
-<span class="fc bfc" id="L199" title="All 2 branches covered.">    int result = q == 4 ? (yyyyq / 10 + 1) * 10 + 1 : yyyyq + 1;</span>
-<span class="fc bfc" id="L200" title="All 2 branches covered.">    return result % 10 == 3 ? result + 1 : result;</span>
+<span class="fc" id="L212">    int q = yyyyq % 10;</span>
+<span class="fc bfc" id="L213" title="All 2 branches covered.">    int result = q == 4 ? (yyyyq / 10 + 1) * 10 + 1 : yyyyq + 1;</span>
+<span class="fc bfc" id="L214" title="All 2 branches covered.">    return result % 10 == 3 ? result + 1 : result;</span>
   }
+
+  /** The quarter a fake transcript's term names: 20254 for F25; the inverse of {@link #term}. */
+  static int quarter(String term) {
+<span class="fc" id="L219">    return (2000 + Integer.parseInt(term.substring(1))) * 10 + &quot;WSMF&quot;.indexOf(term.charAt(0)) + 1;</span>
+  }
+
+  /**
+   * Puts {@code row} into a transcript that is in term order, after every row of its term or
+   * earlier, so the transcript stays in term order.
+   */
+  static void insertInTermOrder(List&lt;PriorCoursework&gt; rows, PriorCoursework row) {
+<span class="fc" id="L227">    int position = 0;</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">    while (position &lt; rows.size()</span>
+<span class="fc bfc" id="L229" title="All 2 branches covered.">        &amp;&amp; quarter(rows.get(position).getTerm()) &lt;= quarter(row.getTerm())) {</span>
+<span class="fc" id="L230">      position++;</span>
+    }
+<span class="fc" id="L232">    rows.add(position, row);</span>
+<span class="fc" id="L233">  }</span>
 
   /** A quarter as an applicant writes it: F25 for 20254. */
   static String term(int yyyyq) {
-<span class="fc" id="L205">    return &quot;WSMF&quot;.charAt(yyyyq % 10 - 1) + String.format(&quot;%02d&quot;, (yyyyq / 10) % 100);</span>
+<span class="fc" id="L237">    return &quot;WSMF&quot;.charAt(yyyyq % 10 - 1) + String.format(&quot;%02d&quot;, (yyyyq / 10) % 100);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

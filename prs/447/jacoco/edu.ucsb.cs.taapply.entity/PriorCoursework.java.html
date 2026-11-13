@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PriorCoursework.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.entity</a> &gt; <span class="el_source">PriorCoursework.java</span></div><h1>PriorCoursework.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.entity;
 
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import lombok.*;
@@ -59,26 +59,14 @@ public class PriorCoursework {
 <span class="fc bfc" id="L59" title="All 4 branches covered.">    if (courseNumber == null || courseNumber.isBlank()) {</span>
 <span class="fc" id="L60">      return null;</span>
     }
-<span class="fc bfc" id="L62" title="All 2 branches covered.">    String school = ucsbCourse ? &quot;UCSB&quot; : &quot;other:&quot; + squash(otherSchool);</span>
-<span class="fc" id="L63">    return String.join(&quot;|&quot;, school, squash(courseNumber), squash(term));</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">    String school = ucsbCourse ? &quot;UCSB&quot; : &quot;other:&quot; + CourseMatching.squash(otherSchool);</span>
+<span class="fc" id="L63">    return String.join(</span>
+<span class="fc" id="L64">        &quot;|&quot;, school, CourseMatching.squash(courseNumber), CourseMatching.squash(term));</span>
   }
 
   /** The key of this row; see {@link #key(boolean, String, String, String)}. */
   public String key() {
-<span class="fc" id="L68">    return key(ucsbCourse, otherSchool, courseNumber, term);</span>
-  }
-
-  /**
-   * Whether two course numbers name the same course (issue #442): equal after uppercasing both and
-   * removing all whitespace, so the padded course id &quot;CMPSC 156&quot; matches &quot;cmpsc 156&quot;. A null or
-   * blank number matches nothing.
-   */
-  public static boolean sameCourseNumber(String a, String b) {
-<span class="fc bfc" id="L77" title="All 8 branches covered.">    return a != null &amp;&amp; !a.isBlank() &amp;&amp; b != null &amp;&amp; squash(a).equals(squash(b));</span>
-  }
-
-  private static String squash(String text) {
-<span class="fc bfc" id="L81" title="All 2 branches covered.">    return text == null ? &quot;&quot; : text.toUpperCase(Locale.ROOT).replaceAll(&quot;\\s+&quot;, &quot;&quot;);</span>
+<span class="fc" id="L69">    return key(ucsbCourse, otherSchool, courseNumber, term);</span>
   }
 
   /**
@@ -87,26 +75,26 @@ public class PriorCoursework {
    * does not matter. A row with no key is kept as it is.
    */
   public static &lt;T&gt; List&lt;T&gt; collapse(List&lt;T&gt; rows, Function&lt;T, String&gt; keyOf) {
-<span class="fc" id="L90">    Map&lt;String, Integer&gt; positions = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L91">    List&lt;T&gt; collapsed = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L92" title="All 2 branches covered.">    for (T row : rows) {</span>
-<span class="fc" id="L93">      String key = keyOf.apply(row);</span>
-<span class="fc bfc" id="L94" title="All 2 branches covered.">      Integer position = key == null ? null : positions.get(key);</span>
-<span class="fc bfc" id="L95" title="All 2 branches covered.">      if (position != null) {</span>
-<span class="fc" id="L96">        collapsed.set(position, row);</span>
+<span class="fc" id="L78">    Map&lt;String, Integer&gt; positions = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L79">    List&lt;T&gt; collapsed = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">    for (T row : rows) {</span>
+<span class="fc" id="L81">      String key = keyOf.apply(row);</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">      Integer position = key == null ? null : positions.get(key);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">      if (position != null) {</span>
+<span class="fc" id="L84">        collapsed.set(position, row);</span>
       } else {
-<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (key != null) {</span>
-<span class="fc" id="L99">          positions.put(key, collapsed.size());</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (key != null) {</span>
+<span class="fc" id="L87">          positions.put(key, collapsed.size());</span>
         }
-<span class="fc" id="L101">        collapsed.add(row);</span>
+<span class="fc" id="L89">        collapsed.add(row);</span>
       }
-<span class="fc" id="L103">    }</span>
-<span class="fc" id="L104">    return collapsed;</span>
+<span class="fc" id="L91">    }</span>
+<span class="fc" id="L92">    return collapsed;</span>
   }
 
   /** The rows with identical courses collapsed to one; see {@link #collapse(List, Function)}. */
   public static List&lt;PriorCoursework&gt; collapse(List&lt;PriorCoursework&gt; rows) {
-<span class="fc" id="L109">    return collapse(rows, PriorCoursework::key);</span>
+<span class="fc" id="L97">    return collapse(rows, PriorCoursework::key);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
