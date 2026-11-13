@@ -12,7 +12,10 @@ export const SELECTION_TABLE_CLASS = "align-middle w-auto";
 /** Also on a read-only table, whose radio buttons are disabled but drawn at full strength. */
 export const READ_ONLY_SELECTION_TABLE_CLASS = "selection-table-read-only";
 
-/** On the label column's heading and cells: as wide as the widest label, on one line. */
+/**
+ * On the label column's heading and cells: as wide as the widest label, on one line. It sets no
+ * width, which in this auto-width table would stretch the table (issue #451).
+ */
 export const LABEL_CELL_CLASS = "selection-table-label";
 
 /** Also on a course label cell: monospace with its spaces kept, so padded course ids line up. */
