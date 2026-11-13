@@ -3,7 +3,17 @@ import type { DraftApplication } from "main/utils/draftApplications";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkTable from "main/components/PriorCoursework/PriorCourseworkTable";
 import { submittedText } from "main/utils/adminApplications";
-import { courseInterestLabel, gpaText } from "main/utils/applicationFields";
+import {
+  CourseInterestTable,
+  LevelTable,
+} from "main/components/Applications/SelectionTables";
+import {
+  DEFAULT_COURSE_INTEREST,
+  INTEREST_LEVELS,
+  gpaText,
+  proficiencyLevels,
+} from "main/utils/applicationFields";
+import { rowSlug } from "main/utils/formTableLayout";
 import {
   CLASS_LEVEL_LABELS,
   LANGUAGE_EXAM_LABELS,
@@ -55,32 +65,26 @@ const show = (value: unknown): string =>
 const yesNo = (value: boolean | null | undefined, draft: boolean): string =>
   draft ? yesNoLabel(value) : value ? "Yes" : "No";
 
-/**
- * One line per course, padded course id first so they line up, in course order. The map holds
- * only courses the applicant marked, so an empty map reads as blank, like any other unanswered
- * question.
- */
-const otherCourses = (
-  interests: Record<string, string> | null | undefined,
-): string => {
-  const marked = interests ?? {};
-  return Object.keys(marked)
-    .sort()
-    .map((courseId) => `${courseId}  ${courseInterestLabel(marked[courseId])}`)
-    .join("\n");
-};
+/** The names an applicant rated, in name order; none means the question reads as blank. */
+const ratedNames = (levels: Record<string, number> | null | undefined) =>
+  Object.keys(levels ?? {}).sort((a, b) => a.localeCompare(b));
 
-/** One line per answered name, in name order, each "name: level / top"; an empty map is blank. */
-const levelLines = (
-  levels: Record<string, number> | null | undefined,
-  top: number,
-): string => {
-  const answered = levels ?? {};
-  return Object.keys(answered)
-    .sort((a, b) => a.localeCompare(b))
-    .map((name) => `${name}: ${answered[name]} / ${top}`)
-    .join("\n");
-};
+/**
+ * The courses the applicant said something about, in course order: the two choices and every
+ * course they marked. The courses they left at the default are not stored, so they are not shown.
+ */
+const coursesOfInterest = (
+  application: ApplicationSummaryProps["application"],
+): string[] =>
+  [
+    ...new Set(
+      [
+        application.firstChoiceCourse,
+        application.secondChoiceCourse,
+        ...Object.keys(application.courseInterests ?? {}),
+      ].filter((courseId): courseId is string => !!courseId),
+    ),
+  ].sort();
 
 /** What the applicant submitted, shown back once the application can no longer be edited. */
 export default function ApplicationSummary({
@@ -93,7 +97,8 @@ export default function ApplicationSummary({
 }: ApplicationSummaryProps): React.JSX.Element {
   const isTa = type === "TA";
 
-  const rows: { label: string; value: string; mono?: boolean }[] = [
+  const id = (name: string) => `${testIdPrefix}-${name}`;
+  const rows: { label: string; value: React.ReactNode; mono?: boolean }[] = [
     // First, so nobody reads a cancelled application without knowing (issue #107).
     ...(application.status === "CANCELLED"
       ? [
@@ -193,18 +198,34 @@ export default function ApplicationSummary({
     );
   }
 
+  // Issue #443: the ratings and the other courses are shown in the form's own tables, read-only,
+  // so each scale reads the way the applicant saw it.
+  const topics = ratedNames(application.topicProficiencies);
   rows.push({
-    label: isTa
-      ? "Topic Proficiency (1 lowest to 5 highest)"
-      : "Topic Proficiency (1 very comfortable to 3 not familiar)",
-    value: levelLines(application.topicProficiencies, isTa ? 5 : 3),
-    mono: true,
+    label: "Topic Proficiency",
+    value: topics.length > 0 && (
+      <LevelTable
+        heading="Topic"
+        names={topics}
+        levels={proficiencyLevels(type)}
+        values={application.topicProficiencies ?? {}}
+        rowTestId={(topic) => id(`topic-${rowSlug(topic)}`)}
+      />
+    ),
   });
   if (!isTa) {
+    const interests = ratedNames(application.interests);
     rows.push({
-      label: "Interests (1 not interested to 5 very interested)",
-      value: levelLines(application.interests, 5),
-      mono: true,
+      label: "Interests",
+      value: interests.length > 0 && (
+        <LevelTable
+          heading="Interest"
+          names={interests}
+          levels={INTEREST_LEVELS}
+          values={application.interests ?? {}}
+          rowTestId={(interest) => id(`interest-${rowSlug(interest)}`)}
+        />
+      ),
     });
   }
   // Only the ULA form asks about availability (issue #76).
@@ -239,6 +260,8 @@ export default function ApplicationSummary({
             ),
           },
         ];
+  const courseInterests = application.courseInterests ?? {};
+  const courses = coursesOfInterest(application);
   rows.push(
     {
       label: "Previous Teaching Experience",
@@ -258,8 +281,22 @@ export default function ApplicationSummary({
     ...availability("Second"),
     {
       label: "Other Courses of Interest",
-      value: otherCourses(application.courseInterests),
-      mono: true,
+      value: courses.length > 0 && (
+        <CourseInterestTable
+          courses={courses}
+          rankOf={(courseId) =>
+            courseId === application.firstChoiceCourse
+              ? "1st choice"
+              : courseId === application.secondChoiceCourse
+                ? "2nd choice"
+                : null
+          }
+          interestIn={(courseId) =>
+            courseInterests[courseId] ?? DEFAULT_COURSE_INTEREST
+          }
+          rowTestId={(courseId) => id(`courseInterest-${rowSlug(courseId)}`)}
+        />
+      ),
     },
     { label: "Anything Else", value: show(application.comments) },
   );

@@ -153,14 +153,15 @@ public class ApplicationsApplyWebIT extends ApplicationsWebTestCase {
     setupRegularUser();
     goTo("/apply/" + recruitment.getId());
 
-    // The topic table's headings are the worded three-point scale, and there is no 4 or 5.
-    assertThat(page.getByTestId("ApplyPage-topicProficiencies")).containsText("1-Very comfortable");
-    assertThat(page.getByTestId("ApplyPage-topicProficiencies")).containsText("3-Not familiar");
+    // The topic table's headings are the worded three-point scale, and there is no 4 or 5. Each
+    // heading is the number with its wording under it (issue #443), which reads as one line.
+    assertThat(page.getByTestId("ApplyPage-topicProficiencies")).containsText("1 Very comfortable");
+    assertThat(page.getByTestId("ApplyPage-topicProficiencies")).containsText("3 Not familiar");
     assertThat(page.getByTestId("ApplyPage-topic-JavaScript-3")).isVisible();
     assertThat(page.getByTestId("ApplyPage-topic-JavaScript-4")).not().isVisible();
     // The interests table lists the admin's areas with a 1 to 5 scale.
-    assertThat(page.getByTestId("ApplyPage-interests")).containsText("1-Not interested");
-    assertThat(page.getByTestId("ApplyPage-interests")).containsText("5-Very interested");
+    assertThat(page.getByTestId("ApplyPage-interests")).containsText("1 Not interested");
+    assertThat(page.getByTestId("ApplyPage-interests")).containsText("5 Very interested");
 
     // Issue #140: the instructions for the teaching-demo video, under the video link box.
     assertThat(page.getByTestId("ApplyPage-videoLink-instructions"))

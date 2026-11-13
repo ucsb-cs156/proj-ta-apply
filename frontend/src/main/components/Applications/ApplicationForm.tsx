@@ -1,10 +1,10 @@
-import { Fragment, useEffect, useRef, useState } from "react";
-import { Alert, Button, Col, Form, Row, Table } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Button, Col, Form, Row } from "react-bootstrap";
 import {
-  CHOICE_CELL_STYLE,
-  LABEL_CELL_STYLE,
-  SELECTION_TABLE_CLASS,
-} from "main/utils/formTableLayout";
+  CourseInterestTable,
+  LevelTable,
+} from "main/components/Applications/SelectionTables";
+import { rowSlug } from "main/utils/formTableLayout";
 import { useForm } from "react-hook-form";
 import { useBackend } from "main/utils/useBackend";
 import type { CatalogCourse } from "main/utils/bulkCourses";
@@ -20,8 +20,6 @@ import {
 } from "main/utils/priorCoursework";
 import { courseLabel, type CourseInstructors } from "main/utils/courseLabels";
 import {
-  UNTAKEN_EXPLANATION,
-  UNTAKEN_TITLE,
   untakenAskedFor,
   untakenCommentsReminder,
 } from "main/utils/untakenCourses";
@@ -31,7 +29,6 @@ import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplan
 import type { NoticeVersion } from "main/utils/notices";
 import type { NoticeFillIn } from "main/utils/noticeFields";
 import {
-  COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
   INTEREST_LEVELS,
   OTHER_MAJOR,
@@ -224,7 +221,7 @@ const CLASS_LEVEL_OPTIONS = [
 ];
 
 /** "CMPSC   156" becomes "CMPSC-156": a course id or topic as it can appear in an element id. */
-const slug = (name: string): string => name.replace(/\s+/g, "-");
+const slug = rowSlug;
 
 /**
  * Enter in a text-like field must not submit the application (issue #309); only the Submit
@@ -1310,51 +1307,16 @@ export default function ApplicationForm({
             No topics are listed yet.
           </p>
         ) : (
-          <Table size="sm" responsive className={SELECTION_TABLE_CLASS}>
-            <thead>
-              <tr>
-                <th style={LABEL_CELL_STYLE}>Topic</th>
-                {topicLevels.map((level) => (
-                  <th
-                    key={level.value}
-                    className="text-center fw-normal"
-                    style={CHOICE_CELL_STYLE}
-                  >
-                    {level.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {topicList.map((topic) => {
-                const rowId = id(`topic-${slug(topic)}`);
-                return (
-                  <tr key={topic} data-testid={rowId}>
-                    <td style={LABEL_CELL_STYLE}>{topic}</td>
-                    {topicLevels.map(({ value: level }) => (
-                      <td key={level} className="text-center">
-                        <Form.Check
-                          type="radio"
-                          name={rowId}
-                          id={`${rowId}-${level}`}
-                          data-testid={`${rowId}-${level}`}
-                          aria-label={`${topic}: ${level}`}
-                          value={level}
-                          checked={proficiencies[topic] === level}
-                          onChange={() =>
-                            setProficiencies((previous) => ({
-                              ...previous,
-                              [topic]: level,
-                            }))
-                          }
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
+          <LevelTable
+            heading="Topic"
+            names={topicList}
+            levels={topicLevels}
+            values={proficiencies}
+            onChange={(topic, level) =>
+              setProficiencies((previous) => ({ ...previous, [topic]: level }))
+            }
+            rowTestId={(topic) => id(`topic-${slug(topic)}`)}
+          />
         )}
       </Form.Group>
 
@@ -1372,51 +1334,19 @@ export default function ApplicationForm({
               No interests are listed yet.
             </p>
           ) : (
-            <Table size="sm" responsive className={SELECTION_TABLE_CLASS}>
-              <thead>
-                <tr>
-                  <th style={LABEL_CELL_STYLE}>Interest</th>
-                  {INTEREST_LEVELS.map((level) => (
-                    <th
-                      key={level.value}
-                      className="text-center fw-normal"
-                      style={CHOICE_CELL_STYLE}
-                    >
-                      {level.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {interestList.map((interest) => {
-                  const rowId = id(`interest-${slug(interest)}`);
-                  return (
-                    <tr key={interest} data-testid={rowId}>
-                      <td style={LABEL_CELL_STYLE}>{interest}</td>
-                      {INTEREST_LEVELS.map(({ value: level }) => (
-                        <td key={level} className="text-center">
-                          <Form.Check
-                            type="radio"
-                            name={rowId}
-                            id={`${rowId}-${level}`}
-                            data-testid={`${rowId}-${level}`}
-                            aria-label={`${interest}: ${level}`}
-                            value={level}
-                            checked={interestLevels[interest] === level}
-                            onChange={() =>
-                              setInterestLevels((previous) => ({
-                                ...previous,
-                                [interest]: level,
-                              }))
-                            }
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
+            <LevelTable
+              heading="Interest"
+              names={interestList}
+              levels={INTEREST_LEVELS}
+              values={interestLevels}
+              onChange={(interest, level) =>
+                setInterestLevels((previous) => ({
+                  ...previous,
+                  [interest]: level,
+                }))
+              }
+              rowTestId={(interest) => id(`interest-${slug(interest)}`)}
+            />
           )}
         </Form.Group>
       )}
@@ -1594,114 +1524,18 @@ export default function ApplicationForm({
             No courses are listed for this recruitment yet.
           </p>
         ) : (
-          <Table size="sm" responsive className={SELECTION_TABLE_CLASS}>
-            <thead>
-              <tr>
-                {!isTa && (
-                  <th
-                    aria-label="Warnings"
-                    style={LABEL_CELL_STYLE}
-                    data-testid={id("courseInterests-warning-header")}
-                  />
-                )}
-                <th style={LABEL_CELL_STYLE}>Course</th>
-                {COURSE_INTEREST_OPTIONS.map((option) => (
-                  <th
-                    key={option.value}
-                    className="text-center fw-normal"
-                    style={CHOICE_CELL_STYLE}
-                  >
-                    {option.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {courseList.map((courseId) => {
-                const rank = rankOf(courseId);
-                const rowId = id(`courseInterest-${slug(courseId)}`);
-                const legendId = `${rowId}-untaken-warning`;
-                const flagged = !isTa && untaken.has(courseId);
-                return (
-                  <Fragment key={courseId}>
-                    <tr
-                      data-testid={rowId}
-                      aria-describedby={flagged ? legendId : undefined}
-                    >
-                      {!isTa && (
-                        <td className="text-center text-danger">
-                          {untaken.has(courseId) && (
-                            <span
-                              title={UNTAKEN_TITLE}
-                              data-testid={`${rowId}-untaken`}
-                            >
-                              <WarningIcon
-                                role="img"
-                                aria-hidden={undefined}
-                                aria-label={UNTAKEN_TITLE}
-                              />
-                            </span>
-                          )}
-                        </td>
-                      )}
-                      <td
-                        style={{
-                          ...LABEL_CELL_STYLE,
-                          fontFamily: "monospace",
-                          whiteSpace: "pre",
-                        }}
-                      >
-                        {courseLabel(courseId, courseInstructors)}
-                      </td>
-                      {rank ? (
-                        <td
-                          colSpan={COURSE_INTEREST_OPTIONS.length}
-                          className="text-center"
-                          data-testid={`${rowId}-choice`}
-                        >
-                          <strong>{rank}</strong>
-                        </td>
-                      ) : (
-                        COURSE_INTEREST_OPTIONS.map((option) => (
-                          <td key={option.value} className="text-center">
-                            <Form.Check
-                              type="radio"
-                              name={rowId}
-                              id={`${rowId}-${option.value}`}
-                              data-testid={`${rowId}-${option.value}`}
-                              aria-label={`${courseId}: ${option.label}`}
-                              value={option.value}
-                              checked={interestIn(courseId) === option.value}
-                              onChange={() =>
-                                setInterests((previous) => ({
-                                  ...previous,
-                                  [courseId]: option.value,
-                                }))
-                              }
-                            />
-                          </td>
-                        ))
-                      )}
-                    </tr>
-                    {flagged && (
-                      <tr
-                        id={legendId}
-                        className="small text-danger"
-                        data-testid={legendId}
-                      >
-                        <td colSpan={2 + COURSE_INTEREST_OPTIONS.length}>
-                          <p className="mb-0">
-                            <WarningIcon className="me-1 align-text-bottom" />
-                            {UNTAKEN_EXPLANATION}
-                          </p>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </Table>
+          <CourseInterestTable
+            courses={courseList}
+            rankOf={rankOf}
+            interestIn={interestIn}
+            onChange={(courseId, value) =>
+              setInterests((previous) => ({ ...previous, [courseId]: value }))
+            }
+            courseLabel={(courseId) => courseLabel(courseId, courseInstructors)}
+            untaken={isTa ? undefined : untaken}
+            rowTestId={(courseId) => id(`courseInterest-${slug(courseId)}`)}
+            warningHeaderTestId={id("courseInterests-warning-header")}
+          />
         )}
       </Form.Group>
 
