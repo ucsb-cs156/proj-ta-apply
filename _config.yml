@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/441-ranking-colours","number":446,"title":"Restore the ranking page's interest and tie colours (#441)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/446"}]
+pull_requests: []
