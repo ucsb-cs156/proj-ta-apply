@@ -189,16 +189,26 @@ body {
 /* How interested an applicant is in a course (issue #199): Bootstrap's pastel success, warning and
    danger backgrounds. utils/interestDisplay.ts names the class for a preference; AssignmentsTable's
    lecture cells, the InterestLegend swatches and CandidateTable's Course Preference cells carry it.
-   1st choice, 2nd choice and Enthusiastic share the green. */
+   1st choice, 2nd choice and Enthusiastic share the green.
+
+   Each class sets --bs-table-bg as well as background-color (issue #441). On a td of a Bootstrap
+   .table, Bootstrap's `.table > :not(caption) > * > *` rule sets background-color to
+   var(--bs-table-bg) and outranks a single class, so background-color alone is lost there (as on
+   CandidateTable's Course Preference cells); setting the variable is how Bootstrap's own
+   .table-success colours a cell. background-color still colours everything outside a table, such
+   as the legend's swatches and the divs inside AssignmentsTable's cells. */
 .candidate-course-rank-enthusiastic {
+  --bs-table-bg: #d1e7dd;
   background-color: #d1e7dd;
 }
 
 .candidate-course-rank-would-consider {
+  --bs-table-bg: #fff3cd;
   background-color: #fff3cd;
 }
 
 .candidate-course-rank-not-applicable {
+  --bs-table-bg: #f8d7da;
   background-color: #f8d7da;
 }
 
@@ -212,8 +222,10 @@ body {
    (components/Instructor/CandidateTable.tsx), issue #415 likewise.
    ============================================================================ */
 
-/* A Ranking cell whose rank another candidate shares (issue #311). */
+/* A Ranking cell whose rank another candidate shares (issue #311). It is a td of a Bootstrap
+   .table, so it sets --bs-table-bg too (issue #441; see .candidate-course-rank-enthusiastic). */
 .candidate-rank-tied {
+  --bs-table-bg: #ffff00;
   background-color: #ffff00;
 }
 

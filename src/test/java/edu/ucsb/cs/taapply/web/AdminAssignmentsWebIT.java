@@ -129,6 +129,63 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(page.getByLabel("Ranking for Ada Lovelace")).hasValue("1");
   }
 
+  /**
+   * Issue #441: on the ranking page, each Course Preference cell is coloured by the applicant's
+   * interest and a tied Ranking cell is yellow. The colour classes sit on the td of a Bootstrap
+   * table, whose own cell rule once outranked them and left every cell white; the colours are
+   * measured in the browser, with no inline style.
+   */
+  @Test
+  public void ranking_page_cells_are_coloured_by_interest_and_ties() throws Exception {
+    // As in the #439 test above, an admin ranks a TBD course after reviews have closed.
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    recruitment.setReviewStatus("Closed");
+    recruitmentRepository.save(recruitment);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    course.setInstructor("TBD");
+    recruitmentCourseRepository.save(course);
+    Application first = seedApplicant(recruitment);
+    first.setFirstChoiceCourse("CMPSC   156");
+    first = applicationRepository.save(first);
+    Application considering =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(recruitment.getId())
+                .email("grace@ucsb.edu")
+                .firstName("Grace")
+                .lastName("Hopper")
+                .courseInterests(
+                    new java.util.HashMap<>(
+                        java.util.Map.of(
+                            "CMPSC   156",
+                            edu.ucsb.cs.taapply.enums.CourseInterest.WOULD_CONSIDER)))
+                .build());
+
+    setupAdminUser();
+    goTo("/recruitments/" + recruitment.getId() + "/courses/" + course.getId() + "/ranking");
+
+    Locator firstPreference = page.getByTestId("CandidateTable-preference-" + first.getId());
+    assertThat(firstPreference).hasClass(Pattern.compile("candidate-course-rank-enthusiastic"));
+    assertNull(firstPreference.getAttribute("style"));
+    assertEquals(
+        "rgb(209, 231, 221)", firstPreference.evaluate("e => getComputedStyle(e).backgroundColor"));
+    Locator consideringPreference =
+        page.getByTestId("CandidateTable-preference-" + considering.getId());
+    assertThat(consideringPreference)
+        .hasClass(Pattern.compile("candidate-course-rank-would-consider"));
+    assertEquals(
+        "rgb(255, 243, 205)",
+        consideringPreference.evaluate("e => getComputedStyle(e).backgroundColor"));
+
+    // Both ranked 1: their Ranking cells turn yellow.
+    page.getByLabel("Ranking for Ada Lovelace").fill("1");
+    page.getByLabel("Ranking for Grace Hopper").fill("1");
+    Locator tiedCell = page.getByLabel("Ranking for Ada Lovelace").locator("xpath=ancestor::td");
+    assertThat(tiedCell).hasClass(Pattern.compile("candidate-rank-tied"));
+    assertEquals("rgb(255, 255, 0)", tiedCell.evaluate("e => getComputedStyle(e).backgroundColor"));
+  }
+
   /** A second window of the same admin, on the same page. */
   private com.microsoft.playwright.BrowserContext openSecondWindow(
       com.microsoft.playwright.Page[] holder) {
