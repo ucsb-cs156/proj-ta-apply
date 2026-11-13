@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/451-selection-table-width","number":452,"title":"Selection tables shrink to their content (drop the label column's width: 1%) (#451)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/452"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/443-rating-tables","number":450,"title":"Application view: ratings and other courses in the form's tables, read-only (#443)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/450"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/451-selection-table-width","number":452,"title":"Selection tables shrink to their content (drop the label column's width: 1%) (#451)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/452"}]
