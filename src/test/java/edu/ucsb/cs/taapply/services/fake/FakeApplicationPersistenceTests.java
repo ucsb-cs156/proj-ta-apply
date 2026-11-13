@@ -48,7 +48,14 @@ class FakeApplicationPersistenceTests {
 
   private FakeApplicationGenerator generator() {
     return new FakeApplicationGenerator(
-        new FakeCoursework(), courses, taTopics, ulaTopics, ulaInterests, taMajors, ulaMajors);
+        new FakeCoursework(),
+        courses,
+        taTopics,
+        ulaTopics,
+        ulaInterests,
+        taMajors,
+        ulaMajors,
+        new FakeExplanationService());
   }
 
   @Test

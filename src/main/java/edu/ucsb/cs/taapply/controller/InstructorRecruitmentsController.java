@@ -30,6 +30,7 @@ import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.RankingVersionService;
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -614,18 +615,6 @@ public class InstructorRecruitmentsController extends ApiController {
        */
       String comments) {}
 
-  /**
-   * Issue #442: the first of the applicant's UCSB prior courses whose course number is the course's
-   * id (ignoring case and spacing), or null if they list none. Courses taken elsewhere never match.
-   */
-  static PriorCoursework ucsbCourseTaken(Application application, String courseId) {
-    return application.getPriorCoursework().stream()
-        .filter(PriorCoursework::isUcsbCourse)
-        .filter(taken -> PriorCoursework.sameCourseNumber(taken.getCourseNumber(), courseId))
-        .findFirst()
-        .orElse(null);
-  }
-
   /** A saved rank, and the version of the course's ranking list that the save produced. */
   public static record RankEdit(Integer rank, Integer version) {}
 
@@ -679,7 +668,10 @@ public class InstructorRecruitmentsController extends ApiController {
     return eligible(scope, includeNotInterested).stream()
         .map(
             application -> {
-              PriorCoursework taken = ucsbCourseTaken(application, scope.course().getCourseId());
+              // Issue #442: the course on the applicant's UCSB transcript, by the shared rule.
+              PriorCoursework taken =
+                  CourseMatching.firstUcsbCourse(
+                      application.getPriorCoursework(), scope.course().getCourseId());
               return new Candidate(
                   application.getId(),
                   ranks.get(application.getId()),

@@ -1,0 +1,41 @@
+{
+  "byCourse": {
+    "CMPSC 5A": [
+      "Did not take CMPSC 5A, but have taken CMPSC 8 and PSTAT 120A so I feel prepared."
+    ],
+    "CMPSC 5B": [
+      "Did not take CMPSC 5B, but have taken CMPSC 8 and 9 and PSTAT 120A, so I feel prepared."
+    ],
+    "CMPSC 8": [
+      "Did not take CMPSC 8 at UCSB, but have extensive Python programming background."
+    ],
+    "CMPSC 9": [
+      "Did not take CMPSC 9 at UCSB, but have taken CMPSC 24 and have Python programming background."
+    ],
+    "CMPSC 16": [
+      "Did not take {course} at UCSB, but took an equivalent course at SBCC."
+    ],
+    "CMPSC 24": [
+      "Did not take {course} at UCSB, but took an equivalent course at SBCC."
+    ],
+    "CMPSC 32": [
+      "Did not take {course} at UCSB, but took an equivalent course at SBCC."
+    ],
+    "CMPSC 41": [
+      "Did not take {course} at UCSB, but took an equivalent course at SBCC."
+    ],
+    "CMPSC 42": [
+      "Did not take {course} at UCSB, but took an equivalent course at SBCC."
+    ],
+    "CMPSC 64": [
+      "Did not take {course} at UCSB, but took an equivalent course at SBCC."
+    ]
+  },
+  "lowerDivision": [
+    "Took an equivalent at Community College."
+  ],
+  "upperDivision": [
+    "Have not taken {course} at UCSB, but took an equivalent course on Study Abroad (EAP).",
+    "Have not taken {course} at UCSB, but have done research with the professor of the course that covers the subject matter."
+  ]
+}

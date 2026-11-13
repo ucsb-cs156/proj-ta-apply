@@ -45,7 +45,8 @@ public class FakeApplicationsRuleComplianceTests {
           ulaTopics,
           ulaInterests,
           mock(TaMajorRepository.class),
-          mock(UlaMajorRepository.class));
+          mock(UlaMajorRepository.class),
+          new edu.ucsb.cs.taapply.services.fake.FakeExplanationService());
 
   static ApplicationFields fieldsOf(Application a) {
     List<PriorCourseworkFields> prior =
