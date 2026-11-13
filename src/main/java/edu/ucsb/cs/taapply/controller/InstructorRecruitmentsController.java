@@ -9,6 +9,7 @@ import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.User;
@@ -29,6 +30,7 @@ import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.RankingVersionService;
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -595,7 +597,23 @@ public class InstructorRecruitmentsController extends ApiController {
       String videoLink,
       /** Issue #292: no GPAs yet, so the table says "First quarter" instead of a blank. */
       boolean firstQuarter,
-      Integer rankingVersion) {}
+      Integer rankingVersion,
+      /**
+       * Issue #442: whether the applicant lists this course among their UCSB prior coursework. The
+       * ULA ranking table shows a warning in place of the term when they do not.
+       */
+      boolean tookCourse,
+      /**
+       * Issue #442: the term the applicant took the course, as they wrote it; null if not taken.
+       */
+      String courseTerm,
+      /** Issue #442: the grade the applicant earned in the course; null if not taken or none. */
+      String courseGrade,
+      /**
+       * The applicant's own comments at the end of the application, where a ULA applicant explains
+       * their preparation for a course they have not taken (issue #447 review).
+       */
+      String comments) {}
 
   /** A saved rank, and the version of the course's ranking list that the save produced. */
   public static record RankEdit(Integer rank, Integer version) {}
@@ -649,24 +667,33 @@ public class InstructorRecruitmentsController extends ApiController {
         .forEach(row -> ranks.put(row.getApplicationId(), row.getRank()));
     return eligible(scope, includeNotInterested).stream()
         .map(
-            application ->
-                new Candidate(
-                    application.getId(),
-                    ranks.get(application.getId()),
-                    preferenceLabel(application, scope.course().getCourseId()),
-                    application.getFirstName(),
-                    application.getLastName(),
-                    application.getEmail(),
-                    application.getMajor(),
-                    application.getClassLevel() == null ? null : application.getClassLevel().name(),
-                    application.getYearInProgram(),
-                    application.getGraduationDate(),
-                    application.getGpaMajor(),
-                    application.getGpaOverall(),
-                    application.getPreviousServiceAsUla(),
-                    application.getVideoLink(),
-                    application.isFirstQuarter(),
-                    rankingVersion))
+            application -> {
+              // Issue #442: the course on the applicant's UCSB transcript, by the shared rule.
+              PriorCoursework taken =
+                  CourseMatching.firstUcsbCourse(
+                      application.getPriorCoursework(), scope.course().getCourseId());
+              return new Candidate(
+                  application.getId(),
+                  ranks.get(application.getId()),
+                  preferenceLabel(application, scope.course().getCourseId()),
+                  application.getFirstName(),
+                  application.getLastName(),
+                  application.getEmail(),
+                  application.getMajor(),
+                  application.getClassLevel() == null ? null : application.getClassLevel().name(),
+                  application.getYearInProgram(),
+                  application.getGraduationDate(),
+                  application.getGpaMajor(),
+                  application.getGpaOverall(),
+                  application.getPreviousServiceAsUla(),
+                  application.getVideoLink(),
+                  application.isFirstQuarter(),
+                  rankingVersion,
+                  taken != null,
+                  taken == null ? null : taken.getTerm(),
+                  taken == null ? null : taken.getGrade(),
+                  application.getComments());
+            })
         .toList();
   }
 

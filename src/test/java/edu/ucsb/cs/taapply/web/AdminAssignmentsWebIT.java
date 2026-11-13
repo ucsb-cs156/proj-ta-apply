@@ -186,6 +186,72 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertEquals("rgb(255, 255, 0)", tiedCell.evaluate("e => getComputedStyle(e).backgroundColor"));
   }
 
+  /**
+   * Issue #447 review: the ranking page's Comments column is hidden until ticked, then 25% of the
+   * window wide (at least 200px), and dragging its heading's edge widens and narrows it, never
+   * below 200px nor past 80% of the window. Widths are measured in the browser, which is what
+   * applies the column's class.
+   */
+  @Test
+  public void the_ranking_pages_comments_column_is_opt_in_and_resizable() throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    recruitment.setReviewStatus("Closed");
+    recruitmentRepository.save(recruitment);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    course.setInstructor("TBD");
+    recruitmentCourseRepository.save(course);
+    Application applicant = seedApplicant(recruitment);
+    applicant.setFirstChoiceCourse("CMPSC   156");
+    applicant.setComments("I have tutored this course for two quarters.");
+    applicationRepository.save(applicant);
+
+    setupAdminUser();
+    page.setViewportSize(1200, 800);
+    goTo("/recruitments/" + recruitment.getId() + "/courses/" + course.getId() + "/ranking");
+    assertThat(page.getByLabel("Ranking for Ada Lovelace")).isVisible();
+    assertThat(page.getByText("I have tutored this course for two quarters.")).hasCount(0);
+
+    page.getByTestId("CandidateTable-columns-toggle").click();
+    page.getByRole(
+            com.microsoft.playwright.options.AriaRole.CHECKBOX,
+            new com.microsoft.playwright.Page.GetByRoleOptions().setName("Comments"))
+        .check();
+    page.keyboard().press("Escape");
+    Locator cell = page.getByText("I have tutored this course for two quarters.");
+    assertThat(cell).isVisible();
+    // 25% of the 1200px window.
+    assertEquals(300.0, cell.boundingBox().width, 1.0);
+
+    Locator handle = page.getByTestId("CandidateTable-resize-comments");
+    var box = handle.boundingBox();
+    double x = box.x + box.width / 2;
+    double y = box.y + box.height / 2;
+    page.mouse().move(x, y);
+    page.mouse().down();
+    page.mouse().move(x + 150, y, new com.microsoft.playwright.Mouse.MoveOptions().setSteps(5));
+    page.mouse().up();
+    assertEquals(450.0, cell.boundingBox().width, 1.0);
+
+    // Never narrower than 200px...
+    box = handle.boundingBox();
+    x = box.x + box.width / 2;
+    page.mouse().move(x, y);
+    page.mouse().down();
+    page.mouse().move(x - 1000, y, new com.microsoft.playwright.Mouse.MoveOptions().setSteps(5));
+    page.mouse().up();
+    assertEquals(200.0, cell.boundingBox().width, 1.0);
+
+    // ...nor wider than 80% of the window.
+    box = handle.boundingBox();
+    x = box.x + box.width / 2;
+    page.mouse().move(x, y);
+    page.mouse().down();
+    page.mouse().move(x + 3000, y, new com.microsoft.playwright.Mouse.MoveOptions().setSteps(5));
+    page.mouse().up();
+    assertEquals(960.0, cell.boundingBox().width, 1.0);
+  }
+
   /** A second window of the same admin, on the same page. */
   private com.microsoft.playwright.BrowserContext openSecondWindow(
       com.microsoft.playwright.Page[] holder) {

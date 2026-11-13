@@ -16,6 +16,11 @@ const candidatesFixtures = [
     previousServiceAsUla: 2,
     videoLink: "https://example.edu/ada",
     rankingVersion: 3,
+    tookCourse: true,
+    courseTerm: "F25",
+    courseGrade: "A",
+    comments:
+      "I have tutored CMPSC 156 students through the CS club for two quarters.",
   },
   {
     applicationId: 2,
@@ -34,6 +39,10 @@ const candidatesFixtures = [
     previousServiceAsUla: 10,
     videoLink: "https://example.edu/grace",
     rankingVersion: 3,
+    tookCourse: true,
+    courseTerm: "W25",
+    courseGrade: "A-",
+    comments: "Happy to help with any course.",
   },
   {
     applicationId: 3,
@@ -52,6 +61,11 @@ const candidatesFixtures = [
     previousServiceAsUla: 1,
     videoLink: "https://example.edu/alan",
     rankingVersion: 3,
+    tookCourse: false,
+    courseTerm: null,
+    courseGrade: null,
+    comments:
+      "I have not taken this course at UCSB, but I took the equivalent course at my previous college and earned an A.\nI have also built several web applications with React and Spring Boot during my internship.",
   },
   {
     applicationId: 4,
@@ -70,6 +84,10 @@ const candidatesFixtures = [
     previousServiceAsUla: 0,
     videoLink: null,
     rankingVersion: 3,
+    tookCourse: true,
+    courseTerm: "S24",
+    courseGrade: null,
+    comments: null,
   },
 ];
 
@@ -93,6 +111,10 @@ export const candidatesWithNotInterested = [
     previousServiceAsUla: 0,
     videoLink: null,
     rankingVersion: 3,
+    tookCourse: false,
+    courseTerm: null,
+    courseGrade: null,
+    comments: null,
   },
 ];
 

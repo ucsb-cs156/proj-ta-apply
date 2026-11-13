@@ -105,6 +105,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
             .gpaOverall(3.7)
             .previousServiceAsUla(2)
             .videoLink("https://example.edu/video")
+            .comments("I tutored this course informally.")
             .firstChoiceCourse("CMPSC   156")
             .adminComments("Private staff notes")
             .postApplicationComments("Applicant follow-up")
@@ -220,7 +221,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         {"applicationId":30,"rank":1,"preference":"1st Choice","firstName":"Ada","lastName":"Lovelace",
         "email":"student@ucsb.edu","major":"Computer Science","classLevel":"PHD","yearInProgram":"2",
         "graduationDate":"Spring 2028","gpaMajor":3.8,"gpaOverall":3.7,"previousServiceAsUla":2,
-        "videoLink":"https://example.edu/video","firstQuarter":false,"rankingVersion":0}
+        "videoLink":"https://example.edu/video","firstQuarter":false,"rankingVersion":0,
+        "tookCourse":false,"courseTerm":null,"courseGrade":null,
+        "comments":"I tutored this course informally."}
         """;
     var expected = mapper.createArrayNode();
     expected.add(mapper.readTree(expectedRow));
@@ -234,6 +237,85 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     }
     assertEquals(expected, mapper.readTree(actual));
     verify(candidateRankingRepository).findByRecruitmentCourseId(20L);
+  }
+
+  /**
+   * Issue #442: a candidate who lists the course among their UCSB prior coursework gets its term
+   * and grade. The course number matches ignoring case and spacing; a course taken at another
+   * school with the same number does not count, and the first UCSB match wins.
+   */
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void a_candidate_who_took_the_course_at_ucsb_gets_its_term_and_grade() throws Exception {
+    application.setPriorCoursework(
+        List.of(
+            PriorCoursework.builder()
+                .ucsbCourse(false)
+                .otherSchool("Partner University")
+                .courseNumber("CMPSC 156")
+                .term("S24")
+                .grade("C")
+                .build(),
+            PriorCoursework.builder()
+                .ucsbCourse(true)
+                .courseNumber("CMPSC 130A")
+                .term("W25")
+                .build(),
+            PriorCoursework.builder()
+                .ucsbCourse(true)
+                .courseNumber(" cmpsc156 ")
+                .term("F25")
+                .grade("A-")
+                .build(),
+            PriorCoursework.builder()
+                .ucsbCourse(true)
+                .courseNumber("CMPSC 156")
+                .term("W26")
+                .grade("B")
+                .build()));
+
+    var row =
+        mapper
+            .readTree(
+                mockMvc
+                    .perform(get(BASE))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString())
+            .get(0);
+    assertTrue(row.get("tookCourse").asBoolean());
+    assertEquals("F25", row.get("courseTerm").asText());
+    assertEquals("A-", row.get("courseGrade").asText());
+  }
+
+  /** Issue #442: the same course taken only at another school leaves the candidate untaken. */
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void a_course_taken_only_elsewhere_does_not_count_as_taken() throws Exception {
+    application.setPriorCoursework(
+        List.of(
+            PriorCoursework.builder()
+                .ucsbCourse(false)
+                .otherSchool("Partner University")
+                .courseNumber("CMPSC 156")
+                .term("S24")
+                .grade("A")
+                .build()));
+
+    var row =
+        mapper
+            .readTree(
+                mockMvc
+                    .perform(get(BASE))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString())
+            .get(0);
+    assertFalse(row.get("tookCourse").asBoolean());
+    assertTrue(row.get("courseTerm").isNull());
+    assertTrue(row.get("courseGrade").isNull());
   }
 
   /** Issue #292: a first quarter applicant has no GPAs, and the page is told so. */

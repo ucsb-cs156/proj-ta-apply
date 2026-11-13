@@ -4,6 +4,8 @@ import AxiosMockAdapter from "axios-mock-adapter";
 import userEvent from "@testing-library/user-event";
 import CandidateTable, {
   DEFAULT_SORT_TOOLTIP,
+  NOT_TAKEN_MARK,
+  NOT_TAKEN_TOOLTIP,
   TIED_WARNING,
 } from "main/components/Instructor/CandidateTable";
 import candidatesFixtures from "fixtures/candidatesFixtures";
@@ -23,8 +25,18 @@ const taHeaders = [
   "Year in Program",
   "Expected Graduation",
 ];
+/** The TA headings once Comments (hidden by default, issue #447 review) is shown. */
+const taHeadersWithComments = [
+  ...taHeaders.slice(0, 4),
+  "Comments",
+  ...taHeaders.slice(4),
+];
+// Issue #447 review: When Course Taken and Course Grade come right after Course Preference.
 const ulaHeaders = [
-  ...taHeaders.slice(0, 6),
+  ...taHeaders.slice(0, 2),
+  "When Course Taken",
+  "Course Grade",
+  ...taHeaders.slice(2, 6),
   "Year in Program",
   "Expected Graduation",
   "GPA in Major",
@@ -247,6 +259,8 @@ describe("CandidateTable", () => {
     ["Overall GPA", ["Grace", "Ada", "Alan", "Katherine"]],
     ["Quarters of Previous ULA Service", ["Katherine", "Alan", "Ada", "Grace"]],
     ["Video Link", ["Ada", "Alan", "Grace", "Katherine"]],
+    // Issue #442: by the term as written; those who did not take the course come last.
+    ["When Course Taken", ["Ada", "Katherine", "Grace", "Alan"]],
   ])(
     "ULA %s sorts numerically where appropriate, in both directions",
     (label, expected) => {
@@ -257,6 +271,294 @@ describe("CandidateTable", () => {
       expect(names()).toEqual([...expected].reverse());
     },
   );
+
+  /** Issue #442: whether a ULA candidate took the course at UCSB, and their grade. */
+  describe("when the course was taken (issue #442)", () => {
+    const row = (firstName) =>
+      screen.getByRole("link", { name: firstName, exact: true }).closest("tr");
+    const cellUnder = (firstName, label) =>
+      row(firstName).querySelectorAll("td")[ulaHeaders.indexOf(label)];
+
+    test("a candidate who took the course shows its term and grade", () => {
+      table({ type: "ULA" });
+      expect(cellUnder("Ada", "When Course Taken")).toHaveTextContent(/^F25$/);
+      expect(cellUnder("Ada", "Course Grade")).toHaveTextContent(/^A$/);
+      expect(cellUnder("Grace", "When Course Taken")).toHaveTextContent(
+        /^W25$/,
+      );
+      expect(cellUnder("Grace", "Course Grade")).toHaveTextContent(/^A-$/);
+      // Taken with no grade given: the term, and an empty grade.
+      expect(cellUnder("Katherine", "When Course Taken")).toHaveTextContent(
+        /^S24$/,
+      );
+      expect(cellUnder("Katherine", "Course Grade")).toBeEmptyDOMElement();
+      expect(screen.queryByTestId("CandidateTable-not-taken-1")).toBeNull();
+    });
+
+    test("a candidate who did not take it gets a warning with an explanatory tooltip", async () => {
+      table({ type: "ULA" });
+      expect(NOT_TAKEN_MARK).toBe("\u26A0\uFE0F");
+      expect(NOT_TAKEN_TOOLTIP).toBe(
+        "Student did not take course; see comments for their explanation of their qualifications to ULA for this course.",
+      );
+      const mark = screen.getByTestId("CandidateTable-not-taken-3");
+      expect(cellUnder("Alan", "When Course Taken")).toContainElement(mark);
+      expect(mark).toHaveTextContent(/^⚠️$/);
+      expect(mark).toHaveAttribute("aria-label", NOT_TAKEN_TOOLTIP);
+      expect(mark).toHaveAttribute("tabindex", "0");
+      expect(cellUnder("Alan", "Course Grade")).toBeEmptyDOMElement();
+
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+      await userEvent.hover(mark);
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveTextContent(NOT_TAKEN_TOOLTIP);
+      expect(tooltip).toHaveAttribute(
+        "id",
+        "CandidateTable-not-taken-tooltip-3",
+      );
+    });
+
+    test("the When Course Taken heading is stacked, one word per line", () => {
+      table({ type: "ULA" });
+      const stack = screen
+        .getByRole("button", { name: "When Course Taken" })
+        .querySelector("span");
+      expect(stack).toHaveClass("candidate-table-stacked-heading");
+      expect(stack).not.toHaveAttribute("style");
+      expect(stack.querySelectorAll("br")).toHaveLength(2);
+      // The other headings are not stacked.
+      expect(
+        screen.getByRole("button", { name: "Course Grade" }).innerHTML,
+      ).toBe("Course Grade");
+    });
+
+    test("Course Grade sorts by grade, with candidates who have none last", () => {
+      table({ type: "ULA" });
+      const sortBy = () =>
+        fireEvent.click(screen.getByRole("button", { name: "Course Grade" }));
+      sortBy();
+      expect(names()).toEqual(["Ada", "Grace", "Alan", "Katherine"]);
+      sortBy();
+      expect(names()).toEqual(["Alan", "Katherine", "Grace", "Ada"]);
+    });
+
+    test("TA tables have neither column", () => {
+      table({ type: "TA" });
+      expect(headingLabels()).not.toContain("When Course Taken");
+      expect(headingLabels()).not.toContain("Course Grade");
+      expect(screen.queryByTestId("CandidateTable-not-taken-3")).toBeNull();
+    });
+
+    test("both columns are in the Columns menu, shown by default, and can be hidden", async () => {
+      table({
+        type: "ULA",
+        columnsStorageKey: "candidateRanking.hiddenColumns.1.ULA",
+      });
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      );
+      for (const id of ["courseTerm", "courseGrade"])
+        expect(
+          screen.getByTestId(`CandidateTable-columns-${id}`),
+        ).toBeChecked();
+      for (const label of ["When Course Taken", "Course Grade"])
+        expect(screen.getByRole("checkbox", { name: label })).toBeChecked();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-hide-courseTerm"),
+      );
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-hide-courseGrade"),
+      );
+      expect(headingLabels()).toEqual(
+        ulaHeaders.filter(
+          (label) => !["When Course Taken", "Course Grade"].includes(label),
+        ),
+      );
+      expect(
+        JSON.parse(
+          localStorage.getItem("candidateRanking.hiddenColumns.1.ULA"),
+        ),
+      ).toEqual(["courseTerm", "courseGrade"]);
+    });
+  });
+
+  /** Issue #447 review: the applicant's comments, an opt-in column that can be resized. */
+  describe("the Comments column", () => {
+    const SHOWN_KEY = `${KEY}.shown`;
+    const showComments = () => localStorage.setItem(SHOWN_KEY, '["comments"]');
+    const commentsCell = (firstName) =>
+      screen
+        .getByRole("link", { name: firstName, exact: true })
+        .closest("tr")
+        .querySelectorAll("td")[taHeadersWithComments.indexOf("Comments")];
+    const handle = () => screen.getByTestId("CandidateTable-resize-comments");
+    const widthVar = () =>
+      screen
+        .getByRole("table")
+        .style.getPropertyValue("--candidate-comments-width");
+    /** The heading's width as the browser would measure it before any drag. */
+    const measuredAt = (width) =>
+      vi
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockReturnValue({ width });
+    afterEach(() => vi.restoreAllMocks());
+
+    test.each(["TA", "ULA"])(
+      "is hidden by default in a %s table, and offered unticked in the Columns menu",
+      async (type) => {
+        table({ type });
+        expect(headingLabels()).not.toContain("Comments");
+        expect(
+          screen.queryByText(candidatesFixtures[1].comments),
+        ).not.toBeInTheDocument();
+        await userEvent.click(
+          screen.getByTestId("CandidateTable-columns-toggle"),
+        );
+        expect(
+          screen.getByRole("checkbox", { name: "Comments" }),
+        ).not.toBeChecked();
+      },
+    );
+
+    test("stays hidden for an instructor who chose other columns before it existed", () => {
+      localStorage.setItem(KEY, JSON.stringify(["email"]));
+      table();
+      expect(headingLabels()).toEqual(
+        taHeaders.filter((label) => label !== "Email"),
+      );
+    });
+
+    test("ticking it shows it between Last Name and Email, and is remembered apart from the hidden list", async () => {
+      table();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      );
+      await userEvent.click(screen.getByRole("checkbox", { name: "Comments" }));
+      expect(headingLabels()).toEqual(taHeadersWithComments);
+      expect(JSON.parse(localStorage.getItem(SHOWN_KEY))).toEqual(["comments"]);
+      expect(localStorage.getItem(KEY)).toBeNull();
+    });
+
+    test("once shown it is shown again on the next visit, and its hide link hides it", async () => {
+      showComments();
+      table({ type: "ULA" });
+      expect(headingLabels()).toEqual([
+        ...ulaHeaders.slice(0, 6),
+        "Comments",
+        ...ulaHeaders.slice(6),
+      ]);
+      await userEvent.click(screen.getByTestId("CandidateTable-hide-comments"));
+      expect(headingLabels()).not.toContain("Comments");
+      expect(JSON.parse(localStorage.getItem(SHOWN_KEY))).toEqual([]);
+    });
+
+    test("hiding another column leaves it shown", async () => {
+      showComments();
+      table();
+      await userEvent.click(screen.getByTestId("CandidateTable-hide-email"));
+      expect(headingLabels()).toContain("Comments");
+      expect(JSON.parse(localStorage.getItem(KEY))).toEqual(["email"]);
+    });
+
+    test("each cell holds the applicant's comments in the column's class, line breaks kept", () => {
+      showComments();
+      table();
+      const alan = commentsCell("Alan");
+      const box = alan.querySelector("div");
+      expect(box).toHaveClass("candidate-comments-cell");
+      expect(box).not.toHaveAttribute("style");
+      expect(box.textContent).toBe(candidatesFixtures[2].comments);
+      expect(candidatesFixtures[2].comments).toContain("\n");
+      expect(commentsCell("Katherine")).toHaveTextContent(/^$/);
+      expect(alan).not.toHaveAttribute("class");
+    });
+
+    test("its heading is the column's width, with a hide link clear of the drag handle", () => {
+      showComments();
+      table();
+      const sortButton = screen.getByRole("button", { name: "Comments" });
+      expect(sortButton.parentElement).toHaveClass("candidate-comments-cell");
+      expect(sortButton.parentElement.tagName).toBe("DIV");
+      expect(screen.getByTestId("CandidateTable-hide-comments")).toHaveClass(
+        "column-hide-link",
+        "column-hide-link-beside-resize",
+      );
+      expect(screen.getByTestId("CandidateTable-hide-email")).not.toHaveClass(
+        "column-hide-link-beside-resize",
+      );
+      // Only the Comments column can be resized.
+      expect(screen.getAllByRole("separator")).toHaveLength(1);
+      expect(sortButton.closest("th")).toContainElement(handle());
+    });
+
+    test("has a drag handle that takes its default width from the class until it is dragged", () => {
+      showComments();
+      table();
+      expect(handle()).toHaveAttribute("aria-label", "Resize Comments column");
+      expect(handle()).toHaveAttribute("aria-orientation", "vertical");
+      expect(handle()).toHaveAttribute("aria-valuemin", "200");
+      expect(handle()).not.toHaveAttribute("aria-valuenow");
+      expect(handle()).toHaveAttribute("tabindex", "0");
+      expect(handle()).toHaveClass("column-resize-handle");
+      expect(handle()).not.toHaveClass("column-resize-handle-active");
+      expect(screen.getByRole("table")).not.toHaveAttribute("style");
+    });
+
+    test("dragging the handle widens and narrows the column, within 200px and 80% of the window", () => {
+      showComments();
+      table();
+      measuredAt(300);
+      const removed = vi.spyOn(window, "removeEventListener");
+      // The press does not start a text selection.
+      expect(fireEvent.pointerDown(handle(), { clientX: 100 })).toBe(false);
+      expect(handle()).toHaveClass("column-resize-handle-active");
+      fireEvent.pointerMove(window, { clientX: 150 });
+      expect(widthVar()).toBe("350px");
+      expect(handle()).toHaveAttribute("aria-valuenow", "350");
+      fireEvent.pointerMove(window, { clientX: 0 });
+      expect(widthVar()).toBe("200px");
+      fireEvent.pointerMove(window, { clientX: 5000 });
+      expect(widthVar()).toBe(`${0.8 * window.innerWidth}px`);
+      fireEvent.pointerUp(window);
+      expect(handle()).not.toHaveClass("column-resize-handle-active");
+      // Letting go removes both listeners the press added.
+      expect(removed).toHaveBeenCalledWith("pointermove", expect.any(Function));
+      expect(removed).toHaveBeenCalledWith("pointerup", expect.any(Function));
+      // After the drag, moving the pointer changes nothing.
+      fireEvent.pointerMove(window, { clientX: 150 });
+      expect(widthVar()).toBe(`${0.8 * window.innerWidth}px`);
+      // A second drag starts from the width the first one left.
+      fireEvent.pointerDown(handle(), { clientX: 1000 });
+      fireEvent.pointerMove(window, { clientX: 900 });
+      expect(widthVar()).toBe(`${0.8 * window.innerWidth - 100}px`);
+      fireEvent.pointerUp(window);
+    });
+
+    test("the left and right arrow keys narrow and widen it by 20px from its measured width", () => {
+      showComments();
+      table();
+      measuredAt(300);
+      fireEvent.keyDown(handle(), { key: "ArrowRight" });
+      expect(widthVar()).toBe("320px");
+      fireEvent.keyDown(handle(), { key: "ArrowRight" });
+      expect(widthVar()).toBe("340px");
+      fireEvent.keyDown(handle(), { key: "ArrowLeft" });
+      expect(widthVar()).toBe("320px");
+      expect(fireEvent.keyDown(handle(), { key: "Enter" })).toBe(true);
+      expect(fireEvent.keyDown(handle(), { key: "ArrowLeft" })).toBe(false);
+      expect(widthVar()).toBe("300px");
+    });
+
+    test("a nudge never makes it narrower than 200px", () => {
+      showComments();
+      table();
+      measuredAt(0);
+      fireEvent.keyDown(handle(), { key: "ArrowLeft" });
+      expect(widthVar()).toBe("200px");
+      fireEvent.keyDown(handle(), { key: "ArrowRight" });
+      expect(widthVar()).toBe("220px");
+    });
+  });
 
   /** Issue #292: no GPAs yet, so the cells say so, and sorting by GPA does not trip over them. */
   describe("a first quarter candidate", () => {
@@ -278,7 +580,10 @@ describe("CandidateTable", () => {
       return within(row)
         .getAllByRole("cell")
         .map((cell) => cell.textContent)
-        .slice(8, 10);
+        .slice(
+          ulaHeaders.indexOf("GPA in Major"),
+          ulaHeaders.indexOf("Overall GPA") + 1,
+        );
     };
 
     test("has First quarter in both GPA cells, and the others their numbers", () => {
@@ -1102,7 +1407,8 @@ describe("CandidateTable", () => {
       expect(headerTexts()).not.toContain("Major");
       expect(
         screen.getByTestId("CandidateTable-columns-toggle"),
-      ).toHaveTextContent("Columns (1 hidden)");
+        // Comments is hidden by default (issue #447 review), so two are hidden.
+      ).toHaveTextContent("Columns (2 hidden)");
       await userEvent.click(screen.getByTestId("CandidateTable-columns-major"));
       expect(headerTexts()).toEqual(taHeaders);
     });
@@ -1120,7 +1426,8 @@ describe("CandidateTable", () => {
       await userEvent.click(
         screen.getByTestId("CandidateTable-columns-select-all"),
       );
-      expect(headerTexts()).toEqual(taHeaders);
+      // Show All shows the Comments column too, between Last Name and Email.
+      expect(headerTexts()).toEqual(taHeadersWithComments);
     });
 
     test("the hidden columns are read from this browser's storage", () => {
@@ -1162,7 +1469,9 @@ describe("CandidateTable", () => {
       await userEvent.click(
         screen.getByTestId("CandidateTable-hide-videoLink"),
       );
-      expect(headerTexts()).toEqual(ulaHeaders.slice(0, -1));
+      expect(headerTexts()).toEqual(
+        ulaHeaders.filter((label) => label !== "Video Link"),
+      );
     });
   });
 });
