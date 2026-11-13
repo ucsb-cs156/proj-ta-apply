@@ -68,6 +68,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#graduateCourses()" tabindex="0">graduateCourses()</a></li>
 <li><a href="#ucsb(java.util.Random,int,int)" tabindex="0">ucsb(Random, int, int)</a></li>
 <li><a href="#ucsbGraduate(java.util.Random,int,int)" tabindex="0">ucsbGraduate(Random, int, int)</a></li>
+<li><a href="#ucsbCourse(java.util.Random,java.lang.String,int)" tabindex="0">ucsbCourse(Random, String, int)</a></li>
 <li><a href="#other(java.util.Random,int,boolean,int)" tabindex="0">other(Random, int, boolean, int)</a></li>
 </ol>
 </li>
@@ -163,11 +164,19 @@ for an international student, a domestic one otherwise.</div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Up to <code>wanted</code> UCSB courses, taken from CMPSC 8 or 16 (chosen by the generator) onward.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ucsbGraduate(java.util.Random,int,int)" class="member-name-link">ucsbGraduate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
- int&nbsp;wanted,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ucsbCourse(java.util.Random,java.lang.String,int)" class="member-name-link">ucsbCourse</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId,
  int&nbsp;latestQuarter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The applicant's UCSB row for one course (issue #448), written as an applicant would ("CMPSC
+156"), in one of the six quarters up to <code>latestQuarter</code>, with a passing grade.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ucsbGraduate(java.util.Random,int,int)" class="member-name-link">ucsbGraduate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
+ int&nbsp;wanted,
+ int&nbsp;latestQuarter)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Up to <code>wanted</code> graduate UCSB courses, chosen at random, each with a recent term.</div>
 </div>
 </div>
@@ -248,6 +257,18 @@ wanted</code> come back when the graph runs out. Terms step forward one quarter 
  int&nbsp;wanted,
  int&nbsp;latestQuarter)</span></div>
 <div class="block">Up to <code>wanted</code> graduate UCSB courses, chosen at random, each with a recent term.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="ucsbCourse(java.util.Random,java.lang.String,int)">
+<h3>ucsbCourse</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></span>&nbsp;<span class="element-name">ucsbCourse</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId,
+ int&nbsp;latestQuarter)</span></div>
+<div class="block">The applicant's UCSB row for one course (issue #448), written as an applicant would ("CMPSC
+156"), in one of the six quarters up to <code>latestQuarter</code>, with a passing grade.</div>
 </div>
 </section>
 </li>

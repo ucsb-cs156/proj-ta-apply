@@ -62,6 +62,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.services.fake">edu.ucsb.cs.taapply.services.fake</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.utilities">edu.ucsb.cs.taapply.utilities</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -106,6 +108,20 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="edu.ucsb.cs.taapply.services.fake">
 <h2>Uses of <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a> in <a href="../../services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a> that return <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">FakeCoursework.</span><code><a href="../../services/fake/FakeCoursework.html#ucsbCourse(java.util.Random,java.lang.String,int)" class="member-name-link">ucsbCourse</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId,
+ int&nbsp;latestQuarter)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The applicant's UCSB row for one course (issue #448), written as an applicant would ("CMPSC
+156"), in one of the six quarters up to <code>latestQuarter</code>, with a passing grade.</div>
+</div>
+</div>
 <div class="caption"><span>Methods in <a href="../../services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a> that return types with arguments of type <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -133,6 +149,47 @@ for an international student, a domestic one otherwise.</div>
  int&nbsp;latestQuarter)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Up to <code>wanted</code> graduate UCSB courses, chosen at random, each with a recent term.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.utilities">
+<h2>Uses of <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a> in <a href="../../utilities/package-summary.html">edu.ucsb.cs.taapply.utilities</a></h2>
+<div class="caption"><span>Methods in <a href="../../utilities/package-summary.html">edu.ucsb.cs.taapply.utilities</a> that return <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">CourseMatching.</span><code><a href="../../utilities/CourseMatching.html#firstUcsbCourse(java.util.List,java.lang.String)" class="member-name-link">firstUcsbCourse</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;&nbsp;rows,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The first of the rows that is the UCSB course <code>courseId</code>, or null if none is.</div>
+</div>
+</div>
+<div class="caption"><span>Methods in <a href="../../utilities/package-summary.html">edu.ucsb.cs.taapply.utilities</a> with parameters of type <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static boolean</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">CourseMatching.</span><code><a href="../../utilities/CourseMatching.html#isUcsbCourse(edu.ucsb.cs.taapply.entity.PriorCoursework,java.lang.String)" class="member-name-link">isUcsbCourse</a><wbr>(<a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Whether a prior course is the UCSB course <code>courseId</code>; a course elsewhere never is.</div>
+</div>
+</div>
+<div class="caption"><span>Method parameters in <a href="../../utilities/package-summary.html">edu.ucsb.cs.taapply.utilities</a> with type arguments of type <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static <a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">CourseMatching.</span><code><a href="../../utilities/CourseMatching.html#firstUcsbCourse(java.util.List,java.lang.String)" class="member-name-link">firstUcsbCourse</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;&nbsp;rows,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The first of the rows that is the UCSB course <code>courseId</code>, or null if none is.</div>
 </div>
 </div>
 </section>

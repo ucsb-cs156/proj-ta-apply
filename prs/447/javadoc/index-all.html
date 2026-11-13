@@ -1090,6 +1090,11 @@ least one quarter the admin has populated from the UCSB API.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.CourseInterestsConverter.html#%3Cinit%3E()" class="member-name-link">CourseInterestsConverter()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/DraftApplication.CourseInterestsConverter.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication.CourseInterestsConverter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.utilities">CourseMatching</a> - Class in <a href="edu/ucsb/cs/taapply/utilities/package-summary.html">edu.ucsb.cs.taapply.utilities</a></dt>
+<dd>
+<div class="block">The one place that decides whether two course numbers name the same course, and whether an
+applicant's prior coursework includes a given UCSB course (issue #448).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#courseNumber()" class="member-name-link">courseNumber()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>courseNumber</code> record component.</div>
@@ -1360,6 +1365,11 @@ makes it available.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html#differentULACount()" class="member-name-link">differentULACount()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/InstructorFeedbackReportService.Row.html" title="class in edu.ucsb.cs.taapply.services">InstructorFeedbackReportService.Row</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>differentULACount</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html#display(java.lang.String)" class="member-name-link">display(String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html" title="class in edu.ucsb.cs.taapply.utilities">CourseMatching</a></dt>
+<dd>
+<div class="block">A course id as an applicant would write it, with each run of spaces made one and the ends
+trimmed: the padded id of CMPSC 156 becomes "CMPSC 156".</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Step.html#done()" class="member-name-link">done()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Step.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentStepsService.Step</a></dt>
 <dd>
@@ -1861,6 +1871,10 @@ estimated hours per ULA, to the cent; null while either has not been entered.</d
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html#existsByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">existsByQuarterAndType(String, RecruitmentType)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeExplanationService.html#explanation(java.lang.String,java.util.Random)" class="member-name-link">explanation(String, Random)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeExplanationService.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeExplanationService</a></dt>
+<dd>
+<div class="block">A fake explanation of why the student is prepared for <code>courseId</code> (e.g.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:F">F</h2>
 <dl class="index">
@@ -1902,7 +1916,7 @@ estimated hours per ULA, to the cent; null while either has not been entered.</d
 <dd>
 <div class="block">Builds fake applications for Developer Mode (issue #219).</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html#%3Cinit%3E(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.CourseRepository,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)" class="member-name-link">FakeApplicationGenerator(FakeCoursework, CourseRepository, TaTopicRepository, UlaTopicRepository, UlaInterestRepository, TaMajorRepository, UlaMajorRepository)</a> - Constructor for class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeApplicationGenerator</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html#%3Cinit%3E(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.CourseRepository,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository,edu.ucsb.cs.taapply.services.fake.FakeExplanationService)" class="member-name-link">FakeApplicationGenerator(FakeCoursework, CourseRepository, TaTopicRepository, UlaTopicRepository, UlaInterestRepository, TaMajorRepository, UlaMajorRepository, FakeExplanationService)</a> - Constructor for class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeApplicationGenerator</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCourseChoices.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeCourseChoices</a> - Class in <a href="edu/ucsb/cs/taapply/services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></dt>
 <dd>
@@ -1925,6 +1939,13 @@ science courses of a few other universities.</div>
 <dd>
 <div class="block">How widely fake applicants' interest is spread over a recruitment's courses (issue #219).</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeExplanationService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeExplanationService</a> - Class in <a href="edu/ucsb/cs/taapply/services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></dt>
+<dd>
+<div class="block">Why a fake ULA applicant feels prepared for a course they ask for but have not taken at UCSB
+(issue #448).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeExplanationService.html#%3Cinit%3E()" class="member-name-link">FakeExplanationService()</a> - Constructor for class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeExplanationService.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeExplanationService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeNames.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeNames</a> - Class in <a href="edu/ucsb/cs/taapply/services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></dt>
 <dd>
 <div class="block">Names and sentences for fake applicants.</div>
@@ -2148,6 +2169,10 @@ comparison.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#firstQuarterTicked()" class="member-name-link">firstQuarterTicked()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Whether the applicant ticked the first quarter box; no answer is not ticked.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html#firstUcsbCourse(java.util.List,java.lang.String)" class="member-name-link">firstUcsbCourse(List, String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html" title="class in edu.ucsb.cs.taapply.utilities">CourseMatching</a></dt>
+<dd>
+<div class="block">The first of the rows that is the UCSB course <code>courseId</code>, or null if none is.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AuditTrailController.html#forApplication(java.lang.String,java.lang.Long)" class="member-name-link">forApplication(String, Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AuditTrailController.html" title="class in edu.ucsb.cs.taapply.controller">AuditTrailController</a></dt>
 <dd>&nbsp;</dd>
@@ -3043,6 +3068,10 @@ have logged in: until then both names are null.</div>
 <dd>
 <div class="block">Whether the released hiring decisions are now tentative: they were released, and applications
 or faculty ranking have been reopened since.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html#isUcsbCourse(edu.ucsb.cs.taapply.entity.PriorCoursework,java.lang.String)" class="member-name-link">isUcsbCourse(PriorCoursework, String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html" title="class in edu.ucsb.cs.taapply.utilities">CourseMatching</a></dt>
+<dd>
+<div class="block">Whether a prior course is the UCSB course <code>courseId</code>; a course elsewhere never is.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html#isUcsbEmail(java.lang.String)" class="member-name-link">isUcsbEmail(String)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></dt>
 <dd>
@@ -4347,10 +4376,9 @@ effect without requiring re-login.</div>
 </dl>
 <h2 class="title" id="I:S">S</h2>
 <dl class="index">
-<dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#sameCourseNumber(java.lang.String,java.lang.String)" class="member-name-link">sameCourseNumber(String, String)</a> - Static method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html#sameCourse(java.lang.String,java.lang.String)" class="member-name-link">sameCourse(String, String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html" title="class in edu.ucsb.cs.taapply.utilities">CourseMatching</a></dt>
 <dd>
-<div class="block">Whether two course numbers name the same course (issue #442): equal after uppercasing both and
-removing all whitespace, so the padded course id "CMPSC 156" matches "cmpsc 156".</div>
+<div class="block">Whether two course numbers name the same course, ignoring case and spacing.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#samePerson()" class="member-name-link">samePerson()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
 <dd>
@@ -4546,6 +4574,10 @@ so with no source; creates the row if need be.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoverage.html#SPARSE" class="member-name-link">SPARSE</a> - Enum constant in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoverage.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeCoverage</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html#squash(java.lang.String)" class="member-name-link">squash(String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CourseMatching.html" title="class in edu.ucsb.cs.taapply.utilities">CourseMatching</a></dt>
+<dd>
+<div class="block">Text uppercased with every whitespace character removed; null becomes "".</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.QuarterRefresh.html#start()" class="member-name-link">start()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>start</code> record component.</div>
@@ -5168,6 +5200,11 @@ names and the dates of its classes, finals, registration passes and deadlines.</
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#ucsbCourse()" class="member-name-link">ucsbCourse()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>ucsbCourse</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html#ucsbCourse(java.util.Random,java.lang.String,int)" class="member-name-link">ucsbCourse(Random, String, int)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></dt>
+<dd>
+<div class="block">The applicant's UCSB row for one course (issue #448), written as an applicant would ("CMPSC
+156"), in one of the six quarters up to <code>latestQuarter</code>, with a passing grade.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/UcsbCourse.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">UcsbCourse</a> - Class in <a href="edu/ucsb/cs/taapply/models/package-summary.html">edu.ucsb.cs.taapply.models</a></dt>
 <dd>
