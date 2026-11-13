@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/439-admins-edit-rankings","number":445,"title":"Admins can enter and change a course's faculty rankings (#439)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/445"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/437-coursetable-focus","number":438,"title":"Courses page: keep keyboard focus on the checkboxes across background refreshes (closes #437)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/438"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/439-admins-edit-rankings","number":445,"title":"Admins can enter and change a course's faculty rankings (#439)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/445"}]
