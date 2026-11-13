@@ -48,6 +48,28 @@ function ScaleHeading({ level }: { level: ScaleLevel }): React.JSX.Element {
   );
 }
 
+/**
+ * A course answer's column heading, with a line break after each " / " so that "Not Applicable /
+ * Not Interested" sits on two lines, the slash ending the first. The space before each break keeps
+ * the heading's text whole for screen readers and tests.
+ */
+function OptionHeading({ label }: { label: string }): React.JSX.Element {
+  return (
+    <>
+      {label.split(" / ").map((part, i) => (
+        <Fragment key={i}>
+          {i > 0 && (
+            <>
+              {" /"} <br />
+            </>
+          )}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 type LevelTableProps = {
   /** The label column's heading: "Topic" or "Interest". */
   heading: string;
@@ -170,7 +192,7 @@ export function CourseInterestTable({
               key={option.value}
               className={`text-center fw-normal ${CHOICE_CELL_CLASS}`}
             >
-              {option.label}
+              <OptionHeading label={option.label} />
             </th>
           ))}
         </tr>

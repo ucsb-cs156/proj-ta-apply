@@ -419,6 +419,15 @@ describe("ApplicationSummary tests", () => {
       "Would Consider",
       "Not Applicable / Not Interested",
     ]);
+    // "Not Applicable /" over "Not Interested"; the other headings are one line.
+    const stacked = other.querySelectorAll("thead th")[3];
+    expect(stacked.querySelectorAll("br")).toHaveLength(1);
+    expect(stacked.innerHTML).toBe("Not Applicable / <br>Not Interested");
+    expect(
+      [...other.querySelectorAll("thead th")]
+        .slice(1, 3)
+        .map((th) => th.innerHTML),
+    ).toEqual(["Enthusiastic", "Would Consider"]);
     const rows = [...other.querySelectorAll("tbody tr")];
     expect(rows.map((row) => row.querySelector("td").textContent)).toEqual([
       "CMPSC     8",
