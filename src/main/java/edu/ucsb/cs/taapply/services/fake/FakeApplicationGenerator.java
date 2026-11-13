@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
@@ -23,14 +24,17 @@ import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +53,12 @@ public class FakeApplicationGenerator {
 
   static final List<String> TA_RESIDENCY_EXAM_PASS_QUARTERS = List.of("F23", "W24", "S24", "F24");
 
+  /**
+   * Issue #448: how often, in percent, a fake ULA applicant has taken at UCSB a course they ask
+   * for. The rest of the time they explain in their comments why they are prepared anyway.
+   */
+  static final int ASKED_FOR_TAKEN_PERCENT = 80;
+
   private final FakeCoursework coursework;
   private final CourseRepository courseRepository;
   private final TaTopicRepository taTopicRepository;
@@ -56,6 +66,7 @@ public class FakeApplicationGenerator {
   private final UlaInterestRepository ulaInterestRepository;
   private final TaMajorRepository taMajorRepository;
   private final UlaMajorRepository ulaMajorRepository;
+  private final FakeExplanationService explanations;
 
   @Autowired
   public FakeApplicationGenerator(
@@ -65,7 +76,8 @@ public class FakeApplicationGenerator {
       UlaTopicRepository ulaTopicRepository,
       UlaInterestRepository ulaInterestRepository,
       TaMajorRepository taMajorRepository,
-      UlaMajorRepository ulaMajorRepository) {
+      UlaMajorRepository ulaMajorRepository,
+      FakeExplanationService explanations) {
     this.coursework = coursework;
     this.courseRepository = courseRepository;
     this.taTopicRepository = taTopicRepository;
@@ -73,6 +85,7 @@ public class FakeApplicationGenerator {
     this.ulaInterestRepository = ulaInterestRepository;
     this.taMajorRepository = taMajorRepository;
     this.ulaMajorRepository = ulaMajorRepository;
+    this.explanations = explanations;
   }
 
   /**
@@ -107,10 +120,15 @@ public class FakeApplicationGenerator {
               ? ula(recruitment, random, topics, majors, interests, latest)
               : ta(recruitment, random, topics, majors, latest);
       identity(application, recruitment, random, takenEmails);
-      addTitles(application, titles);
       applications.add(application);
     }
     FakeCourseChoices.assign(applications, courseIds, coverage, random);
+    for (Application application : applications) {
+      if (recruitment.getType() == RecruitmentType.ULA) {
+        takeOrExplain(application, random, latest);
+      }
+      addTitles(application, titles);
+    }
     return applications;
   }
 
@@ -351,6 +369,60 @@ public class FakeApplicationGenerator {
     }
     application.setChangingMajor(random.nextInt(6) == 0);
     return application;
+  }
+
+  /**
+   * The courses a ULA applicant asks for, in a fixed order: first choice, second choice, then the
+   * courses they are Enthusiastic about or Would Consider, by course id.
+   */
+  static List<String> askedFor(Application application) {
+    Set<String> asked = new LinkedHashSet<>();
+    if (application.getFirstChoiceCourse() != null) {
+      asked.add(application.getFirstChoiceCourse());
+    }
+    if (application.getSecondChoiceCourse() != null) {
+      asked.add(application.getSecondChoiceCourse());
+    }
+    new TreeMap<>(application.getCourseInterests())
+        .forEach(
+            (courseId, interest) -> {
+              if (interest == CourseInterest.ENTHUSIASTIC
+                  || interest == CourseInterest.WOULD_CONSIDER) {
+                asked.add(courseId);
+              }
+            });
+    return new ArrayList<>(asked);
+  }
+
+  /**
+   * Issue #448: for each course a ULA applicant asks for, a biased coin. Most of the time ({@link
+   * #ASKED_FOR_TAKEN_PERCENT}) they have taken it at UCSB, and it is added to their transcript, in
+   * term order, if the prerequisite walk did not already put it there. Otherwise it is taken off
+   * their UCSB transcript, and their comments gain a sentence from {@link FakeExplanationService}
+   * on why they are prepared anyway, one line per such course. A transcript left empty gains one
+   * course from another school, since a ULA application needs at least one.
+   */
+  void takeOrExplain(Application application, Random random, int latest) {
+    List<PriorCoursework> prior = new ArrayList<>(application.getPriorCoursework());
+    List<String> lines = new ArrayList<>();
+    for (String courseId : askedFor(application)) {
+      if (random.nextInt(100) < ASKED_FOR_TAKEN_PERCENT) {
+        if (CourseMatching.firstUcsbCourse(prior, courseId) == null) {
+          FakeCoursework.insertInTermOrder(prior, coursework.ucsbCourse(random, courseId, latest));
+        }
+      } else {
+        prior.removeIf(row -> CourseMatching.isUcsbCourse(row, courseId));
+        lines.add(explanations.explanation(courseId, random));
+      }
+    }
+    if (prior.isEmpty()) {
+      prior.addAll(coursework.other(random, 1, false, latest));
+    }
+    application.setPriorCoursework(prior);
+    if (!lines.isEmpty()) {
+      lines.add(0, application.getComments());
+      application.setComments(String.join("\n", lines));
+    }
   }
 
   private static String permNumber(Random random) {

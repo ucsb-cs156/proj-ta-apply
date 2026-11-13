@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.services.fake;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -148,6 +149,19 @@ public class FakeCoursework {
   }
 
   /**
+   * The applicant's UCSB row for one course (issue #448), written as an applicant would ("CMPSC
+   * 156"), in one of the six quarters up to {@code latestQuarter}, with a passing grade.
+   */
+  public PriorCoursework ucsbCourse(Random random, String courseId, int latestQuarter) {
+    return PriorCoursework.builder()
+        .ucsbCourse(true)
+        .courseNumber(CourseMatching.display(courseId))
+        .term(term(walkBack(latestQuarter, random.nextInt(6))))
+        .grade(pickGrade(random))
+        .build();
+  }
+
+  /**
    * Up to {@code wanted} distinct courses from one school chosen at random: an international school
    * for an international student, a domestic one otherwise.
    */
@@ -198,6 +212,24 @@ public class FakeCoursework {
     int q = yyyyq % 10;
     int result = q == 4 ? (yyyyq / 10 + 1) * 10 + 1 : yyyyq + 1;
     return result % 10 == 3 ? result + 1 : result;
+  }
+
+  /** The quarter a fake transcript's term names: 20254 for F25; the inverse of {@link #term}. */
+  static int quarter(String term) {
+    return (2000 + Integer.parseInt(term.substring(1))) * 10 + "WSMF".indexOf(term.charAt(0)) + 1;
+  }
+
+  /**
+   * Puts {@code row} into a transcript that is in term order, after every row of its term or
+   * earlier, so the transcript stays in term order.
+   */
+  static void insertInTermOrder(List<PriorCoursework> rows, PriorCoursework row) {
+    int position = 0;
+    while (position < rows.size()
+        && quarter(rows.get(position).getTerm()) <= quarter(row.getTerm())) {
+      position++;
+    }
+    rows.add(position, row);
   }
 
   /** A quarter as an applicant writes it: F25 for 20254. */
