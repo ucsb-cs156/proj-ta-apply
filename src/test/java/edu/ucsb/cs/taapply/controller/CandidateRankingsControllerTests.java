@@ -105,6 +105,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
             .gpaOverall(3.7)
             .previousServiceAsUla(2)
             .videoLink("https://example.edu/video")
+            .comments("I tutored this course informally.")
             .firstChoiceCourse("CMPSC   156")
             .adminComments("Private staff notes")
             .postApplicationComments("Applicant follow-up")
@@ -221,7 +222,8 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         "email":"student@ucsb.edu","major":"Computer Science","classLevel":"PHD","yearInProgram":"2",
         "graduationDate":"Spring 2028","gpaMajor":3.8,"gpaOverall":3.7,"previousServiceAsUla":2,
         "videoLink":"https://example.edu/video","firstQuarter":false,"rankingVersion":0,
-        "tookCourse":false,"courseTerm":null,"courseGrade":null}
+        "tookCourse":false,"courseTerm":null,"courseGrade":null,
+        "comments":"I tutored this course informally."}
         """;
     var expected = mapper.createArrayNode();
     expected.add(mapper.readTree(expectedRow));

@@ -29,6 +29,25 @@ export default {
 
 export const TA = {};
 export const ULA = { args: { type: "ULA" } };
+/**
+ * Issue #447 review: the ULA table with the opt-in Comments column shown, as the instructor's
+ * browser remembers it, at its default width (25% of the window, at least 200px).
+ */
+export const ULAWithComments = {
+  args: {
+    type: "ULA",
+    columnsStorageKey: "candidateRanking.hiddenColumns.storybook.comments",
+  },
+  decorators: [
+    (Story) => {
+      localStorage.setItem(
+        "candidateRanking.hiddenColumns.storybook.comments.shown",
+        JSON.stringify(["comments"]),
+      );
+      return <Story />;
+    },
+  ],
+};
 export const ReadOnly = { args: { editable: false } };
 export const Empty = { args: { candidates: [] } };
 // The yellow highlight and the warning under the tied rows appear two seconds after a tie is

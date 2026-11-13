@@ -6,7 +6,12 @@ import InterestMark from "main/components/Common/InterestMark";
 import { WarningIcon } from "main/components/Common/Icons";
 import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
 import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
-import { candidateColumnChoices } from "main/utils/candidateColumns";
+import {
+  candidateColumnChoices,
+  COMMENTS_MIN_WIDTH,
+  commentsWidthWithin,
+  OPT_IN_CANDIDATE_COLUMNS,
+} from "main/utils/candidateColumns";
 import { gpaText } from "main/utils/applicationFields";
 import { interestDisplay } from "main/utils/interestDisplay";
 import { stackedWords } from "main/components/Common/columnStyles";
@@ -43,6 +48,8 @@ export type Candidate = {
   courseTerm: string | null;
   /** Issue #442: the grade they earned in it; null if they did not take it, or gave none. */
   courseGrade: string | null;
+  /** The applicant's own comments at the end of the application (issue #447 review). */
+  comments: string | null;
 };
 
 type Props = {
@@ -105,14 +112,35 @@ type Column = {
   heading?: React.ReactNode;
   numeric?: boolean;
 };
-const common: Column[] = [
-  { key: "rank", label: "Ranking", numeric: true },
-  { key: "preference", label: "Course Preference" },
+const rank: Column = { key: "rank", label: "Ranking", numeric: true };
+const preference: Column = { key: "preference", label: "Course Preference" };
+/** Issue #442: whether a ULA applicant took this course at UCSB, and how they did. */
+const courseTaken: Column[] = [
+  {
+    key: "courseTerm",
+    label: "When Course Taken",
+    heading: stackedWords(
+      "When Course Taken",
+      "candidate-table-stacked-heading",
+    ),
+  },
+  { key: "courseGrade", label: "Course Grade" },
+];
+const names: Column[] = [
   { key: "firstName", label: "First Name" },
   { key: "lastName", label: "Last Name" },
+];
+const comments: Column = { key: "comments", label: "Comments" };
+const contact: Column[] = [
   { key: "email", label: "Email" },
   { key: "major", label: "Major" },
 ];
+
+/** How far the left and right arrow keys move the Comments column's edge, in pixels. */
+const KEYBOARD_RESIZE_CHANGE: Record<string, number> = {
+  ArrowRight: 20,
+  ArrowLeft: -20,
+};
 const year: Column = {
   key: "yearInProgram",
   label: "Year in Program",
@@ -258,7 +286,12 @@ export default function CandidateTable({
   }
 
   const columns: Column[] = [
-    ...common,
+    rank,
+    preference,
+    ...(type === "ULA" ? courseTaken : []),
+    ...names,
+    comments,
+    ...contact,
     ...(type === "TA"
       ? [
           { key: "classLevel" as const, label: "Level (PhD/MS)" },
@@ -276,23 +309,46 @@ export default function CandidateTable({
             numeric: true,
           },
           { key: "videoLink" as const, label: "Video Link" },
-          // Issue #442: whether the applicant took this course at UCSB, and how they did.
-          {
-            key: "courseTerm" as const,
-            label: "When Course Taken",
-            heading: stackedWords(
-              "When Course Taken",
-              "candidate-table-stacked-heading",
-            ),
-          },
-          { key: "courseGrade" as const, label: "Course Grade" },
         ]),
   ];
   // Issue #312: the columns the instructor has hidden, remembered in this browser.
   const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
     columnsStorageKey,
     [],
+    OPT_IN_CANDIDATE_COLUMNS,
   );
+  // The Comments column's width once the instructor has dragged it; until then its class sets it.
+  const [commentsWidth, setCommentsWidth] = useState<number | null>(null);
+  const [resizing, setResizing] = useState(false);
+  const commentsHeading = useRef<HTMLDivElement>(null);
+  // Before a drag, the width the class gave the heading; the heading is there whenever its
+  // handle is.
+  const currentCommentsWidth = (): number =>
+    commentsWidth ??
+    (commentsHeading.current as HTMLDivElement).getBoundingClientRect().width;
+  const startResize = (event: React.PointerEvent) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = currentCommentsWidth();
+    setResizing(true);
+    const move = (moved: PointerEvent) =>
+      setCommentsWidth(
+        commentsWidthWithin(startWidth + moved.clientX - startX),
+      );
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      setResizing(false);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+  };
+  const resizeFromKeyboard = (event: React.KeyboardEvent) => {
+    const change = KEYBOARD_RESIZE_CHANGE[event.key];
+    if (change === undefined) return;
+    event.preventDefault();
+    setCommentsWidth(commentsWidthWithin(currentCommentsWidth() + change));
+  };
   const choices = candidateColumnChoices(columns);
   const shownColumns = columns.filter(
     (column) => !hiddenColumns.includes(column.key),
@@ -343,6 +399,20 @@ export default function CandidateTable({
     if (tied.includes(rank)) lastOfTie.set(rank, candidate.applicationId);
   });
 
+  const sortButton = (column: Column) => (
+    <button
+      className="btn btn-link"
+      onClick={() =>
+        setSort({
+          key: column.key,
+          descending: sort?.key === column.key && !sort.descending,
+        })
+      }
+    >
+      {column.heading ?? column.label}
+    </button>
+  );
+
   return (
     <section aria-label="Eligible candidates">
       <h2>Candidates</h2>
@@ -380,7 +450,17 @@ export default function CandidateTable({
         <p>No eligible candidates for this course.</p>
       ) : (
         <div className="table-responsive">
-          <table className="table">
+          <table
+            className="table"
+            // A dragged width, for the Comments column's class to read; none until a drag.
+            style={
+              commentsWidth === null
+                ? undefined
+                : ({
+                    "--candidate-comments-width": `${commentsWidth}px`,
+                  } as React.CSSProperties)
+            }
+          >
             <thead>
               <tr>
                 {shownColumns.map((column) => (
@@ -398,7 +478,11 @@ export default function CandidateTable({
                     {choices.some((choice) => choice.id === column.key) && (
                       <button
                         type="button"
-                        className="btn btn-link p-0 border-0 text-secondary column-hide-link"
+                        className={`btn btn-link p-0 border-0 text-secondary column-hide-link${
+                          column.key === "comments"
+                            ? " column-hide-link-beside-resize"
+                            : ""
+                        }`}
                         aria-label={`Hide ${column.label} column`}
                         onClick={() => toggleColumn(column.key, true)}
                         data-testid={`CandidateTable-hide-${column.key}`}
@@ -406,18 +490,34 @@ export default function CandidateTable({
                         hide
                       </button>
                     )}
-                    <button
-                      className="btn btn-link"
-                      onClick={() =>
-                        setSort({
-                          key: column.key,
-                          descending:
-                            sort?.key === column.key && !sort.descending,
-                        })
-                      }
-                    >
-                      {column.heading ?? column.label}
-                    </button>
+                    {column.key === "comments" ? (
+                      <>
+                        <div
+                          ref={commentsHeading}
+                          className="candidate-comments-cell"
+                        >
+                          {sortButton(column)}
+                        </div>
+                        <div
+                          role="separator"
+                          aria-orientation="vertical"
+                          aria-label="Resize Comments column"
+                          aria-valuenow={commentsWidth ?? undefined}
+                          aria-valuemin={COMMENTS_MIN_WIDTH}
+                          tabIndex={0}
+                          // A strip down the heading's right edge: drag it, or focus it and press
+                          // the left and right arrow keys.
+                          className={`column-resize-handle${
+                            resizing ? " column-resize-handle-active" : ""
+                          }`}
+                          onPointerDown={startResize}
+                          onKeyDown={resizeFromKeyboard}
+                          data-testid="CandidateTable-resize-comments"
+                        />
+                      </>
+                    ) : (
+                      sortButton(column)
+                    )}
                   </th>
                 ))}
               </tr>
@@ -553,6 +653,10 @@ export default function CandidateTable({
                               {NOT_TAKEN_MARK}
                             </span>
                           </OverlayTrigger>
+                        ) : column.key === "comments" ? (
+                          <div className="candidate-comments-cell">
+                            {candidate.comments}
+                          </div>
                         ) : column.key === "preference" ? (
                           <>
                             <InterestMark

@@ -430,7 +430,13 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByTestId("HelpInstructorsPage-course-taken"),
     ).toHaveTextContent(
-      "In a ULA recruitment the table also has When Course Taken and Course Grade, shown by default: the term and grade the applicant listed for this course among the UCSB courses they have taken. When they do not list it, When Course Taken shows a warning sign (⚠️); hover over it for a reminder to read their comments, where they explain what prepares them to be a ULA for the course.",
+      "In a ULA recruitment the table also has When Course Taken and Course Grade, right after Course Preference and shown by default: the term and grade the applicant listed for this course among the UCSB courses they have taken. When they do not list it, When Course Taken shows a warning sign (⚠️); hover over it for a reminder to read their comments, where they explain what prepares them to be a ULA for the course.",
+    );
+    // Issue #447 review: the opt-in, resizable Comments column.
+    expect(
+      screen.getByTestId("HelpInstructorsPage-comments-column"),
+    ).toHaveTextContent(
+      "The Comments column, between Last Name and Email, shows the comments each applicant wrote at the end of their application. It is hidden until you tick it in the Columns menu. To make it wider or narrower, drag the right edge of its heading, or click that edge and press the left and right arrow keys.",
     );
     // Issue #364: the home page is one card per quarter, with a TA and/or ULA card per course.
     expect(

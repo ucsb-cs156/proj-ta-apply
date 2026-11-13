@@ -22,3 +22,18 @@ export const candidateColumnChoices = (
   columns
     .filter((column) => !ALWAYS_SHOWN_CANDIDATE_COLUMNS.includes(column.key))
     .map((column) => ({ id: column.key, label: column.label }));
+
+/**
+ * The Comments column (issue #447 review) is hidden until the instructor shows it, even if they
+ * have already chosen which of the other columns to hide.
+ */
+export const OPT_IN_CANDIDATE_COLUMNS = ["comments"];
+
+/**
+ * The width a drag of the Comments column can give it: at least 200px and at most 80% of the
+ * window, the same limits as its class in index.css. When the window is too narrow for both, the
+ * 200px wins, as min-width beats max-width in CSS.
+ */
+export const COMMENTS_MIN_WIDTH = 200;
+export const commentsWidthWithin = (width: number): number =>
+  Math.max(COMMENTS_MIN_WIDTH, Math.min(width, 0.8 * window.innerWidth));

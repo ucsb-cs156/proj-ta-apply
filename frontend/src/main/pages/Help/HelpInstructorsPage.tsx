@@ -125,11 +125,18 @@ export default function HelpInstructorsPage(): React.JSX.Element {
         <p data-testid="HelpInstructorsPage-course-taken">
           In a ULA recruitment the table also has{" "}
           <strong>When Course Taken</strong> and <strong>Course Grade</strong>,
-          shown by default: the term and grade the applicant listed for this
-          course among the UCSB courses they have taken. When they do not list
-          it, When Course Taken shows a warning sign (⚠️); hover over it for a
-          reminder to read their comments, where they explain what prepares them
-          to be a ULA for the course.
+          right after Course Preference and shown by default: the term and grade
+          the applicant listed for this course among the UCSB courses they have
+          taken. When they do not list it, When Course Taken shows a warning
+          sign (⚠️); hover over it for a reminder to read their comments, where
+          they explain what prepares them to be a ULA for the course.
+        </p>
+        <p data-testid="HelpInstructorsPage-comments-column">
+          The <strong>Comments</strong> column, between Last Name and Email,
+          shows the comments each applicant wrote at the end of their
+          application. It is hidden until you tick it in the Columns menu. To
+          make it wider or narrower, drag the right edge of its heading, or
+          click that edge and press the left and right arrow keys.
         </p>
         <p>
           Enter any integer from 1 through the number of candidates. Each valid

@@ -246,6 +246,40 @@ body {
   line-height: 1.2;
 }
 
+/* The Comments column (issue #447 review): its heading and cells each hold one of these, so the
+   column is as wide as it. By default 25% of the window but at least 200px; dragging the
+   heading's edge sets --candidate-comments-width on the table, kept between 200px and 80% of the
+   window. The comments keep the applicant's line breaks and wrap within the width. */
+.candidate-comments-cell {
+  width: var(--candidate-comments-width, max(200px, 25vw));
+  min-width: 200px;
+  max-width: 80vw;
+  white-space: pre-wrap;
+}
+
+/* The drag handle down the right edge of a resizable heading, which is position-relative; it
+   looks like OurTable's (issue #447 review). */
+.column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  border-right: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.column-resize-handle-active {
+  border-right-color: #0d6efd;
+}
+
+/* A resizable heading's hide link keeps the drag handle at the right edge clear. */
+.column-hide-link-beside-resize {
+  right: 0.6rem;
+}
+
 /* The warning under the last row of a group of tied rankings (issue #311). */
 .candidate-table-tied-warning {
   font-size: 0.8em;

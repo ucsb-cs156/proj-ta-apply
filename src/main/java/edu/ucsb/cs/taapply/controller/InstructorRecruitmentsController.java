@@ -607,7 +607,12 @@ public class InstructorRecruitmentsController extends ApiController {
        */
       String courseTerm,
       /** Issue #442: the grade the applicant earned in the course; null if not taken or none. */
-      String courseGrade) {}
+      String courseGrade,
+      /**
+       * The applicant's own comments at the end of the application, where a ULA applicant explains
+       * their preparation for a course they have not taken (issue #447 review).
+       */
+      String comments) {}
 
   /**
    * Issue #442: the first of the applicant's UCSB prior courses whose course number is the course's
@@ -694,7 +699,8 @@ public class InstructorRecruitmentsController extends ApiController {
                   rankingVersion,
                   taken != null,
                   taken == null ? null : taken.getTerm(),
-                  taken == null ? null : taken.getGrade());
+                  taken == null ? null : taken.getGrade(),
+                  application.getComments());
             })
         .toList();
   }
