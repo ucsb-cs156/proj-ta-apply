@@ -932,10 +932,12 @@ describe("ApplicationForm tests", () => {
     renderForm();
 
     const row = screen.getByTestId("ApplicationForm-courseInterest-CMPSC-8");
-    expect(row.firstChild).toHaveStyle({
-      fontFamily: "monospace",
-      whiteSpace: "pre",
-    });
+    // Issue #443: monospace with its spaces kept, by class rather than inline style.
+    expect(row.firstChild).toHaveClass(
+      "selection-table-label",
+      "selection-table-course",
+    );
+    expect(row.firstChild).not.toHaveAttribute("style");
     expect(row.firstChild.textContent).toBe("CMPSC     8");
   });
 
@@ -1626,10 +1628,11 @@ describe("ApplicationForm tests", () => {
       ),
     ).toBeInTheDocument();
     const group = screen.getByTestId("ApplicationForm-topicProficiencies");
-    // The columns run 5 down to 1 with the ends worded (issue #137).
+    // The columns run 5 down to 1 with the ends worded (issue #137); the wording sits under the
+    // number (issue #443).
     expect(
       [...group.querySelectorAll("thead th")].map((th) => th.textContent),
-    ).toEqual(["Topic", "5 (highest)", "4", "3", "2", "1 (lowest)"]);
+    ).toEqual(["Topic", "5 highest", "4", "3", "2", "1 lowest"]);
     topics.forEach((topic) => {
       const row = screen.getByTestId(
         `ApplicationForm-topic-${topic.replace(/\s+/g, "-")}`,
@@ -1724,10 +1727,16 @@ describe("ApplicationForm tests", () => {
       [...group.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual([
       "Topic",
-      "1-Very comfortable",
-      "2-Somewhat comfortable",
-      "3-Not familiar",
+      "1 Very comfortable",
+      "2 Somewhat comfortable",
+      "3 Not familiar",
     ]);
+    // Issue #443: the number, then each word on a line of its own.
+    expect(
+      [...group.querySelectorAll("thead th")].map(
+        (th) => th.querySelectorAll("br").length,
+      ),
+    ).toEqual([0, 2, 2, 2]);
     [1, 2, 3].forEach((level) =>
       expect(
         screen.getByTestId(`ApplicationForm-topic-Java-${level}`),
@@ -1751,11 +1760,11 @@ describe("ApplicationForm tests", () => {
       [...group.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual([
       "Interest",
-      "5-Very interested",
+      "5 Very interested",
       "4",
       "3",
       "2",
-      "1-Not interested",
+      "1 Not interested",
     ]);
     interests.forEach((interest) => {
       const row = screen.getByTestId(
@@ -3671,15 +3680,20 @@ describe("ApplicationForm tests", () => {
     const table = group.querySelector("table");
     expect(table).toHaveClass("w-auto", "align-middle", "table-sm");
     const headings = [...table.querySelectorAll("thead th")];
+    // Issue #443: the widths are classes in index.css, not inline styles.
+    expect(table).not.toHaveClass("selection-table-read-only");
     const label = headings.find((th) => th.textContent === labelHeading);
-    expect(label.style.width).toBe("1%");
-    expect(label.style.whiteSpace).toBe("nowrap");
+    expect(label).toHaveClass("selection-table-label");
+    expect(label).not.toHaveAttribute("style");
     const choices = headings.slice(headings.indexOf(label) + 1);
     expect(choices.length).toBeGreaterThan(1);
     choices.forEach((th) => {
-      expect(th.style.width).toBe("8em");
-      expect(th.style.whiteSpace).toBe("normal");
-      expect(th).toHaveClass("text-center", "fw-normal");
+      expect(th).toHaveClass(
+        "text-center",
+        "fw-normal",
+        "selection-table-choice",
+      );
+      expect(th).not.toHaveAttribute("style");
     });
     return { table, headings, label };
   };
@@ -3691,8 +3705,8 @@ describe("ApplicationForm tests", () => {
     const topicRow = screen.getByTestId("ApplicationForm-topic-Java");
     const topicLabel = topicRow.querySelector("td");
     expect(topicLabel).toHaveTextContent("Java");
-    expect(topicLabel.style.width).toBe("1%");
-    expect(topicLabel.style.whiteSpace).toBe("nowrap");
+    expect(topicLabel).toHaveClass("selection-table-label");
+    expect(topicLabel).not.toHaveAttribute("style");
 
     const { headings } = selectionTableLayout(
       "ApplicationForm-courseInterests",
@@ -3704,10 +3718,12 @@ describe("ApplicationForm tests", () => {
       .getByTestId("ApplicationForm-courseInterests")
       .querySelector("tbody tr");
     const courseLabel = courseRow.querySelector("td");
-    expect(courseLabel.style.width).toBe("1%");
-    // The padded course id keeps its spaces, so it stays `pre`, which never wraps either.
-    expect(courseLabel.style.whiteSpace).toBe("pre");
-    expect(courseLabel.style.fontFamily).toBe("monospace");
+    // The padded course id keeps its spaces (monospace, `pre`, which never wraps either).
+    expect(courseLabel).toHaveClass(
+      "selection-table-label",
+      "selection-table-course",
+    );
+    expect(courseLabel).not.toHaveAttribute("style");
   });
 
   test("a ULA form's interest table and warning column shrink to their content too", () => {
@@ -3718,8 +3734,9 @@ describe("ApplicationForm tests", () => {
     const interestRow = screen
       .getByTestId("ApplicationForm-interests")
       .querySelector("tbody tr");
-    expect(interestRow.querySelector("td").style.width).toBe("1%");
-    expect(interestRow.querySelector("td").style.whiteSpace).toBe("nowrap");
+    expect(interestRow.querySelector("td")).toHaveClass(
+      "selection-table-label",
+    );
 
     const { headings } = selectionTableLayout(
       "ApplicationForm-courseInterests",
@@ -3729,8 +3746,8 @@ describe("ApplicationForm tests", () => {
       "ApplicationForm-courseInterests-warning-header",
     );
     expect(headings[0]).toBe(warning);
-    expect(warning.style.width).toBe("1%");
-    expect(warning.style.whiteSpace).toBe("nowrap");
+    expect(warning).toHaveClass("selection-table-label");
+    expect(warning).not.toHaveAttribute("style");
   });
 
   // ---- the first quarter box under the GPA fields (issue #292) ----

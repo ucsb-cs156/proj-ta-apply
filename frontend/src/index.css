@@ -309,3 +309,33 @@ body {
   white-space: pre;
   font-family: monospace;
 }
+
+/* ============================================================================
+   The application's selection tables (components/Applications/SelectionTables.tsx): topic
+   proficiencies, interests and other courses, on the form and, read-only, in the application
+   summary (issue #443; the layout is issue #194's).
+   ============================================================================ */
+
+/* The label column: as wide as its widest label, on one line. */
+.selection-table-label {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* A course label: monospace with its spaces kept, so padded course ids line up. */
+.selection-table-course {
+  font-family: monospace;
+  white-space: pre;
+}
+
+/* Every choice column is the same width, whatever its heading says; long headings wrap. */
+.selection-table-choice {
+  width: 8em;
+  white-space: normal;
+}
+
+/* A read-only table's radio buttons are disabled, but drawn at full strength rather than
+   Bootstrap's faded disabled look, so the answers are easy to read. */
+.selection-table-read-only .form-check-input:disabled {
+  opacity: 1;
+}
