@@ -1,0 +1,3180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>BudgetService.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.services;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.Budget;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.Recruitment;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.RecruitmentCourse;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.RecruitmentType;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.errors.EntityNotFoundException;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.RecruitmentRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.math.BigDecimal;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.math.RoundingMode;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.ArrayList;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.LinkedHashMap;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.List;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Map;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Optional;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.beans.factory.annotation.Autowired;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.stereotype.Service;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The figures behind the Budget for Quarter page (issue #177): which quarters have recruitments,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * and for one quarter the budget row, each recruitment&#39;s hiring target, cost, allocation and</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * enrollment totals, the estimated cost per ULA computed from the budget&#39;s rate and hours (issue</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * #388), and the anticipated expenses, funds and bottom line. All money is in dollars and cents, as</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * {@link BigDecimal}s with two decimal places.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>@Service</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public class BudgetService {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired BudgetCreationService budgetCreationService;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired RecruitmentRepository recruitmentRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired BudgetCourseService budgetCourseService;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** A quarter with at least one recruitment, and which types it has. */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public record QuarterSummary(String quarter, boolean hasTa, boolean hasUla) {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * One recruitment&#39;s side of the budget.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param avgCostPerPosition the estimated cost of one position per quarter, from the budget</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     (issue #388): on the TA side its cost per TA as entered; on the ULA side its {@link</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     #estimatedCostPerUla computed cost per ULA}; null while unknown</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param totalAllocation the sum of the allocations of its non-removed courses</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param totalEnrollmentEstimate the sum of their enrollment estimates (the quarter&#39;s, from</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     {@code budget_courses}), a missing one counting as 0</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param allocationDifference totalAllocation minus totalHiringTarget; 0 when they agree</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param studentsPerPosition totalEnrollmentEstimate divided by totalHiringTarget, the n of the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     &#34;1:n&#34; ratio; null when there are no estimates</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param anticipatedCost totalHiringTarget times avgCostPerPosition; 0 while the cost is unknown</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_52'/>
+52
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_52'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public record Side(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Long recruitmentId,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_54'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Integer totalHiringTarget,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_55'/>
+55
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_55'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      BigDecimal avgCostPerPosition,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_56'/>
+56
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_56'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      int totalAllocation,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_57'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      int totalEnrollmentEstimate,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_58'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      int allocationDifference,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_59'/>
+59
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_59'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Double studentsPerPosition,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_60'/>
+60
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_60'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      BigDecimal anticipatedCost) {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_61'/>
+61
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_61'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_62'/>
+62
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_62'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_63'/>
+63
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_63'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Everything the page shows for one quarter. {@code ta} or {@code ula} is null when the quarter</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_64'/>
+64
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_64'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * has no recruitment of that type.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_65'/>
+65
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_65'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_66'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param estimatedCostPerULAPerQuarter the budget&#39;s ULA hourly rate times its hours per ULA, to</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_67'/>
+67
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_67'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     the cent (issue #388); null while either is not yet entered. Shown whether or not the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_68'/>
+68
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_68'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     quarter has a ULA recruitment.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_69'/>
+69
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_69'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param totalExpenses the two anticipated costs added</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_70'/>
+70
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_70'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param totalFunds the budget&#39;s three subzero lines and its other funds for ASEs added</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_71'/>
+71
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_71'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param bottomLine totalFunds minus totalExpenses</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_72'/>
+72
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_72'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_73'/>
+73
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_73'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public record Summary(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_74'/>
+74
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_74'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      String quarter,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_75'/>
+75
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_75'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Budget budget,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_76'/>
+76
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_76'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Side ta,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_77'/>
+77
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_77'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Side ula,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_78'/>
+78
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_78'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      BigDecimal estimatedCostPerULAPerQuarter,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_79'/>
+79
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_79'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      BigDecimal totalExpenses,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_80'/>
+80
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_80'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      BigDecimal totalFunds,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_81'/>
+81
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_81'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      BigDecimal bottomLine) {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_82'/>
+82
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_82'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_83'/>
+83
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_83'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Every quarter with a recruitment, most recent first. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_84'/>
+84
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_84'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public List&#60;QuarterSummary&#62; quarters() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_85'/>
+85
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_85'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Map&#60;String, boolean[]&#62; byQuarter = new LinkedHashMap&#60;&#62;();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_86'/>
+86
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_86'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    for (Recruitment recruitment : recruitmentRepository.findAllByOrderByQuarterDescTypeAsc()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_87'/>
+87
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_87'>1</a>
+<span>
+1. lambda$quarters$0 : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::lambda$quarters$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      boolean[] types = byQuarter.computeIfAbsent(recruitment.getQuarter(), q -&#62; new boolean[2]);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_88'/>
+88
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_88'>1</a>
+<span>
+1. quarters : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      if (recruitment.getType() == RecruitmentType.TA) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_89'/>
+89
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_89'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        types[0] = true;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_90'/>
+90
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_90'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      } else {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_91'/>
+91
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_91'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        types[1] = true;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_92'/>
+92
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_92'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_93'/>
+93
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_93'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_94'/>
+94
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_94'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    List&#60;QuarterSummary&#62; result = new ArrayList&#60;&#62;();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_95'/>
+95
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_95'>1</a>
+<span>
+1. quarters : removed call to java/util/Map::forEach &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    byQuarter.forEach(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_96'/>
+96
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_96'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        (quarter, types) -&#62; result.add(new QuarterSummary(quarter, types[0], types[1])));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_97'/>
+97
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_97'>1</a>
+<span>
+1. quarters : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/BudgetService::quarters &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return result;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_98'/>
+98
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_98'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_99'/>
+99
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_99'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_100'/>
+100
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_100'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_101'/>
+101
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_101'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * The quarter&#39;s budget row, created if this is the first time it is asked for, as a copy of the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_102'/>
+102
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_102'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * most recent earlier quarter&#39;s (issue #384; see {@link BudgetCreationService}). Only quarters</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_103'/>
+103
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_103'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * with at least one recruitment have a budget.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_104'/>
+104
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_104'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_105'/>
+105
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_105'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @throws EntityNotFoundException when the quarter has no recruitment</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_106'/>
+106
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_106'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_107'/>
+107
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_107'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public Budget budgetFor(String quarter) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_108'/>
+108
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_108'>1</a>
+<span>
+1. budgetFor : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (recruitmentRepository.findByQuarterAndType(quarter, RecruitmentType.TA).isEmpty()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_109'/>
+109
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_109'>1</a>
+<span>
+1. budgetFor : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        &#38;&#38; recruitmentRepository.findByQuarterAndType(quarter, RecruitmentType.ULA).isEmpty()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_110'/>
+110
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_110'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new EntityNotFoundException(&#34;No recruitment for quarter %s&#34;.formatted(quarter));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_111'/>
+111
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_111'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_112'/>
+112
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_112'>1</a>
+<span>
+1. budgetFor : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::budgetFor &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return budgetCreationService.findOrCreate(quarter);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_113'/>
+113
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_113'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_114'/>
+114
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_114'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_115'/>
+115
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_115'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_116'/>
+116
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_116'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * The whole picture for one quarter.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_117'/>
+117
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_117'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_118'/>
+118
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_118'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @throws EntityNotFoundException when the quarter has no recruitment</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_119'/>
+119
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_119'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_120'/>
+120
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_120'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public Summary summary(String quarter) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_121'/>
+121
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_121'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Budget budget = budgetFor(quarter);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_122'/>
+122
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_122'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Side ta = sideFor(quarter, RecruitmentType.TA, budget);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_123'/>
+123
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_123'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Side ula = sideFor(quarter, RecruitmentType.ULA, budget);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_124'/>
+124
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_124'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    BigDecimal totalExpenses = costOf(ta).add(costOf(ula));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_125'/>
+125
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_125'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    BigDecimal totalFunds =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_126'/>
+126
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_126'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        money(budget.getUnrestrictedBudget())</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_127'/>
+127
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_127'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .add(money(budget.getTasOnlyBudget()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_128'/>
+128
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_128'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .add(money(budget.getUlasOnlyBudget()))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_129'/>
+129
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_129'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .add(money(orZero(budget.getGiftFundsForASEs())));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_130'/>
+130
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_130'>1</a>
+<span>
+1. summary : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::summary &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return new Summary(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_131'/>
+131
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_131'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        quarter,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_132'/>
+132
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_132'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        budget,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_133'/>
+133
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_133'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        ta,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_134'/>
+134
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_134'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        ula,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_135'/>
+135
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_135'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        estimatedCostPerUla(budget),</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_136'/>
+136
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_136'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        totalExpenses,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_137'/>
+137
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_137'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        totalFunds,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_138'/>
+138
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_138'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        totalFunds.subtract(totalExpenses));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_139'/>
+139
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_139'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_140'/>
+140
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_140'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_141'/>
+141
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_141'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_142'/>
+142
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_142'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * The estimated cost of one ULA for the quarter (issue #388): the budget&#39;s hourly rate times its</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_143'/>
+143
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_143'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * estimated hours per ULA, to the cent; null while either has not been entered.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_144'/>
+144
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_144'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_145'/>
+145
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_145'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static BigDecimal estimatedCostPerUla(Budget budget) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_146'/>
+146
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_146'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    BigDecimal rate = budget.getUlaRateDollarsPerHour();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_147'/>
+147
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_147'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    BigDecimal hours = budget.getEstimatedHoursPerULAPerQuarter();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_148'/>
+148
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_148'>3</a>
+<span>
+1. estimatedCostPerUla : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::estimatedCostPerUla &rarr; KILLED<br/>
+2. estimatedCostPerUla : negated conditional &rarr; KILLED<br/>
+3. estimatedCostPerUla : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return rate == null || hours == null ? null : money(rate.multiply(hours));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_149'/>
+149
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_149'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_150'/>
+150
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_150'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_151'/>
+151
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_151'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private Side sideFor(String quarter, RecruitmentType type, Budget budget) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_152'/>
+152
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_152'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    Optional&#60;Recruitment&#62; recruitment = recruitmentRepository.findByQuarterAndType(quarter, type);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_153'/>
+153
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_153'>2</a>
+<span>
+1. lambda$sideFor$0 : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::lambda$sideFor$0 &rarr; KILLED<br/>
+2. sideFor : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::sideFor &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return recruitment.map(found -&#62; side(found, budget)).orElse(null);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_154'/>
+154
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_154'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_155'/>
+155
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_155'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_156'/>
+156
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_156'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private Side side(Recruitment recruitment, Budget budget) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_157'/>
+157
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_157'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    List&#60;RecruitmentCourse&#62; active =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_158'/>
+158
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_158'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_159'/>
+159
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_159'>2</a>
+<span>
+1. lambda$side$0 : replaced boolean return with true for edu/ucsb/cs/taapply/services/BudgetService::lambda$side$0 &rarr; KILLED<br/>
+2. lambda$side$0 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            .filter(row -&#62; !row.isRemoved())</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_160'/>
+160
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_160'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            .toList();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_161'/>
+161
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_161'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // The estimates are the quarter&#39;s (issue #363), shared with the other recruitment.</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_162'/>
+162
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_162'>1</a>
+<span>
+1. side : removed call to edu/ucsb/cs/taapply/services/BudgetCourseService::attach &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    budgetCourseService.attach(recruitment.getQuarter(), active);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_163'/>
+163
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_163'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    int totalAllocation = active.stream().mapToInt(RecruitmentCourse::getAllocation).sum();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_164'/>
+164
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_164'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    int totalEstimate = active.stream().mapToInt(BudgetService::estimateOf).sum();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_165'/>
+165
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_165'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    int target = recruitment.getTotalHiringTarget();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_166'/>
+166
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_166'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // Both costs are the budget&#39;s (issue #388): the cost per TA as entered, the cost per ULA</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_167'/>
+167
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_167'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // computed from the rate and the hours.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_168'/>
+168
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_168'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    BigDecimal perPosition =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_169'/>
+169
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_169'>1</a>
+<span>
+1. side : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        recruitment.getType() == RecruitmentType.ULA</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_170'/>
+170
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_170'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            ? estimatedCostPerUla(budget)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_171'/>
+171
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_171'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            : budget.getTaCostPerQuarter();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_172'/>
+172
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_172'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    BigDecimal cost =</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_173'/>
+173
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_173'>1</a>
+<span>
+1. side : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        perPosition == null</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_174'/>
+174
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_174'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            ? money(BigDecimal.ZERO)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_175'/>
+175
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_175'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            : money(perPosition.multiply(BigDecimal.valueOf(target)));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_176'/>
+176
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_176'>1</a>
+<span>
+1. side : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::side &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return new Side(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_177'/>
+177
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_177'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        recruitment.getId(),</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_178'/>
+178
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_178'>1</a>
+<span>
+1. side : Replaced integer subtraction with addition &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        target,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_179'/>
+179
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_179'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        perPosition,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_180'/>
+180
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_180'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        totalAllocation,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_181'/>
+181
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_181'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        totalEstimate,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_182'/>
+182
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_182'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        totalAllocation - target,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_183'/>
+183
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_183'>2</a>
+<span>
+1. side : negated conditional &rarr; KILLED<br/>
+2. side : Replaced double division with multiplication &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        totalEstimate == 0 ? null : (double) totalEstimate / target,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_184'/>
+184
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_184'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        cost);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_185'/>
+185
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_185'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_186'/>
+186
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_186'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_187'/>
+187
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_187'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static BigDecimal costOf(Side side) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_188'/>
+188
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_188'>2</a>
+<span>
+1. costOf : negated conditional &rarr; KILLED<br/>
+2. costOf : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::costOf &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return side == null ? money(BigDecimal.ZERO) : side.anticipatedCost();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_189'/>
+189
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_189'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_190'/>
+190
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_190'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_191'/>
+191
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_191'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static BigDecimal orZero(BigDecimal amount) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_192'/>
+192
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_192'>2</a>
+<span>
+1. orZero : negated conditional &rarr; KILLED<br/>
+2. orZero : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::orZero &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return amount == null ? BigDecimal.ZERO : amount;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_193'/>
+193
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_193'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_194'/>
+194
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_194'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_195'/>
+195
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_195'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static int estimateOf(RecruitmentCourse row) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_196'/>
+196
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_196'>2</a>
+<span>
+1. estimateOf : replaced int return with 0 for edu/ucsb/cs/taapply/services/BudgetService::estimateOf &rarr; KILLED<br/>
+2. estimateOf : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return row.getEnrollmentEstimate() == null ? 0 : row.getEnrollmentEstimate();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_197'/>
+197
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_197'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_198'/>
+198
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_198'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_199'/>
+199
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_199'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Dollars and cents: two decimal places, half up. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_200'/>
+200
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_200'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static BigDecimal money(BigDecimal amount) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_201'/>
+201
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_201'>1</a>
+<span>
+1. money : replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::money &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return amount.setScale(2, RoundingMode.HALF_UP);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_202'/>
+202
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_202'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@320411f0_203'/>
+203
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_203'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_87'>87</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_87'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$quarters$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:quarters_groups_recruitments_by_quarter_newest_first()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::lambda$quarters$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_88'>88</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_88'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>quarters<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:quarters_groups_recruitments_by_quarter_newest_first()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_95'>95</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_95'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>quarters<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:quarters_groups_recruitments_by_quarter_newest_first()]</span></span> removed call to java/util/Map::forEach &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_97'>97</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_97'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>quarters<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:quarters_groups_recruitments_by_quarter_newest_first()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/BudgetService::quarters &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_108'>108</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_108'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>budgetFor<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_quarter_with_no_recruitment_has_no_budget()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_109'>109</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_109'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>budgetFor<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_quarter_with_no_recruitment_has_no_budget()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_112'>112</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_112'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>budgetFor<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_quarter_with_only_a_ta_recruitment_gets_its_budget_from_the_creation_service()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::budgetFor &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_130'>130</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_130'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>summary<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_other_funds_for_ases_are_counted_to_the_cent()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::summary &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_148'>148</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_148'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>estimatedCostPerUla<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_the_rate_times_the_hours_to_the_cent_rounding_half_up()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::estimatedCostPerUla &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>estimatedCostPerUla<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_the_rate_times_the_hours_to_the_cent_rounding_half_up()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>3.<span><b>3</b><br/><b>Location : </b>estimatedCostPerUla<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_the_rate_times_the_hours_to_the_cent_rounding_half_up()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_153'>153</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_153'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$sideFor$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_computed_even_when_the_quarter_has_no_ula_recruitment()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::lambda$sideFor$0 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>sideFor<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_computed_even_when_the_quarter_has_no_ula_recruitment()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::sideFor &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_159'>159</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_159'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$side$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:each_side_reads_the_quarters_figures_onto_its_live_rows_first()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/BudgetService::lambda$side$0 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$side$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:each_side_reads_the_quarters_figures_onto_its_live_rows_first()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_162'>162</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_162'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>side<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:each_side_reads_the_quarters_figures_onto_its_live_rows_first()]</span></span> removed call to edu/ucsb/cs/taapply/services/BudgetCourseService::attach &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_169'>169</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_169'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>side<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_computed_even_when_the_quarter_has_no_ula_recruitment()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_173'>173</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_173'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>side<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_other_funds_for_ases_are_counted_to_the_cent()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_176'>176</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_176'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>side<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_computed_even_when_the_quarter_has_no_ula_recruitment()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::side &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_178'>178</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_178'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>side<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_ula_recruitment_costs_nothing_while_the_rate_or_the_hours_are_unknown()]</span></span> Replaced integer subtraction with addition &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_183'>183</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_183'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>side<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_ula_recruitment_costs_nothing_while_the_rate_or_the_hours_are_unknown()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>side<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:each_side_reads_the_quarters_figures_onto_its_live_rows_first()]</span></span> Replaced double division with multiplication &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_188'>188</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_188'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>costOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_other_funds_for_ases_are_counted_to_the_cent()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>costOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_other_funds_for_ases_are_counted_to_the_cent()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::costOf &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_192'>192</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_192'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>orZero<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_other_funds_for_ases_are_counted_to_the_cent()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>orZero<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_other_funds_for_ases_are_counted_to_the_cent()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::orZero &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_196'>196</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_196'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>estimateOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:each_side_reads_the_quarters_figures_onto_its_live_rows_first()]</span></span> replaced int return with 0 for edu/ucsb/cs/taapply/services/BudgetService::estimateOf &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>estimateOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:each_side_reads_the_quarters_figures_onto_its_live_rows_first()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@320411f0_201'>201</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@320411f0_201'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>money<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:money_has_two_decimal_places_rounding_half_up()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/services/BudgetService::money &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_other_funds_for_ases_are_counted_to_the_cent()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_computed_even_when_the_quarter_has_no_ula_recruitment()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_ula_recruitment_costs_nothing_while_the_rate_or_the_hours_are_unknown()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:summary_with_only_a_ula_recruitment_and_no_rate_or_hours_yet_has_zero_expenses()] (2 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:each_side_reads_the_quarters_figures_onto_its_live_rows_first()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ta_is_the_budgets_and_a_ta_recruitment_costs_nothing_until_it_is_entered()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:summary_with_only_a_ta_recruitment_has_a_null_ula_side()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:estimates_that_add_up_to_zero_give_no_ratio_while_one_student_gives_a_fraction()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:summary_with_both_recruitments_adds_up_both_sides()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:quarters_groups_recruitments_by_quarter_newest_first()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:money_has_two_decimal_places_rounding_half_up()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_the_rate_times_the_hours_to_the_cent_rounding_half_up()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorFeedbackSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorFeedbackSettingsControllerTests]/[method:the_preview_costs_are_the_two_figures_of_the_quarters_budget()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_without_a_conversion_factor_leaves_it_alone()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_with_the_current_version_is_applied_and_counts_one_more()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_that_gives_lines_and_the_factor_counts_both()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:admin_can_set_all_three_lines_at_once_rounded_to_cents()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:admin_can_set_the_rate_the_hours_and_the_other_funds_at_once_rounded_to_cents()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_line_save_counts_the_lines_and_not_the_factor_whichever_line_it_is()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:lines_not_given_keep_their_values()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorFeedbackControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorFeedbackControllerTests]/[method:the_costs_are_the_two_figures_of_the_quarters_budget()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:the_rate_the_hours_and_the_other_funds_are_lines_counted_under_version()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:each_of_the_rate_the_hours_and_the_other_funds_is_set_on_its_own_and_the_rest_kept()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_counts_as_being_there_for_the_others_heartbeats()] (3 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:the_cost_per_ula_is_unknown_until_both_the_rate_and_the_hours_are_entered()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorFeedbackControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorFeedbackControllerTests]/[method:costs_not_entered_are_null()] (2 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:quarters_is_empty_when_there_are_no_recruitments()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_quarter_with_no_recruitment_has_no_budget()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:summary_of_a_quarter_with_no_recruitment_is_a_404()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_quarter_with_only_a_ta_recruitment_gets_its_budget_from_the_creation_service()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:a_quarter_with_only_a_ula_recruitment_returns_the_budget_on_file()] (0 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
