@@ -16,6 +16,9 @@ const candidatesFixtures = [
     previousServiceAsUla: 2,
     videoLink: "https://example.edu/ada",
     rankingVersion: 3,
+    tookCourse: true,
+    courseTerm: "F25",
+    courseGrade: "A",
   },
   {
     applicationId: 2,
@@ -34,6 +37,9 @@ const candidatesFixtures = [
     previousServiceAsUla: 10,
     videoLink: "https://example.edu/grace",
     rankingVersion: 3,
+    tookCourse: true,
+    courseTerm: "W25",
+    courseGrade: "A-",
   },
   {
     applicationId: 3,
@@ -52,6 +58,9 @@ const candidatesFixtures = [
     previousServiceAsUla: 1,
     videoLink: "https://example.edu/alan",
     rankingVersion: 3,
+    tookCourse: false,
+    courseTerm: null,
+    courseGrade: null,
   },
   {
     applicationId: 4,
@@ -70,6 +79,9 @@ const candidatesFixtures = [
     previousServiceAsUla: 0,
     videoLink: null,
     rankingVersion: 3,
+    tookCourse: true,
+    courseTerm: "S24",
+    courseGrade: null,
   },
 ];
 
@@ -93,6 +105,9 @@ export const candidatesWithNotInterested = [
     previousServiceAsUla: 0,
     videoLink: null,
     rankingVersion: 3,
+    tookCourse: false,
+    courseTerm: null,
+    courseGrade: null,
   },
 ];
 

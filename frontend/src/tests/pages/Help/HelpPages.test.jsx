@@ -426,6 +426,12 @@ describe("Help pages (issue #140)", () => {
     ).toHaveTextContent(
       "The ranking table has a Columns menu, like the other tables, to hide the columns you do not need: untick a column to hide it and tick it again to bring it back, or use Show All and Show None. Each column heading also has a small hide link above it that hides that column. The Ranking, First Name and Last Name columns cannot be hidden, so you can always rank and see whom you are ranking. Your choice is remembered in this browser for all the courses of the recruitment (separately for TA and ULA recruitments). The warning under tied rankings always spans whichever columns are showing.",
     );
+    // Issue #442: the ULA table's When Course Taken and Course Grade columns.
+    expect(
+      screen.getByTestId("HelpInstructorsPage-course-taken"),
+    ).toHaveTextContent(
+      "In a ULA recruitment the table also has When Course Taken and Course Grade, shown by default: the term and grade the applicant listed for this course among the UCSB courses they have taken. When they do not list it, When Course Taken shows a warning sign (⚠️); hover over it for a reminder to read their comments, where they explain what prepares them to be a ULA for the course.",
+    );
     // Issue #364: the home page is one card per quarter, with a TA and/or ULA card per course.
     expect(
       screen.getByTestId("HelpInstructorsPage-home-cards"),

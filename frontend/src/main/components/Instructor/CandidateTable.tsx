@@ -9,6 +9,7 @@ import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
 import { candidateColumnChoices } from "main/utils/candidateColumns";
 import { gpaText } from "main/utils/applicationFields";
 import { interestDisplay } from "main/utils/interestDisplay";
+import { stackedWords } from "main/components/Common/columnStyles";
 import {
   compareByRankThenPreference,
   PREFERENCE_ORDER,
@@ -36,6 +37,12 @@ export type Candidate = {
    * same on every row of one reading. A save names it, and is refused if the list has changed.
    */
   rankingVersion: number;
+  /** Issue #442: whether the applicant lists this course among their UCSB prior coursework. */
+  tookCourse: boolean;
+  /** Issue #442: the term they took it, as they wrote it; null if they did not take it. */
+  courseTerm: string | null;
+  /** Issue #442: the grade they earned in it; null if they did not take it, or gave none. */
+  courseGrade: string | null;
 };
 
 type Props = {
@@ -69,6 +76,16 @@ const isConflict = (error: unknown): boolean =>
 export const CONFLICT_MESSAGE =
   "Rankings for this course changed while you were editing; your change has not been saved.";
 
+/**
+ * Issue #442: the tooltip on the warning in the When Course Taken cell of a ULA candidate who does
+ * not list the course among their UCSB prior coursework.
+ */
+export const NOT_TAKEN_TOOLTIP =
+  "Student did not take course; see comments for their explanation of their qualifications to ULA for this course.";
+
+/** Issue #442: what the When Course Taken cell shows for a candidate who did not take the course. */
+export const NOT_TAKEN_MARK = "\u26A0\uFE0F";
+
 /** Issue #311: the warning under the last row of each group of tied rankings. */
 export const TIED_WARNING =
   "You have ranked multiple candidates with the same rank.  Are you sure you have no preference among these candidates?";
@@ -80,7 +97,14 @@ const preferences = PREFERENCE_ORDER;
 export const DEFAULT_SORT_TOOLTIP =
   "Sorts by faculty ranking (1 first, unranked last); within a ranking, by course preference (first choice, second choice, Enthusiastic, Would Consider, Not Interested); then in the order the applications were submitted. Rankings are read as of now, so a row does not jump while you type.";
 
-type Column = { key: keyof Candidate; label: string; numeric?: boolean };
+type Column = {
+  key: keyof Candidate;
+  /** The heading, and the column's name in the Columns menu. */
+  label: string;
+  /** Shown in the heading in place of the label, e.g. stacked on several lines. */
+  heading?: React.ReactNode;
+  numeric?: boolean;
+};
 const common: Column[] = [
   { key: "rank", label: "Ranking", numeric: true },
   { key: "preference", label: "Course Preference" },
@@ -252,6 +276,16 @@ export default function CandidateTable({
             numeric: true,
           },
           { key: "videoLink" as const, label: "Video Link" },
+          // Issue #442: whether the applicant took this course at UCSB, and how they did.
+          {
+            key: "courseTerm" as const,
+            label: "When Course Taken",
+            heading: stackedWords(
+              "When Course Taken",
+              "candidate-table-stacked-heading",
+            ),
+          },
+          { key: "courseGrade" as const, label: "Course Grade" },
         ]),
   ];
   // Issue #312: the columns the instructor has hidden, remembered in this browser.
@@ -382,7 +416,7 @@ export default function CandidateTable({
                         })
                       }
                     >
-                      {column.label}
+                      {column.heading ?? column.label}
                     </button>
                   </th>
                 ))}
@@ -499,6 +533,26 @@ export default function CandidateTable({
                           >
                             {candidate.videoLink}
                           </a>
+                        ) : column.key === "courseTerm" &&
+                          !candidate.tookCourse ? (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={
+                              <Tooltip
+                                id={`CandidateTable-not-taken-tooltip-${candidate.applicationId}`}
+                              >
+                                {NOT_TAKEN_TOOLTIP}
+                              </Tooltip>
+                            }
+                          >
+                            <span
+                              tabIndex={0}
+                              aria-label={NOT_TAKEN_TOOLTIP}
+                              data-testid={`CandidateTable-not-taken-${candidate.applicationId}`}
+                            >
+                              {NOT_TAKEN_MARK}
+                            </span>
+                          </OverlayTrigger>
                         ) : column.key === "preference" ? (
                           <>
                             <InterestMark

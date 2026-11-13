@@ -239,6 +239,13 @@ body {
   line-height: 1.2;
 }
 
+/* The "When Course Taken" heading of the ULA table (issue #442), one word per line
+   (columnStyles' stackedWords), the lines close together. */
+.candidate-table-stacked-heading {
+  display: inline-block;
+  line-height: 1.2;
+}
+
 /* The warning under the last row of a group of tied rankings (issue #311). */
 .candidate-table-tied-warning {
   font-size: 0.8em;

@@ -68,6 +68,15 @@ public class PriorCoursework {
     return key(ucsbCourse, otherSchool, courseNumber, term);
   }
 
+  /**
+   * Whether two course numbers name the same course (issue #442): equal after uppercasing both and
+   * removing all whitespace, so the padded course id "CMPSC 156" matches "cmpsc 156". A null or
+   * blank number matches nothing.
+   */
+  public static boolean sameCourseNumber(String a, String b) {
+    return a != null && !a.isBlank() && b != null && squash(a).equals(squash(b));
+  }
+
   private static String squash(String text) {
     return text == null ? "" : text.toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
   }

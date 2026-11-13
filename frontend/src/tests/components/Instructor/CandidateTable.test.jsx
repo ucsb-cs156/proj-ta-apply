@@ -4,6 +4,8 @@ import AxiosMockAdapter from "axios-mock-adapter";
 import userEvent from "@testing-library/user-event";
 import CandidateTable, {
   DEFAULT_SORT_TOOLTIP,
+  NOT_TAKEN_MARK,
+  NOT_TAKEN_TOOLTIP,
   TIED_WARNING,
 } from "main/components/Instructor/CandidateTable";
 import candidatesFixtures from "fixtures/candidatesFixtures";
@@ -31,6 +33,8 @@ const ulaHeaders = [
   "Overall GPA",
   "Quarters of Previous ULA Service",
   "Video Link",
+  "When Course Taken",
+  "Course Grade",
 ];
 function table(props = {}) {
   return render(
@@ -247,6 +251,8 @@ describe("CandidateTable", () => {
     ["Overall GPA", ["Grace", "Ada", "Alan", "Katherine"]],
     ["Quarters of Previous ULA Service", ["Katherine", "Alan", "Ada", "Grace"]],
     ["Video Link", ["Ada", "Alan", "Grace", "Katherine"]],
+    // Issue #442: by the term as written; those who did not take the course come last.
+    ["When Course Taken", ["Ada", "Katherine", "Grace", "Alan"]],
   ])(
     "ULA %s sorts numerically where appropriate, in both directions",
     (label, expected) => {
@@ -257,6 +263,112 @@ describe("CandidateTable", () => {
       expect(names()).toEqual([...expected].reverse());
     },
   );
+
+  /** Issue #442: whether a ULA candidate took the course at UCSB, and their grade. */
+  describe("when the course was taken (issue #442)", () => {
+    const row = (firstName) =>
+      screen.getByRole("link", { name: firstName, exact: true }).closest("tr");
+    const cellUnder = (firstName, label) =>
+      row(firstName).querySelectorAll("td")[ulaHeaders.indexOf(label)];
+
+    test("a candidate who took the course shows its term and grade", () => {
+      table({ type: "ULA" });
+      expect(cellUnder("Ada", "When Course Taken")).toHaveTextContent(/^F25$/);
+      expect(cellUnder("Ada", "Course Grade")).toHaveTextContent(/^A$/);
+      expect(cellUnder("Grace", "When Course Taken")).toHaveTextContent(
+        /^W25$/,
+      );
+      expect(cellUnder("Grace", "Course Grade")).toHaveTextContent(/^A-$/);
+      // Taken with no grade given: the term, and an empty grade.
+      expect(cellUnder("Katherine", "When Course Taken")).toHaveTextContent(
+        /^S24$/,
+      );
+      expect(cellUnder("Katherine", "Course Grade")).toBeEmptyDOMElement();
+      expect(screen.queryByTestId("CandidateTable-not-taken-1")).toBeNull();
+    });
+
+    test("a candidate who did not take it gets a warning with an explanatory tooltip", async () => {
+      table({ type: "ULA" });
+      expect(NOT_TAKEN_MARK).toBe("\u26A0\uFE0F");
+      expect(NOT_TAKEN_TOOLTIP).toBe(
+        "Student did not take course; see comments for their explanation of their qualifications to ULA for this course.",
+      );
+      const mark = screen.getByTestId("CandidateTable-not-taken-3");
+      expect(cellUnder("Alan", "When Course Taken")).toContainElement(mark);
+      expect(mark).toHaveTextContent(/^⚠️$/);
+      expect(mark).toHaveAttribute("aria-label", NOT_TAKEN_TOOLTIP);
+      expect(mark).toHaveAttribute("tabindex", "0");
+      expect(cellUnder("Alan", "Course Grade")).toBeEmptyDOMElement();
+
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+      await userEvent.hover(mark);
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveTextContent(NOT_TAKEN_TOOLTIP);
+      expect(tooltip).toHaveAttribute(
+        "id",
+        "CandidateTable-not-taken-tooltip-3",
+      );
+    });
+
+    test("the When Course Taken heading is stacked, one word per line", () => {
+      table({ type: "ULA" });
+      const stack = screen
+        .getByRole("button", { name: "When Course Taken" })
+        .querySelector("span");
+      expect(stack).toHaveClass("candidate-table-stacked-heading");
+      expect(stack).not.toHaveAttribute("style");
+      expect(stack.querySelectorAll("br")).toHaveLength(2);
+      // The other headings are not stacked.
+      expect(
+        screen.getByRole("button", { name: "Course Grade" }).innerHTML,
+      ).toBe("Course Grade");
+    });
+
+    test("Course Grade sorts by grade, with candidates who have none last", () => {
+      table({ type: "ULA" });
+      const sortBy = () =>
+        fireEvent.click(screen.getByRole("button", { name: "Course Grade" }));
+      sortBy();
+      expect(names()).toEqual(["Ada", "Grace", "Alan", "Katherine"]);
+      sortBy();
+      expect(names()).toEqual(["Alan", "Katherine", "Grace", "Ada"]);
+    });
+
+    test("TA tables have neither column", () => {
+      table({ type: "TA" });
+      expect(headingLabels()).not.toContain("When Course Taken");
+      expect(headingLabels()).not.toContain("Course Grade");
+      expect(screen.queryByTestId("CandidateTable-not-taken-3")).toBeNull();
+    });
+
+    test("both columns are in the Columns menu, shown by default, and can be hidden", async () => {
+      table({
+        type: "ULA",
+        columnsStorageKey: "candidateRanking.hiddenColumns.1.ULA",
+      });
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      );
+      for (const id of ["courseTerm", "courseGrade"])
+        expect(
+          screen.getByTestId(`CandidateTable-columns-${id}`),
+        ).toBeChecked();
+      for (const label of ["When Course Taken", "Course Grade"])
+        expect(screen.getByRole("checkbox", { name: label })).toBeChecked();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-hide-courseTerm"),
+      );
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-hide-courseGrade"),
+      );
+      expect(headingLabels()).toEqual(ulaHeaders.slice(0, -2));
+      expect(
+        JSON.parse(
+          localStorage.getItem("candidateRanking.hiddenColumns.1.ULA"),
+        ),
+      ).toEqual(["courseTerm", "courseGrade"]);
+    });
+  });
 
   /** Issue #292: no GPAs yet, so the cells say so, and sorting by GPA does not trip over them. */
   describe("a first quarter candidate", () => {
@@ -1162,7 +1274,9 @@ describe("CandidateTable", () => {
       await userEvent.click(
         screen.getByTestId("CandidateTable-hide-videoLink"),
       );
-      expect(headerTexts()).toEqual(ulaHeaders.slice(0, -1));
+      expect(headerTexts()).toEqual(
+        ulaHeaders.filter((label) => label !== "Video Link"),
+      );
     });
   });
 });
