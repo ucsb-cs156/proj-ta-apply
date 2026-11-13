@@ -101,6 +101,27 @@ Rankable.parameters = {
 };
 
 /**
+ * Issue #439: an admin who does not teach the course may enter or change its rankings, here after
+ * faculty reviews have closed. The note above the table says they are doing so as an admin.
+ */
+export const RankableAsAdmin = Template.bind({});
+RankableAsAdmin.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
+        HttpResponse.json({
+          ...instructorRecruitmentsFixtures.candidateRankingPage,
+          reviewStatus: "Closed",
+          canRank: true,
+          rankingAsAdmin: true,
+        }),
+      ),
+      ...handlers,
+    ],
+  },
+};
+
+/**
  * Another instructor of the course is ranking it too (issue #279): the warning names them, and as
  * this is the newest tab the question is put as well.
  */

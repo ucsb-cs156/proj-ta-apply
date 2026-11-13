@@ -690,11 +690,11 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           instructor typed in its box and offers <em>Save again</em>. The
           candidates are read after the version, so a change in between can only
           make a save refused, never wrongly accepted. Only someone who may rank
-          the course (its instructor while reviews are Open) may heartbeat or
-          say goodbye for <code>ranking:&lt;recruitmentCourseId&gt;</code>: an
-          instructor of another course, or an admin who does not teach the
-          course, gets <code>403</code> and is neither recorded nor told who is
-          there.
+          the course (its instructor while reviews are Open, or an admin for a
+          course still on offer) may heartbeat or say goodbye for{" "}
+          <code>ranking:&lt;recruitmentCourseId&gt;</code>: an instructor of
+          another course gets <code>403</code> and is neither recorded nor told
+          who is there.
         </p>
         <p>Where the version check and the warning are used so far:</p>
         <Table

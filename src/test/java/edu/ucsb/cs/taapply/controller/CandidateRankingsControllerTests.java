@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = InstructorRecruitmentsController.class)
 @Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
@@ -425,41 +426,63 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
     verify(candidateRankingRepository).save(any());
 
-    // Still only while reviews are Open.
+    // Issue #439: once reviews are Closed the instructor's right is gone, but as an admin they
+    // may still change the ranking.
     recruitment.setReviewStatus("Closed");
     mockMvc
         .perform(
-            put(BASE + "/30/rank?version=0")
+            put(BASE + "/30/rank?version=1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"rank\":1}"))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isOk());
+    verify(candidateRankingRepository, times(2)).save(any());
     mockMvc.perform(get(BASE)).andExpect(status().isOk());
   }
 
+  /**
+   * Issue #439: an admin enters and changes the rankings of a course they do not teach, while
+   * reviews are Open and after they are Closed. An instructor with no admin role still cannot.
+   */
   @Test
-  @WithMockUser(roles = {"ADMIN", "INSTRUCTOR"})
-  void admins_read_closed_pages_but_never_edit_even_with_dual_role() throws Exception {
+  @WithMockUser(roles = {"ADMIN"})
+  void an_admin_ranks_a_course_they_do_not_teach_whether_reviews_are_open_or_closed()
+      throws Exception {
     when(currentUserService.getCurrentUser())
         .thenReturn(
             CurrentUser.builder()
-                .user(User.builder().email("faculty@ucsb.edu").build())
-                .roles(
-                    List.of(
-                        new SimpleGrantedAuthority("ROLE_ADMIN"),
-                        new SimpleGrantedAuthority("ROLE_INSTRUCTOR")))
+                .user(User.builder().email("admin@ucsb.edu").build())
+                .roles(List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .build());
-    course.setInstructor("OTHER FACULTY");
+    // Not an instructor at all, and the course's instructor is still to be decided.
+    when(instructorRepository.findByEmail("admin@ucsb.edu")).thenReturn(Optional.empty());
+    course.setInstructor("TBD");
+    when(candidateRankingRepository.findByRecruitmentCourseIdAndApplicationId(20L, 30L))
+        .thenReturn(Optional.empty());
+    when(candidateRankingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    MvcResult open =
+        mockMvc
+            .perform(
+                put(BASE + "/30/rank?version=0")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"rank\":1}"))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertJson("{\"rank\":1,\"version\":1}", open.getResponse().getContentAsString());
+    ArgumentCaptor<CandidateRanking> saved = ArgumentCaptor.forClass(CandidateRanking.class);
+    verify(candidateRankingRepository).save(saved.capture());
+    assertEquals(20L, saved.getValue().getRecruitmentCourseId());
+    assertEquals(30L, saved.getValue().getApplicationId());
+    assertEquals(1, saved.getValue().getRank());
+
     recruitment.setReviewStatus("Closed");
-    mockMvc.perform(get(BASE)).andExpect(status().isOk());
-    mockMvc.perform(get(BASE + "/30")).andExpect(status().isOk());
-    recruitment.setReviewStatus("Open");
     mockMvc
         .perform(
-            put(BASE + "/30/rank?version=0")
+            put(BASE + "/30/rank?version=1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"rank\":1}"))
-        .andExpect(status().isForbidden());
-    verify(candidateRankingRepository, never()).save(any());
+                .content("{\"rank\":null}"))
+        .andExpect(status().isOk());
+    verify(candidateRankingRepository, times(2)).save(any());
   }
 
   @Test
@@ -622,6 +645,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
   @Test
   @WithMockUser(roles = {"ADMIN"})
   void admins_can_read_historical_unavailable_courses_but_cannot_edit_them() throws Exception {
+    // Issue #439 lets an admin rank a course on offer; this one is not, whatever the review status.
     course.setStale(true);
     recruitment.setReviewStatus("Closed");
     when(currentUserService.getCurrentUser())
@@ -634,12 +658,41 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
 
     mockMvc.perform(get(BASE)).andExpect(status().isOk());
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isOk());
-    mockMvc
-        .perform(
-            put(BASE + "/30/rank?version=0")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"rank\":1}"))
-        .andExpect(status().isForbidden());
+    for (String status : List.of("Closed", "Open")) {
+      recruitment.setReviewStatus(status);
+      MvcResult refused =
+          mockMvc
+              .perform(
+                  put(BASE + "/30/rank?version=0")
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content("{\"rank\":1}"))
+              .andExpect(status().isForbidden())
+              .andReturn();
+      assertEquals(
+          "Rankings of a course that has been removed or is no longer available cannot be changed.",
+          mapper.readTree(refused.getResponse().getContentAsString()).get("message").asText());
+    }
+    verify(candidateRankingRepository, never()).save(any());
+  }
+
+  /** Someone who is not an admin is told that ranking is for the course's instructors. */
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void an_instructor_refused_after_reviews_close_is_told_who_may_rank() throws Exception {
+    recruitment.setReviewStatus("Closed");
+
+    MvcResult refused =
+        mockMvc
+            .perform(
+                put(BASE + "/30/rank?version=0")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"rank\":1}"))
+            .andExpect(status().isForbidden())
+            .andReturn();
+
+    assertEquals(
+        "Only assigned instructors may rank candidates while reviews are Open.",
+        mapper.readTree(refused.getResponse().getContentAsString()).get("message").asText());
     verify(candidateRankingRepository, never()).save(any());
   }
 

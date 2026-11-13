@@ -336,14 +336,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           menu applicants use to add UCSB courses they have taken, so graduate
           courses belong in it too even though they rarely get TAs or ULAs.
         </p>
-        <p>
+        <p data-testid="HelpAdminsPage-faculty-rankings">
           On a recruitment&apos;s own <strong>Courses</strong> page, after
           faculty reviews have started, the leftmost{" "}
           <strong>Faculty Rankings</strong> column (<em>Rankings</em> in the
           Columns menu) shows how many eligible applications have an entered
-          ranking for each section. The number links to the ranking page,
-          read-only for you unless you are that course&apos;s instructor of
-          record; sections with no entered rankings link with a zero. The{" "}
+          ranking for each section. The number links to the ranking page;
+          sections with no entered rankings link with a zero. As an admin you
+          can enter or change the rankings there yourself, for instance for a
+          course whose instructor is still TBD, or to adjust a ranking after
+          faculty reviews have closed: what you save is the course&apos;s
+          faculty ranking, the one its instructor sees, and a note on the page
+          says when you are editing as an admin. Only the rankings of a course
+          that has been removed, or is stale or cancelled, stay read-only. The{" "}
           <strong>Email</strong> column uses the instructor&apos;s catalog-name
           mapping from the Instructors page. Use its <em>Copy</em> control for
           one address, or <em>Copy emails of faculty with zero rankings</em> to

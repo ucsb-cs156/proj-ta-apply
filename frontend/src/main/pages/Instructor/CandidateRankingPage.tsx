@@ -14,6 +14,7 @@ import {
   NOT_INTERESTED_WARNING,
 } from "main/utils/interestDisplay";
 import { apiErrorMessage } from "main/utils/apiError";
+import { rankingAsAdminText } from "main/utils/rankingAsAdmin";
 import { useBackend } from "main/utils/useBackend";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -68,11 +69,16 @@ export type CandidateRankingPageData = {
    */
   hasRankedNotInterested?: boolean;
   /**
-   * Whether this user may enter rankings (issue #202): the course's instructor of record while
-   * reviews are Open, admin or not. Anyone else, including an admin who does not teach the
-   * course, sees the rankings read-only.
+   * Whether this user may enter rankings: the course's instructor of record while reviews are Open
+   * (issue #202), or an admin, for any course still on offer, whether reviews are Open or Closed
+   * (issue #439). Anyone else sees the rankings read-only.
    */
   canRank?: boolean;
+  /**
+   * Whether it is only as an admin that this user may enter rankings (issue #439): they do not
+   * teach the course, or reviews are Closed. The page then says whose rankings they are changing.
+   */
+  rankingAsAdmin?: boolean;
   /**
    * How many TAs or ULAs the course was allocated (issue #178): null or absent while the admin
    * hides allocations from faculty; admins always get it.
@@ -326,6 +332,16 @@ export default function CandidateRankingPage(): React.JSX.Element {
                   ))}
                 </ul>
               </section>
+            )}
+
+            {data.rankingAsAdmin === true && (
+              <div
+                className="alert alert-info"
+                role="note"
+                data-testid="CandidateRankingPage-ranking-as-admin"
+              >
+                {rankingAsAdminText(data.reviewStatus)}
+              </div>
             )}
 
             {/* A candidate list that could not be read again keeps showing the one it has, so that

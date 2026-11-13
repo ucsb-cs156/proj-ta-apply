@@ -44,6 +44,8 @@ public class AdminAssignmentsWebIT extends WebTestCase {
 
   @Autowired ApplicationRepository applicationRepository;
 
+  @Autowired edu.ucsb.cs.taapply.repository.CandidateRankingRepository candidateRankingRepository;
+
   private static final String BANNER = "AdminAssignmentsPage-multiple-tabs";
   private static final String SELECT = "AdminAssignmentsPage-table-cell-row-0-tentative-select";
   private static final String THERMOMETER = "AdminAssignmentsPage-progress";
@@ -82,6 +84,49 @@ public class AdminAssignmentsWebIT extends WebTestCase {
             .firstName("Ada")
             .lastName("Lovelace")
             .build());
+  }
+
+  /**
+   * Issue #439: an admin who teaches nothing enters a ranking for a course whose instructor is
+   * still TBD, after faculty reviews have closed. The page says they are doing so as an admin, and
+   * the rank is saved as the course's faculty ranking.
+   */
+  @Test
+  public void an_admin_can_enter_a_ranking_for_a_course_with_no_instructor() throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    recruitment.setReviewStatus("Closed");
+    recruitmentRepository.save(recruitment);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    course.setInstructor("TBD");
+    recruitmentCourseRepository.save(course);
+    Application applicant = seedApplicant(recruitment);
+    applicant.setFirstChoiceCourse("CMPSC   156");
+    applicant = applicationRepository.save(applicant);
+
+    setupAdminUser();
+    goTo("/recruitments/" + recruitment.getId() + "/courses/" + course.getId() + "/ranking");
+
+    assertThat(page.getByTestId("CandidateRankingPage-ranking-as-admin"))
+        .containsText("because you are an admin");
+    assertThat(page.getByTestId("CandidateRankingPage-ranking-as-admin"))
+        .containsText("Faculty reviews are closed");
+    assertThat(page.getByText("Rankings are read-only.")).hasCount(0);
+
+    Locator rank = page.getByLabel("Ranking for Ada Lovelace");
+    rank.fill("1");
+    assertThat(page.getByRole(com.microsoft.playwright.options.AriaRole.STATUS).getByText("Saved"))
+        .isVisible();
+
+    var saved =
+        candidateRankingRepository.findByRecruitmentCourseIdAndApplicationId(
+            course.getId(), applicant.getId());
+    assertTrue(saved.isPresent());
+    assertEquals(1, saved.get().getRank());
+
+    // It is the course's ranking: there on a fresh read of the page.
+    reloadPage(page);
+    assertThat(page.getByLabel("Ranking for Ada Lovelace")).hasValue("1");
   }
 
   /** A second window of the same admin, on the same page. */
