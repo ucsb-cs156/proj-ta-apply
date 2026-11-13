@@ -107,3 +107,21 @@ Here is a portion of Claude's comments on this file:
 > - [EPFL propedeutics](https://edu.epfl.ch/studyplan/en/propedeutics/computer-science/) and [EPFL bachelor](https://edu.epfl.ch/studyplan/en/bachelor/computer-science/)
 > - [TUM study plan](https://www.cit.tum.de/en/cit/studium/studiengaenge/bachelor-informatik/studienplan/) and [TUM 2019 regulations](https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/fachpruefungsordnungen/2019-88-2-AeS-BA-Informatik-FINAL-11-10-2019.pdf)
 > - [ZJU 2020 training plan](https://bksy.zju.edu.cn/_upload/article/files/b0/49/cf400d1142e9bb65b751c8d2cfa0/d50867e2-e35b-43fa-b4d7-28a2ebd5931f.pdf)
+## fake_explanations.json
+
+Sentences that fake ULA applicants put in their comments to explain why they feel
+prepared to be a ULA for a course they ask for but have not taken at UCSB (issue #448).
+When fake ULA applications are made, each course an applicant ranks as 1st Choice,
+2nd Choice, Enthusiastic or Would Consider is on their UCSB transcript 80% of the time;
+the other 20% of the time it is left off, and one of these sentences is added to their
+comments instead. `FakeExplanationService` reads the file.
+
+- `byCourse`: sentences for particular courses, keyed by course number (`"CMPSC 5A"`).
+  Case and spacing do not matter in the key.
+- `lowerDivision`: for any other course numbered below 100.
+- `upperDivision`: for any other course numbered 100 or above.
+
+Each entry is a list. When a list has more than one sentence, one is chosen at random,
+so to give a course more variety, add sentences to its list. In a sentence, `{course}`
+is replaced by the course number as an applicant would write it, e.g. `CMPSC 156`.
+To change the sentences, edit this file; no code changes are needed.

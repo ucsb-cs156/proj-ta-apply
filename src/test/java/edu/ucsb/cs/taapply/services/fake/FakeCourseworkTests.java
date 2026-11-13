@@ -236,4 +236,56 @@ public class FakeCourseworkTests {
     assertEquals(
         1, rows.stream().map(PriorCoursework::getOtherSchool).collect(Collectors.toSet()).size());
   }
+
+  // ---- issue #448: one UCSB course, and keeping a transcript in term order ----
+
+  @Test
+  public void ucsb_course_is_the_course_as_an_applicant_writes_it_in_one_of_six_recent_quarters() {
+    Set<String> terms = new HashSet<>();
+    for (int i = 0; i < 200; i++) {
+      PriorCoursework row = coursework.ucsbCourse(new Random(seed(i)), "CMPSC  130A", LATEST);
+      assertTrue(row.isUcsbCourse());
+      assertNull(row.getOtherSchool());
+      assertEquals("CMPSC 130A", row.getCourseNumber());
+      assertTrue(FakeCoursework.GRADES.contains(row.getGrade()));
+      terms.add(row.getTerm());
+    }
+    assertEquals(Set.of("W26", "F25", "S25", "W25", "F24", "S24"), terms);
+  }
+
+  @Test
+  public void quarter_reads_back_what_term_writes() {
+    assertEquals(20254, FakeCoursework.quarter("F25"));
+    assertEquals(20261, FakeCoursework.quarter("W26"));
+    assertEquals(20242, FakeCoursework.quarter("S24"));
+    assertEquals(20093, FakeCoursework.quarter("M09"));
+    for (int quarter : List.of(20251, 20252, 20253, 20254, 20301)) {
+      assertEquals(quarter, FakeCoursework.quarter(FakeCoursework.term(quarter)));
+    }
+  }
+
+  private static PriorCoursework termed(String number, String term) {
+    return PriorCoursework.builder().ucsbCourse(true).courseNumber(number).term(term).build();
+  }
+
+  private static List<String> numbersOf(List<PriorCoursework> rows) {
+    return rows.stream().map(PriorCoursework::getCourseNumber).toList();
+  }
+
+  @Test
+  public void insert_in_term_order_goes_after_every_row_of_its_term_or_earlier() {
+    List<PriorCoursework> rows =
+        new java.util.ArrayList<>(
+            List.of(
+                termed("A", "F24"), termed("B", "W25"), termed("C", "W25"), termed("D", "S25")));
+    FakeCoursework.insertInTermOrder(rows, termed("E", "W25"));
+    assertEquals(List.of("A", "B", "C", "E", "D"), numbersOf(rows));
+    FakeCoursework.insertInTermOrder(rows, termed("F", "S24"));
+    assertEquals("F", rows.get(0).getCourseNumber());
+    FakeCoursework.insertInTermOrder(rows, termed("G", "W26"));
+    assertEquals("G", rows.get(rows.size() - 1).getCourseNumber());
+    List<PriorCoursework> empty = new java.util.ArrayList<>();
+    FakeCoursework.insertInTermOrder(empty, termed("H", "F25"));
+    assertEquals(List.of("H"), numbersOf(empty));
+  }
 }

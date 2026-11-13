@@ -1,10 +1,10 @@
 package edu.ucsb.cs.taapply.entity;
 
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import lombok.*;
@@ -59,17 +59,14 @@ public class PriorCoursework {
     if (courseNumber == null || courseNumber.isBlank()) {
       return null;
     }
-    String school = ucsbCourse ? "UCSB" : "other:" + squash(otherSchool);
-    return String.join("|", school, squash(courseNumber), squash(term));
+    String school = ucsbCourse ? "UCSB" : "other:" + CourseMatching.squash(otherSchool);
+    return String.join(
+        "|", school, CourseMatching.squash(courseNumber), CourseMatching.squash(term));
   }
 
   /** The key of this row; see {@link #key(boolean, String, String, String)}. */
   public String key() {
     return key(ucsbCourse, otherSchool, courseNumber, term);
-  }
-
-  private static String squash(String text) {
-    return text == null ? "" : text.toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
   }
 
   /**

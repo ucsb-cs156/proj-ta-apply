@@ -149,7 +149,8 @@ public class PriorCourseworkEditMatrixTests extends ControllerTestCase {
             ulaTopics,
             ulaInterests,
             mock(TaMajorRepository.class),
-            mock(UlaMajorRepository.class));
+            mock(UlaMajorRepository.class),
+            new edu.ucsb.cs.taapply.services.fake.FakeExplanationService());
     Recruitment recruitment = Recruitment.builder().id(1L).quarter("20264").type(type).build();
     Application fake =
         generator

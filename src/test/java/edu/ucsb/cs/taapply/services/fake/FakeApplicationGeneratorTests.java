@@ -19,6 +19,7 @@ import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
@@ -29,7 +30,9 @@ import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +59,14 @@ public class FakeApplicationGeneratorTests {
   private final UlaMajorRepository ulaMajors = mock(UlaMajorRepository.class);
   private final FakeApplicationGenerator generator =
       new FakeApplicationGenerator(
-          coursework, courses, taTopics, ulaTopics, ulaInterests, taMajors, ulaMajors);
+          coursework,
+          courses,
+          taTopics,
+          ulaTopics,
+          ulaInterests,
+          taMajors,
+          ulaMajors,
+          new FakeExplanationService());
 
   private static Recruitment recruitment(RecruitmentType type) {
     return Recruitment.builder().id(7L).quarter("20261").type(type).build();
@@ -332,6 +342,209 @@ public class FakeApplicationGeneratorTests {
 
   // ---- ULA ----
 
+  /**
+   * With no courses on offer nothing is asked for, so a ULA transcript is exactly the prerequisite
+   * walk: 6(n-1) + 1..6 UCSB courses for a student in year n, ending in the quarter of TODAY.
+   */
+  @Test
+  public void ula_transcripts_are_the_prerequisite_walk_when_nothing_is_asked_for() {
+    withSettings();
+    List<Application> made =
+        generator.generate(
+            recruitment(RecruitmentType.ULA),
+            List.of(),
+            500,
+            FakeCoverage.ALL,
+            new Random(42),
+            new HashSet<>(),
+            TODAY);
+    for (Application a : made) {
+      int year = Integer.parseInt(a.getYearInProgram().substring(0, 1));
+      int courses = a.getPriorCoursework().size();
+      assertTrue(
+          courses >= 6 * (year - 1) + 1 && courses <= 6 * (year - 1) + 6, year + ": " + courses);
+      assertTrue(a.getPriorCoursework().stream().allMatch(PriorCoursework::isUcsbCourse));
+      assertEquals("W26", a.getPriorCoursework().get(courses - 1).getTerm());
+      assertFalse(a.getComments().contains("\n"), a.getComments());
+    }
+  }
+
+  // ---- ULA: asked-for courses taken, or explained (issue #448) ----
+
+  /** Whether the applicant's comments explain why they are ready for {@code courseId}. */
+  private static boolean explains(Application a, String courseId) {
+    String course = CourseMatching.display(courseId);
+    return a.getComments().lines().skip(1).anyMatch(line -> line.contains(course))
+        || a.getComments().lines().skip(1).anyMatch(line -> line.startsWith("Took an equivalent"));
+  }
+
+  @Test
+  public void
+      an_asked_for_course_is_taken_at_ucsb_80_percent_of_the_time_and_explained_otherwise() {
+    withSettings();
+    int asked = 0;
+    int taken = 0;
+    for (Application a : generate(RecruitmentType.ULA, 1500, FakeCoverage.ALL)) {
+      List<String> askedFor = FakeApplicationGenerator.askedFor(a);
+      List<String> lines = a.getComments().lines().toList();
+      int explained = 0;
+      for (String courseId : askedFor) {
+        asked++;
+        if (CourseMatching.firstUcsbCourse(a.getPriorCoursework(), courseId) != null) {
+          taken++;
+          assertEquals(
+              1,
+              a.getPriorCoursework().stream()
+                  .filter(row -> CourseMatching.isUcsbCourse(row, courseId))
+                  .count(),
+              courseId + " listed twice");
+        } else {
+          explained++;
+          assertTrue(explains(a, courseId), courseId + " not explained in " + a.getComments());
+        }
+      }
+      // The comments are the picked comment, then one line per course not taken.
+      assertEquals(1 + explained, lines.size(), a.getComments());
+      assertTrue(FakeNames.COMMENTS.contains(lines.get(0)));
+    }
+    double rate = (double) taken / asked;
+    assertTrue(asked > 2000, "only " + asked + " courses asked for");
+    assertTrue(rate > 0.77 && rate < 0.83, "taken rate " + rate);
+  }
+
+  @Test
+  public void every_asked_for_course_is_either_taken_or_explained_never_both() {
+    withSettings();
+    boolean sawAdded = false;
+    for (Application a : generate(RecruitmentType.ULA, 500, FakeCoverage.ALL)) {
+      for (String courseId : FakeApplicationGenerator.askedFor(a)) {
+        PriorCoursework row = CourseMatching.firstUcsbCourse(a.getPriorCoursework(), courseId);
+        if (row != null) {
+          assertEquals(CourseMatching.display(courseId), row.getCourseNumber());
+          assertTrue(FakeCoursework.GRADES.contains(row.getGrade()));
+          sawAdded |= !List.of("CMPSC 8", "CMPSC 16").contains(row.getCourseNumber());
+        }
+      }
+    }
+    assertTrue(sawAdded);
+  }
+
+  /** A ULA applicant asking for the given courses, with a transcript of the given rows. */
+  private static Application asking(List<PriorCoursework> prior, String first, String second) {
+    Application a = Application.builder().comments("Picked comment.").build();
+    a.setPriorCoursework(new ArrayList<>(prior));
+    a.setFirstChoiceCourse(first);
+    a.setSecondChoiceCourse(second);
+    return a;
+  }
+
+  private static PriorCoursework row(boolean ucsb, String number, String term) {
+    return PriorCoursework.builder()
+        .ucsbCourse(ucsb)
+        .otherSchool(ucsb ? null : "Partner University")
+        .courseNumber(number)
+        .term(term)
+        .grade("A")
+        .build();
+  }
+
+  /** A Random whose nextInt(100) gives these coin results in turn, and 0 for anything else. */
+  private static Random coins(int... results) {
+    return new Random() {
+      int next = 0;
+
+      @Override
+      public int nextInt(int bound) {
+        return bound == 100 ? results[next++] : 0;
+      }
+
+      @Override
+      public int nextInt(int origin, int bound) {
+        return origin;
+      }
+    };
+  }
+
+  @Test
+  public void a_course_taken_is_added_in_term_order_unless_already_listed() {
+    Application a =
+        asking(
+            List.of(row(true, "CMPSC 16", "F25"), row(true, "cmpsc 156", "W26")),
+            "CMPSC   16",
+            "CMPSC  130A");
+    // 79 is the last "taken" result; nextInt(6) = 0 puts the new row in the latest quarter.
+    generator.takeOrExplain(a, coins(79, 79), 20261);
+    assertEquals(
+        List.of("CMPSC 16", "cmpsc 156", "CMPSC 130A"),
+        a.getPriorCoursework().stream().map(PriorCoursework::getCourseNumber).toList());
+    assertEquals("W26", a.getPriorCoursework().get(2).getTerm());
+    assertTrue(a.getPriorCoursework().get(2).isUcsbCourse());
+    assertEquals("Picked comment.", a.getComments());
+  }
+
+  @Test
+  public void a_course_not_taken_comes_off_the_ucsb_transcript_and_is_explained() {
+    Application a =
+        asking(
+            List.of(
+                row(false, "CMPSC 156", "S24"),
+                row(true, "CMPSC 16", "F25"),
+                row(true, "cmpsc156", "W26")),
+            "CMPSC  156",
+            "CMPSC    8");
+    // 80 is the first "not taken" result, for both courses.
+    generator.takeOrExplain(a, coins(80, 80), 20261);
+    assertEquals(
+        List.of("CMPSC 156", "CMPSC 16"),
+        a.getPriorCoursework().stream().map(PriorCoursework::getCourseNumber).toList());
+    assertFalse(a.getPriorCoursework().get(0).isUcsbCourse());
+    assertEquals(
+        "Picked comment.\n"
+            + "Have not taken CMPSC 156 at UCSB, but took an equivalent course on Study Abroad (EAP).\n"
+            + "Did not take CMPSC 8 at UCSB, but have extensive Python programming background.",
+        a.getComments());
+  }
+
+  @Test
+  public void a_transcript_emptied_by_courses_not_taken_gains_a_course_from_another_school() {
+    Application a = asking(List.of(row(true, "CMPSC 8", "W26")), "CMPSC    8", null);
+    generator.takeOrExplain(a, coins(99), 20261);
+    assertEquals(1, a.getPriorCoursework().size());
+    assertFalse(a.getPriorCoursework().get(0).isUcsbCourse());
+    assertNotNull(a.getPriorCoursework().get(0).getOtherSchool());
+  }
+
+  @Test
+  public void an_applicant_who_asks_for_nothing_is_left_alone() {
+    List<PriorCoursework> prior = List.of(row(true, "CMPSC 16", "F25"));
+    Application a = asking(prior, null, null);
+    generator.takeOrExplain(a, coins(), 20261);
+    assertEquals(prior, a.getPriorCoursework());
+    assertEquals("Picked comment.", a.getComments());
+  }
+
+  @Test
+  public void the_courses_asked_for_are_the_choices_then_enthusiastic_and_would_consider_by_id() {
+    Application a = asking(List.of(), "CMPSC  156", "CMPSC   16");
+    a.setCourseInterests(
+        Map.of(
+            "CMPSC   24", CourseInterest.WOULD_CONSIDER,
+            "CMPSC  130A", CourseInterest.NOT_INTERESTED,
+            "CMPSC   32", CourseInterest.ENTHUSIASTIC,
+            "CMPSC  156", CourseInterest.ENTHUSIASTIC));
+    assertEquals(
+        List.of("CMPSC  156", "CMPSC   16", "CMPSC   24", "CMPSC   32"),
+        FakeApplicationGenerator.askedFor(a));
+  }
+
+  @Test
+  public void ta_applications_are_not_touched_by_the_asked_for_coin() {
+    withSettings();
+    for (Application a : generate(RecruitmentType.TA, 200, FakeCoverage.ALL)) {
+      assertTrue(FakeNames.COMMENTS.contains(a.getComments()), a.getComments());
+    }
+  }
+
   @Test
   public void ula_applications_carry_every_answer_the_form_requires() {
     withSettings();
@@ -385,12 +598,18 @@ public class FakeApplicationGeneratorTests {
       sawDiscussion1 |= a.isAvailableForDiscussionFirstChoice();
       sawDiscussion2 |= a.isAvailableForDiscussionSecondChoice();
 
-      // 6(n-1) + 1..6 courses for a student in year n, ending in the quarter of TODAY.
-      int courses = a.getPriorCoursework().size();
-      assertTrue(
-          courses >= 6 * (year - 1) + 1 && courses <= 6 * (year - 1) + 6, year + ": " + courses);
-      assertTrue(a.getPriorCoursework().stream().allMatch(PriorCoursework::isUcsbCourse));
-      assertEquals("W26", a.getPriorCoursework().get(courses - 1).getTerm());
+      // Issue #448 adds and removes the courses asked for, so here the transcript is only known to
+      // be non-empty and in term order, no later than the quarter of TODAY; the prerequisite walk
+      // itself is pinned by ula_transcripts_are_the_prerequisite_walk_when_nothing_is_asked_for.
+      List<PriorCoursework> prior = a.getPriorCoursework();
+      assertFalse(prior.isEmpty());
+      for (int i = 0; i < prior.size(); i++) {
+        int quarter = FakeCoursework.quarter(prior.get(i).getTerm());
+        assertTrue(quarter <= 20261, prior.get(i).getTerm());
+        if (i > 0) {
+          assertTrue(FakeCoursework.quarter(prior.get(i - 1).getTerm()) <= quarter);
+        }
+      }
 
       int previous = a.getPreviousServiceAsUla();
       assertTrue(previous >= 0 && previous <= (year == 1 ? 0 : Math.min(6, 3 * (year - 1))));
@@ -436,10 +655,11 @@ public class FakeApplicationGeneratorTests {
   @Test
   public void terms_are_counted_back_from_the_quarter_of_the_date_given() {
     withSettings();
+    // No courses on offer, so nothing asked for changes the transcripts (issue #448).
     List<Application> autumn =
         generator.generate(
             recruitment(RecruitmentType.ULA),
-            COURSES,
+            List.of(),
             50,
             FakeCoverage.ALL,
             new Random(3),
@@ -552,7 +772,9 @@ public class FakeApplicationGeneratorTests {
 
     assertEquals(
         // Re-pinned for issue #440: the same applications, each now with hidden=false in its text.
-        List.of(-140874799, -1506589584, 1187073112, -1901760668),
+        // Re-pinned for issue #448: the ULA runs only, now that asked-for courses are taken or
+        // explained; the TA runs are unchanged.
+        List.of(-140874799, -1506589584, -228261963, -1429252441),
         List.of(
             fingerprint(RecruitmentType.TA, FakeCoverage.ALL),
             fingerprint(RecruitmentType.TA, FakeCoverage.SPARSE),
