@@ -18,6 +18,86 @@ type CourseTableProps = {
   testIdPrefix?: string;
 };
 
+type Flag = "needsTa" | "needsUla";
+
+/** What a flag column's checkboxes need, handed to them through the column's meta. */
+type FlagMeta = {
+  style: { width: string; whiteSpace: "nowrap" };
+  field: Flag;
+  shortName: string;
+  testIdPrefix: string;
+  onToggle: (course: Course, field: Flag) => void;
+};
+
+/** What the Delete column's buttons need, handed to them through the column's meta. */
+type DeleteMeta = {
+  style: { width: string; whiteSpace: "nowrap" };
+  testIdPrefix: string;
+  onDelete: (courseId: string) => void;
+};
+
+/*
+ * The cells are module-level components (issue #437). A cell function written inside the table is
+ * a new component on every render, so React made every checkbox and button anew each time the
+ * page re-read the courses in the background, and a keyboard user lost the focus. What changes
+ * from render to render (the handlers) comes through the column's meta instead.
+ */
+
+/** One course's TA or ULA checkbox; ticking it saves at once. */
+function FlagCell({
+  cell,
+}: {
+  cell: Cell<Course, unknown>;
+}): React.JSX.Element {
+  const meta = cell.column.columnDef.meta as FlagMeta;
+  const course = cell.row.original;
+  return (
+    <Form.Check
+      type="checkbox"
+      checked={course[meta.field]}
+      onChange={() => meta.onToggle(course, meta.field)}
+      aria-label={`${meta.shortName} for ${course.courseId}`}
+      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-col-${meta.field}-checkbox`}
+    />
+  );
+}
+
+/**
+ * The course number. Course ids keep the API's fixed-width padding so they sort numerically. HTML
+ * collapses runs of spaces by default, so they are shown preformatted and monospaced to keep the
+ * numbers aligned. The field is at most 13 characters: an 8-character subject code, then a course
+ * number of up to 3 digits and 2 letters.
+ */
+function CourseNumberCell({
+  cell,
+}: {
+  cell: Cell<Course, unknown>;
+}): React.JSX.Element {
+  return (
+    <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
+      {cell.row.original.courseId}
+    </span>
+  );
+}
+
+/** One course's Delete button; it asks first, in the confirmation modal. */
+function DeleteCell({
+  cell,
+}: {
+  cell: Cell<Course, unknown>;
+}): React.JSX.Element {
+  const meta = cell.column.columnDef.meta as DeleteMeta;
+  return (
+    <Button
+      variant="danger"
+      onClick={() => meta.onDelete(cell.row.original.courseId)}
+      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-col-delete-button`}
+    >
+      Delete
+    </Button>
+  );
+}
+
 export default function CourseTable({
   courses,
   testIdPrefix = "CourseTable",
@@ -51,38 +131,29 @@ export default function CourseTable({
     ["/api/courses/all"],
   );
 
-  const toggle = (course: Course, field: "needsTa" | "needsUla") => {
+  const toggle = (course: Course, field: Flag) => {
     mutation.mutate({ ...course, [field]: !course[field] });
   };
-
-  const flagColumn = (
-    header: string,
-    field: "needsTa" | "needsUla",
-    shortName: string,
-  ) => ({
-    header,
-    id: field,
-    accessorKey: field,
-    meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
-    cell: ({ cell }: { cell: Cell<Course, unknown> }) => {
-      const course = cell.row.original;
-      return (
-        <Form.Check
-          type="checkbox"
-          checked={course[field]}
-          onChange={() => toggle(course, field)}
-          aria-label={`${shortName} for ${course.courseId}`}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-${field}-checkbox`}
-        />
-      );
-    },
-  });
 
   // Widths: everything shrinks to its content except Title, which is given 100% so it absorbs
   // the slack from Bootstrap's full-width table. Without that, the narrow columns get stretched.
   const shrinkToContent = {
     style: { width: "1%", whiteSpace: "nowrap" as const },
   };
+
+  const flagColumn = (header: string, field: Flag, shortName: string) => ({
+    header,
+    id: field,
+    accessorKey: field,
+    meta: {
+      ...shrinkToContent,
+      field,
+      shortName,
+      testIdPrefix,
+      onToggle: toggle,
+    } satisfies FlagMeta,
+    cell: FlagCell,
+  });
 
   const columns = [
     flagColumn("TA", "needsTa", "TA"),
@@ -91,15 +162,7 @@ export default function CourseTable({
       header: "Course Number",
       accessorKey: "courseId",
       meta: shrinkToContent,
-      // Course ids keep the API's fixed-width padding so they sort numerically. HTML collapses
-      // runs of spaces by default, so render them preformatted and monospaced to keep the
-      // numbers aligned. The field is at most 13 characters: an 8-character subject code, then a
-      // course number of up to 3 digits and 2 letters.
-      cell: ({ cell }: { cell: Cell<Course, unknown> }) => (
-        <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
-          {cell.row.original.courseId}
-        </span>
-      ),
+      cell: CourseNumberCell,
     },
     {
       header: "Title",
@@ -110,16 +173,12 @@ export default function CourseTable({
       header: "Delete",
       id: "delete",
       accessorKey: "courseId",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Course, unknown> }) => (
-        <Button
-          variant="danger"
-          onClick={() => setPendingDelete(cell.row.original.courseId)}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-delete-button`}
-        >
-          Delete
-        </Button>
-      ),
+      meta: {
+        ...shrinkToContent,
+        testIdPrefix,
+        onDelete: setPendingDelete,
+      } satisfies DeleteMeta,
+      cell: DeleteCell,
     },
   ];
 
@@ -129,6 +188,10 @@ export default function CourseTable({
         data={Array.isArray(courses) ? courses : []}
         columns={columns}
         testid={testIdPrefix}
+        // A row is its course (issue #437): now that the cells keep the focus across a re-read,
+        // a course added or removed before the focused one must not hand that focus, and the
+        // next key press, to another course (the #435 bug).
+        getRowId={(row) => row.courseId}
       />
       <CourseDeleteModal
         courseId={pendingDelete}

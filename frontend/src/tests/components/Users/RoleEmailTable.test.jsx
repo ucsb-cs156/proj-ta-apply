@@ -273,6 +273,32 @@ describe("RoleEmailTable", () => {
     }
   });
 
+  test("a Delete button keeps the focus across a re-read that adds someone before it, and deletes its own person (issue #437)", async () => {
+    const onDelete = vi.fn();
+    const table = (people) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable data={people} customDeleteCallback={onDelete} />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { rerender } = render(table([{ email: "zed@ucsb.edu" }]));
+    const button = screen.getByTestId(
+      "RoleEmailTable-cell-row-0-col-delete-button",
+    );
+    button.focus();
+
+    rerender(table([{ email: "amy@ucsb.edu" }, { email: "zed@ucsb.edu" }]));
+
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-1-col-delete-button"),
+    ).toBe(button);
+    expect(button).toHaveFocus();
+    fireEvent.click(document.activeElement);
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onDelete.mock.calls[0][0].row.original.email).toBe("zed@ucsb.edu");
+  });
+
   // ---- the Catalog Name column (issue #120) ----
 
   test("a dropdown with focus stays its person's when a re-read adds someone before them (issue #435)", () => {

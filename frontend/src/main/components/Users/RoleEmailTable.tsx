@@ -94,6 +94,44 @@ function CatalogNameCell({
   );
 }
 
+/** What the Delete column's cells need, handed to them through the column's meta. */
+type DeleteMeta = {
+  testIdPrefix: string;
+  onDelete: (cell: Cell<RoleEmail, unknown>) => void;
+};
+
+/**
+ * One row's Delete button, or why there is none: someone named in ADMIN_EMAILS cannot be deleted.
+ * A module-level component (issue #437), like the dropdown: a cell function written inside the
+ * table is a new component on every render, so the Instructors page's background re-read made
+ * the button anew and a keyboard user lost the focus.
+ */
+function DeleteCell({
+  cell,
+}: {
+  cell: Cell<RoleEmail, unknown>;
+}): React.JSX.Element {
+  const { testIdPrefix, onDelete } = cell.column.columnDef.meta as DeleteMeta;
+  if (!cell.row.original.isInAdminEmails) {
+    return (
+      <Button
+        className="btn btn-danger"
+        onClick={() => onDelete(cell)}
+        data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-delete-button`}
+      >
+        Delete
+      </Button>
+    );
+  }
+  return (
+    <span
+      data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-cannot-delete`}
+    >
+      In <code>ADMIN_EMAILS</code>
+    </span>
+  );
+}
+
 export default function RoleEmailTable({
   data,
   deleteEndpoint = "/api/admin/delete",
@@ -160,26 +198,8 @@ export default function RoleEmailTable({
     {
       header: "Delete",
       accessorKey: "isInAdminEmails",
-      cell: ({ cell }: { cell: Cell<RoleEmail, unknown> }) => {
-        if (!cell.row.original.isInAdminEmails) {
-          return (
-            <Button
-              className="btn btn-danger"
-              onClick={() => deleteCallback(cell)}
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-delete-button`}
-            >
-              Delete
-            </Button>
-          );
-        }
-        return (
-          <span
-            data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-cannot-delete`}
-          >
-            In <code>ADMIN_EMAILS</code>
-          </span>
-        );
-      },
+      meta: { testIdPrefix, onDelete: deleteCallback } satisfies DeleteMeta,
+      cell: DeleteCell,
     },
   ];
 

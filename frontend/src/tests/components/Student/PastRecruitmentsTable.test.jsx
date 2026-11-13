@@ -88,4 +88,28 @@ describe("PastRecruitmentsTable tests", () => {
       screen.getByTestId("PastRecruitmentsTable-cell-row-0-col-view-link"),
     ).toBeInTheDocument();
   });
+
+  test("a View Application link keeps the focus across a re-read that adds a recruitment before it (issue #437)", () => {
+    const table = (recruitments) => (
+      <MemoryRouter>
+        <PastRecruitmentsTable
+          recruitments={recruitments}
+          applications={[applicationsFixtures.oneTaApplication]}
+          testIdPrefix="P"
+        />
+      </MemoryRouter>
+    );
+    const { rerender } = render(table([closedTa]));
+    const link = screen.getByTestId("P-cell-row-0-col-view-link");
+    const href = link.getAttribute("href");
+    link.focus();
+
+    // The home page's background re-read: an older recruitment, with no application, comes first.
+    rerender(table([{ ...closedTa, id: 999 }, closedTa]));
+
+    expect(screen.getByTestId("P-cell-row-1-col-view-link")).toBe(link);
+    expect(link).toHaveFocus();
+    expect(link).toHaveAttribute("href", href);
+    expect(screen.queryByTestId("P-cell-row-0-col-view-link")).toBeNull();
+  });
 });

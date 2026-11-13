@@ -80,11 +80,18 @@ describe("CourseTable tests", () => {
     });
   });
 
-  // Issue #435: the table's cells are made anew on every render, so a re-read takes the focus
-  // away instead of handing it to another course. Whatever the reason, a key pressed after the
-  // re-read must never toggle another course.
-  test("a key pressed after a re-read adds a course before the focused checkbox never toggles another course (issue #435)", async () => {
-    const client = new QueryClient();
+  // Issue #437: the cells are kept across renders, so a background re-read no longer takes the
+  // keyboard focus away; and a row is its course (#435), so a course added or removed before the
+  // focused one never hands the focus, or the next key press, to another course.
+  describe("the focus across a re-read (issues #435, #437)", () => {
+    const [cs130a, cs156, cs165a] = coursesFixtures.threeCourses;
+    const cs9 = {
+      courseId: "CMPSC     9",
+      title: "Intro",
+      needsTa: false,
+      needsUla: false,
+    };
+    let client;
     const table = (courses) => (
       <QueryClientProvider client={client}>
         <MemoryRouter>
@@ -93,33 +100,83 @@ describe("CourseTable tests", () => {
       </QueryClientProvider>
     );
     // By the exact label: the course numbers keep the API's padding.
-    const taBox = (courseId) =>
-      document.querySelector(`[aria-label="TA for ${courseId}"]`);
-    const { rerender } = render(table(coursesFixtures.threeCourses));
-    const box = taBox("CMPSC   156");
-    box.focus();
+    const box = (kind, courseId) =>
+      document.querySelector(`[aria-label="${kind} for ${courseId}"]`);
+    const putsFor = () =>
+      axiosMock.history.put.map((r) => [
+        r.params.courseId,
+        r.params.needsTa,
+        r.params.needsUla,
+      ]);
 
-    // The Courses page's background re-read brings a course that sorts first.
-    rerender(
-      table([
-        {
-          courseId: "CMPSC     9",
-          title: "Intro",
-          needsTa: false,
-          needsUla: false,
-        },
-        ...coursesFixtures.threeCourses,
-      ]),
-    );
+    beforeEach(() => {
+      client = new QueryClient();
+    });
 
-    // The new course's box is not the one that has focus.
-    expect(taBox("CMPSC     9")).not.toHaveFocus();
-    await userEvent.keyboard(" ");
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    test("a re-read with the same courses keeps the focus on the checkbox, and Space toggles that course", async () => {
+      const { rerender } = render(table(coursesFixtures.threeCourses));
+      const ta = box("TA", "CMPSC   156");
+      ta.focus();
 
-    expect(
-      axiosMock.history.put.filter((r) => r.params.courseId !== "CMPSC   156"),
-    ).toEqual([]);
+      rerender(table(coursesFixtures.threeCourses.map((c) => ({ ...c }))));
+
+      expect(box("TA", "CMPSC   156")).toBe(ta);
+      expect(ta).toHaveFocus();
+      await userEvent.keyboard(" ");
+      await waitFor(() => expect(putsFor()).toHaveLength(1));
+      expect(putsFor()).toEqual([["CMPSC   156", false, true]]);
+    });
+
+    test("a course added above the focused checkbox leaves the focus on the same course, and Space toggles only that course", async () => {
+      const { rerender } = render(table([cs130a, cs156, cs165a]));
+      const ula = box("ULA", "CMPSC   156");
+      ula.focus();
+
+      rerender(table([cs9, cs130a, cs156, cs165a]));
+
+      expect(box("ULA", "CMPSC   156")).toBe(ula);
+      expect(ula).toHaveFocus();
+      // The test ids keep the position: CMPSC 156 is the third row now.
+      expect(
+        screen.getByTestId("CourseTable-cell-row-2-col-needsUla-checkbox"),
+      ).toBe(ula);
+      await userEvent.keyboard(" ");
+      await waitFor(() => expect(putsFor()).toHaveLength(1));
+      expect(putsFor()).toEqual([["CMPSC   156", true, false]]);
+    });
+
+    test("a course removed above the focused checkbox leaves the focus on the same course, and a click toggles only that course", async () => {
+      const { rerender } = render(table([cs9, cs130a, cs156, cs165a]));
+      const ta = box("TA", "CMPSC   165A");
+      ta.focus();
+
+      rerender(table([cs130a, cs156, cs165a]));
+
+      expect(box("TA", "CMPSC   165A")).toBe(ta);
+      expect(ta).toHaveFocus();
+      await userEvent.click(document.activeElement);
+      await waitFor(() => expect(putsFor()).toHaveLength(1));
+      expect(putsFor()).toEqual([["CMPSC   165A", true, false]]);
+    });
+
+    test("a Delete button keeps the focus across a re-read that adds a course above it, and asks about its own course", async () => {
+      const { rerender } = render(table([cs130a, cs156]));
+      const button = screen.getByTestId(
+        "CourseTable-cell-row-1-col-delete-button",
+      );
+      button.focus();
+
+      rerender(table([cs9, cs130a, cs156]));
+
+      expect(
+        screen.getByTestId("CourseTable-cell-row-2-col-delete-button"),
+      ).toBe(button);
+      expect(button).toHaveFocus();
+      await userEvent.keyboard("{Enter}");
+      expect(
+        await screen.findByTestId("CourseDeleteModal-body"),
+      ).toHaveTextContent("CMPSC 156");
+    });
   });
 
   test("unticking the ULA box PUTs both flags, flipping only ULA", async () => {

@@ -911,4 +911,75 @@ describe("RecruitmentCourseTable tests", () => {
       ).toBeInTheDocument();
     }
   });
+
+  // Issue #437: the page re-reads the courses in the background, and the links and buttons keep
+  // the keyboard focus across it; a row is its course (#435), so the focus stays on that course.
+  describe("the focus across a re-read (issue #437)", () => {
+    const [first, ...others] = notRemoved;
+    const onCopyEmail = vi.fn();
+    const client = new QueryClient();
+    const table = (courses) => (
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <RecruitmentCourseTable
+            courses={courses}
+            includeRemoved={false}
+            rankingSummaries={recruitmentCoursesFixtures.rankingSummaries}
+            showRankings
+            onCopyEmail={onCopyEmail}
+            testIdPrefix="RecruitmentCourseTable"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const control = (row, suffix) =>
+      screen.getByTestId(`RecruitmentCourseTable-cell-row-${row}-${suffix}`);
+
+    test.each([
+      ["the Remove button", "col-removed-button"],
+      ["the copy-email button", "copy-email"],
+      ["the rankings link", "ranking-link"],
+    ])(
+      "%s keeps the focus when a course is added before its row, and stays its course's",
+      (_name, suffix) => {
+        const { rerender } = render(table(others));
+        const focused = control(0, suffix);
+        focused.focus();
+
+        rerender(table([first, ...others]));
+
+        // The test ids keep the position: the course is the second row now.
+        expect(control(1, suffix)).toBe(focused);
+        expect(focused).toHaveFocus();
+      },
+    );
+
+    test("Enter on the focused Remove button after the re-read removes its own course", async () => {
+      const { rerender } = render(table(others));
+      control(0, "col-removed-button").focus();
+
+      rerender(table([first, ...others]));
+      await userEvent.keyboard("{Enter}");
+
+      await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+      expect(axiosMock.history.put[0].params).toEqual({
+        id: others[0].id,
+        removed: true,
+      });
+    });
+
+    test("the copy-email button copies its own course's email after the re-read", async () => {
+      const { rerender } = render(table(others));
+      control(0, "copy-email").focus();
+
+      rerender(table([first, ...others]));
+      await userEvent.keyboard("{Enter}");
+
+      expect(onCopyEmail).toHaveBeenCalledWith(
+        recruitmentCoursesFixtures.rankingSummaries.find(
+          (s) => s.recruitmentCourseId === others[0].id,
+        ).instructorEmail,
+      );
+    });
+  });
 });
