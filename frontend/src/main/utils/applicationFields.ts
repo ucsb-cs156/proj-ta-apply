@@ -24,6 +24,20 @@ export const courseInterestLabel = (value: string): string =>
 /** One radio button on a rating scale: the stored number and the column heading above it. */
 export type ScaleLevel = { value: number; label: string };
 
+/**
+ * The words of a scale level's label after its number (issue #443), for a column heading that puts
+ * the number on its own line with the wording under it: ["Very", "comfortable"] for "1-Very
+ * comfortable", ["highest"] for "5 (highest)" (parentheses around the whole wording are dropped),
+ * and none for a bare "4".
+ */
+export const scaleHeadingWords = (level: ScaleLevel): string[] => {
+  const wording = level.label
+    .replace(/^\d+\s*-?\s*/, "")
+    .replace(/^\((.*)\)$/, "$1")
+    .trim();
+  return wording === "" ? [] : wording.split(/\s+/);
+};
+
 /** The lowest self-rating an applicant can give for a topic, on either form. */
 export const MIN_PROFICIENCY = 1;
 

@@ -12,6 +12,7 @@ import {
   ULA_PROFICIENCY_LEVELS,
   proficiencyInstruction,
   proficiencyLevels,
+  scaleHeadingWords,
   courseInterestLabel,
   FIRST_QUARTER_LABELS,
   FIRST_QUARTER_TEXT,
@@ -322,5 +323,75 @@ describe("the first quarter box (issue #292)", () => {
     expect(gpaText({ firstQuarter: false }, null)).toBe("");
     expect(gpaText({ firstQuarter: null }, undefined)).toBe("");
     expect(gpaText({}, 4)).toBe("4");
+  });
+});
+
+describe("scaleHeadingWords (issue #443)", () => {
+  test("the words after a level's number, for the lines under it", () => {
+    expect(
+      scaleHeadingWords({ value: 1, label: "1-Very comfortable" }),
+    ).toEqual(["Very", "comfortable"]);
+    expect(scaleHeadingWords({ value: 5, label: "5 (highest)" })).toEqual([
+      "highest",
+    ]);
+    expect(
+      scaleHeadingWords({ value: 3, label: "3 - Not  familiar " }),
+    ).toEqual(["Not", "familiar"]);
+  });
+
+  test("only parentheses around the whole wording are dropped", () => {
+    expect(
+      scaleHeadingWords({ value: 3, label: "3-Familiar (a little)" }),
+    ).toEqual(["Familiar", "(a", "little)"]);
+    expect(scaleHeadingWords({ value: 2, label: "2 (a) b" })).toEqual([
+      "(a)",
+      "b",
+    ]);
+  });
+
+  test("only the leading number is dropped, however many digits it has", () => {
+    expect(scaleHeadingWords({ value: 10, label: "10 (top)" })).toEqual([
+      "top",
+    ]);
+    expect(scaleHeadingWords({ value: 1, label: "1-Up to 2 hours" })).toEqual([
+      "Up",
+      "to",
+      "2",
+      "hours",
+    ]);
+    // A label that does not start with its number keeps every word.
+    expect(scaleHeadingWords({ value: 5, label: "Top 5" })).toEqual([
+      "Top",
+      "5",
+    ]);
+  });
+
+  test("a bare number has no words", () => {
+    expect(scaleHeadingWords({ value: 4, label: "4" })).toEqual([]);
+    expect(scaleHeadingWords({ value: 2, label: "2 ()" })).toEqual([]);
+  });
+
+  test("every level of every scale reads as its number and wording", () => {
+    expect(
+      [
+        ...TA_PROFICIENCY_LEVELS,
+        ...ULA_PROFICIENCY_LEVELS,
+        ...INTEREST_LEVELS,
+      ].map((level) => [level.value, ...scaleHeadingWords(level)].join(" ")),
+    ).toEqual([
+      "5 highest",
+      "4",
+      "3",
+      "2",
+      "1 lowest",
+      "1 Very comfortable",
+      "2 Somewhat comfortable",
+      "3 Not familiar",
+      "5 Very interested",
+      "4",
+      "3",
+      "2",
+      "1 Not interested",
+    ]);
   });
 });

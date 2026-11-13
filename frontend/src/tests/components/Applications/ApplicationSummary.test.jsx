@@ -97,7 +97,15 @@ describe("ApplicationSummary tests", () => {
     expect(screen.queryByTestId("ApplicationSummary-notice")).toBeNull();
   });
 
-  test("lists the topic ratings one per line, in topic order", () => {
+  /** Issue #443: the radio buttons of a table, as a list of "row: checked level". */
+  const checkedIn = (cell) =>
+    [...cell.querySelectorAll("tbody tr")].map((row) => {
+      const checked = [...row.querySelectorAll("input")].find((r) => r.checked);
+      return `${row.querySelector("td").textContent}: ${checked?.value ?? "none"}`;
+    });
+
+  /** Issue #443: the form's topic table, read-only, in topic order. */
+  test("shows the topic ratings in the form's table, read-only, in topic order", () => {
     render(
       <ApplicationSummary
         application={{
@@ -108,11 +116,21 @@ describe("ApplicationSummary tests", () => {
       />,
     );
 
-    const cell = screen.getByTestId(
-      "ApplicationSummary-Topic Proficiency (1 lowest to 5 highest)",
-    );
-    expect(cell.textContent).toBe("Java: 5 / 5\nReact: 3 / 5");
-    expect(cell).toHaveStyle({ whiteSpace: "pre" });
+    const cell = screen.getByTestId("ApplicationSummary-Topic Proficiency");
+    expect(checkedIn(cell)).toEqual(["Java: 5", "React: 3"]);
+    expect(
+      [...cell.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual(["Topic", "5 highest", "4", "3", "2", "1 lowest"]);
+    const table = cell.querySelector("table");
+    expect(table).toHaveClass("selection-table-read-only", "w-auto");
+    cell.querySelectorAll("input").forEach((radio) => {
+      expect(radio).toBeDisabled();
+      expect(radio).toHaveAttribute("readonly");
+    });
+    expect(screen.getByTestId("ApplicationSummary-topic-Java-5")).toBeChecked();
+    // No "level / top" text any more.
+    expect(cell.textContent).not.toContain("/");
+    expect(cell).not.toHaveAttribute("style");
   });
 
   /** The ULA form rates topics on three levels, and asks about interests as well. */
@@ -128,20 +146,31 @@ describe("ApplicationSummary tests", () => {
       />,
     );
 
-    const topics = screen.getByTestId(
-      "ApplicationSummary-Topic Proficiency (1 very comfortable to 3 not familiar)",
-    );
-    expect(topics.textContent).toBe("JavaScript: 3 / 3\nReact: 1 / 3");
-    const interests = screen.getByTestId(
-      "ApplicationSummary-Interests (1 not interested to 5 very interested)",
-    );
-    expect(interests.textContent).toBe("Grading: 2 / 5\nTutoring: 5 / 5");
-    expect(interests).toHaveStyle({ whiteSpace: "pre" });
+    const topics = screen.getByTestId("ApplicationSummary-Topic Proficiency");
+    expect(checkedIn(topics)).toEqual(["JavaScript: 3", "React: 1"]);
     expect(
-      screen.queryByTestId(
-        "ApplicationSummary-Topic Proficiency (1 lowest to 5 highest)",
-      ),
-    ).toBeNull();
+      [...topics.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "Topic",
+      "1 Very comfortable",
+      "2 Somewhat comfortable",
+      "3 Not familiar",
+    ]);
+    const interests = screen.getByTestId("ApplicationSummary-Interests");
+    expect(checkedIn(interests)).toEqual(["Grading: 2", "Tutoring: 5"]);
+    expect(
+      [...interests.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "Interest",
+      "5 Very interested",
+      "4",
+      "3",
+      "2",
+      "1 Not interested",
+    ]);
+    expect(
+      screen.getByTestId("ApplicationSummary-interest-Tutoring-5"),
+    ).toBeDisabled();
   });
 
   test("a ULA application with no interest answers shows a blank interests row", () => {
@@ -155,11 +184,9 @@ describe("ApplicationSummary tests", () => {
       />,
     );
 
-    expect(
-      screen.getByTestId(
-        "ApplicationSummary-Interests (1 not interested to 5 very interested)",
-      ).textContent,
-    ).toBe("");
+    const cell = screen.getByTestId("ApplicationSummary-Interests");
+    expect(cell.textContent).toBe("");
+    expect(cell.querySelector("table")).toBeNull();
   });
 
   test("a TA summary has no interests row", () => {
@@ -170,11 +197,7 @@ describe("ApplicationSummary tests", () => {
       />,
     );
 
-    expect(
-      screen.queryByTestId(
-        "ApplicationSummary-Interests (1 not interested to 5 very interested)",
-      ),
-    ).toBeNull();
+    expect(screen.queryByTestId("ApplicationSummary-Interests")).toBeNull();
   });
 
   test("an application with no ratings shows a blank rating row", () => {
@@ -188,11 +211,9 @@ describe("ApplicationSummary tests", () => {
       />,
     );
 
-    expect(
-      screen.getByTestId(
-        "ApplicationSummary-Topic Proficiency (1 lowest to 5 highest)",
-      ).textContent,
-    ).toBe("");
+    const cell = screen.getByTestId("ApplicationSummary-Topic Proficiency");
+    expect(cell.textContent).toBe("");
+    expect(cell.querySelector("table")).toBeNull();
   });
 
   /** Codes are for the database; a person reading their own application should see words. */
@@ -367,12 +388,17 @@ describe("ApplicationSummary tests", () => {
     expect(first.textContent).toBe("CMPSC   156");
   });
 
-  /** One course per line, padded so the ids line up, in course order whatever order the map is in. */
-  test("lists the other courses of interest, spelled out and in course order", () => {
+  /**
+   * Issue #443: the form's course table, read-only: the two choices spanning their rows, then each
+   * marked course with its answer checked, in course order whatever order the map is in.
+   */
+  test("shows the other courses of interest in the form's table, read-only, in course order", () => {
     render(
       <ApplicationSummary
         application={{
           ...applicationsFixtures.oneTaApplication,
+          firstChoiceCourse: "CMPSC   156",
+          secondChoiceCourse: "CMPSC   130A",
           courseInterests: {
             "CMPSC    16": "WOULD_CONSIDER",
             "CMPSC     8": "ENTHUSIASTIC",
@@ -385,17 +411,78 @@ describe("ApplicationSummary tests", () => {
     const other = screen.getByTestId(
       "ApplicationSummary-Other Courses of Interest",
     );
-    expect(other.textContent).toBe(
-      "CMPSC     8  Enthusiastic\nCMPSC    16  Would Consider",
+    expect(
+      [...other.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "Course",
+      "Enthusiastic",
+      "Would Consider",
+      "Not Applicable / Not Interested",
+    ]);
+    const rows = [...other.querySelectorAll("tbody tr")];
+    expect(rows.map((row) => row.querySelector("td").textContent)).toEqual([
+      "CMPSC     8",
+      "CMPSC    16",
+      "CMPSC   130A",
+      "CMPSC   156",
+    ]);
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-courseInterest-CMPSC-8-ENTHUSIASTIC",
+      ),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-courseInterest-CMPSC-16-WOULD_CONSIDER",
+      ),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationSummary-courseInterest-CMPSC-156-choice"),
+    ).toHaveTextContent("1st choice");
+    expect(
+      screen.getByTestId("ApplicationSummary-courseInterest-CMPSC-130A-choice"),
+    ).toHaveTextContent("2nd choice");
+    other.querySelectorAll("input").forEach((radio) => {
+      expect(radio).toBeDisabled();
+      // Each button has its own id, its test id, so its label and others' never mix.
+      expect(radio).toHaveAttribute("id", radio.dataset.testid);
+    });
+    expect(other.querySelector("table")).toHaveClass(
+      "selection-table-read-only",
     );
-    expect(other).toHaveStyle({ whiteSpace: "pre", fontFamily: "monospace" });
+    expect(rows[0].querySelector("td")).toHaveClass("selection-table-course");
+    // No warnings column: the untaken-course warnings are for the applicant's form.
+    expect(other.querySelector('th[aria-label="Warnings"]')).toBeNull();
+    expect(rows[0].querySelectorAll("td")).toHaveLength(4);
   });
 
-  test("with no other courses marked, that row is blank", () => {
+  test("a course marked Not Interested is shown with that answer checked", () => {
     render(
       <ApplicationSummary
         application={{
           ...applicationsFixtures.oneUlaApplication,
+          firstChoiceCourse: null,
+          secondChoiceCourse: null,
+          courseInterests: { "CMPSC    24": "NOT_INTERESTED" },
+        }}
+        type="ULA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-courseInterest-CMPSC-24-NOT_INTERESTED",
+      ),
+    ).toBeChecked();
+  });
+
+  test("with no choices and no other courses marked, that row is blank", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneUlaApplication,
+          firstChoiceCourse: "",
+          secondChoiceCourse: null,
           courseInterests: {},
         }}
         type="ULA"
@@ -409,21 +496,27 @@ describe("ApplicationSummary tests", () => {
   });
 
   /** An application stored before the table existed may come back with no map at all. */
-  test("a missing course interest map reads as blank", () => {
+  test("a missing course interest map shows the choices alone", () => {
     render(
       <ApplicationSummary
         application={{
           ...applicationsFixtures.oneUlaApplication,
+          firstChoiceCourse: "CMPSC   156",
+          secondChoiceCourse: "CMPSC   156",
           courseInterests: null,
         }}
         type="ULA"
       />,
     );
 
+    const rows = screen
+      .getByTestId("ApplicationSummary-Other Courses of Interest")
+      .querySelectorAll("tbody tr");
+    // A course named as both choices is listed once.
+    expect(rows).toHaveLength(1);
     expect(
-      screen.getByTestId("ApplicationSummary-Other Courses of Interest")
-        .textContent,
-    ).toBe("");
+      screen.getByTestId("ApplicationSummary-courseInterest-CMPSC-156-choice"),
+    ).toHaveTextContent("1st choice");
   });
 
   /** An unanswered question should read as unanswered, not as "null". */

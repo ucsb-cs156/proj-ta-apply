@@ -218,11 +218,15 @@ describe("AdminApplicationPage tests", () => {
     expect(
       screen.getByTestId("AdminApplicationPage-summary-Name"),
     ).toHaveTextContent(ula.firstName);
+    // Issue #443: in the form's interest table, read-only.
     expect(
-      screen.getByTestId(
-        "AdminApplicationPage-summary-Interests (1 not interested to 5 very interested)",
-      ),
-    ).toHaveTextContent("Tutoring: 5 / 5");
+      screen.getByTestId("AdminApplicationPage-summary-Interests"),
+    ).toHaveTextContent("Tutoring");
+    const tutoring5 = screen.getByTestId(
+      "AdminApplicationPage-summary-interest-Tutoring-5",
+    );
+    expect(tutoring5).toBeChecked();
+    expect(tutoring5).toBeDisabled();
     // The version the applicant agreed to is fetched by id and shown ticked.
     const box = await screen.findByTestId(
       "AdminApplicationPage-summary-notice-agree",
@@ -252,9 +256,7 @@ describe("AdminApplicationPage tests", () => {
       screen.getByTestId("AdminApplicationPage-summary-Class Level"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByTestId(
-        "AdminApplicationPage-summary-Interests (1 not interested to 5 very interested)",
-      ),
+      screen.queryByTestId("AdminApplicationPage-summary-Interests"),
     ).toBeNull();
   });
 
