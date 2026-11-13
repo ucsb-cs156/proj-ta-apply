@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   CHOICE_CELL_CLASS,
+  COURSE_CHOICE_CELL_CLASS,
   COURSE_LABEL_CELL_CLASS,
   LABEL_CELL_CLASS,
   READ_ONLY_SELECTION_TABLE_CLASS,
@@ -17,5 +18,6 @@ describe("formTableLayout", () => {
     expect(LABEL_CELL_CLASS).toBe("selection-table-label");
     expect(COURSE_LABEL_CELL_CLASS).toBe("selection-table-course");
     expect(CHOICE_CELL_CLASS).toBe("selection-table-choice");
+    expect(COURSE_CHOICE_CELL_CLASS).toBe("selection-table-course-choice");
   });
 });

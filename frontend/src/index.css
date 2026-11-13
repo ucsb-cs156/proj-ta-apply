@@ -336,6 +336,12 @@ body {
   white-space: normal;
 }
 
+/* The course table's choice columns are a little wider, so "Not Applicable /" fits on one line
+   above "Not Interested" (its heading breaks only after the slash). */
+.selection-table-course-choice {
+  width: 10em;
+}
+
 /* A read-only table's radio buttons are disabled, but drawn at full strength rather than
    Bootstrap's faded disabled look, so the answers are easy to read. */
 .selection-table-read-only .form-check-input:disabled {
