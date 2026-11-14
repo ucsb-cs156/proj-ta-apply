@@ -23,6 +23,12 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoAuditing(dateTimeProviderRef = "auditingDateTimeProvider")
 public class MongoDevConfig extends EmbeddedMongoAutoConfiguration {
 
+  // Before any embedded MongoDB starts: on an Ubuntu release flapdoodle does not know yet (such as
+  // GitHub's 26.04 runners), use the newest one it does.
+  static {
+    EmbeddedMongoPlatform.useKnownUbuntuIfUnrecognised();
+  }
+
   @Bean(name = "auditingDateTimeProvider")
   public DateTimeProvider dateTimeProvider() {
     return () -> Optional.of(OffsetDateTime.now());
