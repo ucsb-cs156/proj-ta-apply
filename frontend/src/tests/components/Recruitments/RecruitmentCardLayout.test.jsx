@@ -5,12 +5,15 @@ import { beforeEach, vi } from "vitest";
 
 import RecruitmentCardLayout, {
   DELETE_TOOLTIP,
-  RANKING_PROGRESS_LABEL,
-  RANKING_PROGRESS_NO_COURSES,
   RECRUITMENT_CARD_STORAGE_PREFIX,
 } from "main/components/Recruitments/RecruitmentCardLayout";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
+import {
+  MINIMUM_RANKINGS_LABEL,
+  RANKING_PROGRESS_NO_COURSES,
+  requestedRankingsLabel,
+} from "main/utils/recruitmentSteps";
 
 // The W26 TA recruitment (id 1): applications closed, reviews closed.
 const ta = recruitmentsFixtures.threeRecruitments[2];
@@ -305,61 +308,122 @@ describe("RecruitmentCardLayout tests", () => {
     expect(onAction).toHaveBeenCalledWith("closeReviews");
   });
 
-  // ---- Issue #453: the thermometer of courses with enough rankings ----
+  // ---- Issue #453: the thermometers of courses with the minimum and the requested rankings ----
 
-  test("once faculty ranking has opened, a thermometer of courses ranked sits under the steps and above the buttons", () => {
+  test("the ranking thermometers' labels name the factor they are given", () => {
+    expect(MINIMUM_RANKINGS_LABEL).toBe(
+      "Courses with the minimum rankings (>= hiring target)",
+    );
+    expect(requestedRankingsLabel(2)).toBe(
+      "Courses with requested rankings (>= 2 * hiring target)",
+    );
+    expect(requestedRankingsLabel(3)).toBe(
+      "Courses with requested rankings (>= 3 * hiring target)",
+    );
+    expect(RANKING_PROGRESS_NO_COURSES).toBe("no courses allocated yet");
+  });
+
+  test("once faculty ranking has opened, two thermometers sit under the steps and above the buttons", () => {
     renderCard();
 
-    const thermometer = screen.getByTestId("C-ranking-progress");
-    expect(screen.getByTestId("C-ranking-progress-text")).toHaveTextContent(
-      /^Courses with enough rankings: 2 of 5 \(40%\)$/,
+    const thermometers = screen.getByTestId("C-ranking-progress");
+    const minimum = screen.getByTestId("C-minimum-rankings");
+    const requested = screen.getByTestId("C-requested-rankings");
+    expect(screen.getByTestId("C-minimum-rankings-text")).toHaveTextContent(
+      /^Courses with the minimum rankings \(>= hiring target\): 3 of 5 \(60%\)$/,
     );
-    expect(screen.getByTestId("C-ranking-progress-bar")).toHaveAttribute(
+    expect(screen.getByTestId("C-requested-rankings-text")).toHaveTextContent(
+      /^Courses with requested rankings \(>= 2 \* hiring target\): 1 of 5 \(20%\)$/,
+    );
+    expect(screen.getByTestId("C-minimum-rankings-bar")).toHaveAttribute(
       "aria-valuenow",
-      "40",
+      "60",
     );
-    // In the card body, after the steps panel and before the footer's buttons.
+    expect(screen.getByTestId("C-requested-rankings-bar")).toHaveAttribute(
+      "aria-valuenow",
+      "20",
+    );
+    // The minimum first, then the requested, together in the card body after the steps panel and
+    // before the footer's buttons.
+    expect([...thermometers.children]).toEqual([minimum, requested]);
     expect(screen.getByTestId("C-dates").parentElement).toContainElement(
-      thermometer,
+      thermometers,
     );
     expect(
-      screen.getByTestId("C-steps").compareDocumentPosition(thermometer) &
+      screen.getByTestId("C-steps").compareDocumentPosition(thermometers) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      thermometer.compareDocumentPosition(
+      thermometers.compareDocumentPosition(
         screen.getByTestId("C-courses-button"),
       ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
-  test("the ranking thermometer is full when every allocated course is ranked", () => {
-    renderCard({ steps: recruitmentStepsFixtures.rankingsClosed });
-    expect(screen.getByTestId("C-ranking-progress-text")).toHaveTextContent(
-      "Courses with enough rankings: 5 of 5 (100%)",
+  test("the requested thermometer's label uses the factor the backend sends", () => {
+    renderCard({
+      steps: {
+        ...recruitmentStepsFixtures.rankingsOpen,
+        rankingProgress: {
+          courses: 4,
+          coursesWithMinimum: 2,
+          coursesWithRequested: 1,
+          requestedRankingsPerPosition: 3,
+        },
+      },
+    });
+    expect(screen.getByTestId("C-minimum-rankings-text")).toHaveTextContent(
+      "Courses with the minimum rankings (>= hiring target): 2 of 4 (50%)",
     );
-    expect(screen.getByTestId("C-ranking-progress-fill")).toHaveClass(
+    expect(screen.getByTestId("C-requested-rankings-text")).toHaveTextContent(
+      "Courses with requested rankings (>= 3 * hiring target): 1 of 4 (25%)",
+    );
+  });
+
+  test("both ranking thermometers are full and green when every allocated course has the requested rankings", () => {
+    renderCard({ steps: recruitmentStepsFixtures.rankingsClosed });
+    expect(screen.getByTestId("C-minimum-rankings-text")).toHaveTextContent(
+      "5 of 5 (100%)",
+    );
+    expect(screen.getByTestId("C-requested-rankings-text")).toHaveTextContent(
+      "5 of 5 (100%)",
+    );
+    expect(screen.getByTestId("C-minimum-rankings-fill")).toHaveClass(
+      "bg-success",
+    );
+    expect(screen.getByTestId("C-requested-rankings-fill")).toHaveClass(
       "bg-success",
     );
   });
 
-  test("with no course allocated anyone, the ranking thermometer says so", () => {
+  test("with no course allocated anyone, both ranking thermometers say so", () => {
     renderCard({
       steps: {
         ...recruitmentStepsFixtures.rankingsOpen,
-        rankingProgress: { coursesRanked: 0, courses: 0 },
+        rankingProgress: {
+          courses: 0,
+          coursesWithMinimum: 0,
+          coursesWithRequested: 0,
+          requestedRankingsPerPosition: 2,
+        },
       },
     });
-    expect(screen.getByTestId("C-ranking-progress-text")).toHaveTextContent(
-      `${RANKING_PROGRESS_LABEL}: 0 so far, ${RANKING_PROGRESS_NO_COURSES}`,
+    expect(screen.getByTestId("C-minimum-rankings-text")).toHaveTextContent(
+      `${MINIMUM_RANKINGS_LABEL}: 0 so far, ${RANKING_PROGRESS_NO_COURSES}`,
     );
-    expect(RANKING_PROGRESS_NO_COURSES).toBe("no courses allocated yet");
+    expect(screen.getByTestId("C-requested-rankings-text")).toHaveTextContent(
+      `${requestedRankingsLabel(2)}: 0 so far, ${RANKING_PROGRESS_NO_COURSES}`,
+    );
   });
 
-  test("before faculty ranking has opened there is no ranking thermometer", () => {
+  test("before faculty ranking has opened there are no ranking thermometers", () => {
     renderCard({ steps: recruitmentStepsFixtures.released });
     expect(screen.getByTestId("C-steps")).toBeInTheDocument();
     expect(screen.queryByTestId("C-ranking-progress")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("C-minimum-rankings")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("C-requested-rankings"),
+    ).not.toBeInTheDocument();
   });
 
   test("defaultExpanded shows the diagram at once; no steps means no panel", () => {

@@ -248,6 +248,8 @@ instructorRecruitmentsFixtures.quarters = {
 instructorRecruitmentsFixtures.candidateRankingPageWithAllocation = {
   ...instructorRecruitmentsFixtures.candidateRankingPage,
   allocation: 2,
+  // Issue #453: the backend's requested rankings, twice the allocation.
+  requestedRankings: 4,
   targets: {
     recruitmentCourseId: 2,
     allocation: 2,

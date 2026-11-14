@@ -168,10 +168,18 @@ const released = withSteps(allocated, [
 
 /**
  * Reviews are open with a deadline, so step 7 shows the deadline rather than "Not closed yet".
- * Faculty have ranked enough candidates for 2 of the 5 allocated courses (issue #453).
+ * Of the 5 allocated courses, 3 have the minimum rankings and 1 the requested rankings (issue #453).
  */
 const rankingsOpen = withSteps(
-  { ...released, rankingProgress: { coursesRanked: 2, courses: 5 } },
+  {
+    ...released,
+    rankingProgress: {
+      courses: 5,
+      coursesWithMinimum: 3,
+      coursesWithRequested: 1,
+      requestedRankingsPerPosition: 2,
+    },
+  },
   [
     {
       number: 6,
@@ -188,9 +196,17 @@ const rankingsOpen = withSteps(
   ],
 );
 
-/** Every allocated course has enough rankings (issue #453). */
+/** Every allocated course has the requested rankings, and so the minimum too (issue #453). */
 const rankingsClosed = withSteps(
-  { ...rankingsOpen, rankingProgress: { coursesRanked: 5, courses: 5 } },
+  {
+    ...rankingsOpen,
+    rankingProgress: {
+      courses: 5,
+      coursesWithMinimum: 5,
+      coursesWithRequested: 5,
+      requestedRankingsPerPosition: 2,
+    },
+  },
   [
     {
       number: 7,

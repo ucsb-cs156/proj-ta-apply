@@ -383,7 +383,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             // Ranking as the course's instructor, not as an admin (issue #439).
             false,
             null,
-            false);
+            false,
+            null);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
     verify(instructorRepository).findByEmail(EMAIL);
     verify(instructorRepository, never()).findByEmail("attacker@example.com");
@@ -1053,6 +1054,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertTrue(mapper.readTree(body).get("allocation").isNull());
     assertFalse(body.contains("\"allocation\":3"), body);
     assertTrue(mapper.readTree(body).get("targets").isNull());
+    assertTrue(mapper.readTree(body).get("requestedRankings").isNull());
     verify(courseTargetsService, never()).targetsFor(any(), any(RecruitmentCourse.class));
   }
 
@@ -1074,6 +1076,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
 
     JsonNode json = mapper.readTree(response.getResponse().getContentAsString());
     assertEquals(3, json.get("allocation").asInt());
+    // Issue #453: twice the allocation of 3, whatever the number of interested candidates.
+    assertEquals(6, json.get("requestedRankings").asInt());
     assertEquals(
         mapper.readTree(mapper.writeValueAsString(new CourseTargets(1L, 3, 5, 5, 1, 4))),
         json.get("targets"));
@@ -1099,6 +1103,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(1L, json.get("course").get("id").asLong());
     assertEquals(2, json.get("targets").get("rankingTarget").asInt());
     assertEquals(2, json.get("targets").get("stillNeeded").asInt());
+    assertEquals(6, json.get("requestedRankings").asInt());
   }
 
   // ---- the three visibility states (issue #224) ----

@@ -129,22 +129,35 @@ public class RecruitmentStepsServiceTests {
   }
 
   @Test
-  public void ranking_progress_counts_the_allocated_courses_ranked_up_to_their_allocation()
+  public void ranking_progress_counts_courses_with_the_minimum_and_with_the_requested_rankings()
       throws Exception {
-    RecruitmentCourse exactlyEnough = course(1, 2, false);
-    RecruitmentCourse oneShort = course(2, 2, false);
-    RecruitmentCourse oneAllocatedAndMore = course(3, 1, false);
-    List<RecruitmentCourse> counted = List.of(exactlyEnough, oneShort, oneAllocatedAndMore);
+    // allocation, ranked: minimum (>= allocation)? requested (>= 2 x allocation)?
+    RecruitmentCourse belowMinimum = course(1, 2, false); // 1: no, no
+    RecruitmentCourse exactlyMinimum = course(2, 2, false); // 2: yes, no
+    RecruitmentCourse oneShortOfRequested = course(3, 2, false); // 3: yes, no
+    RecruitmentCourse exactlyRequested = course(6, 2, false); // 4: yes, yes
+    RecruitmentCourse beyondRequested = course(7, 1, false); // 5: yes, yes
+    List<RecruitmentCourse> counted =
+        List.of(
+            belowMinimum, exactlyMinimum, oneShortOfRequested, exactlyRequested, beyondRequested);
     when(recruitmentCourseRepository.findByRecruitmentId(7L))
         .thenReturn(
             List.of(
-                exactlyEnough,
-                oneShort,
+                belowMinimum,
+                exactlyMinimum,
                 course(4, 0, false), // allocated no one: not counted
-                oneAllocatedAndMore,
+                oneShortOfRequested,
+                exactlyRequested,
+                beyondRequested,
                 course(5, 2, true))); // removed: not counted
     when(courseTargetsService.targetsFor(7L, counted))
-        .thenReturn(Map.of(1L, ranked(1, 2, 2), 2L, ranked(2, 2, 1), 3L, ranked(3, 1, 4)));
+        .thenReturn(
+            Map.of(
+                1L, ranked(1, 2, 1),
+                2L, ranked(2, 2, 2),
+                3L, ranked(3, 2, 3),
+                6L, ranked(6, 2, 4),
+                7L, ranked(7, 1, 5)));
     Recruitment recruitment = fresh();
     // Opened once and closed since: still shown.
     recruitment.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 1));
@@ -152,14 +165,16 @@ public class RecruitmentStepsServiceTests {
 
     Steps steps = service.stepsFor(recruitment);
 
-    assertEquals(new RankingProgress(2, 3), steps.rankingProgress());
+    assertEquals(new RankingProgress(5, 4, 2, 2), steps.rankingProgress());
     JsonNode json = new ObjectMapper().valueToTree(steps).get("rankingProgress");
-    assertEquals(2, json.get("coursesRanked").asInt());
-    assertEquals(3, json.get("courses").asInt());
+    assertEquals(5, json.get("courses").asInt());
+    assertEquals(4, json.get("coursesWithMinimum").asInt());
+    assertEquals(2, json.get("coursesWithRequested").asInt());
+    assertEquals(2, json.get("requestedRankingsPerPosition").asInt());
   }
 
   @Test
-  public void ranking_progress_with_no_allocated_courses_is_zero_of_zero() {
+  public void ranking_progress_with_no_allocated_courses_is_all_zeros() {
     when(recruitmentCourseRepository.findByRecruitmentId(7L))
         .thenReturn(List.of(course(1, 0, false)));
     when(courseTargetsService.targetsFor(7L, List.of())).thenReturn(Map.of());
@@ -167,7 +182,7 @@ public class RecruitmentStepsServiceTests {
     recruitment.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 1));
     recruitment.setReviewStatus("Open");
 
-    assertEquals(new RankingProgress(0, 0), service.stepsFor(recruitment).rankingProgress());
+    assertEquals(new RankingProgress(0, 0, 0, 2), service.stepsFor(recruitment).rankingProgress());
   }
 
   // ---- the whole thing ----

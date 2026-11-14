@@ -9,8 +9,11 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -69,12 +72,21 @@ public class RecruitmentStepsService {
    * How far faculty ranking has got (issue #453), for the thermometer on the admin's recruitment
    * card.
    *
-   * @param coursesRanked the courses counted that have at least as many rankings as their share of
-   *     the hiring target (their allocation)
    * @param courses the courses counted: those not removed with an allocation of at least 1, since a
    *     course allocated no one needs no rankings
+   * @param coursesWithMinimum the courses counted that have the minimum rankings: at least as many
+   *     as their share of the hiring target (their allocation)
+   * @param coursesWithRequested the courses counted that have the requested rankings: at least
+   *     {@link CourseTargetsService#requestedRankings} (twice the allocation)
+   * @param requestedRankingsPerPosition the factor itself, {@link
+   *     CourseTargetsService#REQUESTED_RANKINGS_PER_POSITION}, so the thermometer's label can name
+   *     it without defining it a second time
    */
-  public record RankingProgress(int coursesRanked, int courses) {}
+  public record RankingProgress(
+      int courses,
+      int coursesWithMinimum,
+      int coursesWithRequested,
+      int requestedRankingsPerPosition) {}
 
   /**
    * @param rankingProgress null, and left out of the JSON, until faculty ranking has been opened
@@ -263,16 +275,22 @@ public class RecruitmentStepsService {
         reviewOpened ? rankingProgress(id, activeCourses) : null);
   }
 
-  /** The thermometer's figures: the allocated courses, and how many of them are ranked enough. */
+  /** The thermometers' figures: the allocated courses, and how many of them are ranked enough. */
   private RankingProgress rankingProgress(Long id, List<RecruitmentCourse> activeCourses) {
     List<RecruitmentCourse> allocated =
         activeCourses.stream().filter(course -> course.getAllocation() > 0).toList();
-    int ranked =
-        (int)
-            courseTargetsService.targetsFor(id, allocated).values().stream()
-                .filter(targets -> targets.rankedCount() >= targets.allocation())
-                .count();
-    return new RankingProgress(ranked, allocated.size());
+    Collection<CourseTargets> targets = courseTargetsService.targetsFor(id, allocated).values();
+    return new RankingProgress(
+        allocated.size(),
+        countWhere(targets, t -> t.rankedCount() >= t.allocation()),
+        countWhere(
+            targets,
+            t -> t.rankedCount() >= CourseTargetsService.requestedRankings(t.allocation())),
+        CourseTargetsService.REQUESTED_RANKINGS_PER_POSITION);
+  }
+
+  private static int countWhere(Collection<CourseTargets> targets, Predicate<CourseTargets> test) {
+    return (int) targets.stream().filter(test).count();
   }
 
   /** "1 course" or "7 courses". */

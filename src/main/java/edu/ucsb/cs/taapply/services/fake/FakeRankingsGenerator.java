@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -89,10 +90,13 @@ public class FakeRankingsGenerator {
     return Math.min(size, 1 + random.nextInt(Math.max(1, size - 1)));
   }
 
-  /** How many interested candidates to rank: twice the allocation (at least 1), capped. */
+  /**
+   * How many interested candidates to rank: the requested rankings ({@link
+   * CourseTargetsService#requestedRankings}, twice the allocation), at least 1, capped.
+   */
   static int target(Integer allocation, int interested) {
     int allocated = allocation == null ? 0 : allocation;
-    return Math.min(Math.max(1, 2 * allocated), interested);
+    return Math.min(Math.max(1, CourseTargetsService.requestedRankings(allocated)), interested);
   }
 
   /**

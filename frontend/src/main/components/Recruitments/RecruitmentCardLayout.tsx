@@ -6,22 +6,16 @@ import { TrashIcon } from "main/components/Common/Icons";
 import ProgressThermometer from "main/components/Common/ProgressThermometer";
 import { applicationsText } from "main/utils/adminApplications";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
-import type {
-  RecruitmentStepAction,
-  RecruitmentStepsData,
+import {
+  MINIMUM_RANKINGS_LABEL,
+  RANKING_PROGRESS_NO_COURSES,
+  requestedRankingsLabel,
+  type RecruitmentStepAction,
+  type RecruitmentStepsData,
 } from "main/utils/recruitmentSteps";
 import { useRememberedOpen } from "main/utils/useRememberedOpen";
 
 export const DELETE_TOOLTIP = "Delete this Recruitment";
-
-/**
- * The ranking thermometer's label (issue #453). A course is ranked once it has at least as many
- * rankings as its allocation; only courses allocated at least one TA or ULA are counted.
- */
-export const RANKING_PROGRESS_LABEL = "Courses with enough rankings";
-
-/** Said instead of "n of m" while no course has been allocated anyone. */
-export const RANKING_PROGRESS_NO_COURSES = "no courses allocated yet";
 
 /**
  * The localStorage keys are this prefix, the quarter as yyyyq and the type, such as
@@ -55,7 +49,8 @@ type RecruitmentCardLayoutProps = {
  * the status badges and the application count; aria-expanded for keyboard users) with the trash
  * icon beside it, outside the toggle. Open, the card shows the dates panel with its Change button
  * beside the Faculty Ranking Deadline; the live Recruitment Steps diagram in its collapsible
- * panel; once faculty ranking has been opened, a thermometer of the courses ranked (issue #453);
+ * panel; once faculty ranking has been opened, thermometers of the courses with the minimum and
+ * with the requested rankings (issue #453);
  * and the button row: Courses, Draft Applications, Applications, Make Assignments (the admin
  * page where candidates are assigned to slots) and View Assignments (the read-only assignments
  * page), and Download Rankings CSV once faculty rankings have been opened (issues #358, #317),
@@ -187,13 +182,24 @@ export default function RecruitmentCardLayout({
             )}
             {/* Issue #453: present once faculty ranking has been opened at least once. */}
             {steps?.rankingProgress && (
-              <ProgressThermometer
-                numerator={steps.rankingProgress.coursesRanked}
-                denominator={steps.rankingProgress.courses}
-                label={RANKING_PROGRESS_LABEL}
-                noTargetText={RANKING_PROGRESS_NO_COURSES}
-                testIdPrefix={id("ranking-progress")}
-              />
+              <div data-testid={id("ranking-progress")}>
+                <ProgressThermometer
+                  numerator={steps.rankingProgress.coursesWithMinimum}
+                  denominator={steps.rankingProgress.courses}
+                  label={MINIMUM_RANKINGS_LABEL}
+                  noTargetText={RANKING_PROGRESS_NO_COURSES}
+                  testIdPrefix={id("minimum-rankings")}
+                />
+                <ProgressThermometer
+                  numerator={steps.rankingProgress.coursesWithRequested}
+                  denominator={steps.rankingProgress.courses}
+                  label={requestedRankingsLabel(
+                    steps.rankingProgress.requestedRankingsPerPosition,
+                  )}
+                  noTargetText={RANKING_PROGRESS_NO_COURSES}
+                  testIdPrefix={id("requested-rankings")}
+                />
+              </div>
             )}
           </Card.Body>
           <Card.Footer className="d-flex flex-wrap gap-2">
