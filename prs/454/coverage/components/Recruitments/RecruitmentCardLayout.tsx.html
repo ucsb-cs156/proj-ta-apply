@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
@@ -323,7 +323,16 @@
 <a name='L258'></a><a href='#L258'>258</a>
 <a name='L259'></a><a href='#L259'>259</a>
 <a name='L260'></a><a href='#L260'>260</a>
-<a name='L261'></a><a href='#L261'>261</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -346,13 +355,6 @@
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -401,15 +403,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">21142x</span>
-<span class="cline-any cline-yes">874x</span>
-<span class="cline-any cline-yes">874x</span>
-<span class="cline-any cline-yes">874x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21208x</span>
+<span class="cline-any cline-yes">875x</span>
+<span class="cline-any cline-yes">875x</span>
+<span class="cline-any cline-yes">875x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">874x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">875x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -469,7 +470,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3464x</span>
+<span class="cline-any cline-yes">3468x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -495,6 +496,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -591,22 +603,16 @@ import { TrashIcon } from "main/components/Common/Icons";
 import ProgressThermometer from "main/components/Common/ProgressThermometer";
 import { applicationsText } from "main/utils/adminApplications";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
-import type {
-  RecruitmentStepAction,
-  RecruitmentStepsData,
+import {
+  MINIMUM_RANKINGS_LABEL,
+  RANKING_PROGRESS_NO_COURSES,
+  requestedRankingsLabel,
+  type RecruitmentStepAction,
+  type RecruitmentStepsData,
 } from "main/utils/recruitmentSteps";
 import { useRememberedOpen } from "main/utils/useRememberedOpen";
 &nbsp;
 export const DELETE_TOOLTIP = "Delete this Recruitment";
-&nbsp;
-/**
- * The ranking thermometer's label (issue #453). A course is ranked once it has at least as many
- * rankings as its allocation; only courses allocated at least one TA or ULA are counted.
- */
-export const RANKING_PROGRESS_LABEL = "Courses with enough rankings";
-&nbsp;
-/** Said instead of "n of m" while no course has been allocated anyone. */
-export const RANKING_PROGRESS_NO_COURSES = "no courses allocated yet";
 &nbsp;
 /**
  * The localStorage keys are this prefix, the quarter as yyyyq and the type, such as
@@ -640,7 +646,8 @@ type RecruitmentCardLayoutProps = {
  * the status badges and the application count; aria-expanded for keyboard users) with the trash
  * icon beside it, outside the toggle. Open, the card shows the dates panel with its Change button
  * beside the Faculty Ranking Deadline; the live Recruitment Steps diagram in its collapsible
- * panel; once faculty ranking has been opened, a thermometer of the courses ranked (issue #453);
+ * panel; once faculty ranking has been opened, thermometers of the courses with the minimum and
+ * with the requested rankings (issue #453);
  * and the button row: Courses, Draft Applications, Applications, Make Assignments (the admin
  * page where candidates are assigned to slots) and View Assignments (the read-only assignments
  * page), and Download Rankings CSV once faculty rankings have been opened (issues #358, #317),
@@ -772,13 +779,24 @@ export default function RecruitmentCardLayout({
             )}
             {/* Issue #453: present once faculty ranking has been opened at least once. */}
             {steps?.rankingProgress &amp;&amp; (
-              &lt;ProgressThermometer
-                numerator={steps.rankingProgress.coursesRanked}
-                denominator={steps.rankingProgress.courses}
-                label={RANKING_PROGRESS_LABEL}
-                noTargetText={RANKING_PROGRESS_NO_COURSES}
-                testIdPrefix={id("ranking-progress")}
-              /&gt;
+              &lt;div data-testid={id("ranking-progress")}&gt;
+                &lt;ProgressThermometer
+                  numerator={steps.rankingProgress.coursesWithMinimum}
+                  denominator={steps.rankingProgress.courses}
+                  label={MINIMUM_RANKINGS_LABEL}
+                  noTargetText={RANKING_PROGRESS_NO_COURSES}
+                  testIdPrefix={id("minimum-rankings")}
+                /&gt;
+                &lt;ProgressThermometer
+                  numerator={steps.rankingProgress.coursesWithRequested}
+                  denominator={steps.rankingProgress.courses}
+                  label={requestedRankingsLabel(
+                    steps.rankingProgress.requestedRankingsPerPosition,
+                  )}
+                  noTargetText={RANKING_PROGRESS_NO_COURSES}
+                  testIdPrefix={id("requested-rankings")}
+                /&gt;
+              &lt;/div&gt;
             )}
           &lt;/Card.Body&gt;
           &lt;Card.Footer className="d-flex flex-wrap gap-2"&gt;
@@ -850,7 +868,7 @@ export default function RecruitmentCardLayout({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-14T17:10:58.243Z
+                at 2026-11-14T18:04:12.047Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
