@@ -144,6 +144,94 @@ public class ApplicationsApplyWebIT extends ApplicationsWebTestCase {
     assertThat(page.getByTestId(cards + ula.getId() + "-apply")).isVisible();
   }
 
+  /**
+   * Issue #451: a selection table (topics, interests, other courses) is only as wide as its
+   * content: narrower than the space it sits in, with every choice column exactly 8em wide rather
+   * than spread out to fill the space. The widths are measured in the browser; a label column of
+   * "width: 1%" once stretched every such table across the page.
+   */
+  private void assertShrunkToContent(Locator group) {
+    assertShrunkToContent(group, 8);
+  }
+
+  /**
+   * The course table's choice columns are 10em, a little wider than the others, so that its "Not
+   * Applicable /" heading fits on one line above "Not Interested" (issue #451).
+   */
+  private void assertCourseTableShrunkToContent(Locator group) {
+    assertShrunkToContent(group, 10);
+    Locator heading =
+        group.locator("thead th").filter(new Locator.FilterOptions().setHasText("Not Applicable"));
+    // The distinct tops of the heading's lines of text: two lines, not four.
+    Number lines =
+        (Number)
+            heading.evaluate(
+                "th => { const r = document.createRange(); r.selectNodeContents(th);"
+                    + " return new Set([...r.getClientRects()].filter(c => c.width > 0)"
+                    + ".map(c => Math.round(c.top))).size; }");
+    assertEquals(2, lines.intValue(), "the Not Applicable / Not Interested heading's lines");
+  }
+
+  private void assertShrunkToContent(Locator group, int choiceEms) {
+    Locator table = group.locator("table");
+    double tableWidth = table.boundingBox().width;
+    // The table's parent is React-Bootstrap's .table-responsive wrapper, as wide as the space.
+    double available = ((Number) table.evaluate("t => t.parentElement.clientWidth")).doubleValue();
+    assertTrue(
+        tableWidth < available - 1,
+        "table is " + tableWidth + "px wide in " + available + "px: it was not shrunk to fit");
+    Locator choices = table.locator("thead th.selection-table-choice");
+    assertTrue(choices.count() > 1);
+    double em =
+        ((Number) table.evaluate("t => parseFloat(getComputedStyle(t).fontSize)")).doubleValue();
+    for (int i = 0; i < choices.count(); i++) {
+      double width = choices.nth(i).boundingBox().width;
+      assertTrue(
+          Math.abs(width - choiceEms * em) <= 1.5, "choice column " + i + " is " + width + "px");
+    }
+  }
+
+  @Test
+  public void the_ula_forms_selection_tables_are_only_as_wide_as_their_content() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.ULA, LocalDate.now().plusDays(30));
+    seedUlaLists();
+
+    setupRegularUser();
+    page.setViewportSize(1280, 900);
+    goTo("/apply/" + recruitment.getId());
+
+    assertThat(page.getByTestId("ApplyPage-topic-JavaScript-1")).isVisible();
+    assertShrunkToContent(page.getByTestId("ApplyPage-topicProficiencies"));
+    assertShrunkToContent(page.getByTestId("ApplyPage-interests"));
+    assertCourseTableShrunkToContent(page.getByTestId("ApplyPage-courseInterests"));
+  }
+
+  @Test
+  public void the_read_only_selection_tables_are_only_as_wide_as_their_content() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.ULA, LocalDate.now().plusDays(30));
+    Application application =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(recruitment.getId())
+                .email("chris@ucsb.edu")
+                .firstName("Chris")
+                .lastName("Gaucho")
+                .firstChoiceCourse("CMPSC   156")
+                .topicProficiencies(new java.util.HashMap<>(java.util.Map.of("JavaScript", 1)))
+                .interests(new java.util.HashMap<>(java.util.Map.of("Tutoring", 5, "Grading", 2)))
+                .build());
+
+    setupAdminUser();
+    page.setViewportSize(1280, 900);
+    goTo("/admin/applications/" + application.getId());
+
+    assertThat(page.getByTestId("AdminApplicationPage-summary-topic-JavaScript-1")).isChecked();
+    assertShrunkToContent(page.getByTestId("AdminApplicationPage-summary-Topic Proficiency"));
+    assertShrunkToContent(page.getByTestId("AdminApplicationPage-summary-Interests"));
+    assertCourseTableShrunkToContent(
+        page.getByTestId("AdminApplicationPage-summary-Other Courses of Interest"));
+  }
+
   /** The ULA form rates topics on three levels and adds an Interests table rated 1 to 5. */
   @Test
   public void a_ula_application_asks_a_three_point_topic_scale_and_interests() throws Exception {

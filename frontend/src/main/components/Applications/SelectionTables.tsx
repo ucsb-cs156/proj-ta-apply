@@ -9,6 +9,7 @@ import {
 } from "main/utils/applicationFields";
 import {
   CHOICE_CELL_CLASS,
+  COURSE_CHOICE_CELL_CLASS,
   COURSE_LABEL_CELL_CLASS,
   LABEL_CELL_CLASS,
   READ_ONLY_SELECTION_TABLE_CLASS,
@@ -190,7 +191,7 @@ export function CourseInterestTable({
           {COURSE_INTEREST_OPTIONS.map((option) => (
             <th
               key={option.value}
-              className={`text-center fw-normal ${CHOICE_CELL_CLASS}`}
+              className={`text-center fw-normal ${CHOICE_CELL_CLASS} ${COURSE_CHOICE_CELL_CLASS}`}
             >
               <OptionHeading label={option.label} />
             </th>

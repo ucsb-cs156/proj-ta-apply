@@ -316,9 +316,11 @@ body {
    summary (issue #443; the layout is issue #194's).
    ============================================================================ */
 
-/* The label column: as wide as its widest label, on one line. */
+/* The label column: as wide as its widest label, on one line. It has no width of its own (issue
+   #451): the table is w-auto, so every column already takes its content's width, and the
+   "width: 1%" this once had made the browser size the whole table so that the label column was
+   1% of it, which stretched the table across the page. */
 .selection-table-label {
-  width: 1%;
   white-space: nowrap;
 }
 
@@ -332,6 +334,12 @@ body {
 .selection-table-choice {
   width: 8em;
   white-space: normal;
+}
+
+/* The course table's choice columns are a little wider, so "Not Applicable /" fits on one line
+   above "Not Interested" (its heading breaks only after the slash). */
+.selection-table-course-choice {
+  width: 10em;
 }
 
 /* A read-only table's radio buttons are disabled, but drawn at full strength rather than

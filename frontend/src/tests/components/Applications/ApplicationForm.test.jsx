@@ -3708,10 +3708,21 @@ describe("ApplicationForm tests", () => {
     expect(topicLabel).toHaveClass("selection-table-label");
     expect(topicLabel).not.toHaveAttribute("style");
 
-    const { headings } = selectionTableLayout(
+    const { headings, label } = selectionTableLayout(
       "ApplicationForm-courseInterests",
       "Course",
     );
+    // Only the course table's choice columns are the wider ones, so that "Not Applicable /" fits
+    // on one line (issue #451).
+    headings
+      .slice(headings.indexOf(label) + 1)
+      .forEach((th) => expect(th).toHaveClass("selection-table-course-choice"));
+    screen
+      .getByTestId("ApplicationForm-topicProficiencies")
+      .querySelectorAll("thead th")
+      .forEach((th) =>
+        expect(th).not.toHaveClass("selection-table-course-choice"),
+      );
     // No warning column on a TA form.
     expect(headings[0].textContent).toBe("Course");
     const courseRow = screen
