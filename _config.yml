@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/453-rankings-thermometer","number":454,"title":"Thermometer of courses with enough rankings on the admin recruitment card (closes #453)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/454"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/embedded-mongo-ubuntu-26","number":455,"title":"Start embedded MongoDB on GitHub's Ubuntu 26.04 runners (fixes CI on main)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/455"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/453-rankings-thermometer","number":454,"title":"Thermometer of courses with enough rankings on the admin recruitment card (closes #453)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/454"}]
