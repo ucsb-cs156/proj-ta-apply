@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,12 +19,15 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.RecruitmentStepsService.Link;
+import edu.ucsb.cs.taapply.services.RecruitmentStepsService.RankingProgress;
 import edu.ucsb.cs.taapply.services.RecruitmentStepsService.Step;
 import edu.ucsb.cs.taapply.services.RecruitmentStepsService.Steps;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +43,7 @@ public class RecruitmentStepsServiceTests {
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean AssignmentsService assignmentsService;
   @MockitoBean DraftApplicationRepository draftApplicationRepository;
+  @MockitoBean CourseTargetsService courseTargetsService;
 
   private static final String COURSES = "/admin/recruitments/7/courses";
   private static final List<Link> SEE_APPLICATIONS =
@@ -99,6 +106,68 @@ public class RecruitmentStepsServiceTests {
 
   private static Application assignedTo(long id, Long courseId) {
     return Application.builder().id(id).tentativeAssignmentId(courseId).build();
+  }
+
+  // ---- issue #453: the ranking progress thermometer ----
+
+  /** One course's figures as CourseTargetsService gives them; only these two matter here. */
+  private static CourseTargets ranked(long courseId, int allocation, int rankedCount) {
+    return new CourseTargets(courseId, allocation, 0, 0, rankedCount, 0);
+  }
+
+  @Test
+  public void there_is_no_ranking_progress_until_faculty_ranking_has_been_opened()
+      throws Exception {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(course(1, 2, false)));
+
+    Steps steps = service.stepsFor(fresh());
+
+    assertNull(steps.rankingProgress());
+    assertFalse(new ObjectMapper().valueToTree(steps).has("rankingProgress"));
+    verify(courseTargetsService, never()).targetsFor(any(), any(List.class));
+  }
+
+  @Test
+  public void ranking_progress_counts_the_allocated_courses_ranked_up_to_their_allocation()
+      throws Exception {
+    RecruitmentCourse exactlyEnough = course(1, 2, false);
+    RecruitmentCourse oneShort = course(2, 2, false);
+    RecruitmentCourse oneAllocatedAndMore = course(3, 1, false);
+    List<RecruitmentCourse> counted = List.of(exactlyEnough, oneShort, oneAllocatedAndMore);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(
+            List.of(
+                exactlyEnough,
+                oneShort,
+                course(4, 0, false), // allocated no one: not counted
+                oneAllocatedAndMore,
+                course(5, 2, true))); // removed: not counted
+    when(courseTargetsService.targetsFor(7L, counted))
+        .thenReturn(Map.of(1L, ranked(1, 2, 2), 2L, ranked(2, 2, 1), 3L, ranked(3, 1, 4)));
+    Recruitment recruitment = fresh();
+    // Opened once and closed since: still shown.
+    recruitment.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 1));
+    recruitment.setReviewStatus("Closed");
+
+    Steps steps = service.stepsFor(recruitment);
+
+    assertEquals(new RankingProgress(2, 3), steps.rankingProgress());
+    JsonNode json = new ObjectMapper().valueToTree(steps).get("rankingProgress");
+    assertEquals(2, json.get("coursesRanked").asInt());
+    assertEquals(3, json.get("courses").asInt());
+  }
+
+  @Test
+  public void ranking_progress_with_no_allocated_courses_is_zero_of_zero() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(course(1, 0, false)));
+    when(courseTargetsService.targetsFor(7L, List.of())).thenReturn(Map.of());
+    Recruitment recruitment = fresh();
+    recruitment.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 1));
+    recruitment.setReviewStatus("Open");
+
+    assertEquals(new RankingProgress(0, 0), service.stepsFor(recruitment).rankingProgress());
   }
 
   // ---- the whole thing ----

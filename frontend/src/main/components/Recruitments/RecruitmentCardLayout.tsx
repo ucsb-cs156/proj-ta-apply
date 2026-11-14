@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import RecruitmentStepsPanel from "main/components/Recruitments/RecruitmentStepsPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { TrashIcon } from "main/components/Common/Icons";
+import ProgressThermometer from "main/components/Common/ProgressThermometer";
 import { applicationsText } from "main/utils/adminApplications";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
 import type {
@@ -12,6 +13,15 @@ import type {
 import { useRememberedOpen } from "main/utils/useRememberedOpen";
 
 export const DELETE_TOOLTIP = "Delete this Recruitment";
+
+/**
+ * The ranking thermometer's label (issue #453). A course is ranked once it has at least as many
+ * rankings as its allocation; only courses allocated at least one TA or ULA are counted.
+ */
+export const RANKING_PROGRESS_LABEL = "Courses with enough rankings";
+
+/** Said instead of "n of m" while no course has been allocated anyone. */
+export const RANKING_PROGRESS_NO_COURSES = "no courses allocated yet";
 
 /**
  * The localStorage keys are this prefix, the quarter as yyyyq and the type, such as
@@ -45,7 +55,8 @@ type RecruitmentCardLayoutProps = {
  * the status badges and the application count; aria-expanded for keyboard users) with the trash
  * icon beside it, outside the toggle. Open, the card shows the dates panel with its Change button
  * beside the Faculty Ranking Deadline; the live Recruitment Steps diagram in its collapsible
- * panel; and the button row: Courses, Draft Applications, Applications, Make Assignments (the admin
+ * panel; once faculty ranking has been opened, a thermometer of the courses ranked (issue #453);
+ * and the button row: Courses, Draft Applications, Applications, Make Assignments (the admin
  * page where candidates are assigned to slots) and View Assignments (the read-only assignments
  * page), and Download Rankings CSV once faculty rankings have been opened (issues #358, #317),
  * and, pushed to the right edge of the row and apart from those workflow buttons, Change History
@@ -172,6 +183,16 @@ export default function RecruitmentCardLayout({
                 onAction={onAction}
                 onNavigate={onNavigate}
                 testIdPrefix={id("steps")}
+              />
+            )}
+            {/* Issue #453: present once faculty ranking has been opened at least once. */}
+            {steps?.rankingProgress && (
+              <ProgressThermometer
+                numerator={steps.rankingProgress.coursesRanked}
+                denominator={steps.rankingProgress.courses}
+                label={RANKING_PROGRESS_LABEL}
+                noTargetText={RANKING_PROGRESS_NO_COURSES}
+                testIdPrefix={id("ranking-progress")}
               />
             )}
           </Card.Body>

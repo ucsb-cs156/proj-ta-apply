@@ -68,7 +68,8 @@ public class RecruitmentStepsControllerTests extends ControllerTestCase {
                     null,
                     List.of(new Link("View Assignments", "/recruitments/7/assignments")),
                     false,
-                    null)));
+                    null)),
+            null);
     when(recruitmentStepsService.stepsFor(recruitment)).thenReturn(steps);
 
     MvcResult response =

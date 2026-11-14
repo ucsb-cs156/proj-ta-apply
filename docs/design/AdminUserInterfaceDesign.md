@@ -113,6 +113,16 @@ closed at, assignments published at) and stamp them
 from the existing endpoints. The backend computes the labels, done flags and link targets in one
 endpoint so the frontend only draws.
 
+## The ranking thermometer (issue #453)
+
+Once faculty ranking has been opened at least once (the recruitment has a
+`facultyReviewOpeningDate`), the card shows a progress thermometer between the steps diagram and
+the button row: **Courses with enough rankings: n of m (p%)**. The courses counted (m) are those
+not removed with an allocation of at least 1; a course is ranked (n) once it has at least as many
+rankings, by real, non-cancelled applicants, as its allocation. The figures come with the steps,
+as `rankingProgress` in `GET /api/admin/recruitments/{id}/steps`, so the thermometer refreshes
+with the diagram.
+
 ## The quarter card (issues #357, #379)
 
 The admin home page shows **one card per quarter** (`AdminQuarterCard`; until issue #379 a flat,

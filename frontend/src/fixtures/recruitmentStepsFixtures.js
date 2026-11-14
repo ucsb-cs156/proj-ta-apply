@@ -166,30 +166,40 @@ const released = withSteps(allocated, [
   },
 ]);
 
-/** Reviews are open with a deadline, so step 7 shows the deadline rather than "Not closed yet". */
-const rankingsOpen = withSteps(released, [
-  {
-    number: 6,
-    done: true,
-    label: "Opened: 2026-02-05",
-    action: "closeReviews",
-  },
-  {
-    number: 7,
-    done: false,
-    label: "Deadline: 2026-02-15",
-    action: "closeReviews",
-  },
-]);
+/**
+ * Reviews are open with a deadline, so step 7 shows the deadline rather than "Not closed yet".
+ * Faculty have ranked enough candidates for 2 of the 5 allocated courses (issue #453).
+ */
+const rankingsOpen = withSteps(
+  { ...released, rankingProgress: { coursesRanked: 2, courses: 5 } },
+  [
+    {
+      number: 6,
+      done: true,
+      label: "Opened: 2026-02-05",
+      action: "closeReviews",
+    },
+    {
+      number: 7,
+      done: false,
+      label: "Deadline: 2026-02-15",
+      action: "closeReviews",
+    },
+  ],
+);
 
-const rankingsClosed = withSteps(rankingsOpen, [
-  {
-    number: 7,
-    done: true,
-    label: "Closed: 2026-02-16",
-    action: "openReviews",
-  },
-]);
+/** Every allocated course has enough rankings (issue #453). */
+const rankingsClosed = withSteps(
+  { ...rankingsOpen, rankingProgress: { coursesRanked: 5, courses: 5 } },
+  [
+    {
+      number: 7,
+      done: true,
+      label: "Closed: 2026-02-16",
+      action: "openReviews",
+    },
+  ],
+);
 
 /** Six of the eight slots have a tentative assignment. */
 const rankingsClosedNobodyAssigned = withSteps(rankingsClosed, [

@@ -87,6 +87,42 @@ public class AdminAssignmentsWebIT extends WebTestCase {
   }
 
   /**
+   * Issue #453: once faculty ranking has opened, the recruitment's card on the home page shows a
+   * thermometer of the allocated courses with at least as many rankings as their allocation.
+   */
+  @Test
+  public void the_recruitment_card_shows_how_many_courses_have_enough_rankings() throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    course.setAllocation(1);
+    recruitmentCourseRepository.save(course);
+    Application applicant = seedApplicant(recruitment);
+
+    setupAdminUser();
+    goTo("/");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button")).isVisible();
+    // Not before faculty ranking has been opened.
+    assertEquals(0, page.getByTestId("HomePageLoggedIn-admin-card-0-ranking-progress").count());
+
+    recruitment.setReviewStatus("Open");
+    recruitment.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 15));
+    recruitmentRepository.save(recruitment);
+    reloadPage(page);
+    Locator text = page.getByTestId("HomePageLoggedIn-admin-card-0-ranking-progress-text");
+    assertThat(text).hasText("Courses with enough rankings: 0 of 1 (0%)");
+
+    candidateRankingRepository.save(
+        edu.ucsb.cs.taapply.entity.CandidateRanking.builder()
+            .recruitmentCourseId(course.getId())
+            .applicationId(applicant.getId())
+            .rank(1)
+            .build());
+    reloadPage(page);
+    assertThat(text).hasText("Courses with enough rankings: 1 of 1 (100%)");
+  }
+
+  /**
    * Issue #439: an admin who teaches nothing enters a ranking for a course whose instructor is
    * still TBD, after faculty reviews have closed. The page says they are doing so as an admin, and
    * the rank is saved as the course's faculty ranking.

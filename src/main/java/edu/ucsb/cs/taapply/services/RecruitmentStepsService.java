@@ -31,6 +31,7 @@ public class RecruitmentStepsService {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired AssignmentsService assignmentsService;
   @Autowired DraftApplicationRepository draftApplicationRepository;
+  @Autowired CourseTargetsService courseTargetsService;
 
   /** A link the diagram draws: a word of a title, or a "(see rankings)" line. */
   public record Link(String text, String href) {}
@@ -64,7 +65,26 @@ public class RecruitmentStepsService {
       Boolean tentative,
       String blockedReason) {}
 
-  public record Steps(Long recruitmentId, RecruitmentType type, List<Step> steps) {}
+  /**
+   * How far faculty ranking has got (issue #453), for the thermometer on the admin's recruitment
+   * card.
+   *
+   * @param coursesRanked the courses counted that have at least as many rankings as their share of
+   *     the hiring target (their allocation)
+   * @param courses the courses counted: those not removed with an allocation of at least 1, since a
+   *     course allocated no one needs no rankings
+   */
+  public record RankingProgress(int coursesRanked, int courses) {}
+
+  /**
+   * @param rankingProgress null, and left out of the JSON, until faculty ranking has been opened
+   */
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public record Steps(
+      Long recruitmentId,
+      RecruitmentType type,
+      List<Step> steps,
+      RankingProgress rankingProgress) {}
 
   /** The status of all nine steps of the recruitment, in order. */
   public Steps stepsFor(Recruitment recruitment) {
@@ -239,7 +259,20 @@ public class RecruitmentStepsService {
                 null,
                 viewAssignmentsLinks,
                 HiringDecisions.isTentative(recruitment),
-                published ? null : HiringDecisions.unmetPrerequisite(recruitment, assigned > 0))));
+                published ? null : HiringDecisions.unmetPrerequisite(recruitment, assigned > 0))),
+        reviewOpened ? rankingProgress(id, activeCourses) : null);
+  }
+
+  /** The thermometer's figures: the allocated courses, and how many of them are ranked enough. */
+  private RankingProgress rankingProgress(Long id, List<RecruitmentCourse> activeCourses) {
+    List<RecruitmentCourse> allocated =
+        activeCourses.stream().filter(course -> course.getAllocation() > 0).toList();
+    int ranked =
+        (int)
+            courseTargetsService.targetsFor(id, allocated).values().stream()
+                .filter(targets -> targets.rankedCount() >= targets.allocation())
+                .count();
+    return new RankingProgress(ranked, allocated.size());
   }
 
   /** "1 course" or "7 courses". */

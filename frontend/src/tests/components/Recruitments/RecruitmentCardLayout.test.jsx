@@ -5,6 +5,8 @@ import { beforeEach, vi } from "vitest";
 
 import RecruitmentCardLayout, {
   DELETE_TOOLTIP,
+  RANKING_PROGRESS_LABEL,
+  RANKING_PROGRESS_NO_COURSES,
   RECRUITMENT_CARD_STORAGE_PREFIX,
 } from "main/components/Recruitments/RecruitmentCardLayout";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
@@ -301,6 +303,63 @@ describe("RecruitmentCardLayout tests", () => {
     await userEvent.click(screen.getByTestId("C-steps-toggle"));
     await userEvent.click(screen.getByTestId("C-steps-steps-step-7-action"));
     expect(onAction).toHaveBeenCalledWith("closeReviews");
+  });
+
+  // ---- Issue #453: the thermometer of courses with enough rankings ----
+
+  test("once faculty ranking has opened, a thermometer of courses ranked sits under the steps and above the buttons", () => {
+    renderCard();
+
+    const thermometer = screen.getByTestId("C-ranking-progress");
+    expect(screen.getByTestId("C-ranking-progress-text")).toHaveTextContent(
+      /^Courses with enough rankings: 2 of 5 \(40%\)$/,
+    );
+    expect(screen.getByTestId("C-ranking-progress-bar")).toHaveAttribute(
+      "aria-valuenow",
+      "40",
+    );
+    // In the card body, after the steps panel and before the footer's buttons.
+    expect(screen.getByTestId("C-dates").parentElement).toContainElement(
+      thermometer,
+    );
+    expect(
+      screen.getByTestId("C-steps").compareDocumentPosition(thermometer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      thermometer.compareDocumentPosition(
+        screen.getByTestId("C-courses-button"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("the ranking thermometer is full when every allocated course is ranked", () => {
+    renderCard({ steps: recruitmentStepsFixtures.rankingsClosed });
+    expect(screen.getByTestId("C-ranking-progress-text")).toHaveTextContent(
+      "Courses with enough rankings: 5 of 5 (100%)",
+    );
+    expect(screen.getByTestId("C-ranking-progress-fill")).toHaveClass(
+      "bg-success",
+    );
+  });
+
+  test("with no course allocated anyone, the ranking thermometer says so", () => {
+    renderCard({
+      steps: {
+        ...recruitmentStepsFixtures.rankingsOpen,
+        rankingProgress: { coursesRanked: 0, courses: 0 },
+      },
+    });
+    expect(screen.getByTestId("C-ranking-progress-text")).toHaveTextContent(
+      `${RANKING_PROGRESS_LABEL}: 0 so far, ${RANKING_PROGRESS_NO_COURSES}`,
+    );
+    expect(RANKING_PROGRESS_NO_COURSES).toBe("no courses allocated yet");
+  });
+
+  test("before faculty ranking has opened there is no ranking thermometer", () => {
+    renderCard({ steps: recruitmentStepsFixtures.released });
+    expect(screen.getByTestId("C-steps")).toBeInTheDocument();
+    expect(screen.queryByTestId("C-ranking-progress")).not.toBeInTheDocument();
   });
 
   test("defaultExpanded shows the diagram at once; no steps means no panel", () => {

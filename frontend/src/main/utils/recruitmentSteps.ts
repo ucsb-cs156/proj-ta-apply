@@ -48,10 +48,18 @@ export type RecruitmentStepStatus = {
 export const TENTATIVE_NOTE =
   "Tentative; part of the hiring process has been reopened";
 
+/**
+ * How far faculty ranking has got (issue #453): of the courses allocated at least one TA or ULA,
+ * how many have at least as many rankings as their allocation.
+ */
+export type RankingProgress = { coursesRanked: number; courses: number };
+
 export type RecruitmentStepsData = {
   recruitmentId: number;
   type: RecruitmentType;
   steps: RecruitmentStepStatus[];
+  /** Present once faculty ranking has been opened at least once (issue #453). */
+  rankingProgress?: RankingProgress;
 };
 
 /**
