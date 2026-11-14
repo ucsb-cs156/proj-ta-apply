@@ -215,18 +215,28 @@ describe("allocations utilities", () => {
     );
   });
 
-  test("the ranking notice handles singular and plural and doubles the number", () => {
-    expect(rankingAllocationNotice("TA", 2)).toBe(
+  test("the ranking notice handles singular and plural and gives the requested number it is told", () => {
+    expect(rankingAllocationNotice("TA", 2, 4)).toBe(
       "2 TAs have been allocated to this course. Please rank at least 2 candidates, and preferably 4.",
     );
-    expect(rankingAllocationNotice("ULA", 1)).toBe(
+    expect(rankingAllocationNotice("ULA", 1, 2)).toBe(
       "1 ULA has been allocated to this course. Please rank at least 1 candidate, and preferably 2.",
     );
-    expect(rankingAllocationNotice("ULA", 0)).toBe(
+    expect(rankingAllocationNotice("ULA", 0, 0)).toBe(
       "0 ULAs have been allocated to this course. Please rank at least 0 candidates, and preferably 0.",
     );
-    expect(rankingAllocationNotice("TA", 3)).toBe(
-      "3 TAs have been allocated to this course. Please rank at least 3 candidates, and preferably 6.",
+    // Issue #453: the number is the backend's, not worked out here.
+    expect(rankingAllocationNotice("TA", 3, 9)).toBe(
+      "3 TAs have been allocated to this course. Please rank at least 3 candidates, and preferably 9.",
+    );
+  });
+
+  test("without a requested number the ranking notice ends after the minimum", () => {
+    expect(rankingAllocationNotice("TA", 2)).toBe(
+      "2 TAs have been allocated to this course. Please rank at least 2 candidates.",
+    );
+    expect(rankingAllocationNotice("TA", 2, null)).toBe(
+      "2 TAs have been allocated to this course. Please rank at least 2 candidates.",
     );
   });
 });

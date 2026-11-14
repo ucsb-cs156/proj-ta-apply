@@ -34,6 +34,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           deadline to edit it. Closing reviews does not erase either date, and
           changes appear in the recruitment change history.
         </p>
+        <p data-testid="HelpAdminsPage-ranking-progress">
+          Once faculty reviews have been opened, a recruitment&apos;s card on
+          the home page shows two progress thermometers under its Recruitment
+          Steps diagram. <strong>Courses with the minimum rankings</strong>{" "}
+          counts the courses whose instructors have ranked at least as many
+          candidates as the course&apos;s allocation (its hiring target).{" "}
+          <strong>Courses with requested rankings</strong> counts those with at
+          least twice that many, the number faculty are asked to rank. Only
+          courses allocated at least one TA or ULA are counted.
+        </p>
 
         <h2 className="my-3 h4" id="rankings-csv">
           Download Rankings CSV

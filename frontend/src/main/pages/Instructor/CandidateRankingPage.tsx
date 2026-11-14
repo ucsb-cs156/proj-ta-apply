@@ -89,6 +89,11 @@ export type CandidateRankingPageData = {
    * absent while the admin withholds hiring targets from faculty.
    */
   targets?: CourseTargets | null;
+  /**
+   * How many candidates the instructor is asked, preferably, to rank (issue #453): present on the
+   * same terms as `allocation`. The backend works it out, so its factor is defined in one place.
+   */
+  requestedRankings?: number | null;
 };
 
 /** The course-scoped instructor ranking workspace. */
@@ -214,7 +219,11 @@ export default function CandidateRankingPage(): React.JSX.Element {
                 role="note"
                 data-testid="CandidateRankingPage-allocation"
               >
-                {rankingAllocationNotice(data.type, data.allocation)}
+                {rankingAllocationNotice(
+                  data.type,
+                  data.allocation,
+                  data.requestedRankings,
+                )}
               </p>
             )}
             <section aria-label="Recruitment details">

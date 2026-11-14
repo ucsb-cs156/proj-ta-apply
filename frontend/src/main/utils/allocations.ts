@@ -151,15 +151,20 @@ export const allocationVisibilityToast = (
  * The notice at the top of the candidate ranking page once allocations are shown (issue #178; the
  * targets table shown with it is in courseTargets.ts, issue #224):
  * how many positions the course has, and that the instructor should rank at least that many
- * candidates and preferably twice as many.
+ * candidates and preferably the requested number. The requested number comes from the backend,
+ * where the factor (twice the allocation) is defined once (issue #453); without it the sentence
+ * ends after the minimum.
  */
 export const rankingAllocationNotice = (
   type: "TA" | "ULA",
   allocation: number,
+  requestedRankings?: number | null,
 ): string => {
   const positions =
     allocation === 1 ? `1 ${type} has` : `${allocation} ${type}s have`;
   const candidates =
     allocation === 1 ? "1 candidate" : `${allocation} candidates`;
-  return `${positions} been allocated to this course. Please rank at least ${candidates}, and preferably ${2 * allocation}.`;
+  const preferably =
+    requestedRankings == null ? "" : `, and preferably ${requestedRankings}`;
+  return `${positions} been allocated to this course. Please rank at least ${candidates}${preferably}.`;
 };

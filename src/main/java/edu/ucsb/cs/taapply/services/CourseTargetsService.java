@@ -20,6 +20,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class CourseTargetsService {
 
+  /**
+   * How many candidates faculty are asked to rank for each TA or ULA position a course is allocated
+   * (issue #453). This is the one place the factor is defined: the ranking target below, the
+   * "preferably" figure on the ranking page, the "requested rankings" thermometer on the admin's
+   * recruitment card and Developer Mode's fake rankings all use it, through {@link
+   * #requestedRankings}. Fixed for now; making it a per-recruitment setting is issue #456.
+   */
+  public static final int REQUESTED_RANKINGS_PER_POSITION = 2;
+
+  /** How many rankings are requested for a course allocated this many positions (issue #453). */
+  public static int requestedRankings(int allocation) {
+    return REQUESTED_RANKINGS_PER_POSITION * allocation;
+  }
+
   @Autowired ApplicationRepository applicationRepository;
   @Autowired CandidateRankingRepository candidateRankingRepository;
   @Autowired DeveloperModeService developerModeService;
@@ -30,8 +44,9 @@ public class CourseTargetsService {
    * @param allocation the TA or ULA positions the admin allocated to the course (0 when unset)
    * @param candidateCount the real, non-cancelled applicants who expressed interest in the course
    *     (first or second choice, Enthusiastic or Would Consider)
-   * @param rankingTarget how many candidates the instructor is asked to rank: twice the allocation,
-   *     but never more than there are interested candidates; 0 when nothing was allocated
+   * @param rankingTarget how many candidates the instructor is asked to rank: the requested
+   *     rankings ({@link #requestedRankings}, twice the allocation), but never more than there are
+   *     interested candidates; 0 when nothing was allocated
    * @param rankedCount how many real, non-cancelled applicants the instructor has ranked for the
    *     course, interested or not (the same count as the admin's Rankings column)
    * @param stillNeeded rankingTarget minus rankedCount, never below 0
@@ -90,11 +105,11 @@ public class CourseTargetsService {
   }
 
   /**
-   * Twice the allocation, capped at the interested candidates; 0 when nothing was allocated (and
-   * never negative, whatever the inputs).
+   * The requested rankings ({@link #requestedRankings}), capped at the interested candidates; 0
+   * when nothing was allocated (and never negative, whatever the inputs).
    */
   static int rankingTarget(int allocation, int candidateCount) {
-    return Math.max(0, Math.min(2 * allocation, candidateCount));
+    return Math.max(0, Math.min(requestedRankings(allocation), candidateCount));
   }
 
   /** How many more rankings are asked for; never negative. */

@@ -113,6 +113,27 @@ closed at, assignments published at) and stamp them
 from the existing endpoints. The backend computes the labels, done flags and link targets in one
 endpoint so the frontend only draws.
 
+## The ranking thermometers (issue #453)
+
+Once faculty ranking has been opened at least once (the recruitment has a
+`facultyReviewOpeningDate`), the card shows two progress thermometers between the steps diagram
+and the button row:
+
+- **Courses with the minimum rankings (>= hiring target): n of m (p%)**: courses with at least as
+  many rankings, by real, non-cancelled applicants, as their allocation.
+- **Courses with requested rankings (>= 2 * hiring target): n of m (p%)**: courses with at least
+  the requested rankings, twice the allocation.
+
+The courses counted (m) are those not removed with an allocation of at least 1. The figures come
+with the steps, as `rankingProgress` in `GET /api/admin/recruitments/{id}/steps`, so the
+thermometers refresh with the diagram.
+
+The factor of 2 is defined once, as `CourseTargetsService.REQUESTED_RANKINGS_PER_POSITION`. It
+sets the faculty's ranking target, the "preferably" number on the ranking page (sent as
+`requestedRankings`), this thermometer (whose label gets the factor as
+`requestedRankingsPerPosition`) and Developer Mode's fake rankings. Making it a per-recruitment
+setting is issue #456.
+
 ## The quarter card (issues #357, #379)
 
 The admin home page shows **one card per quarter** (`AdminQuarterCard`; until issue #379 a flat,

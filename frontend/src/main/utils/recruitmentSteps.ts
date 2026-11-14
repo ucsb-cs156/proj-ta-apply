@@ -48,10 +48,40 @@ export type RecruitmentStepStatus = {
 export const TENTATIVE_NOTE =
   "Tentative; part of the hiring process has been reopened";
 
+/**
+ * How far faculty ranking has got (issue #453): of the courses allocated at least one TA or ULA,
+ * how many have the minimum rankings (at least their allocation) and how many have the requested
+ * rankings (at least twice it; the backend defines the factor).
+ */
+export type RankingProgress = {
+  courses: number;
+  coursesWithMinimum: number;
+  coursesWithRequested: number;
+  /** The factor: the requested rankings are this many times the allocation (now 2). */
+  requestedRankingsPerPosition: number;
+};
+
+/**
+ * The ranking thermometers' labels (issue #453). Only courses allocated at least one TA or ULA are
+ * counted. A course has the minimum rankings once it has at least as many as its allocation (its
+ * share of the hiring target), and the requested rankings once it has at least the backend's
+ * factor (now 2) times that.
+ */
+export const MINIMUM_RANKINGS_LABEL =
+  "Courses with the minimum rankings (>= hiring target)";
+/** The factor comes from the backend, which defines it once (now 2). */
+export const requestedRankingsLabel = (perPosition: number): string =>
+  `Courses with requested rankings (>= ${perPosition} * hiring target)`;
+
+/** Said instead of "n of m" while no course has been allocated anyone. */
+export const RANKING_PROGRESS_NO_COURSES = "no courses allocated yet";
+
 export type RecruitmentStepsData = {
   recruitmentId: number;
   type: RecruitmentType;
   steps: RecruitmentStepStatus[];
+  /** Present once faculty ranking has been opened at least once (issue #453). */
+  rankingProgress?: RankingProgress;
 };
 
 /**

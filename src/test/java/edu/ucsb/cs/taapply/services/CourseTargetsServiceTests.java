@@ -172,6 +172,15 @@ public class CourseTargetsServiceTests {
     assertEquals(Map.of(), service.targetsFor(7L, List.of()));
   }
 
+  /** Issue #453: the factor is defined once, here, and the requested rankings are built on it. */
+  @Test
+  public void the_requested_rankings_are_twice_the_allocation() {
+    assertEquals(2, CourseTargetsService.REQUESTED_RANKINGS_PER_POSITION);
+    assertEquals(0, CourseTargetsService.requestedRankings(0));
+    assertEquals(2, CourseTargetsService.requestedRankings(1));
+    assertEquals(6, CourseTargetsService.requestedRankings(3));
+  }
+
   @Test
   public void the_arithmetic_at_its_edges() {
     assertEquals(0, CourseTargetsService.rankingTarget(0, 9));

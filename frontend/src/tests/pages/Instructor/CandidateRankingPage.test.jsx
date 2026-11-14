@@ -495,6 +495,7 @@ describe("CandidateRankingPage", () => {
       ...instructorRecruitmentsFixtures.candidateRankingPage,
       type: "ULA",
       allocation: 1,
+      requestedRankings: 2,
     });
     renderPage();
 

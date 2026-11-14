@@ -87,6 +87,69 @@ public class AdminAssignmentsWebIT extends WebTestCase {
   }
 
   /**
+   * Issue #453: once faculty ranking has opened, the recruitment's card on the home page shows two
+   * thermometers: the allocated courses with at least as many rankings as their allocation, and
+   * those with at least twice as many.
+   */
+  @Test
+  public void the_recruitment_card_shows_how_many_courses_have_the_minimum_and_requested_rankings()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    course.setAllocation(1);
+    recruitmentCourseRepository.save(course);
+    Application first = seedApplicant(recruitment);
+    Application second =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(recruitment.getId())
+                .email("grad2@ucsb.edu")
+                .firstName("Grace")
+                .lastName("Hopper")
+                .build());
+
+    setupAdminUser();
+    goTo("/");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button")).isVisible();
+    // Not before faculty ranking has been opened.
+    assertEquals(0, page.getByTestId("HomePageLoggedIn-admin-card-0-ranking-progress").count());
+
+    recruitment.setReviewStatus("Open");
+    recruitment.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 15));
+    recruitmentRepository.save(recruitment);
+    reloadPage(page);
+    Locator minimum = page.getByTestId("HomePageLoggedIn-admin-card-0-minimum-rankings-text");
+    Locator requested = page.getByTestId("HomePageLoggedIn-admin-card-0-requested-rankings-text");
+    assertThat(minimum)
+        .hasText("Courses with the minimum rankings (>= hiring target): 0 of 1 (0%)");
+    assertThat(requested)
+        .hasText("Courses with requested rankings (>= 2 * hiring target): 0 of 1 (0%)");
+
+    // One ranking: the minimum for an allocation of 1, but not the two requested.
+    rank(course, first, 1);
+    reloadPage(page);
+    assertThat(minimum)
+        .hasText("Courses with the minimum rankings (>= hiring target): 1 of 1 (100%)");
+    assertThat(requested)
+        .hasText("Courses with requested rankings (>= 2 * hiring target): 0 of 1 (0%)");
+
+    rank(course, second, 2);
+    reloadPage(page);
+    assertThat(requested)
+        .hasText("Courses with requested rankings (>= 2 * hiring target): 1 of 1 (100%)");
+  }
+
+  private void rank(RecruitmentCourse course, Application applicant, int rank) {
+    candidateRankingRepository.save(
+        edu.ucsb.cs.taapply.entity.CandidateRanking.builder()
+            .recruitmentCourseId(course.getId())
+            .applicationId(applicant.getId())
+            .rank(rank)
+            .build());
+  }
+
+  /**
    * Issue #439: an admin who teaches nothing enters a ranking for a course whose instructor is
    * still TBD, after faculty reviews have closed. The page says they are doing so as an admin, and
    * the rank is saved as the course's faculty ranking.

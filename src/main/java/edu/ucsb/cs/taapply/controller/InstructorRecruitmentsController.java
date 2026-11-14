@@ -240,6 +240,9 @@ public class InstructorRecruitmentsController extends ApiController {
    * hiring figures (issue #224), present on the same terms as {@code allocation}. {@code
    * hasRankedNotInterested} is whether any real, non-cancelled applicant who did not express
    * interest in the course has a ranking for it (issue #221): the page then always shows that tier.
+   * {@code requestedRankings} is how many candidates the instructor is asked, preferably, to rank
+   * ({@link CourseTargetsService#requestedRankings}), present on the same terms as {@code
+   * allocation} (issue #453).
    */
   public static record CandidateRankingPage(
       Long recruitmentId,
@@ -258,7 +261,8 @@ public class InstructorRecruitmentsController extends ApiController {
       boolean canRank,
       boolean rankingAsAdmin,
       CourseTargets targets,
-      boolean hasRankedNotInterested) {}
+      boolean hasRankedNotInterested,
+      Integer requestedRankings) {}
 
   /** Course identity and catalog display fields; section rows remain distinct by id. */
   public static record CourseDetails(
@@ -380,7 +384,10 @@ public class InstructorRecruitmentsController extends ApiController {
         scope.isAdmin() || allocationsVisible(recruitment)
             ? courseTargetsService.targetsFor(recruitmentId, course)
             : null,
-        hasRankedNotInterested(recruitmentId, course));
+        hasRankedNotInterested(recruitmentId, course),
+        scope.isAdmin() || allocationsVisible(recruitment)
+            ? CourseTargetsService.requestedRankings(course.getAllocation())
+            : null);
   }
 
   /**

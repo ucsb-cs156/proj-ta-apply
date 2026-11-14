@@ -3,11 +3,15 @@ import { Link } from "react-router";
 import RecruitmentStepsPanel from "main/components/Recruitments/RecruitmentStepsPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { TrashIcon } from "main/components/Common/Icons";
+import ProgressThermometer from "main/components/Common/ProgressThermometer";
 import { applicationsText } from "main/utils/adminApplications";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
-import type {
-  RecruitmentStepAction,
-  RecruitmentStepsData,
+import {
+  MINIMUM_RANKINGS_LABEL,
+  RANKING_PROGRESS_NO_COURSES,
+  requestedRankingsLabel,
+  type RecruitmentStepAction,
+  type RecruitmentStepsData,
 } from "main/utils/recruitmentSteps";
 import { useRememberedOpen } from "main/utils/useRememberedOpen";
 
@@ -45,7 +49,9 @@ type RecruitmentCardLayoutProps = {
  * the status badges and the application count; aria-expanded for keyboard users) with the trash
  * icon beside it, outside the toggle. Open, the card shows the dates panel with its Change button
  * beside the Faculty Ranking Deadline; the live Recruitment Steps diagram in its collapsible
- * panel; and the button row: Courses, Draft Applications, Applications, Make Assignments (the admin
+ * panel; once faculty ranking has been opened, thermometers of the courses with the minimum and
+ * with the requested rankings (issue #453);
+ * and the button row: Courses, Draft Applications, Applications, Make Assignments (the admin
  * page where candidates are assigned to slots) and View Assignments (the read-only assignments
  * page), and Download Rankings CSV once faculty rankings have been opened (issues #358, #317),
  * and, pushed to the right edge of the row and apart from those workflow buttons, Change History
@@ -173,6 +179,27 @@ export default function RecruitmentCardLayout({
                 onNavigate={onNavigate}
                 testIdPrefix={id("steps")}
               />
+            )}
+            {/* Issue #453: present once faculty ranking has been opened at least once. */}
+            {steps?.rankingProgress && (
+              <div data-testid={id("ranking-progress")}>
+                <ProgressThermometer
+                  numerator={steps.rankingProgress.coursesWithMinimum}
+                  denominator={steps.rankingProgress.courses}
+                  label={MINIMUM_RANKINGS_LABEL}
+                  noTargetText={RANKING_PROGRESS_NO_COURSES}
+                  testIdPrefix={id("minimum-rankings")}
+                />
+                <ProgressThermometer
+                  numerator={steps.rankingProgress.coursesWithRequested}
+                  denominator={steps.rankingProgress.courses}
+                  label={requestedRankingsLabel(
+                    steps.rankingProgress.requestedRankingsPerPosition,
+                  )}
+                  noTargetText={RANKING_PROGRESS_NO_COURSES}
+                  testIdPrefix={id("requested-rankings")}
+                />
+              </div>
             )}
           </Card.Body>
           <Card.Footer className="d-flex flex-wrap gap-2">
