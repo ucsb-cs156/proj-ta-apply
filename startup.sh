@@ -23,4 +23,4 @@ export JDBC_DATABASE_URL=jdbc:postgresql://$(echo "$DATABASE_URL" | cut -d@ -f2)
 export JDBC_DATABASE_USERNAME=postgres
 
 # Pacific time is the app's time zone whatever the server's own is (issue #293)
-java -Duser.timezone=America/Los_Angeles -jar $1
+java -Duser.timezone=America/Los_Angeles -jar $1 -XX:-UseBASE64Intrinsics
