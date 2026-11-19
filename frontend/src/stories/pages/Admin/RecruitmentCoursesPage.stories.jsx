@@ -32,7 +32,7 @@ export default {
             {
               ...recruitmentsFixtures.threeRecruitments[1],
               id: 7,
-              lastPopulatedAt: "2026-02-01T03:00:00",
+              courseDataLastUpdated: "2026-02-01T03:00:00",
             },
           ]),
         ),

@@ -128,7 +128,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
                         r.getPrimaryConsiderationDate(),
                         r.getActualOpeningDate(),
                         r.getActualClosingDate(),
-                        r.getLastPopulatedAt()))
+                        r.getCourseDataLastUpdated()))
             .toList());
   }
 

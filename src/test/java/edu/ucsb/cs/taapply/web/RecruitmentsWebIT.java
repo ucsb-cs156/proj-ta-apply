@@ -19,8 +19,10 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import edu.ucsb.cs156.jobs.repositories.JobsRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +47,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class RecruitmentsWebIT extends WebTestCase {
 
   @Autowired BudgetRepository budgetRepository;
+  @Autowired JobsRepository jobsRepository;
 
   /** The recruitments are on the admin's home page (issue #141). */
   private void goToRecruitments() {
@@ -297,6 +300,68 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertEquals(7, budgetRepository.findById("20232").orElseThrow().getVersion());
   }
 
+  /**
+   * Issue #465: just above the table, in small type, the time the course data was last updated from
+   * the UCSB API, and a Refresh button, on the view-only page too, that updates it now.
+   */
+  @Test
+  public void the_courses_page_says_when_the_course_data_was_updated_and_refresh_updates_it()
+      throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").needsTa(true).build());
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+    Recruitment created = null;
+    for (int i = 0;
+        i < 40 && (created == null || created.getCourseDataLastUpdated() == null);
+        i++) {
+      page.waitForTimeout(250);
+      created =
+          recruitmentRepository.findAllByOrderByQuarterDescTypeAsc().stream()
+              .findFirst()
+              .orElse(null);
+    }
+    assertNotNull(created, "the form created the recruitment");
+    assertNotNull(created.getCourseDataLastUpdated(), "the Populate on creation stamped it");
+
+    // A known, old time, so the page and the Refresh can be told apart from it.
+    created.setCourseDataLastUpdated(LocalDateTime.of(2020, 1, 2, 3, 4, 5));
+    created = recruitmentRepository.save(created);
+    long jobsBefore = jobsRepository.count();
+
+    openPage(page, "/admin/recruitments/" + created.getId() + "/courses");
+    waitFor(page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId"));
+    Locator line = page.getByTestId("RecruitmentCoursesPage-course-data-last-updated-text");
+    assertThat(line)
+        .hasText(
+            "Course data last updated from the UCSB API: 1/2/2020, 3:04:05 AM. Updated"
+                + " automatically every night at midnight.");
+
+    page.getByTestId("RecruitmentCoursesPage-refresh").click();
+
+    assertThat(
+            page.getByText(
+                "Refresh started. Watch its progress on the Developer > Jobs page; the time above"
+                    + " the table changes when it finishes."))
+        .isVisible();
+    Long id = created.getId();
+    LocalDateTime stamped = null;
+    for (int i = 0; i < 40; i++) {
+      stamped = recruitmentRepository.findById(id).orElseThrow().getCourseDataLastUpdated();
+      if (stamped.getYear() > 2020) {
+        break;
+      }
+      page.waitForTimeout(250);
+    }
+    assertEquals(true, stamped.getYear() > 2020, "Refresh stamped the recruitment anew");
+    assertEquals(jobsBefore + 1, jobsRepository.count(), "Refresh ran one job");
+    reloadPage(page);
+    assertThat(line).not().containsText("2020");
+    assertThat(line).containsText("Course data last updated from the UCSB API: ");
+  }
+
   /** Issue #125: an admin can add an unflagged course's lecture by its enroll code. */
   @Test
   public void an_admin_can_add_a_lecture_by_enroll_code() throws Exception {
@@ -413,7 +478,7 @@ public class RecruitmentsWebIT extends WebTestCase {
     waitFor(firstCourse);
     // View-only: the Edit button and its words, and nothing to change.
     assertThat(page.getByTestId("RecruitmentCoursesPage-edit-text"))
-        .containsText("Click Edit to: populate the course list, add a lecture by enroll code,");
+        .containsText("Click Edit to: add a lecture by enroll code, remove a course,");
     assertThat(page.getByTestId("RecruitmentCoursesPage-add")).not().isVisible();
     // Issue #358: the budget columns left this page for the Combined Allocation page, which the
     // page points to.

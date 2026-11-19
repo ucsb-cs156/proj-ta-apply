@@ -56,6 +56,12 @@ describe("AdminJobsPage tests", () => {
     );
 
     await screen.findByText("Test Job");
+    expect(screen.getByText("Refresh Recruitment Courses")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("refreshRecruitmentCourses-description"),
+    ).toHaveTextContent(
+      "Updates every current recruitment's courses from the UCSB API: enrollment and max enrollment, days, time, room, status and instructor. Runs nightly at midnight; start it here to run it now.",
+    );
   });
 
   test("renders job table with data", async () => {
@@ -130,6 +136,53 @@ describe("AdminJobsPage tests", () => {
     expect(
       queryClientSpecific.getQueryState(["/api/jobs/all"]).dataUpdateCount,
     ).toBe(testJobUpdateCount + 1);
+  });
+
+  test("clicking the Refresh Recruitment Courses button launches the refresh", async () => {
+    axiosMock.onGet("/api/jobs/all").reply(200, []);
+    axiosMock.onPost("/api/jobs/launch/refreshRecruitmentCourses").reply(200, {
+      id: 2,
+      status: "running",
+    });
+    const queryClientSpecific = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          staleTime: Infinity,
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClientSpecific}>
+        <MemoryRouter>
+          <AdminJobsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const currentUserUpdateCount = queryClientSpecific.getQueryState([
+      "current user",
+    ]).dataUpdateCount;
+    const jobsUpdateCount = queryClientSpecific.getQueryState([
+      "/api/jobs/all",
+    ]).dataUpdateCount;
+    const button = await screen.findByTestId(
+      "refreshRecruitmentCourses-job-submit",
+    );
+    expect(button).toHaveTextContent("Refresh");
+    fireEvent.click(button);
+
+    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
+    expect(axiosMock.history.post[0].url).toBe(
+      "/api/jobs/launch/refreshRecruitmentCourses",
+    );
+    expect(
+      queryClientSpecific.getQueryState(["current user"]).dataUpdateCount,
+    ).toBe(currentUserUpdateCount);
+    expect(
+      queryClientSpecific.getQueryState(["/api/jobs/all"]).dataUpdateCount,
+    ).toBe(jobsUpdateCount + 1);
   });
 
   test("clicking Purge Job Log button calls the correct API", async () => {

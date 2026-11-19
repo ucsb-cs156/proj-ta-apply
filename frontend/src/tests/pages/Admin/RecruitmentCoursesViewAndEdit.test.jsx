@@ -106,7 +106,7 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-edit-text"),
     ).toHaveTextContent(
-      "Click Edit to: populate the course list, add a lecture by enroll code, remove a course, or release allocations to faculty.",
+      "Click Edit to: add a lecture by enroll code, remove a course, or release allocations to faculty.",
     );
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     expect(heartbeats()).toHaveLength(0);
@@ -165,7 +165,7 @@ describe("Courses view-only and edit pages (issue #278)", () => {
   test("the edit page has no explanatory paragraph, description or pointer (issue #358)", async () => {
     renderAt("/admin/recruitments/7/courses/edit");
 
-    await screen.findByTestId("RecruitmentCoursesPage-populate");
+    await screen.findByTestId("RecruitmentCoursesPage-add-form");
     expect(
       screen.queryByText(/Re-running Populate picks up newly flagged/),
     ).toBeNull();
@@ -267,6 +267,10 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-show-removed"),
     ).toBeInTheDocument();
+    // Issue #465: Refresh only re-reads the UCSB API, as the nightly run does, so it is here too.
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-refresh"),
+    ).toBeInTheDocument();
   });
 
   test("the Edit button leads to the edit page", async () => {
@@ -291,7 +295,7 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     const back = await screen.findByTestId("RecruitmentCoursesPage-view-link");
     expect(back).toHaveTextContent("Back to the view-only page");
     expect(back).toHaveAttribute("href", "/admin/recruitments/7/courses");
-    for (const id of ["populate", "add-form", "allocation-visibility"]) {
+    for (const id of ["refresh", "add-form", "allocation-visibility"]) {
       expect(
         await screen.findByTestId(`RecruitmentCoursesPage-${id}`),
       ).toBeInTheDocument();

@@ -21,6 +21,22 @@ export default function AdminJobsPage() {
     testJobMutation.mutate();
   };
 
+  // Issue #464: the nightly refresh of every current recruitment's courses, on demand.
+  const objectToAxiosParamsRefreshRecruitmentCourses = () => ({
+    url: "/api/jobs/launch/refreshRecruitmentCourses",
+    method: "POST",
+  });
+
+  const refreshRecruitmentCoursesMutation = useBackendMutation(
+    objectToAxiosParamsRefreshRecruitmentCourses,
+    {},
+    ["/api/jobs/all"],
+  );
+
+  const submitRefreshRecruitmentCourses = async () => {
+    refreshRecruitmentCoursesMutation.mutate();
+  };
+
   // purge job
   const objectToAxiosParamsPurgeJobLog = () => ({
     url: "/api/jobs/all",
@@ -56,6 +72,23 @@ export default function AdminJobsPage() {
           text={"Start"}
           testid={"testJob"}
         />
+      ),
+    },
+    {
+      name: "Refresh Recruitment Courses",
+      form: (
+        <>
+          <p data-testid="refreshRecruitmentCourses-description">
+            Updates every current recruitment's courses from the UCSB API:
+            enrollment and max enrollment, days, time, room, status and
+            instructor. Runs nightly at midnight; start it here to run it now.
+          </p>
+          <SingleButtonJobForm
+            callback={submitRefreshRecruitmentCourses}
+            text={"Refresh"}
+            testid={"refreshRecruitmentCourses"}
+          />
+        </>
       ),
     },
   ];
