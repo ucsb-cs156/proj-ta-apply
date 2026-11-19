@@ -34,4 +34,13 @@ public class JobUserProviderImplTests {
     assertNull(jobUserProvider.getCurrentUserId());
     assertNull(jobUserProvider.getCurrentUserEmail());
   }
+
+  /** Issue #464: a failed lookup must not stop the job being recorded. */
+  @Test
+  public void returns_nulls_when_looking_up_the_user_fails() {
+    when(currentUserService.getUser()).thenThrow(new NullPointerException("no authentication"));
+
+    assertNull(jobUserProvider.getCurrentUserId());
+    assertNull(jobUserProvider.getCurrentUserEmail());
+  }
 }

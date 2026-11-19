@@ -67,10 +67,11 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <Link to="/admin/jobs">Jobs</Link> lists every background job that has
           run, with its status and log: the job that fills the Courses table,
           the job that fills a recruitment&apos;s course list (launched on
-          creation, by Populate, and by the nightly refresh), and a test job
-          that can be launched here to check the job system itself. When a
-          course list looks wrong, its job&apos;s log says what the UCSB API
-          returned.
+          creation and by Populate), the Refresh Recruitment Courses job, which
+          brings every current recruitment&apos;s courses up to date from the
+          UCSB API nightly at midnight and can also be launched here, and a test
+          job that checks the job system itself. When a course list looks wrong,
+          its job&apos;s log says what the UCSB API returned.
         </p>
 
         <h2 className="my-3 h4" id="developer-info">
