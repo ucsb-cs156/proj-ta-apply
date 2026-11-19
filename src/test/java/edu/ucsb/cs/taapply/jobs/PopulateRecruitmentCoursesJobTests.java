@@ -103,7 +103,7 @@ public class PopulateRecruitmentCoursesJobTests {
 
     job.accept(ctx);
 
-    LocalDateTime stamped = job.getRecruitment().getLastPopulatedAt();
+    LocalDateTime stamped = job.getRecruitment().getCourseDataLastUpdated();
     assertNotNull(stamped);
     assertFalse(stamped.isBefore(before));
     verify(recruitmentRepository, times(1)).save(job.getRecruitment());
@@ -116,7 +116,7 @@ public class PopulateRecruitmentCoursesJobTests {
 
     job.accept(ctx);
 
-    assertNotNull(job.getRecruitment().getLastPopulatedAt());
+    assertNotNull(job.getRecruitment().getCourseDataLastUpdated());
     verify(recruitmentRepository, times(1)).save(job.getRecruitment());
   }
 
@@ -129,7 +129,7 @@ public class PopulateRecruitmentCoursesJobTests {
 
     assertThrows(RuntimeException.class, () -> job.accept(ctx));
 
-    assertNull(job.getRecruitment().getLastPopulatedAt());
+    assertNull(job.getRecruitment().getCourseDataLastUpdated());
     verify(recruitmentRepository, never()).save(any());
   }
 

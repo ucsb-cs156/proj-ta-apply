@@ -124,7 +124,7 @@ public class RecruitmentCoursesRefreshServiceTests {
     assertEquals(118, cached.get("07492").getEnrolledTotal());
     assertEquals(150, cached.get("07492").getMaxEnroll());
     // The page's "last refreshed" line reads this stamp.
-    assertNotNull(recruitment.getLastPopulatedAt());
+    assertNotNull(recruitment.getCourseDataLastUpdated());
     verify(recruitmentRepository, times(1)).save(recruitment);
   }
 
@@ -143,7 +143,7 @@ public class RecruitmentCoursesRefreshServiceTests {
     verify(ucsbCurriculumService, never()).getOfferings(any(), any());
     verify(budgetCourseService, never()).refreshCache(any(), any(), any());
     verify(recruitmentCourseRepository, never()).save(any());
-    assertNull(recruitment.getLastPopulatedAt());
+    assertNull(recruitment.getCourseDataLastUpdated());
     verify(recruitmentRepository, never()).save(any());
   }
 
@@ -225,7 +225,7 @@ public class RecruitmentCoursesRefreshServiceTests {
         "The UCSB API could not be reached; the stored enrollment figures were kept.",
         thrown.getMessage());
     assertSame(cause, thrown.getCause());
-    assertNull(recruitment.getLastPopulatedAt());
+    assertNull(recruitment.getCourseDataLastUpdated());
     verify(budgetCourseService, never()).refreshCache(any(), any(), any());
     verify(recruitmentCourseRepository, never()).save(any());
     verify(recruitmentRepository, never()).save(any());
@@ -239,7 +239,7 @@ public class RecruitmentCoursesRefreshServiceTests {
         .thenReturn(List.of(row(1L, "07492", false)));
 
     assertEquals(0, service.refresh(recruitment));
-    assertTrue(recruitment.getLastPopulatedAt() != null);
+    assertTrue(recruitment.getCourseDataLastUpdated() != null);
     verify(recruitmentCourseRepository, never()).save(any());
   }
 }

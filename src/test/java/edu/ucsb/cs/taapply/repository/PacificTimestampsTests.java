@@ -150,13 +150,13 @@ public class PacificTimestampsTests {
   public void a_stamp_is_stored_and_read_back_as_the_same_wall_clock_time() {
     Recruitment r = recruitment();
     r.setCreatedAt(LocalDateTime.of(2026, 11, 1, 19, 30));
-    r.setLastPopulatedAt(LocalDateTime.of(2026, 3, 8, 1, 59, 59));
+    r.setCourseDataLastUpdated(LocalDateTime.of(2026, 3, 8, 1, 59, 59));
     recruitmentRepository.save(r);
     flushAndForget();
 
     Recruitment found = recruitmentRepository.findById(r.getId()).orElseThrow();
     assertEquals(LocalDateTime.of(2026, 11, 1, 19, 30), found.getCreatedAt());
-    assertEquals(LocalDateTime.of(2026, 3, 8, 1, 59, 59), found.getLastPopulatedAt());
+    assertEquals(LocalDateTime.of(2026, 3, 8, 1, 59, 59), found.getCourseDataLastUpdated());
     Object stored =
         entityManager
             .getEntityManager()

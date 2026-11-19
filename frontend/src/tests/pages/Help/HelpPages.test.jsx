@@ -1530,7 +1530,7 @@ describe("Help pages (issue #140)", () => {
       "any number of tabs or windows may show it, for you or for other admins, without any warning",
     );
     expect(intro).toHaveTextContent(
-      "Its Edit button, beside the words \u201cClick Edit to: populate the course list, add a lecture by enroll code, remove a course, or release allocations to faculty\u201d, takes you to the edit page, where you use Populate and the other controls; it has a link back to the view-only page. The estimated enrollments and the allocations are edited on the Combined Allocation page, which counts as a tab of this edit page (below).",
+      "Its Edit button, beside the words \u201cClick Edit to: add a lecture by enroll code, remove a course, or release allocations to faculty\u201d, takes you to the edit page, where you use those controls; it has a link back to the view-only page. The estimated enrollments and the allocations are edited on the Combined Allocation page, which counts as a tab of this edit page (below).",
     );
     expect(intro).toHaveTextContent(
       "Only one tab or window should have a given recruitment's edit page open at a time, and edit pages of different recruitments never warn each other.",
@@ -2039,7 +2039,7 @@ describe("Help pages (issue #140)", () => {
     );
     // Issue #358, part 3: the Courses item points to the Combined Allocation page.
     expect(buttons[2]).toMatch(
-      /the page says when the list was last refreshed\. Enrollment estimates and allocations are not on this page: it points to the Combined Allocation page, where they are edited for TAs and ULAs together\.$/,
+      /the line beside Refresh says when the course data was last updated from the UCSB API\. Enrollment estimates and allocations are not on this page: it points to the Combined Allocation page, where they are edited for TAs and ULAs together\.$/,
     );
     expect(buttons[0]).toMatch(
       /primary consideration date\. Closing keeps every application on file, and a closed recruitment can be opened again\. Each button first asks/,
@@ -2051,7 +2051,13 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[1]).toMatch(
       /ranking deadline, after a short account of what will happen; the box proposes five working days/,
     );
-    expect(buttons[2]).toMatch(/from the schedule\. Populate re-runs the job/);
+    // Issue #465: Refresh, above the table on both pages, replaced the edit page's Populate.
+    expect(buttons[2]).toMatch(
+      /from the schedule\. Refresh, in small type just above the table on both the view-only and the edit page, re-runs the job/,
+    );
+    expect(buttons[2]).toMatch(
+      /refreshed automatically every night at midnight, and the line beside Refresh/,
+    );
     expect(buttons[2]).toMatch(/finds it again\. Remove takes a lecture out/);
     expect(buttons[5]).toMatch(
       /^Draft Applications\. The applications students have started but not yet submitted/,

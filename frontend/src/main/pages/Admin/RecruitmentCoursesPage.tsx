@@ -22,7 +22,11 @@ import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVi
 import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
 import { DeveloperFooterControls } from "main/utils/developerModeFooter";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
-import { lastRefreshedText } from "main/utils/lastRefreshed";
+import {
+  courseDataLastUpdatedText,
+  NIGHTLY_REFRESH_NOTE,
+  REFRESH_STARTED_MESSAGE,
+} from "main/utils/courseDataLastUpdated";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { apiErrorMessage } from "main/utils/apiError";
@@ -40,8 +44,12 @@ import {
  * it can be changed, it says nothing to the server about who has it open, and any number of tabs
  * may show it. It has an Edit button.
  *
+ * Both pages say, in small type just above the table, when the course data was last updated from
+ * the UCSB Courses API, beside a Refresh button that runs the update for this recruitment now
+ * (issue #465). That button replaced the edit page's Populate, which did the same.
+ *
  * The <b>edit page</b>, /admin/recruitments/:recruitmentId/courses/edit (`edit`), has the hiring
- * target, Populate, Add by enroll code, Remove / Unremove, allocation visibility, Publish
+ * target, Add by enroll code, Remove / Unremove, allocation visibility, Publish
  * Assignments and the developer buttons. Only one tab or window should have a recruitment's edit
  * page open, so it heartbeats under the key `courses-edit:<recruitmentId>` and shows the shared
  * warning, with a question to the newest tab, when another has it open.
@@ -97,7 +105,7 @@ export default function RecruitmentCoursesPage({
     edit ? { refetchInterval: false } : {},
   );
 
-  // For the last-refreshed line (issue #124); every Populate stamps the recruitment.
+  // For the course-data-last-updated line (issues #124, #465); every successful update stamps it.
   const { data: recruitments } = useRefreshingBackend<Recruitment[]>(
     ["/api/admin/recruitments/all"],
     // Stryker disable next-line StringLiteral : GET is axios's default method
@@ -206,17 +214,15 @@ export default function RecruitmentCoursesPage({
     return [...unique.values()];
   }, [courses, rankingSummaryByCourse]);
 
-  const populateMutation = useBackendMutation<void, unknown>(
+  // Issue #465: Refresh runs for this recruitment the same Populate job the nightly refresh does.
+  const refreshJobMutation = useBackendMutation<void, unknown>(
     () => ({
       url: "/api/jobs/launch/populateRecruitmentCourses",
       method: "POST",
       params: { recruitmentId },
     }),
     {
-      onSuccess: () =>
-        toast(
-          "Populate job started. Watch its progress on the Developer > Jobs page.",
-        ),
+      onSuccess: () => toast(REFRESH_STARTED_MESSAGE),
     },
     [
       "/api/recruitmentcourses/all",
@@ -346,8 +352,8 @@ export default function RecruitmentCoursesPage({
               Edit
             </Link>
             <span data-testid="RecruitmentCoursesPage-edit-text">
-              Click Edit to: populate the course list, add a lecture by enroll
-              code, remove a course, or release allocations to faculty.
+              Click Edit to: add a lecture by enroll code, remove a course, or
+              release allocations to faculty.
             </span>
           </p>
         )}
@@ -402,11 +408,6 @@ export default function RecruitmentCoursesPage({
           />
         )}
 
-        <p data-testid="RecruitmentCoursesPage-last-refreshed">
-          {lastRefreshedText(recruitment?.lastPopulatedAt)} Open, upcoming and
-          recently closed recruitments are also refreshed automatically every
-          night.
-        </p>
         {refreshing && (
           <p role="status" data-testid="RecruitmentCoursesPage-refreshing">
             Refreshing enrollment from the UCSB API…
@@ -420,14 +421,6 @@ export default function RecruitmentCoursesPage({
         )}
 
         <div className="d-flex align-items-center gap-3 mb-3">
-          {edit && (
-            <Button
-              onClick={() => populateMutation.mutate()}
-              data-testid="RecruitmentCoursesPage-populate"
-            >
-              Populate
-            </Button>
-          )}
           {edit && (
             <Form
               className="d-flex align-items-center gap-2"
@@ -487,6 +480,25 @@ export default function RecruitmentCoursesPage({
             onToggle={toggleColumn}
             testIdPrefix="RecruitmentCoursesPage-columns"
           />
+        </div>
+        {/* Issue #465: how fresh the course data is, and a way to freshen it, at the table's top. */}
+        <div
+          className="d-flex flex-wrap align-items-center gap-2 mb-1 small text-muted"
+          data-testid="RecruitmentCoursesPage-course-data-last-updated"
+        >
+          <span data-testid="RecruitmentCoursesPage-course-data-last-updated-text">
+            {courseDataLastUpdatedText(recruitment?.courseDataLastUpdated)}{" "}
+            {NIGHTLY_REFRESH_NOTE}
+          </span>
+          <Button
+            size="sm"
+            variant="outline-secondary"
+            className="py-0"
+            onClick={() => refreshJobMutation.mutate()}
+            data-testid="RecruitmentCoursesPage-refresh"
+          >
+            Refresh
+          </Button>
         </div>
         <RecruitmentCourseTable
           // Stryker disable next-line all : the query's initial data is an empty list, never undefined

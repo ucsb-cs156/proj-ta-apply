@@ -16,7 +16,7 @@ public record ApplicantRecruitmentDto(
     LocalDate primaryConsiderationDate,
     LocalDate actualOpeningDate,
     LocalDate actualClosingDate,
-    LocalDateTime lastPopulatedAt) {
+    LocalDateTime courseDataLastUpdated) {
 
   public static ApplicantRecruitmentDto from(Recruitment recruitment) {
     return new ApplicantRecruitmentDto(
@@ -28,6 +28,6 @@ public record ApplicantRecruitmentDto(
         recruitment.getPrimaryConsiderationDate(),
         recruitment.getActualOpeningDate(),
         recruitment.getActualClosingDate(),
-        recruitment.getLastPopulatedAt());
+        recruitment.getCourseDataLastUpdated());
   }
 }

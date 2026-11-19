@@ -795,16 +795,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <strong>Courses.</strong> The recruitment&apos;s course list: one
             row per lecture of each flagged course offered that quarter, with
             instructor, meeting time, room and enrollment from the schedule.{" "}
-            <em>Populate</em> re-runs the job: it picks up newly flagged
-            courses, refreshes the details, and marks <em>stale</em> any lecture
-            it no longer finds; a stale or cancelled lecture is hidden from
-            applicants and comes back by itself if a later run finds it again.{" "}
-            <em>Remove</em> takes a lecture out of the recruitment for good (a
-            later Populate will not put it back), and the toggle shows removed
-            rows so one can be restored. Open, upcoming and recently closed
-            recruitments are also refreshed automatically every night, and the
-            page says when the list was last refreshed. Enrollment estimates and
-            allocations are not on this page: it points to the{" "}
+            <em>Refresh</em>, in small type just above the table on both the
+            view-only and the edit page, re-runs the job: it picks up newly
+            flagged courses, refreshes the details, and marks <em>stale</em> any
+            lecture it no longer finds; a stale or cancelled lecture is hidden
+            from applicants and comes back by itself if a later run finds it
+            again. <em>Remove</em> takes a lecture out of the recruitment for
+            good (a later Refresh will not put it back), and the toggle shows
+            removed rows so one can be restored. Open, upcoming and recently
+            closed recruitments are also refreshed automatically every night at
+            midnight, and the line beside Refresh says when the course data was
+            last updated from the UCSB API. Enrollment estimates and allocations
+            are not on this page: it points to the{" "}
             <Link to="#combined-allocations">Combined Allocation page</Link>,
             where they are edited for TAs and ULAs together.
           </li>
@@ -1293,17 +1295,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           get when you open it: nothing on it can be changed, and any number of
           tabs or windows may show it, for you or for other admins, without any
           warning. Its <strong>Edit</strong> button, beside the words
-          &ldquo;Click Edit to: populate the course list, add a lecture by
-          enroll code, remove a course, or release allocations to
-          faculty&rdquo;, takes you to the <strong>edit page</strong>, where you
-          use Populate and the other controls; it has a link back to the
-          view-only page. The estimated enrollments and the allocations are
-          edited on the Combined Allocation page, which counts as a tab of this
-          edit page (below). Only <em>one</em> tab or window should have a given
-          recruitment&apos;s edit page open at a time, and edit pages of
-          different recruitments never warn each other. If another admin, or
-          another tab of yours, has the same edit page open, you get a warning
-          that looks like this:
+          &ldquo;Click Edit to: add a lecture by enroll code, remove a course,
+          or release allocations to faculty&rdquo;, takes you to the{" "}
+          <strong>edit page</strong>, where you use those controls; it has a
+          link back to the view-only page. The estimated enrollments and the
+          allocations are edited on the Combined Allocation page, which counts
+          as a tab of this edit page (below). Only <em>one</em> tab or window
+          should have a given recruitment&apos;s edit page open at a time, and
+          edit pages of different recruitments never warn each other. If another
+          admin, or another tab of yours, has the same edit page open, you get a
+          warning that looks like this:
         </p>
         <MultipleTabsBanner
           others={EXAMPLE_OTHERS}
