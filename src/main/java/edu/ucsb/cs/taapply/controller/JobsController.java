@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
+import edu.ucsb.cs.taapply.jobs.RefreshRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.TestJob;
 import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -26,8 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * list/logs/delete) under the same {@code /api/jobs} prefix, on non-overlapping sub-paths — the
  * same pattern as proj-scaffold's app-level {@code JobsController}.
  *
- * <p>Iteration 1 has no real background work, so the only launcher here is the test job. Iterations
- * 2 and 3 will add jobs that pull course data from the UCSB API.
+ * <p>Besides the test job, these launch the jobs that pull course data from the UCSB API.
  */
 @Tag(name = "Jobs")
 @RequestMapping("/api/jobs")
@@ -42,6 +42,8 @@ public class JobsController extends ApiController {
   @Autowired private PopulateCoursesJobFactory populateCoursesJobFactory;
 
   @Autowired private PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+
+  @Autowired private RefreshRecruitmentCoursesJobFactory refreshRecruitmentCoursesJobFactory;
 
   @Autowired private RecruitmentRepository recruitmentRepository;
 
@@ -97,5 +99,18 @@ public class JobsController extends ApiController {
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
 
     return jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));
+  }
+
+  @Operation(
+      summary = "Refresh every current recruitment's course list from the UCSB API",
+      description =
+          "The job that runs nightly (issue #464), on demand: re-fills the course list of every"
+              + " recruitment open for applications, not yet opened, or closed within the last six"
+              + " months, refreshing each course's instructor, days, time, room and status and the"
+              + " quarter's enrollment figures. Courses the admin removed stay removed.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/launch/refreshRecruitmentCourses")
+  public Job launchRefreshRecruitmentCourses() {
+    return jobService.runAsJob(refreshRecruitmentCoursesJobFactory.create());
   }
 }

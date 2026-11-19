@@ -51,6 +51,13 @@ public class CurrentUserServiceImpl extends CurrentUserService {
       log.info("getUser: user after processSignIn is {}", user);
       return user;
     }
+    // No authentication at all on a thread outside a request, such as the nightly scheduled
+    // refresh (issue #464): there is no user, and that must not be an error, or launching a job
+    // from there fails before the job is recorded.
+    if (authentication == null) {
+      log.info("getUser: no authentication, returning null");
+      return null;
+    }
     log.info("getUser: authentication is not OAuth2AuthenticationToken, returning null");
     log.info("getUser: authentication class is {}", authentication.getClass().getName());
     return null;

@@ -16,6 +16,8 @@ import edu.ucsb.cs.taapply.jobs.PopulateCoursesJob;
 import edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
+import edu.ucsb.cs.taapply.jobs.RefreshRecruitmentCoursesJob;
+import edu.ucsb.cs.taapply.jobs.RefreshRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobService;
@@ -34,6 +36,7 @@ public class JobsControllerTests extends ControllerTestCase {
   @MockitoBean JobService jobService;
   @MockitoBean PopulateCoursesJobFactory populateCoursesJobFactory;
   @MockitoBean PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+  @MockitoBean RefreshRecruitmentCoursesJobFactory refreshRecruitmentCoursesJobFactory;
   @MockitoBean RecruitmentRepository recruitmentRepository;
 
   @Test
@@ -227,5 +230,43 @@ public class JobsControllerTests extends ControllerTestCase {
 
     mockMvc.perform(post(POPULATE_RC_URL).with(csrf())).andExpect(status().isNotFound());
     verify(jobService, never()).runAsJob(any());
+  }
+
+  // ---- POST /api/jobs/launch/refreshRecruitmentCourses (issue #464) ----
+
+  private static final String REFRESH_RC_URL = "/api/jobs/launch/refreshRecruitmentCourses";
+
+  @Test
+  public void logged_out_users_cannot_launch_the_refresh() throws Exception {
+    mockMvc.perform(post(REFRESH_RC_URL).with(csrf())).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void regular_users_cannot_launch_the_refresh() throws Exception {
+    mockMvc.perform(post(REFRESH_RC_URL).with(csrf())).andExpect(status().is(403));
+    verify(jobService, never()).runAsJob(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_launch_the_refresh() throws Exception {
+    mockMvc.perform(post(REFRESH_RC_URL).with(csrf())).andExpect(status().is(403));
+    verify(jobService, never()).runAsJob(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_launch_the_refresh_on_demand() throws Exception {
+    RefreshRecruitmentCoursesJob refreshJob = RefreshRecruitmentCoursesJob.builder().build();
+    Job job = Job.builder().id(11L).status("running").build();
+    when(refreshRecruitmentCoursesJobFactory.create()).thenReturn(refreshJob);
+    when(jobService.runAsJob(refreshJob)).thenReturn(job);
+
+    MvcResult response =
+        mockMvc.perform(post(REFRESH_RC_URL).with(csrf())).andExpect(status().isOk()).andReturn();
+
+    verify(jobService).runAsJob(refreshJob);
+    assertEquals(mapper.writeValueAsString(job), response.getResponse().getContentAsString());
   }
 }
