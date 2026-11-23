@@ -31,6 +31,18 @@ const taHeadersWithComments = [
   "Comments",
   ...taHeaders.slice(4),
 ];
+/** Issue #469: Perm Number, hidden by default, sits between Email and Major. */
+const taHeadersWithPermNumber = [
+  ...taHeaders.slice(0, 5),
+  "Perm Number",
+  ...taHeaders.slice(5),
+];
+/** Every TA column, as Show All brings them. */
+const taHeadersAllShown = [
+  ...taHeadersWithComments.slice(0, 6),
+  "Perm Number",
+  ...taHeadersWithComments.slice(6),
+];
 // Issue #447 review: When Course Taken and Course Grade come right after Course Preference.
 const ulaHeaders = [
   ...taHeaders.slice(0, 2),
@@ -379,6 +391,77 @@ describe("CandidateTable", () => {
           localStorage.getItem("candidateRanking.hiddenColumns.1.ULA"),
         ),
       ).toEqual(["courseTerm", "courseGrade"]);
+    });
+  });
+
+  /** Issue #469: the applicant's perm number, an opt-in column between Email and Major. */
+  describe("the Perm Number column", () => {
+    const SHOWN_KEY = `${KEY}.shown`;
+    const permCells = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map(
+          (row) =>
+            row.querySelectorAll("td")[
+              taHeadersWithPermNumber.indexOf("Perm Number")
+            ].textContent,
+        );
+
+    test.each(["TA", "ULA"])(
+      "is hidden by default in a %s table, and offered unticked in the Columns menu",
+      async (type) => {
+        table({ type });
+        expect(headingLabels()).not.toContain("Perm Number");
+        expect(screen.queryByText("1234567")).not.toBeInTheDocument();
+        await userEvent.click(
+          screen.getByTestId("CandidateTable-columns-toggle"),
+        );
+        expect(
+          screen.getByRole("checkbox", { name: "Perm Number" }),
+        ).not.toBeChecked();
+      },
+    );
+
+    test("stays hidden for an instructor who chose other columns before it existed", () => {
+      localStorage.setItem(KEY, JSON.stringify(["major"]));
+      table();
+      expect(headingLabels()).not.toContain("Perm Number");
+    });
+
+    test("ticking it shows it between Email and Major, and is remembered apart from the hidden list", async () => {
+      table();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      );
+      await userEvent.click(
+        screen.getByRole("checkbox", { name: "Perm Number" }),
+      );
+      expect(headingLabels()).toEqual(taHeadersWithPermNumber);
+      expect(JSON.parse(localStorage.getItem(SHOWN_KEY))).toEqual([
+        "permNumber",
+      ]);
+      expect(localStorage.getItem(KEY)).toBeNull();
+    });
+
+    test("once shown it shows each applicant's perm number, blank when there is none, and can be hidden again", async () => {
+      localStorage.setItem(SHOWN_KEY, '["permNumber"]');
+      table();
+      expect(permCells()).toEqual(["1234567", "2345678", "", "4567890"]);
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-hide-permNumber"),
+      );
+      expect(headingLabels()).toEqual(taHeaders);
+      expect(JSON.parse(localStorage.getItem(SHOWN_KEY))).toEqual([]);
+    });
+
+    test("sorts both directions, those with none as the largest", () => {
+      localStorage.setItem(SHOWN_KEY, '["permNumber"]');
+      table();
+      fireEvent.click(screen.getByRole("button", { name: "Perm Number" }));
+      expect(names()).toEqual(["Ada", "Grace", "Katherine", "Alan"]);
+      fireEvent.click(screen.getByRole("button", { name: "Perm Number" }));
+      expect(names()).toEqual(["Alan", "Katherine", "Grace", "Ada"]);
     });
   });
 
@@ -1407,8 +1490,8 @@ describe("CandidateTable", () => {
       expect(headerTexts()).not.toContain("Major");
       expect(
         screen.getByTestId("CandidateTable-columns-toggle"),
-        // Comments is hidden by default (issue #447 review), so two are hidden.
-      ).toHaveTextContent("Columns (2 hidden)");
+        // Comments (issue #447 review) and Perm Number (issue #469) are hidden by default, so three are hidden.
+      ).toHaveTextContent("Columns (3 hidden)");
       await userEvent.click(screen.getByTestId("CandidateTable-columns-major"));
       expect(headerTexts()).toEqual(taHeaders);
     });
@@ -1426,8 +1509,8 @@ describe("CandidateTable", () => {
       await userEvent.click(
         screen.getByTestId("CandidateTable-columns-select-all"),
       );
-      // Show All shows the Comments column too, between Last Name and Email.
-      expect(headerTexts()).toEqual(taHeadersWithComments);
+      // Show All shows the Comments column too, between Last Name and Email, and Perm Number.
+      expect(headerTexts()).toEqual(taHeadersAllShown);
     });
 
     test("the hidden columns are read from this browser's storage", () => {
