@@ -8,6 +8,7 @@ import {
   FEEDBACK_COLUMN_CHOICES,
   COPY_MISSING_LABEL,
   FEEDBACK_COLUMNS_STORAGE_KEY,
+  FEEDBACK_OPT_IN_COLUMNS,
   MISSING_HEADING,
   emailsCopiedText,
   missingFeedbackEmails,
@@ -26,7 +27,8 @@ const MISSING_URL = "/api/admin/instructorFeedback/missing";
  * Admin → home page → a quarter card's Instructor Feedback button: /admin/instructorFeedback/:qyy
  * (issue #427). Every instructor's feedback on their TA/ULA allocation in the quarter (issue
  * #425), one row per course and instructor, read only. Which columns are hidden is remembered in
- * this browser; every column starts shown.
+ * this browser; every column starts shown but Enrolled and Max Enroll (issue #477), which start
+ * hidden on every visit until the admin shows them.
  */
 export default function InstructorFeedbackPage(): React.JSX.Element {
   const { qyy } = useParams();
@@ -53,6 +55,7 @@ export default function InstructorFeedbackPage(): React.JSX.Element {
   const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
     FEEDBACK_COLUMNS_STORAGE_KEY,
     [],
+    FEEDBACK_OPT_IN_COLUMNS,
   );
 
   if (yyyyq === null) {

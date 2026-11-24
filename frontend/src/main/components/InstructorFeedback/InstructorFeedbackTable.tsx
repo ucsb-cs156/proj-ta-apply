@@ -62,7 +62,9 @@ type Props = {
  * every column sortable, every column but Course Name hideable. Comments starts at 80% of the
  * window (at least 200px), can be dragged no narrower than 200px, and wraps within its width. A
  * Totals/Counts row under a thick black line (issue #473) counts the rows, says k/n for each
- * checkbox column and sums the allocation columns; see feedbackTotals.
+ * checkbox column and sums the allocation columns; see feedbackTotals. Enrolled and Max Enroll
+ * (issue #477), between Instructor and Alloc Reasonable, are the section's enrollment figures; the
+ * page hides them until the admin shows them, and they have no total.
  */
 export default function InstructorFeedbackTable({
   rows,
@@ -106,6 +108,16 @@ export default function InstructorFeedbackTable({
     cell: ({ cell }: { cell: Cell<InstructorFeedbackRow, unknown> }) =>
       cell.row.original[id] ?? whenMissing,
   });
+  // An enrollment figure (issue #477): blank, and sorted last, when the section has none on file.
+  const figure = (id: "enrollment" | "maxEnroll", label: string) => ({
+    header: heading(label),
+    id,
+    accessorFn: (row: InstructorFeedbackRow) => row[id] ?? undefined,
+    sortUndefined: "last" as const,
+    meta: numeric,
+    cell: ({ cell }: { cell: Cell<InstructorFeedbackRow, unknown> }) =>
+      cell.row.original[id] ?? "",
+  });
 
   const columns: LegacyColumn[] = [
     {
@@ -146,6 +158,8 @@ export default function InstructorFeedbackTable({
         );
       },
     },
+    figure("enrollment", "Enrolled"),
+    figure("maxEnroll", "Max Enroll"),
     flag("allocReasonable", "Alloc Reasonable"),
     flag("differentTACount", "Diff TA Count"),
     count("taAllocation", "TA Allocation", NOT_APPLICABLE),

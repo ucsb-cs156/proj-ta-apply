@@ -8,7 +8,8 @@ import {
  * One instructor's feedback on one course, as /api/admin/instructorFeedback returns it (issue
  * #427). The allocations are null when the quarter has no recruitment of that type or the course
  * is not in it; the preferred counts are null unless their box is checked (the server drops a
- * count kept behind an unchecked box).
+ * count kept behind an unchecked box). The enrollment figures (issue #477) are the section's from
+ * the quarter's budget table, null when it has no row there yet.
  */
 export type InstructorFeedbackRow = {
   id: number;
@@ -18,6 +19,8 @@ export type InstructorFeedbackRow = {
   title: string | null;
   email: string;
   instructorName: string | null;
+  enrollment: number | null;
+  maxEnroll: number | null;
   allocReasonable: boolean;
   differentTACount: boolean;
   differentULACount: boolean;
@@ -35,11 +38,14 @@ export const NOT_APPLICABLE = "N/A";
 
 /**
  * Every column but Course Name, which cannot be hidden, in table order: the Columns menu's
- * choices and the "hide" links. Issue #427's order, with Last Updated added after Comments and
- * Preferred ULA Allocation moved before Other Concerns (issue #473).
+ * choices and the "hide" links. Issue #427's order, with Last Updated added after Comments,
+ * Preferred ULA Allocation moved before Other Concerns (issue #473), and Enrolled and Max Enroll
+ * between Instructor and Alloc Reasonable (issue #477).
  */
 export const FEEDBACK_COLUMN_CHOICES: ColumnChoice[] = [
   { id: "instructor", label: "Instructor" },
+  { id: "enrollment", label: "Enrolled" },
+  { id: "maxEnroll", label: "Max Enroll" },
   { id: "allocReasonable", label: "Alloc Reasonable" },
   { id: "differentTACount", label: "Diff TA Count" },
   { id: "taAllocation", label: "TA Allocation" },
@@ -105,6 +111,13 @@ export const feedbackTotals = (
 
 /** Where the hidden columns are remembered, in this browser; the same for every quarter. */
 export const FEEDBACK_COLUMNS_STORAGE_KEY = "instructorFeedback.hiddenColumns";
+
+/**
+ * The columns hidden until the admin shows them (issue #477): Enrolled and Max Enroll start hidden
+ * on every visit, even in a browser that stored its hidden list before they existed; see
+ * useStoredHiddenColumns.
+ */
+export const FEEDBACK_OPT_IN_COLUMNS: string[] = ["enrollment", "maxEnroll"];
 
 /** The narrowest the Comments column may be, in pixels. */
 export const COMMENTS_MIN_WIDTH = WIDE_COLUMN_MIN_WIDTH;

@@ -15,6 +15,7 @@ import {
   FEEDBACK_COLUMN_CHOICES,
   FEEDBACK_COLUMN_CLASS,
   FEEDBACK_COLUMNS_STORAGE_KEY,
+  FEEDBACK_OPT_IN_COLUMNS,
   NOT_APPLICABLE,
   TOTALS_LABEL,
   commentsDefaultWidth,
@@ -150,6 +151,8 @@ describe("InstructorFeedbackTable helpers", () => {
   test("the column choices are every column but Course Name, in table order", () => {
     expect(FEEDBACK_COLUMN_CHOICES.map((c) => c.id)).toEqual([
       "instructor",
+      "enrollment",
+      "maxEnroll",
       "allocReasonable",
       "differentTACount",
       "taAllocation",
@@ -163,6 +166,8 @@ describe("InstructorFeedbackTable helpers", () => {
     ]);
     expect(FEEDBACK_COLUMN_CHOICES.map((c) => c.label)).toEqual([
       "Instructor",
+      "Enrolled",
+      "Max Enroll",
       "Alloc Reasonable",
       "Diff TA Count",
       "TA Allocation",
@@ -177,6 +182,11 @@ describe("InstructorFeedbackTable helpers", () => {
     expect(FEEDBACK_COLUMNS_STORAGE_KEY).toBe(
       "instructorFeedback.hiddenColumns",
     );
+    // Issue #477: the two columns that start hidden are choices like the others.
+    expect(FEEDBACK_OPT_IN_COLUMNS).toEqual(["enrollment", "maxEnroll"]);
+    for (const id of FEEDBACK_OPT_IN_COLUMNS) {
+      expect(FEEDBACK_COLUMN_CHOICES.map((c) => c.id)).toContain(id);
+    }
   });
 });
 
@@ -189,6 +199,8 @@ describe("InstructorFeedbackTable", () => {
     expect(headers).toEqual([
       "course",
       "instructor",
+      "enrollment",
+      "maxEnroll",
       "allocReasonable",
       "differentTACount",
       "taAllocation",
@@ -206,6 +218,8 @@ describe("InstructorFeedbackTable", () => {
     expect(headings).toEqual([
       "Course Name",
       "Instructor",
+      "Enrolled",
+      "Max Enroll",
       "Alloc Reasonable",
       "Diff TA Count",
       "TA Allocation",
@@ -270,6 +284,9 @@ describe("InstructorFeedbackTable", () => {
     expect(footer("otherConcerns")).toHaveTextContent(/^2\/4$/);
     expect(footer("comments")).toBeEmptyDOMElement();
     expect(footer("lastUpdated")).toBeEmptyDOMElement();
+    // Issue #477: the enrollment figures have no total either.
+    expect(footer("enrollment")).toBeEmptyDOMElement();
+    expect(footer("maxEnroll")).toBeEmptyDOMElement();
     // The row is the table's last, in a tfoot, and every cell carries the class index.css draws
     // the thick black line on; the headings and body cells carry it too (harmlessly).
     const tfoot = footer("course").closest("tfoot");
@@ -457,6 +474,67 @@ describe("InstructorFeedbackTable", () => {
     expect(columnText("taAllocation")).toEqual(["2", "2", "3", "N/A"]);
     await sortBy("numULAsPreferred");
     expect(columnText("numULAsPreferred")).toEqual(["8", "2", "", ""]);
+  });
+
+  test("Enrolled and Max Enroll show the section's figures, blank when none, and sort last (issue #477)", async () => {
+    renderTable();
+    expect(columnText("enrollment")).toEqual(["180", "410", "", "95"]);
+    expect(columnText("maxEnroll")).toEqual(["200", "400", "", "120"]);
+    // Headed like the other short columns: "Enrolled" on one line, "Max" over "Enroll".
+    const enrolled = within(
+      screen.getByTestId(`${T}-header-enrollment`),
+    ).getByTestId(/-sort-header$/);
+    expect(enrolled).toHaveTextContent(/^Enrolled$/);
+    expect(
+      enrolled.querySelector(".instructor-feedback-stacked-heading").innerHTML,
+    ).toBe("Enrolled");
+    const maxEnroll = within(
+      screen.getByTestId(`${T}-header-maxEnroll`),
+    ).getByTestId(/-sort-header$/);
+    expect(maxEnroll).toHaveTextContent("Max Enroll");
+    expect(
+      maxEnroll.querySelector(".instructor-feedback-stacked-heading").innerHTML,
+    ).toBe("Max <br>Enroll");
+    // Numbers: right-aligned, shrunk to content.
+    for (const id of ["enrollment", "maxEnroll"]) {
+      expect(cell(0, id), id).toHaveStyle({
+        textAlign: "right",
+        whiteSpace: "nowrap",
+        width: "1%",
+      });
+      expect(screen.getByTestId(`${T}-header-${id}`), id).toHaveClass(
+        FEEDBACK_COLUMN_CLASS,
+      );
+    }
+    // Largest first on the first click, smallest first on the second; a blank last either way.
+    await sortBy("enrollment");
+    expect(columnText("enrollment")).toEqual(["410", "180", "95", ""]);
+    await sortBy("enrollment");
+    expect(columnText("enrollment")).toEqual(["95", "180", "410", ""]);
+    await sortBy("maxEnroll");
+    expect(columnText("maxEnroll")).toEqual(["400", "200", "120", ""]);
+    await sortBy("maxEnroll");
+    expect(columnText("maxEnroll")).toEqual(["120", "200", "400", ""]);
+    // Each has a hide link, like the other columns.
+    expect(screen.getByTestId(`${T}-header-enrollment-hide`)).toHaveAttribute(
+      "aria-label",
+      "Hide Enrolled column",
+    );
+    expect(screen.getByTestId(`${T}-header-maxEnroll-hide`)).toHaveAttribute(
+      "aria-label",
+      "Hide Max Enroll column",
+    );
+  });
+
+  test("Enrolled and Max Enroll are left out when hidden, as the page hides them at first", () => {
+    renderTable({ hiddenColumns: FEEDBACK_OPT_IN_COLUMNS });
+    expect(screen.queryByTestId(`${T}-header-enrollment`)).toBeNull();
+    expect(screen.queryByTestId(`${T}-header-maxEnroll`)).toBeNull();
+    expect(screen.queryByTestId(`${T}-cell-row-0-col-enrollment`)).toBeNull();
+    expect(screen.getByTestId(`${T}-header-instructor`)).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`${T}-header-allocReasonable`),
+    ).toBeInTheDocument();
   });
 
   test("the copy control beside an email copies that email", async () => {

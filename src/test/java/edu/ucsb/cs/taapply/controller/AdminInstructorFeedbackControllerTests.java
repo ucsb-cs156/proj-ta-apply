@@ -54,6 +54,8 @@ public class AdminInstructorFeedbackControllerTests extends ControllerTestCase {
                 "ADV APP PROGRAM",
                 "pconrad@ucsb.edu",
                 "CONRAD P",
+                180,
+                200,
                 true,
                 true,
                 false,

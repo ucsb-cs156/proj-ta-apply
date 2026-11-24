@@ -135,6 +135,110 @@ describe("InstructorFeedbackPage", () => {
     ).toEqual([]);
   });
 
+  test("Enrolled and Max Enroll start hidden; showing one is remembered apart from the hidden list (issue #477)", async () => {
+    axiosMock
+      .onGet("/api/admin/instructorFeedback")
+      .reply(200, adminInstructorFeedbackFixtures.severalRecords);
+    renderPage();
+    await screen.findByTestId("InstructorFeedbackPage-table-row-0");
+    const headerIds = () =>
+      [
+        ...screen
+          .getByTestId("InstructorFeedbackPage-table")
+          .querySelectorAll("thead th"),
+      ].map((th) =>
+        th.dataset.testid.replace("InstructorFeedbackPage-table-header-", ""),
+      );
+    expect(headerIds()).not.toContain("enrollment");
+    expect(headerIds()).not.toContain("maxEnroll");
+    expect(headerIds()).toContain("instructor");
+    expect(headerIds()).toContain("allocReasonable");
+    // Nothing is stored by merely opening the page.
+    expect(localStorage.getItem(FEEDBACK_COLUMNS_STORAGE_KEY)).toBeNull();
+    expect(
+      localStorage.getItem(`${FEEDBACK_COLUMNS_STORAGE_KEY}.shown`),
+    ).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: /Columns/ }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Enrolled" }));
+    expect(headerIds()).toContain("enrollment");
+    // Between Instructor and Alloc Reasonable.
+    expect(headerIds().indexOf("enrollment")).toBe(
+      headerIds().indexOf("instructor") + 1,
+    );
+    expect(headerIds().indexOf("allocReasonable")).toBe(
+      headerIds().indexOf("enrollment") + 1,
+    );
+    expect(
+      screen.getByTestId(
+        "InstructorFeedbackPage-table-cell-row-0-col-enrollment",
+      ),
+    ).toHaveTextContent(/^180$/);
+    expect(
+      JSON.parse(localStorage.getItem(`${FEEDBACK_COLUMNS_STORAGE_KEY}.shown`)),
+    ).toEqual(["enrollment"]);
+    expect(localStorage.getItem(FEEDBACK_COLUMNS_STORAGE_KEY)).toBeNull();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Max Enroll" }));
+    expect(headerIds().indexOf("maxEnroll")).toBe(
+      headerIds().indexOf("enrollment") + 1,
+    );
+    expect(
+      JSON.parse(localStorage.getItem(`${FEEDBACK_COLUMNS_STORAGE_KEY}.shown`)),
+    ).toEqual(["enrollment", "maxEnroll"]);
+
+    // The hide link hides it again, and the memory follows.
+    await userEvent.click(
+      screen.getByRole("button", { name: "Hide Enrolled column" }),
+    );
+    expect(headerIds()).not.toContain("enrollment");
+    expect(headerIds()).toContain("maxEnroll");
+    expect(
+      JSON.parse(localStorage.getItem(`${FEEDBACK_COLUMNS_STORAGE_KEY}.shown`)),
+    ).toEqual(["maxEnroll"]);
+  });
+
+  test("a hidden list stored before Enrolled and Max Enroll existed does not reveal them (issue #477)", async () => {
+    localStorage.setItem(FEEDBACK_COLUMNS_STORAGE_KEY, JSON.stringify([]));
+    axiosMock
+      .onGet("/api/admin/instructorFeedback")
+      .reply(200, adminInstructorFeedbackFixtures.severalRecords);
+    renderPage();
+    await screen.findByTestId("InstructorFeedbackPage-table-row-0");
+    expect(
+      screen.queryByTestId("InstructorFeedbackPage-table-header-enrollment"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("InstructorFeedbackPage-table-header-maxEnroll"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("InstructorFeedbackPage-table-header-comments"),
+    ).toBeInTheDocument();
+  });
+
+  test("an enrollment column shown on an earlier visit stays shown (issue #477)", async () => {
+    localStorage.setItem(
+      `${FEEDBACK_COLUMNS_STORAGE_KEY}.shown`,
+      JSON.stringify(["maxEnroll"]),
+    );
+    axiosMock
+      .onGet("/api/admin/instructorFeedback")
+      .reply(200, adminInstructorFeedbackFixtures.severalRecords);
+    renderPage();
+    await screen.findByTestId("InstructorFeedbackPage-table-row-0");
+    expect(
+      screen.queryByTestId("InstructorFeedbackPage-table-header-enrollment"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("InstructorFeedbackPage-table-header-maxEnroll"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(
+        "InstructorFeedbackPage-table-cell-row-1-col-maxEnroll",
+      ),
+    ).toHaveTextContent(/^400$/);
+  });
+
   test("columns hidden on an earlier visit stay hidden", async () => {
     localStorage.setItem(
       FEEDBACK_COLUMNS_STORAGE_KEY,
