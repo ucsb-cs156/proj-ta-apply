@@ -1443,7 +1443,10 @@
 <a name='L1378'></a><a href='#L1378'>1378</a>
 <a name='L1379'></a><a href='#L1379'>1379</a>
 <a name='L1380'></a><a href='#L1380'>1380</a>
-<a name='L1381'></a><a href='#L1381'>1381</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1381'></a><a href='#L1381'>1381</a>
+<a name='L1382'></a><a href='#L1382'>1382</a>
+<a name='L1383'></a><a href='#L1383'>1383</a>
+<a name='L1384'></a><a href='#L1384'>1384</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1716,6 +1719,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">348x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3551,26 +3557,29 @@ export default function HelpAdminsPage(): React.JSX.Element {
           allocations. A preferred number shows only when its &amp;ldquo;different
           number&amp;rdquo; box is checked. Every column sorts, every column but
           Course Name can be hidden (this browser remembers which), and the
-          Comments column can be dragged wider or narrower, down to 200px. A{" "}
-          &lt;strong&gt;Totals/Counts&lt;/strong&gt; row under a thick black line gives the
-          number of courses, how many of them checked each box (as k/n), the sum
-          of each allocation column, and the sum of each preferred count, where
-          a blank preferred count stands for the current allocation. Below it,{" "}
-          &lt;em&gt;No Feedback Yet From These Instructors&lt;/em&gt; lists each course
-          whose instructor has not checked any box, including instructors who
-          never opened the form, with a button that copies their emails.
-          Clicking anywhere else on that row closes or opens the quarter&amp;apos;s
-          card (the caret at its left shows which it is); clicking a button on
-          the row goes to its page and leaves the card as it was. The newest
-          quarter starts open and the older quarters closed, and this browser
-          remembers each card as you left it. The &lt;strong&gt;Quarters&lt;/strong&gt;{" "}
-          control above the cards puts the newest or the oldest quarter first.
-          Inside a quarter&amp;apos;s card is a nested card for each of its
-          recruitments, headed &lt;strong&gt;TA&lt;/strong&gt; or &lt;strong&gt;ULA&lt;/strong&gt; with
-          its status badges and how many applications it has; clicking that row
-          closes or opens just that card, and the trash icon at its right
-          deletes the recruitment. Open, the card shows the recruitment&amp;apos;s
-          dates, and under the dates the live{" "}
+          Comments column can be dragged wider or narrower, down to 200px.{" "}
+          &lt;strong&gt;Enrolled&lt;/strong&gt; and &lt;strong&gt;Max Enroll&lt;/strong&gt;, the
+          section&amp;apos;s enrollment figures from the Budget page, start hidden;
+          tick them in the Columns menu to show them between Instructor and
+          Alloc Reasonable. A &lt;strong&gt;Totals/Counts&lt;/strong&gt; row under a thick
+          black line gives the number of courses, how many of them checked each
+          box (as k/n), the sum of each allocation column, and the sum of each
+          preferred count, where a blank preferred count stands for the current
+          allocation. Below it, &lt;em&gt;No Feedback Yet From These Instructors&lt;/em&gt;{" "}
+          lists each course whose instructor has not checked any box, including
+          instructors who never opened the form, with a button that copies their
+          emails. Clicking anywhere else on that row closes or opens the
+          quarter&amp;apos;s card (the caret at its left shows which it is);
+          clicking a button on the row goes to its page and leaves the card as
+          it was. The newest quarter starts open and the older quarters closed,
+          and this browser remembers each card as you left it. The{" "}
+          &lt;strong&gt;Quarters&lt;/strong&gt; control above the cards puts the newest or
+          the oldest quarter first. Inside a quarter&amp;apos;s card is a nested
+          card for each of its recruitments, headed &lt;strong&gt;TA&lt;/strong&gt; or{" "}
+          &lt;strong&gt;ULA&lt;/strong&gt; with its status badges and how many applications
+          it has; clicking that row closes or opens just that card, and the
+          trash icon at its right deletes the recruitment. Open, the card shows
+          the recruitment&amp;apos;s dates, and under the dates the live{" "}
           &lt;Link to="/help/recruitment-steps"&gt;Recruitment Steps&lt;/Link&gt; diagram
           (collapsed to a one-line summary on older recruitments, expanded on
           the latest TA and ULA recruitments). Its boxes carry the lifecycle
@@ -4210,7 +4219,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-24T19:38:56.605Z
+                at 2026-11-24T22:07:33.333Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
