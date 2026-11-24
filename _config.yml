@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/476-yellow-to-assign-headings","number":478,"title":"Yellow To Assign headings on the admin Assignments page (issue #476)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/478"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/475-assignments-csv-download","number":479,"title":"Download CSV on the admin Assignments page (issue #475)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/479"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/476-yellow-to-assign-headings","number":478,"title":"Yellow To Assign headings on the admin Assignments page (issue #476)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/478"}]
