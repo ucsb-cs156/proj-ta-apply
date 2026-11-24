@@ -208,6 +208,14 @@ body {
   white-space: nowrap;
 }
 
+/* A lecture's heading starts at the top of the heading row, not at the bottom where Bootstrap
+   puts a thead's content (issue #476): a lecture with nothing to assign has a blank To Assign
+   line, so without this its name and counts would sit lower than its neighbours'. Every lecture's
+   name is on the same line, and the room for "To Assign" and its number is left empty. */
+.table > thead > tr > th.course-column {
+  vertical-align: top;
+}
+
 /* The lecture cell of the row's tentative assignment (CourseRankCell): a thick black outline. */
 .selected-course-assignment-cell {
   border: 5px solid black;

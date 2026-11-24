@@ -541,6 +541,9 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(heading).not().hasClass(Pattern.compile("course-needs-assignment"));
     assertNotEquals(
         "rgb(255, 255, 0)", heading.evaluate("e => getComputedStyle(e).backgroundColor"));
+    // Issue #476: lecture headings are aligned at the top (Bootstrap's thead is bottom-aligned),
+    // so the blank To Assign line leaves its room empty below.
+    assertEquals("top", heading.evaluate("e => getComputedStyle(e).verticalAlign"));
     for (String line : List.of("allocation", "assigned", "left")) {
       Locator count =
           page.locator(
@@ -591,6 +594,16 @@ public class AdminAssignmentsWebIT extends WebTestCase {
         toAssignLabel.evaluate("e => getComputedStyle(e).fontFamily"));
     assertEquals(true, toAssign.evaluate("e => e.scrollWidth <= e.closest('th').clientWidth"));
     assertThat(toAssign).hasClass(Pattern.compile("text-danger"));
+    // The other lecture still has nothing to assign: its name is on the same line as this one's,
+    // and the room under its counts is empty rather than its heading sitting lower.
+    Locator otherLabel =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-label']")
+            .nth(1);
+    assertEquals(label.boundingBox().y, otherLabel.boundingBox().y, 0.5);
+    Locator otherToAssign =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-left']")
+            .nth(1);
+    assertThat(otherToAssign).isEmpty();
     assertThat(heading).hasClass(Pattern.compile("course-needs-assignment"));
     assertEquals("rgb(255, 255, 0)", heading.evaluate("e => getComputedStyle(e).backgroundColor"));
     assertThat(cell).hasClass(Pattern.compile("candidate-course-rank-not-applicable"));
