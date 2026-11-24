@@ -145,11 +145,25 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     ).toHaveTextContent("To Assign -1");
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-20-left"),
-    ).toHaveClass("text-danger", "course-heading-count");
+    ).toHaveClass("text-danger", "course-heading-to-assign");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-20-left-count"),
+    ).toHaveTextContent("-1");
     // Issue #415: the lecture columns are 100px (a class), and Ada's CMPSC 8 cell is outlined.
+    // Issue #476: the headings with a To Assign other than zero (CMPSC 8, 1; CMPSC 16, -1) are
+    // yellow; CMPSC 24's (0) is not.
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-header-course-10"),
+    ).toHaveClass("course-column", "course-needs-assignment");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-20"),
+    ).toHaveClass("course-column", "course-needs-assignment");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-30"),
     ).toHaveClass("course-column");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-30"),
+    ).not.toHaveClass("course-needs-assignment");
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-cell-row-0-course-10"),
     ).toHaveClass("selected-course-assignment-cell");
@@ -172,6 +186,9 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
     ).toHaveTextContent("Assigned 0");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-30"),
+    ).not.toHaveClass("course-needs-assignment");
 
     await userEvent.selectOptions(select, "30");
 
@@ -196,6 +213,14 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-30-left"),
     ).toHaveClass("text-danger");
+    // Issue #476: the yellow follows the counts: CMPSC 24 is now over-assigned, so its heading
+    // turns yellow, and CMPSC 8, with 2 still to assign, stays yellow.
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-30"),
+    ).toHaveClass("course-needs-assignment");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-10"),
+    ).toHaveClass("course-needs-assignment");
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-10-assigned"),
     ).toHaveTextContent("Assigned 0");

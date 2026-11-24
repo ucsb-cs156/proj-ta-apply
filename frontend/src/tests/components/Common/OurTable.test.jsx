@@ -325,6 +325,47 @@ describe("OurTable tests", () => {
     expect(screen.getByTestId("cls-footer-name")).not.toHaveAttribute("class");
   });
 
+  // ---- Issue #476 ----
+
+  test("a column's meta.headerClassName goes on its heading alone, after meta.className", () => {
+    const columns = [
+      { Header: "Name", accessor: "name", footer: "Total" },
+      {
+        Header: "Age",
+        accessor: "age",
+        footer: "99",
+        meta: { className: "age-column", headerClassName: "age-heading" },
+      },
+      {
+        Header: "Town",
+        accessor: "town",
+        footer: "-",
+        meta: { headerClassName: "town-heading" },
+      },
+    ];
+    render(
+      <OurTable
+        data={[{ name: "Ann", age: 1, town: "Goleta" }]}
+        columns={columns}
+        testid="hc"
+      />,
+    );
+    expect(screen.getByTestId("hc-header-age").className).toBe(
+      "age-column age-heading",
+    );
+    expect(screen.getByTestId("hc-cell-row-0-col-age").className).toBe(
+      "age-column",
+    );
+    expect(screen.getByTestId("hc-footer-age").className).toBe("age-column");
+    // Without a className, the heading has just its own class and the cells have none.
+    expect(screen.getByTestId("hc-header-town").className).toBe("town-heading");
+    expect(screen.getByTestId("hc-cell-row-0-col-town")).not.toHaveAttribute(
+      "class",
+    );
+    expect(screen.getByTestId("hc-footer-town")).not.toHaveAttribute("class");
+    expect(screen.getByTestId("hc-header-name")).not.toHaveAttribute("class");
+  });
+
   // ---- Issue #314 ----
 
   test("hideLinks puts a small hide link over each listed column only, and it reports the column", async () => {

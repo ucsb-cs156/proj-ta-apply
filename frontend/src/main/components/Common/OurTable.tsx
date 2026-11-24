@@ -21,14 +21,30 @@ import {
 /**
  * Optional per-column presentation, passed through a column's `meta` key: an inline style, or a
  * class defined in index.css (issue #415). Either goes on the column's heading, cells and footer.
+ * `headerClassName` goes on the heading alone, after `className` (issue #476: the yellow of a
+ * lecture column on the Assignments page that still has places to assign).
  */
-type ColumnStyleMeta = { style?: CSSProperties; className?: string };
+type ColumnStyleMeta = {
+  style?: CSSProperties;
+  className?: string;
+  headerClassName?: string;
+};
 
 const styleOf = (meta: unknown): CSSProperties | undefined =>
   (meta as ColumnStyleMeta | undefined)?.style;
 
 const classOf = (meta: unknown): string | undefined =>
   (meta as ColumnStyleMeta | undefined)?.className;
+
+/** The heading's classes: the column's, then the heading's own; undefined when there is neither. */
+const headerClassOf = (meta: unknown): string | undefined => {
+  const { className, headerClassName } =
+    (meta as ColumnStyleMeta | undefined) ?? {};
+  const classes = [className, headerClassName].filter(
+    (name) => name !== undefined,
+  );
+  return classes.length === 0 ? undefined : classes.join(" ");
+};
 
 /** How far an arrow key moves a column's edge, in pixels. */
 const KEYBOARD_RESIZE_CHANGE: Record<string, number> = {
@@ -166,7 +182,7 @@ export default function OurTable<T extends object>({
                   data-testid={`${testid}-header-${header.column.id}`}
                   key={`${testid}-header-${header.column.id}`}
                   colSpan={header.colSpan}
-                  className={classOf(header.column.columnDef.meta)}
+                  className={headerClassOf(header.column.columnDef.meta)}
                   style={{
                     ...thStyle,
                     ...(isSized(header.column) && sizedStyle(header.column)),
