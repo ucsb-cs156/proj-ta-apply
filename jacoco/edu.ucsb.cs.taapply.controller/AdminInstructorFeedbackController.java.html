@@ -27,17 +27,18 @@ import org.springframework.web.bind.annotation.RestController;
       summary = &quot;Every instructor's allocation feedback in a quarter&quot;,
       description =
           &quot;One entry per feedback row, by course id, section and email: the course, the&quot;
-              + &quot; instructor's email and catalog name, the four checkboxes, the course's current&quot;
-              + &quot; TA and ULA allocations (null when the quarter has no recruitment of that type or&quot;
-              + &quot; the course is not in it), the preferred counts (null unless their box is&quot;
-              + &quot; checked), the comments and when the row was last saved. Empty for a quarter&quot;
-              + &quot; with no feedback.&quot;)
+              + &quot; instructor's email and catalog name, the section's enrollment and maximum&quot;
+              + &quot; enrollment (null when the quarter's budget table has no row for it), the four&quot;
+              + &quot; checkboxes, the course's current TA and ULA allocations (null when the quarter&quot;
+              + &quot; has no recruitment of that type or the course is not in it), the preferred&quot;
+              + &quot; counts (null unless their box is checked), the comments and when the row was&quot;
+              + &quot; last saved. Empty for a quarter with no feedback.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;&quot;)
   public List&lt;InstructorFeedbackReportService.Row&gt; feedback(
       @Parameter(name = &quot;quarter&quot;, description = &quot;YYYYQ, e.g. 20264&quot;) @RequestParam
           String quarter) {
-<span class="fc" id="L40">    return instructorFeedbackReportService.rows(quarter);</span>
+<span class="fc" id="L41">    return instructorFeedbackReportService.rows(quarter);</span>
   }
 
   @Operation(
@@ -52,7 +53,7 @@ import org.springframework.web.bind.annotation.RestController;
   public List&lt;InstructorFeedbackReportService.MissingRow&gt; missing(
       @Parameter(name = &quot;quarter&quot;, description = &quot;YYYYQ, e.g. 20264&quot;) @RequestParam
           String quarter) {
-<span class="fc" id="L55">    return instructorFeedbackReportService.missing(quarter);</span>
+<span class="fc" id="L56">    return instructorFeedbackReportService.missing(quarter);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
