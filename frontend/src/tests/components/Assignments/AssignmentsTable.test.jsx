@@ -99,7 +99,8 @@ describe("AssignmentsTable tests (issue #179)", () => {
     );
     // Issue #415: "To Assign" (it was "Left"); the two count lines a size smaller than `small`
     // (the course-heading-count class in index.css). Issue #476: the To Assign line is the words
-    // over the number, in the classes below, with spaces around the words that keep the text whole.
+    // over the number, in the classes below, with spaces around the words that keep the text whole,
+    // and blank when there is nothing to assign.
     expect(screen.getByTestId("T-course-10-left").textContent).toBe(
       " To Assign 1",
     );
@@ -134,13 +135,16 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "course-heading-to-assign text-danger",
     );
     expect(screen.getByTestId("T-course-20-left-count").textContent).toBe("-1");
-    expect(screen.getByTestId("T-course-30-left")).toHaveTextContent(
-      "To Assign 0",
+    // Nothing to assign: the line is there (so the heading keeps its shape) but blank, with
+    // neither the words nor the number.
+    expect(screen.getByTestId("T-course-30-left")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("T-course-30-left").className).toBe(
+      "course-heading-to-assign",
     );
-    expect(screen.getByTestId("T-course-30-left")).not.toHaveClass(
-      "text-danger",
+    expect(screen.queryByTestId("T-course-30-left-count")).toBeNull();
+    expect(screen.getByTestId("T-header-course-30")).not.toHaveTextContent(
+      "To Assign",
     );
-    expect(screen.getByTestId("T-course-30-left-count").textContent).toBe("0");
     expect(screen.getByTestId("T-header-course-10")).not.toHaveTextContent(
       "Left",
     );

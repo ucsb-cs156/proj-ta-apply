@@ -117,7 +117,8 @@ const NEEDS_ASSIGNMENT_CLASS = "course-needs-assignment";
  * A lecture's column heading: its name, then lines that stay put whatever the sort order: the
  * allocation, how many applicants are pencilled into it, and how many places are still to assign,
  * the last as the words "To Assign" in the headings' font with the number centred under them half
- * again as large (issue #476), in red when more are assigned than allocated. Monospace with the
+ * again as large (issue #476), in red when more are assigned than allocated, and blank (neither
+ * the words nor the number) when there is nothing to assign. Monospace with the
  * spaces kept (issue #355), so the counts line up under the name; the column itself is a fixed
  * 100px (issue #415, `course-column` in index.css), so every lecture column is the same width.
  */
@@ -153,13 +154,19 @@ function CourseHeader({
         className={`course-heading-to-assign${course.left < 0 ? " text-danger" : ""}`}
         data-testid={`${id}-left`}
       >
-        <div className="course-heading-to-assign-label">{TO_ASSIGN_TEXT}</div>
-        <div
-          className="course-heading-to-assign-count"
-          data-testid={`${id}-left-count`}
-        >
-          {course.left}
-        </div>
+        {course.left !== 0 && (
+          <>
+            <div className="course-heading-to-assign-label">
+              {TO_ASSIGN_TEXT}
+            </div>
+            <div
+              className="course-heading-to-assign-count"
+              data-testid={`${id}-left-count`}
+            >
+              {course.left}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

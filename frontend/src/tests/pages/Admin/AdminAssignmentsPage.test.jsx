@@ -211,6 +211,10 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-header-course-30"),
     ).not.toHaveClass("course-needs-assignment");
+    // Issue #476: nothing to assign for CMPSC 24 yet, so its To Assign line is blank.
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-30-left"),
+    ).toBeEmptyDOMElement();
 
     await userEvent.selectOptions(select, "30");
 
@@ -235,6 +239,9 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-30-left"),
     ).toHaveClass("text-danger");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-30-left-count"),
+    ).toHaveTextContent("-1");
     // Issue #476: the yellow follows the counts: CMPSC 24 is now over-assigned, so its heading
     // turns yellow, and CMPSC 8, with 2 still to assign, stays yellow.
     expect(

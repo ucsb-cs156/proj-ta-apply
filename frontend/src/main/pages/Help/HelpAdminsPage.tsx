@@ -110,16 +110,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Allocation</strong>, how many applicants are{" "}
           <strong>Assigned</strong> to it so far, and how many places are still{" "}
           <strong>To Assign</strong>, in red when more have been assigned than
-          allocated; those numbers stay put when you sort. The To Assign number
-          is larger than the other two, and a lecture&apos;s heading is bright
-          yellow whenever that number is not zero, so the columns that still
-          need attention stand out. In each row, the cell of the lecture chosen
-          in the Tentative Assignment dropdown has a thick black outline. A
-          progress thermometer under the page heading shows how many assignments
-          have been made against the recruitment&apos;s hiring target (entered
-          on the Budget page), as a filled bar with the numbers and percentage:
-          green when the target is met, red when more have been assigned than
-          the target, and an empty bar saying so when no target is set yet.
+          allocated; those numbers stay put when you sort. To Assign is shown
+          only when it is not zero: then its number is larger than the other two
+          and the lecture&apos;s heading is bright yellow, so the columns that
+          still need attention stand out, while a lecture with nothing to assign
+          has a blank line there and no yellow. In each row, the cell of the
+          lecture chosen in the Tentative Assignment dropdown has a thick black
+          outline. A progress thermometer under the page heading shows how many
+          assignments have been made against the recruitment&apos;s hiring
+          target (entered on the Budget page), as a filled bar with the numbers
+          and percentage: green when the target is met, red when more have been
+          assigned than the target, and an empty bar saying so when no target is
+          set yet.
         </p>
         <p data-testid="HelpAdminsPage-assignment-columns">
           The <strong>Columns</strong> menu above the table hides and shows
