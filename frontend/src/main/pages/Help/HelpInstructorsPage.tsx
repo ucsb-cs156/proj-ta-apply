@@ -138,6 +138,12 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           make it wider or narrower, drag the right edge of its heading, or
           click that edge and press the left and right arrow keys.
         </p>
+        <p data-testid="HelpInstructorsPage-perm-number-column">
+          The <strong>Perm Number</strong> column, between Email and Major,
+          shows each applicant&apos;s UCSB perm number, for when you need to
+          look a student up. It too is hidden until you tick it in the Columns
+          menu, and it sorts like the other text columns.
+        </p>
         <p>
           Enter any integer from 1 through the number of candidates. Each valid
           edit saves immediately; clear an input to remove its rank. Watch the
