@@ -94,7 +94,7 @@ describe("RecruitmentCoursesPage tests", () => {
       {
         ...recruitmentsFixtures.threeRecruitments[1],
         id: 7,
-        lastPopulatedAt: "2026-02-01T03:00:00",
+        courseDataLastUpdated: "2026-02-01T03:00:00",
       },
     ]);
     // Default view hides removed rows; includeRemoved=true reveals them.
@@ -120,16 +120,18 @@ describe("RecruitmentCoursesPage tests", () => {
       .reply(200, recruitmentCoursesFixtures.rankingSummaries);
   });
 
-  /** Issue #124: how fresh the list is, and that it is refreshed nightly. */
-  test("says when the list was last refreshed", async () => {
+  /** Issues #124 and #465: how fresh the course data is, and that it is refreshed nightly. */
+  test("says when the course data was last updated", async () => {
     renderPage();
 
     // The line is up before the recruitment arrives, so wait for the stamped text.
     await waitFor(() =>
       expect(
-        screen.getByTestId("RecruitmentCoursesPage-last-refreshed"),
+        screen.getByTestId(
+          "RecruitmentCoursesPage-course-data-last-updated-text",
+        ),
       ).toHaveTextContent(
-        `Last refreshed from the UCSB schedule: 2/1/2026, 3:00:00 AM. Open, upcoming and recently closed recruitments are also refreshed automatically every night.`,
+        "Course data last updated from the UCSB API: 2/1/2026, 3:00:00 AM. Updated automatically every night at midnight.",
       ),
     );
   });
@@ -139,12 +141,12 @@ describe("RecruitmentCoursesPage tests", () => {
       {
         ...recruitmentsFixtures.threeRecruitments[0],
         id: 9,
-        lastPopulatedAt: "2026-05-05T03:00:00",
+        courseDataLastUpdated: "2026-05-05T03:00:00",
       },
       {
         ...recruitmentsFixtures.threeRecruitments[1],
         id: 7,
-        lastPopulatedAt: null,
+        courseDataLastUpdated: null,
       },
     ]);
     renderPage();
@@ -157,10 +159,12 @@ describe("RecruitmentCoursesPage tests", () => {
       ).toBe(true),
     );
     const line = await screen.findByTestId(
-      "RecruitmentCoursesPage-last-refreshed",
+      "RecruitmentCoursesPage-course-data-last-updated-text",
     );
-    expect(line).toHaveTextContent("Not yet refreshed from the UCSB schedule.");
-    expect(line).not.toHaveTextContent("Last refreshed");
+    expect(line).toHaveTextContent(
+      "Course data not yet updated from the UCSB API.",
+    );
+    expect(line).not.toHaveTextContent("last updated");
   });
 
   test("says so when the recruitment is unknown", async () => {
@@ -168,8 +172,10 @@ describe("RecruitmentCoursesPage tests", () => {
     renderPage();
 
     expect(
-      await screen.findByTestId("RecruitmentCoursesPage-last-refreshed"),
-    ).toHaveTextContent("Not yet refreshed from the UCSB schedule.");
+      await screen.findByTestId(
+        "RecruitmentCoursesPage-course-data-last-updated-text",
+      ),
+    ).toHaveTextContent("Course data not yet updated from the UCSB API.");
   });
 
   test("lists the recruitment's courses", async () => {
@@ -300,7 +306,9 @@ describe("RecruitmentCoursesPage tests", () => {
     ]);
     renderPage();
 
-    await screen.findByTestId("RecruitmentCoursesPage-last-refreshed");
+    await screen.findByTestId(
+      "RecruitmentCoursesPage-course-data-last-updated-text",
+    );
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-copy-email");
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-header-rankingCount"),
@@ -592,7 +600,7 @@ describe("RecruitmentCoursesPage tests", () => {
     ).not.toBeInTheDocument();
     const panel = screen.getByTestId("RecruitmentCoursesPage-hiring-target");
     const refreshed = screen.getByTestId(
-      "RecruitmentCoursesPage-last-refreshed",
+      "RecruitmentCoursesPage-course-data-last-updated-text",
     );
     expect(
       panel.compareDocumentPosition(refreshed) &
@@ -675,7 +683,7 @@ describe("RecruitmentCoursesPage tests", () => {
 
   test("the edit page has no hiring target, description, pointer or Publish Assignments panel (issue #358)", async () => {
     renderPage();
-    await screen.findByTestId("RecruitmentCoursesPage-populate");
+    await screen.findByTestId("RecruitmentCoursesPage-add-form");
     await screen.findByTestId("RecruitmentCoursesPage-allocation-visibility");
 
     for (const id of [
@@ -910,44 +918,97 @@ describe("RecruitmentCoursesPage tests", () => {
     );
   });
 
-  test("Populate launches the job and points at the Jobs page", async () => {
-    renderPage();
-    await screen.findByTestId("RecruitmentCoursesPage-populate");
-    await afterRefresh();
-    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-ranking-link");
-    const courses = getsOf("/api/recruitmentcourses/all");
-    const recruitments = getsOf("/api/admin/recruitments/all");
-    const summaries = getsOf(
-      "/api/instructor/recruitments/7/admin-course-rankings",
-    );
+  // ---- issue #465: the course-data line and Refresh, at the top of the table ----
 
-    await userEvent.click(
-      screen.getByTestId("RecruitmentCoursesPage-populate"),
-    );
-
-    const populatePosts = () =>
-      axiosMock.history.post.filter(
-        (r) => r.url === "/api/jobs/launch/populateRecruitmentCourses",
+  test.each([true, false])(
+    "Refresh runs this recruitment's update and points at the Jobs page (edit: %s)",
+    async (edit) => {
+      renderPage({ edit });
+      await screen.findByTestId("RecruitmentCoursesPage-refresh");
+      await afterRefresh();
+      await screen.findByTestId(
+        "RecruitmentCoursesPage-cell-row-0-ranking-link",
       );
-    await waitFor(() => expect(populatePosts()).toHaveLength(1));
-    expect(populatePosts()[0].params).toEqual({ recruitmentId: "7" });
-    await waitFor(() => expect(mockToast).toHaveBeenCalled());
-    expect(mockToast.mock.calls[0][0]).toMatch(/Jobs/);
-    // The course list, the recruitment (its last-refreshed stamp) and the ranking summaries are
-    // all read again.
-    await waitFor(() =>
-      expect(getsOf("/api/recruitmentcourses/all")).toBeGreaterThan(courses),
-    );
-    await waitFor(() =>
-      expect(getsOf("/api/admin/recruitments/all")).toBeGreaterThan(
-        recruitments,
-      ),
-    );
-    await waitFor(() =>
+      const courses = getsOf("/api/recruitmentcourses/all");
+      const recruitments = getsOf("/api/admin/recruitments/all");
+      const summaries = getsOf(
+        "/api/instructor/recruitments/7/admin-course-rankings",
+      );
       expect(
-        getsOf("/api/instructor/recruitments/7/admin-course-rankings"),
-      ).toBeGreaterThan(summaries),
-    );
+        screen.getByTestId("RecruitmentCoursesPage-refresh"),
+      ).toHaveTextContent(/^Refresh$/);
+
+      await userEvent.click(
+        screen.getByTestId("RecruitmentCoursesPage-refresh"),
+      );
+
+      const refreshPosts = () =>
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/jobs/launch/populateRecruitmentCourses",
+        );
+      await waitFor(() => expect(refreshPosts()).toHaveLength(1));
+      expect(refreshPosts()[0].params).toEqual({ recruitmentId: "7" });
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Refresh started. Watch its progress on the Developer > Jobs page; the time above the table changes when it finishes.",
+        ),
+      );
+      // The course list, the recruitment (its course-data-last-updated time) and the ranking
+      // summaries are all read again.
+      await waitFor(() =>
+        expect(getsOf("/api/recruitmentcourses/all")).toBeGreaterThan(courses),
+      );
+      await waitFor(() =>
+        expect(getsOf("/api/admin/recruitments/all")).toBeGreaterThan(
+          recruitments,
+        ),
+      );
+      await waitFor(() =>
+        expect(
+          getsOf("/api/instructor/recruitments/7/admin-course-rankings"),
+        ).toBeGreaterThan(summaries),
+      );
+    },
+  );
+
+  test.each([true, false])(
+    "the course-data line is small, between the column choices and the table (edit: %s)",
+    async (edit) => {
+      renderPage({ edit });
+      const firstCell = await screen.findByTestId(
+        "RecruitmentCoursesPage-cell-row-0-col-courseId",
+      );
+      const line = screen.getByTestId(
+        "RecruitmentCoursesPage-course-data-last-updated",
+      );
+      expect(line).toHaveClass("small");
+      expect(line).toHaveClass("text-muted");
+      expect(line).toContainElement(
+        screen.getByTestId(
+          "RecruitmentCoursesPage-course-data-last-updated-text",
+        ),
+      );
+      expect(line).toContainElement(
+        screen.getByTestId("RecruitmentCoursesPage-refresh"),
+      );
+      expect(
+        screen
+          .getByTestId("RecruitmentCoursesPage-columns-toggle")
+          .compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        line.compareDocumentPosition(firstCell) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    },
+  );
+
+  test("the edit page no longer has a Populate button; Refresh does what it did", async () => {
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-refresh");
+
+    expect(screen.queryByTestId("RecruitmentCoursesPage-populate")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Populate" })).toBeNull();
   });
 
   // ---- who may see the allocations (issues #178 and #224) ----
@@ -971,7 +1032,7 @@ describe("RecruitmentCoursesPage tests", () => {
       screen.queryByTestId("RecruitmentCoursesPage-hiring-target"),
     ).toBeNull();
     const refreshed = screen.getByTestId(
-      "RecruitmentCoursesPage-last-refreshed",
+      "RecruitmentCoursesPage-course-data-last-updated-text",
     );
     expect(
       panel.compareDocumentPosition(refreshed) &
@@ -1442,7 +1503,7 @@ describe("RecruitmentCoursesPage tests", () => {
       .reply(200, { available: true, on: false });
     renderPage();
 
-    await screen.findByTestId("RecruitmentCoursesPage-populate");
+    await screen.findByTestId("RecruitmentCoursesPage-add-form");
     await waitFor(() =>
       expect(
         axiosMock.history.get.filter((r) => r.url === "/api/developerMode")

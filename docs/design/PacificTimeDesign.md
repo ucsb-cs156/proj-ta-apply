@@ -43,7 +43,7 @@ Every date/time column, who writes it, and what is done to it.
 | `recruitment_audit_trail.changed_at` | `@PrePersist` (was `@CreationTimestamp`) | Pacific; converted |
 | `notice_versions.created_at` | `NoticesController` | Pacific; converted |
 | `recruitments.created_at` | `RecruitmentsController.create` | Pacific; converted |
-| `recruitments.last_populated_at` | `PopulateRecruitmentCoursesJob`, `RecruitmentCoursesRefreshService` | Pacific; converted |
+| `recruitments.course_data_last_updated` (`last_populated_at` until #465) | `PopulateRecruitmentCoursesJob`, `RecruitmentCoursesRefreshService` | Pacific; converted |
 | `recruitments.allocations_released_at` | `AllocationVisibilityService` | Pacific; converted |
 | `recruitments.faculty_review_closed_at` | `RecruitmentsController` | Pacific; converted |
 | `recruitments.assignments_published_at` | `RecruitmentsController` | Pacific; converted |

@@ -114,7 +114,7 @@ public class RecruitmentCoursesRefreshService {
         cached,
         recruitment.getQuarter());
 
-    recruitment.setLastPopulatedAt(AppTime.now());
+    recruitment.setCourseDataLastUpdated(AppTime.now());
     recruitmentRepository.save(recruitment);
     return refreshed.size();
   }

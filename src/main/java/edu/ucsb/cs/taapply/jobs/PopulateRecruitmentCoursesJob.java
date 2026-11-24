@@ -216,7 +216,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
 
   /** Records that the list is now as fresh as the API, so the admin page can say so (#124). */
   private void stampRefreshed() {
-    recruitment.setLastPopulatedAt(AppTime.now());
+    recruitment.setCourseDataLastUpdated(AppTime.now());
     recruitmentRepository.save(recruitment);
   }
 

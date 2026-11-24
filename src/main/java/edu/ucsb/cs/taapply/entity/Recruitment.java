@@ -67,10 +67,12 @@ public class Recruitment {
   private LocalDate facultyRankingDeadline;
 
   /**
-   * When the course list was last filled from the UCSB API, by hand or by the nightly refresh
-   * (issue #124); null until the first successful Populate.
+   * When the recruitment's course data was last updated from the UCSB Courses API (issues #124 and
+   * #465): stamped by every successful Populate, whether from the nightly refresh or the Refresh
+   * button, and by the refresh on opening the Courses page; a failed run leaves it as it was. Null
+   * until the first successful update. Was {@code lastPopulatedAt} before issue #465.
    */
-  private LocalDateTime lastPopulatedAt;
+  private LocalDateTime courseDataLastUpdated;
 
   /**
    * How many TAs (or ULAs) this recruitment expects to hire in all (issue #174): the number the

@@ -1,0 +1,40 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "072-rename-last-populated-at-to-course-data-last-updated",
+        "author": "pc",
+        "comment": "Renames recruitments.last_populated_at to course_data_last_updated (issue #465): the time the recruitment's course data was last updated from the UCSB Courses API, by the nightly refresh, Refresh or the refresh on opening the Courses page, which the Courses page shows above the table. A rename, so every recruitment keeps its time. Roll back with liquibase rollback-count 1: the column gets its old name back, with its values.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "columnExists": {
+              "tableName": "recruitments",
+              "columnName": "last_populated_at"
+            }
+          }
+        ],
+        "changes": [
+          {
+            "renameColumn": {
+              "tableName": "recruitments",
+              "oldColumnName": "last_populated_at",
+              "newColumnName": "course_data_last_updated",
+              "columnDataType": "TIMESTAMP"
+            }
+          }
+        ],
+        "rollback": [
+          {
+            "renameColumn": {
+              "tableName": "recruitments",
+              "oldColumnName": "course_data_last_updated",
+              "newColumnName": "last_populated_at",
+              "columnDataType": "TIMESTAMP"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
