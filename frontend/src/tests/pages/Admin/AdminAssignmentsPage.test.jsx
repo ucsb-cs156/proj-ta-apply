@@ -172,6 +172,28 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     ).not.toHaveClass("selected-course-assignment-cell");
   });
 
+  test("Download CSV is a link to the backend's CSV of this recruitment's table (issue #475)", async () => {
+    renderPage();
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+
+    const link = screen.getByTestId("AdminAssignmentsPage-csv");
+    expect(link.tagName).toBe("A");
+    expect(link).toHaveTextContent("Download CSV");
+    expect(link).toHaveAttribute(
+      "href",
+      "/api/admin/assignments/csv?recruitmentId=7",
+    );
+    expect(link).toHaveAttribute("download", "assignments-7.csv");
+    expect(link).toHaveClass("btn", "btn-outline-primary", "btn-sm");
+    // Beside the Columns menu, in one row.
+    expect(link.parentElement).toContainElement(
+      screen.getByTestId("AdminAssignmentsPage-columns"),
+    );
+    expect(link.parentElement).toHaveClass("d-flex");
+  });
+
   test("choosing a lecture saves at once and the heading counts follow the response", async () => {
     // The GET keeps answering with the old page: the new counts can only come from the PUT.
     renderPage();

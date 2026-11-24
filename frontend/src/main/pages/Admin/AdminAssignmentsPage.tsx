@@ -293,7 +293,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           {positions} allocated, {assigned} assigned so far.
         </p>
         <InterestLegend testIdPrefix="AdminAssignmentsPage-legend" />
-        <div className="mb-2">
+        <div className="mb-2 d-flex align-items-center gap-2">
           <ColumnVisibilityControl
             choices={columnChoices}
             hidden={hiddenColumns}
@@ -303,6 +303,16 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
             courseColumns={courseColumnStatus(page)}
             testIdPrefix="AdminAssignmentsPage-columns"
           />
+          {/* Issue #475: the table as a file, from the backend like the other CSV downloads; the
+              whole table, whatever columns are hidden here. */}
+          <a
+            className="btn btn-outline-primary btn-sm"
+            href={`/api/admin/assignments/csv?recruitmentId=${recruitmentId}`}
+            download={`assignments-${recruitmentId}.csv`}
+            data-testid="AdminAssignmentsPage-csv"
+          >
+            Download CSV
+          </a>
         </div>
         <AssignmentsTable
           data={page}

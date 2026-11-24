@@ -24,6 +24,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsCsvService;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.AssignmentsService.AssignmentRow;
 import edu.ucsb.cs.taapply.services.AssignmentsService.Assignments;
@@ -58,6 +59,7 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean AssignmentsService assignmentsService;
+  @MockitoBean AssignmentsCsvService assignmentsCsvService;
 
   private static final Recruitment RECRUITMENT =
       Recruitment.builder().id(7L).quarter("20264").type(RecruitmentType.TA).build();
@@ -119,6 +121,9 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
         .perform(get("/api/admin/assignments?recruitmentId=7"))
         .andExpect(status().isForbidden());
     mockMvc
+        .perform(get("/api/admin/assignments/csv?recruitmentId=7"))
+        .andExpect(status().isForbidden());
+    mockMvc
         .perform(
             put("/api/admin/assignments/tentative?applicationId=1&recruitmentCourseId=10&version=3")
                 .with(csrf()))
@@ -131,6 +136,7 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isForbidden());
     verify(recruitmentRepository, never()).findById(any());
     verify(recruitmentRepository, never()).bumpAssignmentsVersionIf(any(), any());
+    verify(assignmentsCsvService, never()).csv(any());
     verify(applicationRepository, never()).findById(any());
     verify(applicationRepository, never()).save(any());
     verify(assignmentsService, never()).assignments(any());
@@ -169,6 +175,46 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
     assertEquals("EntityNotFoundException", json.get("type"));
     assertEquals("Recruitment with id 99 not found", json.get("message"));
     verify(assignmentsService, never()).assignments(any());
+  }
+
+  // ---- GET /csv (issue #475) ----
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void admins_download_the_page_as_a_csv_named_after_the_recruitment() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    String csv = "\"First Name\",\"Tentative Assignment\",\"8\"\n\"Ada\",\"8\",\"1\"\n";
+    when(assignmentsCsvService.csv(RECRUITMENT)).thenReturn(csv);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/assignments/csv?recruitmentId=7"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(csv, response.getResponse().getContentAsString());
+    assertEquals(
+        "attachment; filename=\"assignments-7.csv\"",
+        response.getResponse().getHeader("Content-Disposition"));
+    assertEquals("text/csv;charset=UTF-8", response.getResponse().getContentType());
+    verify(assignmentsCsvService).csv(RECRUITMENT);
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void csv_of_an_unknown_recruitment_is_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/assignments/csv?recruitmentId=99"))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+    assertEquals("Recruitment with id 99 not found", json.get("message"));
+    verify(assignmentsCsvService, never()).csv(any());
   }
 
   // ---- PUT /tentative ----

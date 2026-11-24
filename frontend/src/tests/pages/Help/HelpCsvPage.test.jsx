@@ -102,6 +102,13 @@ describe("HelpCsvPage tests", () => {
       "then one column per lecture, headed by the bare course number (16), or 16 (section 0100) when the recruitment has more than one section of that course, holding that lecture's rank for the applicant.",
     );
 
+    // Issue #475: the Assignments page's own download of its table.
+    expect(
+      screen.getByTestId("assignmentsTableCsvDescription"),
+    ).toHaveTextContent(
+      "Download CSV on the admin Assignments page (beside the Columns menu) saves the table shown there, header row first and every cell quoted: the applicant columns headed as the table heads them (First Name, Last Name, Email, Major and so on for the recruitment's type), then Tentative Assignment (the lecture's column heading, blank if none), then one column per lecture on the page, headed as in the rankings CSV (16, or 16 (section 0100) when the page has more than one section of that course), holding only the rank that lecture's instructor gave the applicant, blank when unranked. There are no Allocation, Assigned or To Assign rows, and no planning rows; applicant rows follow the header directly, in the table's unsorted order.",
+    );
+
     expect(screen.getByTestId("downloadsSummary")).toHaveTextContent(
       "the Recruitments admin page offers a CSV button per recruitment that downloads every application to it",
     );

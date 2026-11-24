@@ -11,15 +11,19 @@ import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsCsvService;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,6 +49,7 @@ public class AdminAssignmentsController extends ApiController {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired ApplicationRepository applicationRepository;
   @Autowired AssignmentsService assignmentsService;
+  @Autowired AssignmentsCsvService assignmentsCsvService;
   @Autowired ClientActivityDetector clientActivityDetector;
 
   @Operation(
@@ -60,6 +65,28 @@ public class AdminAssignmentsController extends ApiController {
   public AssignmentsService.Assignments forRecruitment(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
     return assignmentsService.assignments(recruitmentOf(recruitmentId));
+  }
+
+  @Operation(
+      summary = "The Assignments page's table as CSV",
+      description =
+          "The same applicants and columns as the page (issue #475): the identity columns headed"
+              + " as the page heads them, the Tentative Assignment, then one column per lecture"
+              + " headed by the bare course number (with the section only when the page has more"
+              + " than one section of that course) holding the rank its instructor gave, blank"
+              + " when unranked. No allocation, assigned or To Assign counts. 404 for a"
+              + " recruitment that does not exist.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping(value = "/csv", produces = "text/csv")
+  public ResponseEntity<String> csv(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+    String body = assignmentsCsvService.csv(recruitmentOf(recruitmentId));
+    return ResponseEntity.ok()
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"assignments-%d.csv\"".formatted(recruitmentId))
+        .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+        .body(body);
   }
 
   @Operation(
