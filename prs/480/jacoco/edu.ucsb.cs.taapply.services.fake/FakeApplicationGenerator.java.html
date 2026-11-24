@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FakeApplicationGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services.fake</a> &gt; <span class="el_source">FakeApplicationGenerator.java</span></div><h1>FakeApplicationGenerator.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services.fake;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Course;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.TaMajor;
+import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaInterest;
+import edu.ucsb.cs.taapply.entity.UlaMajor;
+import edu.ucsb.cs.taapply.entity.UlaTopic;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
+import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
+import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.enums.ResidencyStatus;
+import edu.ucsb.cs.taapply.enums.StudentStatus;
+import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
+import edu.ucsb.cs.taapply.repository.TaMajorRepository;
+import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
+import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
+import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import edu.ucsb.cs.taapply.utilities.CourseMatching;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Builds fake applications for Developer Mode (issue #219). Each one satisfies every rule a real
+ * application is held to (the required answers of issues #213 and #214, and enough prior
+ * coursework), so it can travel the whole path from review to hiring decisions. All randomness
+ * comes from the {@link Random} passed in, so a seeded generator gives the same applications every
+ * time.
+ *
+ * &lt;p&gt;Coursework terms run back from the quarter {@code today} falls in, the latest course taking
+ * that quarter. Graduation is counted from the recruitment's own year.
+ */
+@Service
+public class FakeApplicationGenerator {
+
+<span class="fc" id="L54">  static final List&lt;String&gt; TA_RESIDENCY_EXAM_PASS_QUARTERS = List.of(&quot;F23&quot;, &quot;W24&quot;, &quot;S24&quot;, &quot;F24&quot;);</span>
+
+  /**
+   * Issue #448: how often, in percent, a fake ULA applicant has taken at UCSB a course they ask
+   * for. The rest of the time they explain in their comments why they are prepared anyway.
+   */
+  static final int ASKED_FOR_TAKEN_PERCENT = 80;
+
+  private final FakeCoursework coursework;
+  private final CourseRepository courseRepository;
+  private final TaTopicRepository taTopicRepository;
+  private final UlaTopicRepository ulaTopicRepository;
+  private final UlaInterestRepository ulaInterestRepository;
+  private final TaMajorRepository taMajorRepository;
+  private final UlaMajorRepository ulaMajorRepository;
+  private final FakeExplanationService explanations;
+
+  @Autowired
+  public FakeApplicationGenerator(
+      FakeCoursework coursework,
+      CourseRepository courseRepository,
+      TaTopicRepository taTopicRepository,
+      UlaTopicRepository ulaTopicRepository,
+      UlaInterestRepository ulaInterestRepository,
+      TaMajorRepository taMajorRepository,
+      UlaMajorRepository ulaMajorRepository,
+<span class="fc" id="L80">      FakeExplanationService explanations) {</span>
+<span class="fc" id="L81">    this.coursework = coursework;</span>
+<span class="fc" id="L82">    this.courseRepository = courseRepository;</span>
+<span class="fc" id="L83">    this.taTopicRepository = taTopicRepository;</span>
+<span class="fc" id="L84">    this.ulaTopicRepository = ulaTopicRepository;</span>
+<span class="fc" id="L85">    this.ulaInterestRepository = ulaInterestRepository;</span>
+<span class="fc" id="L86">    this.taMajorRepository = taMajorRepository;</span>
+<span class="fc" id="L87">    this.ulaMajorRepository = ulaMajorRepository;</span>
+<span class="fc" id="L88">    this.explanations = explanations;</span>
+<span class="fc" id="L89">  }</span>
+
+  /**
+   * {@code count} fake applications to {@code recruitment}, none sharing an email with {@code
+   * takenEmails}, which gains the new ones.
+   *
+   * @param courseIds the distinct course ids on offer, exactly as an applicant would choose them
+   * @param today the date the applications are made, which fixes the terms of their coursework
+   */
+  public List&lt;Application&gt; generate(
+      Recruitment recruitment,
+      List&lt;String&gt; courseIds,
+      int count,
+      FakeCoverage coverage,
+      Random random,
+      Set&lt;String&gt; takenEmails,
+      LocalDate today) {
+<span class="fc" id="L106">    List&lt;String&gt; topics = topicNames(recruitment.getType());</span>
+<span class="fc" id="L107">    List&lt;String&gt; majors = majorNames(recruitment.getType());</span>
+<span class="fc" id="L108">    List&lt;String&gt; interests = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">    if (recruitment.getType() == RecruitmentType.ULA) {</span>
+<span class="fc" id="L110">      ulaInterestRepository.findAll().forEach((UlaInterest i) -&gt; interests.add(i.getName()));</span>
+<span class="fc" id="L111">      Collections.sort(interests);</span>
+    }
+<span class="fc" id="L113">    int latest = FakeCoursework.latestQuarter(today);</span>
+<span class="fc" id="L114">    Map&lt;String, String&gt; titles = courseTitles();</span>
+
+<span class="fc" id="L116">    List&lt;Application&gt; applications = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">    for (int i = 0; i &lt; count; i++) {</span>
+      Application application =
+<span class="fc bfc" id="L119" title="All 2 branches covered.">          recruitment.getType() == RecruitmentType.ULA</span>
+<span class="fc" id="L120">              ? ula(recruitment, random, topics, majors, interests, latest)</span>
+<span class="fc" id="L121">              : ta(recruitment, random, topics, majors, latest);</span>
+<span class="fc" id="L122">      identity(application, recruitment, random, takenEmails);</span>
+<span class="fc" id="L123">      applications.add(application);</span>
+    }
+<span class="fc" id="L125">    FakeCourseChoices.assign(applications, courseIds, coverage, random);</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">      if (recruitment.getType() == RecruitmentType.ULA) {</span>
+<span class="fc" id="L128">        takeOrExplain(application, random, latest);</span>
+      }
+<span class="fc" id="L130">      addTitles(application, titles);</span>
+<span class="fc" id="L131">    }</span>
+<span class="fc" id="L132">    return applications;</span>
+  }
+
+  /** The title of every course in the course table, by normalized course id (&quot;CMPSC 156&quot;). */
+  private Map&lt;String, String&gt; courseTitles() {
+<span class="fc" id="L137">    Map&lt;String, String&gt; titles = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">    for (Course course : courseRepository.findAll()) {</span>
+<span class="fc bfc" id="L139" title="All 4 branches covered.">      if (course.getTitle() != null &amp;&amp; !course.getTitle().isBlank()) {</span>
+<span class="fc" id="L140">        titles.put(course.getCourseId(), course.getTitle());</span>
+      }
+<span class="fc" id="L142">    }</span>
+<span class="fc" id="L143">    return titles;</span>
+  }
+
+  /**
+   * Fills in the title of each UCSB course on the transcript from the course table, as a real
+   * applicant's bulk-add does (issue #262). A course the table does not have keeps no title.
+   */
+  private static void addTitles(Application application, Map&lt;String, String&gt; titles) {
+<span class="fc bfc" id="L151" title="All 2 branches covered.">    for (PriorCoursework course : application.getPriorCoursework()) {</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">      if (course.isUcsbCourse()) {</span>
+<span class="fc" id="L153">        course.setCourseTitle(titles.get(course.getCourseNumber()));</span>
+      }
+<span class="fc" id="L155">    }</span>
+<span class="fc" id="L156">  }</span>
+
+  private List&lt;String&gt; topicNames(RecruitmentType type) {
+<span class="fc" id="L159">    List&lt;String&gt; names = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
+<span class="fc" id="L161">      ulaTopicRepository.findAll().forEach((UlaTopic t) -&gt; names.add(t.getName()));</span>
+    } else {
+<span class="fc" id="L163">      taTopicRepository.findAll().forEach((TaTopic t) -&gt; names.add(t.getName()));</span>
+    }
+<span class="fc" id="L165">    Collections.sort(names);</span>
+<span class="fc" id="L166">    return names;</span>
+  }
+
+  private List&lt;String&gt; majorNames(RecruitmentType type) {
+<span class="fc" id="L170">    List&lt;String&gt; names = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
+<span class="fc" id="L172">      ulaMajorRepository.findAll().forEach((UlaMajor m) -&gt; names.add(m.getName()));</span>
+    } else {
+<span class="fc" id="L174">      taMajorRepository.findAll().forEach((TaMajor m) -&gt; names.add(m.getName()));</span>
+    }
+<span class="fc" id="L176">    Collections.sort(names);</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">    return names.isEmpty() ? List.of(&quot;Computer Science&quot;) : names;</span>
+  }
+
+  // ---- identity ----
+
+  private static void identity(
+      Application application, Recruitment recruitment, Random random, Set&lt;String&gt; takenEmails) {
+<span class="fc" id="L184">    String first = FakeNames.pick(FakeNames.FIRST, random);</span>
+<span class="fc" id="L185">    String last = FakeNames.pick(FakeNames.LAST, random);</span>
+<span class="fc" id="L186">    String base = (first + &quot;.&quot; + last).toLowerCase();</span>
+<span class="fc" id="L187">    String email = base + &quot;@&quot; + FakeNames.EMAIL_DOMAIN;</span>
+<span class="fc bfc" id="L188" title="All 2 branches covered.">    for (int suffix = 2; takenEmails.contains(email); suffix++) {</span>
+<span class="fc" id="L189">      email = base + suffix + &quot;@&quot; + FakeNames.EMAIL_DOMAIN;</span>
+    }
+<span class="fc" id="L191">    takenEmails.add(email);</span>
+<span class="fc" id="L192">    application.setRecruitmentId(recruitment.getId());</span>
+<span class="fc" id="L193">    application.setOrigin(ApplicationOrigin.DEVELOPER_MODE);</span>
+<span class="fc" id="L194">    application.setEmail(email);</span>
+<span class="fc" id="L195">    application.setFirstName(first);</span>
+<span class="fc" id="L196">    application.setMiddleName(FakeNames.MIDDLE);</span>
+<span class="fc" id="L197">    application.setLastName(last);</span>
+<span class="fc" id="L198">  }</span>
+
+  // ---- shared pieces ----
+
+  private static double gpa(Random random, double low) {
+<span class="fc" id="L203">    return Math.round((low + random.nextDouble() * (4.0 - low)) * 100) / 100.0;</span>
+  }
+
+  private static String ordinal(int n) {
+<span class="fc bfc" id="L207" title="All 4 branches covered.">    return switch (n) {</span>
+<span class="fc" id="L208">      case 1 -&gt; &quot;1st&quot;;</span>
+<span class="fc" id="L209">      case 2 -&gt; &quot;2nd&quot;;</span>
+<span class="fc" id="L210">      case 3 -&gt; &quot;3rd&quot;;</span>
+<span class="fc" id="L211">      default -&gt; n + &quot;th&quot;;</span>
+    };
+  }
+
+  private static String graduation(int year) {
+<span class="fc" id="L216">    return &quot;S&quot; + String.format(&quot;%02d&quot;, year % 100);</span>
+  }
+
+  private static int recruitmentYear(Recruitment recruitment) {
+<span class="fc" id="L220">    return Integer.parseInt(recruitment.getQuarter()) / 10;</span>
+  }
+
+  private static Map&lt;String, Integer&gt; ratings(
+      List&lt;String&gt; names, int maxRating, Random random, int percent) {
+<span class="fc" id="L225">    Map&lt;String, Integer&gt; ratings = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L226" title="All 2 branches covered.">    for (String name : names) {</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">      if (random.nextInt(100) &lt; percent) {</span>
+<span class="fc" id="L228">        ratings.put(name, random.nextInt(1, maxRating + 1));</span>
+      }
+<span class="fc" id="L230">    }</span>
+<span class="fc" id="L231">    return ratings;</span>
+  }
+
+  // ---- TA ----
+
+  private Application ta(
+      Recruitment recruitment,
+      Random random,
+      List&lt;String&gt; topics,
+      List&lt;String&gt; majors,
+      int latest) {
+<span class="fc bfc" id="L242" title="All 2 branches covered.">    ClassLevel level = random.nextBoolean() ? ClassLevel.PHD : ClassLevel.MS;</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">    int year = random.nextInt(1, level == ClassLevel.PHD ? 6 : 3);</span>
+<span class="fc" id="L244">    ResidencyStatus residency =</span>
+<span class="fc" id="L245">        List.of(</span>
+                ResidencyStatus.US_CITIZEN,
+                ResidencyStatus.US_RESIDENT,
+                ResidencyStatus.F1_STUDENT_VISA,
+                ResidencyStatus.J1_STUDENT_VISA)
+<span class="fc" id="L250">            .get(random.nextInt(4));</span>
+<span class="fc bfc" id="L251" title="All 4 branches covered.">    boolean international =</span>
+        residency == ResidencyStatus.F1_STUDENT_VISA
+            || residency == ResidencyStatus.J1_STUDENT_VISA;
+<span class="fc" id="L254">    LanguageExamStatus exam =</span>
+<span class="fc bfc" id="L255" title="All 3 branches covered.">        switch (residency) {</span>
+<span class="fc" id="L256">          case US_CITIZEN -&gt; LanguageExamStatus.EXEMPT_US_CITIZEN;</span>
+<span class="fc" id="L257">          case US_RESIDENT -&gt; LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT;</span>
+<span class="fc" id="L258">          default -&gt; LanguageExamStatus.PASSED_F1_OR_J1_VISA;</span>
+        };
+
+    // Undergraduate preparation. A US citizen or resident flips a coin between UCSB, where the
+    // courses are those of a fourth-year ULA, and one other school; a visa holder always comes from
+    // one international school. Then five graduate courses at UCSB.
+<span class="fc" id="L264">    List&lt;PriorCoursework&gt; prior = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L265" title="All 4 branches covered.">    if (!international &amp;&amp; random.nextBoolean()) {</span>
+<span class="fc" id="L266">      prior.addAll(coursework.ucsb(random, 6 * 3 + random.nextInt(1, 7), latest));</span>
+    } else {
+<span class="fc" id="L268">      prior.addAll(coursework.other(random, 10, international, latest));</span>
+    }
+<span class="fc" id="L270">    prior.addAll(coursework.ucsbGraduate(random, 5, latest));</span>
+
+<span class="fc" id="L272">    Application application = Application.builder().build();</span>
+<span class="fc" id="L273">    application.setClassLevel(level);</span>
+<span class="fc" id="L274">    application.setYearInProgram(ordinal(year));</span>
+<span class="fc" id="L275">    application.setGraduationDate(</span>
+<span class="fc" id="L276">        graduation(</span>
+<span class="fc" id="L277">            Math.max(</span>
+<span class="fc" id="L278">                recruitmentYear(recruitment),</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">                recruitmentYear(recruitment) + (level == ClassLevel.PHD ? 5 : 2) - year)));</span>
+<span class="fc" id="L280">    application.setResidencyStatus(residency);</span>
+<span class="fc" id="L281">    application.setLanguageExam(exam);</span>
+<span class="fc bfc" id="L282" title="All 2 branches covered.">    if (exam != LanguageExamStatus.EXEMPT_US_CITIZEN) {</span>
+<span class="fc" id="L283">      application.setLanguageExamDatePassed(</span>
+<span class="fc" id="L284">          FakeNames.pick(TA_RESIDENCY_EXAM_PASS_QUARTERS, random));</span>
+    }
+<span class="fc" id="L286">    application.setMajor(FakeNames.pick(majors, random));</span>
+<span class="fc" id="L287">    application.setGpaMajor(gpa(random, 3.0));</span>
+<span class="fc" id="L288">    application.setGpaOverall(gpa(random, 3.0));</span>
+    // Issue #292: now and then a first-year grad student is in their first quarter, with no GPAs.
+<span class="fc bfc" id="L290" title="All 4 branches covered.">    if (year == 1 &amp;&amp; random.nextInt(4) == 0) {</span>
+<span class="fc" id="L291">      application.setFirstQuarter(true);</span>
+<span class="fc" id="L292">      application.setGpaMajor(null);</span>
+<span class="fc" id="L293">      application.setGpaOverall(null);</span>
+    }
+<span class="fc" id="L295">    application.setPriorCoursework(prior);</span>
+<span class="fc" id="L296">    application.setTopicProficiencies(ratings(topics, 5, random, 50));</span>
+<span class="fc" id="L297">    application.setPrevExperience(FakeNames.pick(FakeNames.EXPERIENCE, random));</span>
+<span class="fc" id="L298">    application.setComments(FakeNames.pick(FakeNames.COMMENTS, random));</span>
+<span class="fc" id="L299">    return application;</span>
+  }
+
+  // ---- ULA ----
+
+  private Application ula(
+      Recruitment recruitment,
+      Random random,
+      List&lt;String&gt; topics,
+      List&lt;String&gt; majors,
+      List&lt;String&gt; interests,
+      int latest) {
+<span class="fc" id="L311">    int year = random.nextInt(1, 5);</span>
+    // Six courses a year, so a later-year student has a longer path behind them.
+<span class="fc" id="L313">    int wanted = 6 * (year - 1) + random.nextInt(1, 7);</span>
+<span class="fc" id="L314">    List&lt;PriorCoursework&gt; prior = coursework.ucsb(random, wanted, latest);</span>
+
+<span class="fc bfc" id="L316" title="All 2 branches covered.">    int previousService = year == 1 ? 0 : random.nextInt(0, Math.min(6, 3 * (year - 1)) + 1);</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">    boolean employed = random.nextInt(4) == 0;</span>
+<span class="fc bfc" id="L318" title="All 2 branches covered.">    boolean bsMs = random.nextInt(7) == 0;</span>
+
+<span class="fc" id="L320">    Application application = Application.builder().build();</span>
+<span class="fc" id="L321">    application.setYearInProgram(ordinal(year));</span>
+<span class="fc" id="L322">    application.setGraduationDate(graduation(recruitmentYear(recruitment) + 4 - year));</span>
+<span class="fc" id="L323">    application.setMajor(FakeNames.pick(majors, random));</span>
+<span class="fc" id="L324">    application.setGpaMajor(gpa(random, 2.7));</span>
+<span class="fc" id="L325">    application.setGpaOverall(gpa(random, 2.7));</span>
+    // Issue #292: now and then a first-year student is in their first quarter, with no GPAs.
+<span class="fc bfc" id="L327" title="All 4 branches covered.">    if (year == 1 &amp;&amp; random.nextInt(4) == 0) {</span>
+<span class="fc" id="L328">      application.setFirstQuarter(true);</span>
+<span class="fc" id="L329">      application.setGpaMajor(null);</span>
+<span class="fc" id="L330">      application.setGpaOverall(null);</span>
+    }
+<span class="fc" id="L332">    application.setPriorCoursework(prior);</span>
+<span class="fc" id="L333">    application.setTopicProficiencies(ratings(topics, 3, random, 50));</span>
+<span class="fc" id="L334">    application.setInterests(ratings(interests, 5, random, 60));</span>
+<span class="fc" id="L335">    application.setPrevExperience(FakeNames.pick(FakeNames.EXPERIENCE, random));</span>
+<span class="fc" id="L336">    application.setComments(FakeNames.pick(FakeNames.COMMENTS, random));</span>
+<span class="fc" id="L337">    application.setAvailableForLecturesFirstChoice(random.nextBoolean());</span>
+<span class="fc" id="L338">    application.setAvailableForLecturesSecondChoice(random.nextBoolean());</span>
+<span class="fc" id="L339">    application.setAvailableForDiscussionFirstChoice(random.nextBoolean());</span>
+<span class="fc" id="L340">    application.setAvailableForDiscussionSecondChoice(random.nextBoolean());</span>
+<span class="fc" id="L341">    application.setAvailabilityCommentsFirstChoice(FakeNames.pick(FakeNames.AVAILABILITY, random));</span>
+<span class="fc" id="L342">    application.setPermNumber(permNumber(random));</span>
+<span class="fc" id="L343">    application.setBsMsStudent(bsMs);</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">    if (bsMs) {</span>
+<span class="fc" id="L345">      application.setStudentStatusNextQuarter(</span>
+<span class="fc bfc" id="L346" title="All 2 branches covered.">          random.nextBoolean() ? StudentStatus.UNDERGRADUATE : StudentStatus.GRADUATE);</span>
+<span class="fc" id="L347">      application.setWantsTaEligibility(random.nextBoolean());</span>
+    }
+<span class="fc" id="L349">    application.setOtherCampusJob(</span>
+<span class="fc" id="L350">        List.of(OtherCampusJob.YES, OtherCampusJob.NO, OtherCampusJob.NOT_SURE)</span>
+<span class="fc" id="L351">            .get(random.nextInt(3)));</span>
+<span class="fc" id="L352">    application.setPriorUcsbEmployment(employed);</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">    if (employed) {</span>
+<span class="fc" id="L354">      application.setEmployeeId(String.format(&quot;%08d&quot;, random.nextInt(100_000_000)));</span>
+    }
+<span class="fc" id="L356">    application.setI9Appointment(true);</span>
+<span class="fc" id="L357">    application.setPreviousServiceAsUla(previousService);</span>
+<span class="fc bfc" id="L358" title="All 2 branches covered.">    if (previousService == 0) {</span>
+<span class="fc bfc" id="L359" title="All 2 branches covered.">      boolean agrees = random.nextInt(5) != 0;</span>
+<span class="fc" id="L360">      application.setTrainingCommitment(</span>
+<span class="fc bfc" id="L361" title="All 2 branches covered.">          agrees</span>
+<span class="fc" id="L362">              ? TrainingCommitment.AGREE</span>
+<span class="fc bfc" id="L363" title="All 2 branches covered.">              : random.nextBoolean() ? TrainingCommitment.UNSURE : TrainingCommitment.CANNOT);</span>
+<span class="fc bfc" id="L364" title="All 2 branches covered.">      if (!agrees) {</span>
+<span class="fc" id="L365">        application.setTrainingCommitmentExplanation(</span>
+<span class="fc" id="L366">            FakeNames.pick(FakeNames.EXPLANATIONS, random));</span>
+      }
+<span class="fc" id="L368">      application.setVideoLink(&quot;https://example.com/fake-video/&quot; + random.nextInt(100_000));</span>
+    }
+<span class="fc bfc" id="L370" title="All 2 branches covered.">    application.setChangingMajor(random.nextInt(6) == 0);</span>
+<span class="fc" id="L371">    return application;</span>
+  }
+
+  /**
+   * The courses a ULA applicant asks for, in a fixed order: first choice, second choice, then the
+   * courses they are Enthusiastic about or Would Consider, by course id.
+   */
+  static List&lt;String&gt; askedFor(Application application) {
+<span class="fc" id="L379">    Set&lt;String&gt; asked = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L380" title="All 2 branches covered.">    if (application.getFirstChoiceCourse() != null) {</span>
+<span class="fc" id="L381">      asked.add(application.getFirstChoiceCourse());</span>
+    }
+<span class="fc bfc" id="L383" title="All 2 branches covered.">    if (application.getSecondChoiceCourse() != null) {</span>
+<span class="fc" id="L384">      asked.add(application.getSecondChoiceCourse());</span>
+    }
+<span class="fc" id="L386">    new TreeMap&lt;&gt;(application.getCourseInterests())</span>
+<span class="fc" id="L387">        .forEach(</span>
+            (courseId, interest) -&gt; {
+<span class="fc bfc" id="L389" title="All 4 branches covered.">              if (interest == CourseInterest.ENTHUSIASTIC</span>
+                  || interest == CourseInterest.WOULD_CONSIDER) {
+<span class="fc" id="L391">                asked.add(courseId);</span>
+              }
+<span class="fc" id="L393">            });</span>
+<span class="fc" id="L394">    return new ArrayList&lt;&gt;(asked);</span>
+  }
+
+  /**
+   * Issue #448: for each course a ULA applicant asks for, a biased coin. Most of the time ({@link
+   * #ASKED_FOR_TAKEN_PERCENT}) they have taken it at UCSB, and it is added to their transcript, in
+   * term order, if the prerequisite walk did not already put it there. Otherwise it is taken off
+   * their UCSB transcript, and their comments gain a sentence from {@link FakeExplanationService}
+   * on why they are prepared anyway, one line per such course. A transcript left empty gains one
+   * course from another school, since a ULA application needs at least one.
+   */
+  void takeOrExplain(Application application, Random random, int latest) {
+<span class="fc" id="L406">    List&lt;PriorCoursework&gt; prior = new ArrayList&lt;&gt;(application.getPriorCoursework());</span>
+<span class="fc" id="L407">    List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L408" title="All 2 branches covered.">    for (String courseId : askedFor(application)) {</span>
+<span class="fc bfc" id="L409" title="All 2 branches covered.">      if (random.nextInt(100) &lt; ASKED_FOR_TAKEN_PERCENT) {</span>
+<span class="fc bfc" id="L410" title="All 2 branches covered.">        if (CourseMatching.firstUcsbCourse(prior, courseId) == null) {</span>
+<span class="fc" id="L411">          FakeCoursework.insertInTermOrder(prior, coursework.ucsbCourse(random, courseId, latest));</span>
+        }
+      } else {
+<span class="fc" id="L414">        prior.removeIf(row -&gt; CourseMatching.isUcsbCourse(row, courseId));</span>
+<span class="fc" id="L415">        lines.add(explanations.explanation(courseId, random));</span>
+      }
+<span class="fc" id="L417">    }</span>
+<span class="fc bfc" id="L418" title="All 2 branches covered.">    if (prior.isEmpty()) {</span>
+<span class="fc" id="L419">      prior.addAll(coursework.other(random, 1, false, latest));</span>
+    }
+<span class="fc" id="L421">    application.setPriorCoursework(prior);</span>
+<span class="fc bfc" id="L422" title="All 2 branches covered.">    if (!lines.isEmpty()) {</span>
+<span class="fc" id="L423">      lines.add(0, application.getComments());</span>
+<span class="fc" id="L424">      application.setComments(String.join(&quot;\n&quot;, lines));</span>
+    }
+<span class="fc" id="L426">  }</span>
+
+  private static String permNumber(Random random) {
+<span class="fc" id="L429">    String alphabet = &quot;ABCDEFGHJKLMNPQRSTUVWXYZ0123456789&quot;;</span>
+<span class="fc" id="L430">    StringBuilder perm = new StringBuilder();</span>
+<span class="fc bfc" id="L431" title="All 2 branches covered.">    for (int i = 0; i &lt; 7; i++) {</span>
+<span class="fc" id="L432">      perm.append(alphabet.charAt(random.nextInt(alphabet.length())));</span>
+    }
+<span class="fc" id="L434">    return perm.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
