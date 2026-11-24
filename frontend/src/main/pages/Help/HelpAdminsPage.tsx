@@ -726,26 +726,29 @@ export default function HelpAdminsPage(): React.JSX.Element {
           allocations. A preferred number shows only when its &ldquo;different
           number&rdquo; box is checked. Every column sorts, every column but
           Course Name can be hidden (this browser remembers which), and the
-          Comments column can be dragged wider or narrower, down to 200px. A{" "}
-          <strong>Totals/Counts</strong> row under a thick black line gives the
-          number of courses, how many of them checked each box (as k/n), the sum
-          of each allocation column, and the sum of each preferred count, where
-          a blank preferred count stands for the current allocation. Below it,{" "}
-          <em>No Feedback Yet From These Instructors</em> lists each course
-          whose instructor has not checked any box, including instructors who
-          never opened the form, with a button that copies their emails.
-          Clicking anywhere else on that row closes or opens the quarter&apos;s
-          card (the caret at its left shows which it is); clicking a button on
-          the row goes to its page and leaves the card as it was. The newest
-          quarter starts open and the older quarters closed, and this browser
-          remembers each card as you left it. The <strong>Quarters</strong>{" "}
-          control above the cards puts the newest or the oldest quarter first.
-          Inside a quarter&apos;s card is a nested card for each of its
-          recruitments, headed <strong>TA</strong> or <strong>ULA</strong> with
-          its status badges and how many applications it has; clicking that row
-          closes or opens just that card, and the trash icon at its right
-          deletes the recruitment. Open, the card shows the recruitment&apos;s
-          dates, and under the dates the live{" "}
+          Comments column can be dragged wider or narrower, down to 200px.{" "}
+          <strong>Enrolled</strong> and <strong>Max Enroll</strong>, the
+          section&apos;s enrollment figures from the Budget page, start hidden;
+          tick them in the Columns menu to show them between Instructor and
+          Alloc Reasonable. A <strong>Totals/Counts</strong> row under a thick
+          black line gives the number of courses, how many of them checked each
+          box (as k/n), the sum of each allocation column, and the sum of each
+          preferred count, where a blank preferred count stands for the current
+          allocation. Below it, <em>No Feedback Yet From These Instructors</em>{" "}
+          lists each course whose instructor has not checked any box, including
+          instructors who never opened the form, with a button that copies their
+          emails. Clicking anywhere else on that row closes or opens the
+          quarter&apos;s card (the caret at its left shows which it is);
+          clicking a button on the row goes to its page and leaves the card as
+          it was. The newest quarter starts open and the older quarters closed,
+          and this browser remembers each card as you left it. The{" "}
+          <strong>Quarters</strong> control above the cards puts the newest or
+          the oldest quarter first. Inside a quarter&apos;s card is a nested
+          card for each of its recruitments, headed <strong>TA</strong> or{" "}
+          <strong>ULA</strong> with its status badges and how many applications
+          it has; clicking that row closes or opens just that card, and the
+          trash icon at its right deletes the recruitment. Open, the card shows
+          the recruitment&apos;s dates, and under the dates the live{" "}
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
           (collapsed to a one-line summary on older recruitments, expanded on
           the latest TA and ULA recruitments). Its boxes carry the lifecycle

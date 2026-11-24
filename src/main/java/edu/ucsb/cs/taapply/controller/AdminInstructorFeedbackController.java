@@ -27,11 +27,12 @@ public class AdminInstructorFeedbackController extends ApiController {
       summary = "Every instructor's allocation feedback in a quarter",
       description =
           "One entry per feedback row, by course id, section and email: the course, the"
-              + " instructor's email and catalog name, the four checkboxes, the course's current"
-              + " TA and ULA allocations (null when the quarter has no recruitment of that type or"
-              + " the course is not in it), the preferred counts (null unless their box is"
-              + " checked), the comments and when the row was last saved. Empty for a quarter"
-              + " with no feedback.")
+              + " instructor's email and catalog name, the section's enrollment and maximum"
+              + " enrollment (null when the quarter's budget table has no row for it), the four"
+              + " checkboxes, the course's current TA and ULA allocations (null when the quarter"
+              + " has no recruitment of that type or the course is not in it), the preferred"
+              + " counts (null unless their box is checked), the comments and when the row was"
+              + " last saved. Empty for a quarter with no feedback.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("")
   public List<InstructorFeedbackReportService.Row> feedback(

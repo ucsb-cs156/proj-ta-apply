@@ -1,6 +1,7 @@
 /**
  * What /api/admin/instructorFeedback returns (issue #427): a quarter's instructor feedback with
- * each course's current TA and ULA allocations joined in, by course id, section and email.
+ * each course's current TA and ULA allocations and its enrollment figures (issue #477) joined in,
+ * by course id, section and email.
  */
 const LONG_COMMENT =
   "We have four lab sections this quarter and the labs fill up within the first week. " +
@@ -21,6 +22,8 @@ const adminInstructorFeedbackFixtures = {
       title: "ADV APP PROGRAM",
       email: "pconrad@ucsb.edu",
       instructorName: "CONRAD P",
+      enrollment: 180,
+      maxEnroll: 200,
       allocReasonable: false,
       differentTACount: true,
       differentULACount: true,
@@ -42,6 +45,8 @@ const adminInstructorFeedbackFixtures = {
       title: "INTRO TO COMP SCI",
       email: "mirza@ucsb.edu",
       instructorName: "MIRZA D",
+      enrollment: 410,
+      maxEnroll: 400,
       allocReasonable: true,
       differentTACount: false,
       differentULACount: false,
@@ -62,6 +67,9 @@ const adminInstructorFeedbackFixtures = {
       title: "PROBLEM SOLVING I",
       email: "newprof@ucsb.edu",
       instructorName: null,
+      // No budget course row yet: both figures blank.
+      enrollment: null,
+      maxEnroll: null,
       allocReasonable: false,
       differentTACount: false,
       differentULACount: true,
@@ -82,6 +90,8 @@ const adminInstructorFeedbackFixtures = {
       title: "DATA STRUCT ALGOR",
       email: "suri@ucsb.edu",
       instructorName: "SURI S",
+      enrollment: 95,
+      maxEnroll: 120,
       allocReasonable: false,
       differentTACount: true,
       differentULACount: false,

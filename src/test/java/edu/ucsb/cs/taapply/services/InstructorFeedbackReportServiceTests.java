@@ -4,9 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import edu.ucsb.cs.taapply.entity.BudgetCourse;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.InstructorFeedback;
 import edu.ucsb.cs.taapply.entity.Recruitment;
@@ -20,6 +24,7 @@ import edu.ucsb.cs.taapply.services.InstructorFeedbackReportService.MissingRow;
 import edu.ucsb.cs.taapply.services.InstructorFeedbackReportService.Row;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +45,7 @@ public class InstructorFeedbackReportServiceTests {
   @MockitoBean InstructorRepository instructorRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
+  @MockitoBean BudgetCourseService budgetCourseService;
 
   private static final String Q = "20261";
   private static final LocalDateTime SAVED = LocalDateTime.of(2026, 1, 15, 9, 30, 5);
@@ -120,6 +126,18 @@ public class InstructorFeedbackReportServiceTests {
         .thenReturn(
             List.of(
                 Instructor.builder().email("pconrad@ucsb.edu").catalogName("CONRAD P").build()));
+    // Issue #477: the section's figures come from the quarter's budget table, through the service
+    // that fills them in on each row.
+    doAnswer(
+            invocation -> {
+              for (RecruitmentCourse row :
+                  invocation.<Collection<RecruitmentCourse>>getArgument(1)) {
+                row.attachFigures(BudgetCourse.builder().enrollment(180).maxEnroll(200).build());
+              }
+              return null;
+            })
+        .when(budgetCourseService)
+        .attach(eq(Q), anyCollection());
 
     assertEquals(
         List.of(
@@ -131,6 +149,8 @@ public class InstructorFeedbackReportServiceTests {
                 "TITLE 2",
                 "pconrad@ucsb.edu",
                 "CONRAD P",
+                180,
+                200,
                 true,
                 true,
                 true,
@@ -142,6 +162,26 @@ public class InstructorFeedbackReportServiceTests {
                 "More please",
                 SAVED)),
         service.rows(Q));
+    // The figures were attached to the courses read for the feedback, from the quarter's table.
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<Collection<RecruitmentCourse>> attached =
+        ArgumentCaptor.forClass(Collection.class);
+    verify(budgetCourseService).attach(eq(Q), attached.capture());
+    assertEquals(List.of(taRow), List.copyOf(attached.getValue()));
+  }
+
+  @Test
+  public void a_course_with_no_budget_row_has_blank_enrollment_figures() {
+    RecruitmentCourse taRow = course(2, 10, "CMPSC   156", "0100", 3);
+    taRows.add(taRow);
+    onFile(List.of(feedback(7, "pconrad@ucsb.edu", 2).build()), taRow);
+    // The mocked BudgetCourseService attaches nothing, as the real one does for a section with no
+    // budget course row: the figures stay null.
+
+    Row row = service.rows(Q).get(0);
+
+    assertNull(row.enrollment());
+    assertNull(row.maxEnroll());
   }
 
   @Test

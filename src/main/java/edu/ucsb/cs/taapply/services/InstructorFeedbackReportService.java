@@ -26,8 +26,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * The admin's table of instructors' allocation feedback (issue #427): every {@link
- * InstructorFeedback} row of a quarter, with the course, the instructor's catalog name and the
- * course's current TA and ULA allocations joined in.
+ * InstructorFeedback} row of a quarter, with the course, the instructor's catalog name, the
+ * course's current TA and ULA allocations and its enrollment figures (issue #477) joined in.
  */
 @Service
 public class InstructorFeedbackReportService {
@@ -36,12 +36,14 @@ public class InstructorFeedbackReportService {
   @Autowired InstructorRepository instructorRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired BudgetCourseService budgetCourseService;
 
   /**
    * One feedback row as the admin's table shows it. The preferred counts are null unless their
    * "different number" box is checked: an unchecked box keeps its number on file (issue #425), and
    * that number is not meant. The allocations are null when the quarter has no recruitment of that
-   * type, or the course is not in it.
+   * type, or the course is not in it. The enrollment and maximum enrollment (issue #477) are the
+   * section's figures from the quarter's budget table, null when it has no row there yet.
    */
   public static record Row(
       Long id,
@@ -51,6 +53,8 @@ public class InstructorFeedbackReportService {
       String title,
       String email,
       String instructorName,
+      Integer enrollment,
+      Integer maxEnroll,
       boolean allocReasonable,
       boolean differentTACount,
       boolean differentULACount,
@@ -96,6 +100,8 @@ public class InstructorFeedbackReportService {
                     .distinct()
                     .toList()),
             RecruitmentCourse::getId);
+    // The figures live in the quarter's budget table (issue #363), read once for every course.
+    budgetCourseService.attach(quarter, courses.values());
     Map<String, Instructor> instructors =
         byId(
             instructorRepository.findAllById(
@@ -119,6 +125,8 @@ public class InstructorFeedbackReportService {
                   Optional.ofNullable(instructors.get(row.getEmail()))
                       .map(Instructor::getCatalogName)
                       .orElse(null),
+                  course.getEnrollment(),
+                  course.getMaxEnroll(),
                   row.isAllocReasonable(),
                   row.isDifferentTACount(),
                   row.isDifferentULACount(),
