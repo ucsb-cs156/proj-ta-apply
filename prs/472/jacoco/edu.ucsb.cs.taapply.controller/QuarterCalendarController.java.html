@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuarterCalendarController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">QuarterCalendarController.java</span></div><h1>QuarterCalendarController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.UCSBAPIQuarter;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.UCSBAPIQuarterRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * One quarter of the UCSB quarter calendar on file, for any signed-in user (issue #153): the
+ * application form fills the notices text's quarter fields ({@code ${firstDayOfClasses}} and the
+ * like) from it. The admin's Quarters page keeps the file current.
+ */
+@Tag(name = &quot;QuarterCalendar&quot;)
+@RequestMapping(&quot;/api/quarters&quot;)
+@RestController
+<span class="fc" id="L25">@Slf4j</span>
+<span class="fc" id="L26">public class QuarterCalendarController extends ApiController {</span>
+
+  @Autowired UCSBAPIQuarterRepository ucsbApiQuarterRepository;
+
+  @Operation(
+      summary = &quot;The quarter calendar's row for one quarter&quot;,
+      description =
+          &quot;404 when that quarter is not on file; the admin's Quarters page fills the file.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/one&quot;)
+  public UCSBAPIQuarter one(
+      @Parameter(name = &quot;yyyyq&quot;, description = &quot;YYYYQ, e.g. 20261&quot;) @RequestParam String yyyyq) {
+<span class="fc" id="L38">    return ucsbApiQuarterRepository</span>
+<span class="fc" id="L39">        .findById(yyyyq)</span>
+<span class="fc" id="L40">        .orElseThrow(() -&gt; new EntityNotFoundException(UCSBAPIQuarter.class, yyyyq));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
