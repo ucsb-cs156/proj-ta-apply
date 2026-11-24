@@ -9,6 +9,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.fake.FakeApplicationGenerator;
 import edu.ucsb.cs.taapply.services.fake.FakeCoverage;
+import edu.ucsb.cs.taapply.time.AppTime;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,9 @@ public class CreateFakeApplicationsJobFactoryTests {
     CreateFakeApplicationsJob job = factory.create(7L, 30, FakeCoverage.ALL);
 
     assertNotNull(job.getRandom());
-    assertEquals(java.time.LocalDate.now(), job.getToday());
+    // The job's day is the Pacific date, like the app's; LocalDate.now() would be the runner's
+    // zone.
+    assertEquals(AppTime.today(), job.getToday());
     assertEquals(FakeCoverage.ALL, job.getCoverage());
   }
 }

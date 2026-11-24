@@ -773,7 +773,8 @@ public class RecruitmentsWebIT extends WebTestCase {
     org.junit.jupiter.api.Assertions.assertTrue(
         page.url().endsWith("/admin/recruitments/" + id + "/assignments"), page.url());
 
-    // View Assignments lands on the read-only page, which says they are not published yet.
+    // View Assignments lands on the read-only page. The admin sees the (empty) table of
+    // assignments so far under the note that they are not published yet (issue #471).
     goToRecruitments();
     waitFor(page.getByTestId(card + "view-assignments-button"));
     page.getByTestId(card + "view-assignments-button").click();
@@ -781,12 +782,14 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("PublishedAssignmentsPage")).isVisible();
     org.junit.jupiter.api.Assertions.assertTrue(
         page.url().endsWith("/recruitments/" + id + "/assignments"), page.url());
-    // The page's query retries the 400 a few times before it shows the error, so allow for that.
-    assertThat(page.getByTestId("PublishedAssignmentsPage-error"))
-        .containsText(
-            "have not been published",
-            new com.microsoft.playwright.assertions.LocatorAssertions.ContainsTextOptions()
-                .setTimeout(30000));
+    waitFor(page.getByTestId("PublishedAssignmentsPage-unpublished"));
+    assertThat(page.getByTestId("PublishedAssignmentsPage-unpublished"))
+        .containsText("Not published yet: only admins can see this table");
+    assertThat(page.getByTestId("PublishedAssignmentsPage-type"))
+        .containsText("TA recruitment: who has been assigned to each course.");
+    assertThat(page.getByTestId("PublishedAssignmentsPage-table")).isVisible();
+    org.junit.jupiter.api.Assertions.assertEquals(
+        0, page.getByTestId("PublishedAssignmentsPage-error").count());
   }
 
   /** Issue #141: the recruitments live on the admin's home page, and the old page is gone. */

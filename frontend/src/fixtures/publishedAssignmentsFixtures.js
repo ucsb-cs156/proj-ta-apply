@@ -1,10 +1,14 @@
-/** What GET /api/assignments returns once a recruitment's assignments are published (issue #180). */
+/**
+ * What GET /api/assignments returns once a recruitment's assignments are published (issue #180),
+ * or to an admin before then, with published false (issue #471).
+ */
 const publishedAssignmentsFixtures = {
   /** TA recruitment 1, one row per course: two TAs at most in a course. */
   taByCourse: {
     recruitmentId: 1,
     type: "TA",
     layout: "course",
+    published: true,
     headers: ["Course", "Instructor", "Instructor email", "TA", "TA"],
     rows: [
       [
@@ -24,11 +28,17 @@ const publishedAssignmentsFixtures = {
     return { ...this.taByCourse, tentative: true };
   },
 
+  /** The same table as an admin sees it before publishing (issue #471). */
+  get taByCourseUnpublished() {
+    return { ...this.taByCourse, published: false };
+  },
+
   /** TA recruitment 1, one row per TA. */
   taByStudent: {
     recruitmentId: 1,
     type: "TA",
     layout: "student",
+    published: true,
     headers: [
       "First name",
       "Last name",
@@ -63,6 +73,7 @@ const publishedAssignmentsFixtures = {
     recruitmentId: 2,
     type: "ULA",
     layout: "student",
+    published: true,
     headers: [
       "First name",
       "Last name",
@@ -99,6 +110,7 @@ const publishedAssignmentsFixtures = {
     recruitmentId: 2,
     type: "ULA",
     layout: "course",
+    published: true,
     headers: ["Course", "Instructor", "Instructor email"],
     rows: [["CMPSC 1A", "CONRAD P", "pconrad@ucsb.edu"]],
   },

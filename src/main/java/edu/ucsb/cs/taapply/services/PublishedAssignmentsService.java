@@ -23,7 +23,8 @@ import org.springframework.stereotype.Service;
  * The published assignments of a recruitment (issue #180), as the read-only page and its CSV
  * downloads show them: one row per course with the people assigned to it, or one row per TA or ULA
  * with their course. Both come as a header row and text rows, so the page and the CSV are the same
- * table. Only real, uncancelled applications with a tentative assignment take part.
+ * table. Only real, uncancelled applications with a tentative assignment take part. Until the admin
+ * publishes, only admins get the table (issue #471); everyone else is told it is not published yet.
  */
 @Service
 public class PublishedAssignmentsService {
@@ -37,14 +38,21 @@ public class PublishedAssignmentsService {
   /** What an instructor's email reads when the catalog name maps to no, or several, instructors. */
   public static final String NOT_MAPPED = "Not mapped";
 
-  /** A table: the headers, then one list of cells per row, every cell text. */
+  /** What everyone but an admin is told while the assignments are not published (issue #471). */
+  public static final String NOT_PUBLISHED = "Assignments not published yet";
+
+  /**
+   * A table: the headers, then one list of cells per row, every cell text. {@code published} is
+   * false only on the table an admin sees before publishing (issue #471).
+   */
   public record Table(
       Long recruitmentId,
       RecruitmentType type,
       String layout,
       List<String> headers,
       List<List<String>> rows,
-      boolean tentative) {}
+      boolean tentative,
+      boolean published) {}
 
   /** Last name, then first name, case-insensitively, a null reading as "". */
   static final Comparator<Application> BY_NAME =
@@ -57,16 +65,18 @@ public class PublishedAssignmentsService {
   /**
    * The table for one layout.
    *
+   * @param admin whether the caller is an admin, who sees the assignments so far even before they
+   *     are published (issue #471)
    * @throws IllegalArgumentException for a layout other than "course" or "student", or when the
-   *     recruitment's assignments are not published
+   *     recruitment's assignments are not published and the caller is not an admin
    */
-  public Table table(Recruitment recruitment, String layout) {
+  public Table table(Recruitment recruitment, String layout, boolean admin) {
     if (!LAYOUT_COURSE.equals(layout) && !LAYOUT_STUDENT.equals(layout)) {
       throw new IllegalArgumentException("layout must be course or student");
     }
-    if (!Boolean.TRUE.equals(recruitment.getAssignmentsPublished())) {
-      throw new IllegalArgumentException(
-          "Assignments for recruitment %d have not been published".formatted(recruitment.getId()));
+    boolean published = Boolean.TRUE.equals(recruitment.getAssignmentsPublished());
+    if (!published && !admin) {
+      throw new IllegalArgumentException(NOT_PUBLISHED);
     }
     List<RecruitmentCourse> courses =
         new ArrayList<>(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));
@@ -153,12 +163,13 @@ public class PublishedAssignmentsService {
         layout,
         headers,
         rows,
-        HiringDecisions.isTentative(recruitment));
+        HiringDecisions.isTentative(recruitment),
+        published);
   }
 
-  /** The table as CSV: the header row, then the rows, every cell quoted. */
-  public String csv(Recruitment recruitment, String layout) {
-    Table table = table(recruitment, layout);
+  /** The table as CSV: the header row, then the rows, every cell quoted; see {@link #table}. */
+  public String csv(Recruitment recruitment, String layout, boolean admin) {
+    Table table = table(recruitment, layout, admin);
     StringWriter out = new StringWriter();
     CSVWriter writer = new CSVWriter(out);
     writer.writeNext(table.headers().toArray(String[]::new));

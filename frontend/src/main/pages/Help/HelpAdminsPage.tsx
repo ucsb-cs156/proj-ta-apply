@@ -749,10 +749,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Make Assignments and View Assignments buttons:{" "}
           <strong>Make Assignments</strong> opens the page where candidates are
           assigned to slots, and <strong>View Assignments</strong> the read-only
-          assignments page that admins and faculty share (it says the
-          assignments are not published yet until they are). Apart from them, at
-          the right end of the same row, <strong>Change History</strong> opens
-          the list of every change made to the recruitment itself (see{" "}
+          assignments page that admins and faculty share (until they are
+          published, admins see the assignments so far under a red note, and
+          faculty are told they are not published yet). Apart from them, at the
+          right end of the same row, <strong>Change History</strong> opens the
+          list of every change made to the recruitment itself (see{" "}
           <a href="#audit-trail">Audit Trail</a> below). In the diagram, step
           3&apos;s <em>Allocations</em> and step 5&apos;s{" "}
           <em>(see allocations)</em> links open the quarter&apos;s{" "}
@@ -905,9 +906,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
             that admins and faculty share, with its two CSV downloads (see{" "}
             <a href="#publish-assignments">publishing</a> above). The
             card&apos;s <strong>View Assignments</strong> button and step 9 of
-            the diagram open it; until <em>Publish Assignments</em> has been
-            clicked at the top of the Assignments page it says the assignments
-            are not published yet.
+            the diagram open it. Until <em>Publish Assignments</em> has been
+            clicked at the top of the Assignments page, admins see the
+            assignments so far under a red <em>Not published yet</em> note, and
+            faculty are told only that the assignments are not published yet.
           </li>
           <li id="change-history" data-testid="HelpAdminsPage-change-history">
             <strong>Change History.</strong> Every change to the recruitment

@@ -8,6 +8,7 @@ import { useBackend } from "main/utils/useBackend";
 import { apiErrorMessage } from "main/utils/apiError";
 import {
   LAYOUT_LABELS,
+  UNPUBLISHED_NOTE,
   assignmentsCsvFileName,
   assignmentsCsvUrl,
   type AssignmentsLayout,
@@ -20,13 +21,16 @@ const LAYOUTS: AssignmentsLayout[] = ["course", "student"];
 /**
  * The published assignments of a recruitment, read-only, for admins and instructors (issue
  * #180): /recruitments/:recruitmentId/assignments. One row per course or one row per TA/ULA, as
- * the radio buttons say, and the same table as a CSV download in either layout.
+ * the radio buttons say, and the same table as a CSV download in either layout. Before publishing,
+ * the backend serves the table only to admins, with published false, and the page says so (issue
+ * #471); everyone else sees the backend's "not published yet" message.
  */
 export default function PublishedAssignmentsPage(): React.JSX.Element {
   const { recruitmentId } = useParams();
   const [layout, setLayout] = useState<AssignmentsLayout>("course");
 
-  // Errors are shown on the page rather than toasted: the usual one is "not published yet".
+  // Errors are shown on the page rather than toasted: the usual one is "not published yet", which
+  // instructors get while admins already see the table.
   const { data, isError, error } = useBackend<PublishedAssignmentsTable | null>(
     // Stryker disable next-line all : the key is only a cache name, read here alone
     ["/api/assignments", recruitmentId, layout],
@@ -50,6 +54,14 @@ export default function PublishedAssignmentsPage(): React.JSX.Element {
     <BasicLayout>
       <div className="pt-2" data-testid="PublishedAssignmentsPage">
         <h1>Assignments</h1>
+        {data?.published === false && (
+          <p
+            className="fw-bold text-danger"
+            data-testid="PublishedAssignmentsPage-unpublished"
+          >
+            {UNPUBLISHED_NOTE}
+          </p>
+        )}
         {data?.tentative === true && (
           <p
             className="fw-bold text-warning-emphasis"

@@ -13,7 +13,13 @@ export type PublishedAssignmentsTable = {
   rows: string[][];
   /** Released, but applications or faculty ranking have been reopened since (issue #237). */
   tentative?: boolean;
+  /** False only on the table an admin sees before publishing (issue #471). */
+  published?: boolean;
 };
+
+/** What the page says above an admin's table while the assignments are not published. */
+export const UNPUBLISHED_NOTE =
+  "Not published yet: only admins can see this table. Instructors will see it once the assignments are published.";
 
 /** The radio button labels, as the design words them. */
 export const LAYOUT_LABELS: Record<AssignmentsLayout, string> = {

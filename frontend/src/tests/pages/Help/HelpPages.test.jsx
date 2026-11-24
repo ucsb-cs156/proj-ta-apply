@@ -590,7 +590,7 @@ describe("Help pages (issue #140)", () => {
       li.textContent.startsWith("View Assignments."),
     );
     expect(published).toHaveTextContent(
-      "until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet",
+      "Until Publish Assignments has been clicked at the top of the Assignments page, admins see the assignments so far under a red Not published yet note, and faculty are told only that the assignments are not published yet.",
     );
     expect(
       within(published).getByRole("link", { name: "publishing" }),
@@ -2071,7 +2071,7 @@ describe("Help pages (issue #140)", () => {
       /The card's Make Assignments button opens it, as does step 8 of the diagram\.$/,
     );
     expect(buttons[8]).toMatch(
-      /^View Assignments\. The read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\. The card's View Assignments button and step 9 of the diagram open it; until Publish Assignments has been clicked at the top of the Assignments page it says the assignments are not published yet\.$/,
+      /^View Assignments\. The read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\. The card's View Assignments button and step 9 of the diagram open it\. Until Publish Assignments has been clicked at the top of the Assignments page, admins see the assignments so far under a red Not published yet note, and faculty are told only that the assignments are not published yet\.$/,
     );
     // Issue #390: the card's Change History button and page.
     expect(buttons[9]).toBe(
@@ -2451,7 +2451,7 @@ describe("admin Help: the home page's quarter cards (issues #357, #379)", () => 
     );
     // Issue #317: the card's two assignment buttons, told apart.
     expect(card).toHaveTextContent(
-      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (it says the assignments are not published yet until they are). Apart from them, at the right end of the same row, Change History opens the list of every change made to the recruitment itself (see Audit Trail below).",
+      "the card has Courses, Draft Applications, Applications, Make Assignments and View Assignments buttons: Make Assignments opens the page where candidates are assigned to slots, and View Assignments the read-only assignments page that admins and faculty share (until they are published, admins see the assignments so far under a red note, and faculty are told they are not published yet). Apart from them, at the right end of the same row, Change History opens the list of every change made to the recruitment itself (see Audit Trail below).",
     );
     expect(
       within(card).getByRole("link", { name: "Audit Trail" }),
