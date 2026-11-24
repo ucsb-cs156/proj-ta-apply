@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +50,19 @@ public class AssignmentsControllerTests extends ControllerTestCase {
           List.of("Course", "Instructor", "Instructor email", "TA"),
           List.of(
               List.of("CMPSC 8", "CONRAD P", "pconrad@ucsb.edu", "Ada Lovelace (ada@ucsb.edu)")),
+          false,
+          true);
+
+  /** Issue #471: what an admin sees before publishing. */
+  private static final Table UNPUBLISHED_TABLE =
+      new Table(
+          7L,
+          RecruitmentType.TA,
+          "course",
+          List.of("Course", "Instructor", "Instructor email", "TA"),
+          List.of(
+              List.of("CMPSC 8", "CONRAD P", "pconrad@ucsb.edu", "Ada Lovelace (ada@ucsb.edu)")),
+          false,
           false);
 
   private static final String CSV =
@@ -62,7 +76,7 @@ public class AssignmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(get("/api/assignments?recruitmentId=7&layout=course"))
         .andExpect(status().is(403));
-    verify(publishedAssignmentsService, never()).table(any(), any());
+    verify(publishedAssignmentsService, never()).table(any(), any(), anyBoolean());
   }
 
   @WithMockUser(roles = {"USER"})
@@ -71,14 +85,14 @@ public class AssignmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(get("/api/assignments?recruitmentId=7&layout=course"))
         .andExpect(status().is(403));
-    verify(publishedAssignmentsService, never()).table(any(), any());
+    verify(publishedAssignmentsService, never()).table(any(), any(), anyBoolean());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
   @Test
   public void instructors_get_the_table() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(PUBLISHED));
-    when(publishedAssignmentsService.table(PUBLISHED, "course")).thenReturn(TABLE);
+    when(publishedAssignmentsService.table(PUBLISHED, "course", false)).thenReturn(TABLE);
 
     MvcResult response =
         mockMvc
@@ -87,13 +101,14 @@ public class AssignmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals(mapper.writeValueAsString(TABLE), response.getResponse().getContentAsString());
+    verify(publishedAssignmentsService).table(PUBLISHED, "course", false);
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void admins_get_the_table_in_the_layout_they_ask_for() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(PUBLISHED));
-    when(publishedAssignmentsService.table(PUBLISHED, "student")).thenReturn(TABLE);
+    when(publishedAssignmentsService.table(PUBLISHED, "student", true)).thenReturn(TABLE);
 
     MvcResult response =
         mockMvc
@@ -102,6 +117,31 @@ public class AssignmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals(mapper.writeValueAsString(TABLE), response.getResponse().getContentAsString());
+    verify(publishedAssignmentsService).table(PUBLISHED, "student", true);
+  }
+
+  /**
+   * Issue #471: the admin is told they are an admin, so the service serves an unpublished table.
+   */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void admins_get_an_unpublished_table_with_published_false() throws Exception {
+    Recruitment unpublished =
+        Recruitment.builder().id(7L).quarter("20264").type(RecruitmentType.TA).build();
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(unpublished));
+    when(publishedAssignmentsService.table(unpublished, "course", true))
+        .thenReturn(UNPUBLISHED_TABLE);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/assignments?recruitmentId=7&layout=course"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals(false, json.get("published"));
+    assertEquals(
+        mapper.writeValueAsString(UNPUBLISHED_TABLE), response.getResponse().getContentAsString());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
@@ -118,16 +158,15 @@ public class AssignmentsControllerTests extends ControllerTestCase {
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
     assertEquals("Recruitment with id 99 not found", json.get("message"));
-    verify(publishedAssignmentsService, never()).table(any(), any());
+    verify(publishedAssignmentsService, never()).table(any(), any(), anyBoolean());
   }
 
-  @WithMockUser(roles = {"INSTRUCTOR"})
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
   @Test
   public void unpublished_assignments_are_a_400_with_the_service_message() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(PUBLISHED));
-    when(publishedAssignmentsService.table(PUBLISHED, "course"))
-        .thenThrow(
-            new IllegalArgumentException("Assignments for recruitment 7 have not been published"));
+    when(publishedAssignmentsService.table(PUBLISHED, "course", false))
+        .thenThrow(new IllegalArgumentException("Assignments not published yet"));
 
     MvcResult response =
         mockMvc
@@ -137,7 +176,8 @@ public class AssignmentsControllerTests extends ControllerTestCase {
 
     Map<String, Object> json = responseToJson(response);
     assertEquals("IllegalArgumentException", json.get("type"));
-    assertEquals("Assignments for recruitment 7 have not been published", json.get("message"));
+    assertEquals("Assignments not published yet", json.get("message"));
+    verify(publishedAssignmentsService).table(PUBLISHED, "course", false);
   }
 
   // ---- GET /api/assignments/csv ----
@@ -147,7 +187,7 @@ public class AssignmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(get("/api/assignments/csv?recruitmentId=7&layout=course"))
         .andExpect(status().is(403));
-    verify(publishedAssignmentsService, never()).csv(any(), any());
+    verify(publishedAssignmentsService, never()).csv(any(), any(), anyBoolean());
   }
 
   @WithMockUser(roles = {"USER"})
@@ -156,14 +196,14 @@ public class AssignmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(get("/api/assignments/csv?recruitmentId=7&layout=student"))
         .andExpect(status().is(403));
-    verify(publishedAssignmentsService, never()).csv(any(), any());
+    verify(publishedAssignmentsService, never()).csv(any(), any(), anyBoolean());
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void admins_download_the_csv_named_after_the_recruitment_and_layout() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(PUBLISHED));
-    when(publishedAssignmentsService.csv(PUBLISHED, "course")).thenReturn(CSV);
+    when(publishedAssignmentsService.csv(PUBLISHED, "course", true)).thenReturn(CSV);
 
     MvcResult response =
         mockMvc
@@ -176,13 +216,14 @@ public class AssignmentsControllerTests extends ControllerTestCase {
         "attachment; filename=\"assignments-7-course.csv\"",
         response.getResponse().getHeader("Content-Disposition"));
     assertEquals("text/csv;charset=UTF-8", response.getResponse().getContentType());
+    verify(publishedAssignmentsService).csv(PUBLISHED, "course", true);
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
   @Test
   public void instructors_download_the_csv_in_either_layout() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(PUBLISHED));
-    when(publishedAssignmentsService.csv(PUBLISHED, "student")).thenReturn(CSV);
+    when(publishedAssignmentsService.csv(PUBLISHED, "student", false)).thenReturn(CSV);
 
     MvcResult response =
         mockMvc
@@ -204,14 +245,14 @@ public class AssignmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(get("/api/assignments/csv?recruitmentId=99&layout=course"))
         .andExpect(status().isNotFound());
-    verify(publishedAssignmentsService, never()).csv(any(), any());
+    verify(publishedAssignmentsService, never()).csv(any(), any(), anyBoolean());
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void the_csv_of_unpublished_assignments_is_a_400() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(PUBLISHED));
-    when(publishedAssignmentsService.csv(PUBLISHED, "course"))
+    when(publishedAssignmentsService.csv(PUBLISHED, "course", true))
         .thenThrow(new IllegalArgumentException("layout must be course or student"));
 
     MvcResult response =

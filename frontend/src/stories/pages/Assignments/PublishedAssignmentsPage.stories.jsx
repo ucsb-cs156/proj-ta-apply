@@ -75,11 +75,26 @@ NotPublishedYet.parameters = {
         HttpResponse.json(
           {
             type: "IllegalArgumentException",
-            message: "Assignments for recruitment 3 have not been published",
+            message: "Assignments not published yet",
           },
           { status: 400 },
         ),
       ),
+    ],
+  },
+};
+
+/** Issue #471: an admin sees the assignments so far before publishing, with the red note. */
+export const AdminBeforePublishing = Template.bind({});
+AdminBeforePublishing.parameters = {
+  reactRouter: { initialEntries: ["/recruitments/1/assignments"] },
+  msw: {
+    handlers: [
+      ...common(apiCurrentUserFixtures.adminUser),
+      byLayout(publishedAssignmentsFixtures.taByCourseUnpublished, {
+        ...publishedAssignmentsFixtures.taByStudent,
+        published: false,
+      }),
     ],
   },
 };

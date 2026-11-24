@@ -113,29 +113,55 @@ public class PublishedAssignmentsServiceTests {
     IllegalArgumentException e =
         assertThrows(
             IllegalArgumentException.class,
-            () -> service.table(recruitment(RecruitmentType.TA, true), "Course"));
+            () -> service.table(recruitment(RecruitmentType.TA, true), "Course", false));
     assertEquals("layout must be course or student", e.getMessage());
     verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
   }
 
   @Test
-  public void unpublished_assignments_are_refused() {
+  public void unpublished_assignments_are_refused_to_non_admins() {
     IllegalArgumentException e =
         assertThrows(
             IllegalArgumentException.class,
-            () -> service.table(recruitment(RecruitmentType.TA, false), "course"));
-    assertEquals("Assignments for recruitment 7 have not been published", e.getMessage());
+            () -> service.table(recruitment(RecruitmentType.TA, false), "course", false));
+    assertEquals("Assignments not published yet", e.getMessage());
+    assertEquals(PublishedAssignmentsService.NOT_PUBLISHED, e.getMessage());
     assertThrows(
         IllegalArgumentException.class,
-        () -> service.table(recruitment(RecruitmentType.TA, null), "student"));
+        () -> service.table(recruitment(RecruitmentType.TA, null), "student", false));
     verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+  }
+
+  /** Issue #471: an admin sees the assignments so far, and the table says they are unpublished. */
+  @Test
+  public void admins_get_unpublished_assignments_marked_as_such() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(course(1L, "CMPSC 8", "0100", "CONRAD P", false)));
+    when(assignmentsService.realApplications(7L))
+        .thenReturn(List.of(person(10L, "Ada", "Lovelace", "ada@ucsb.edu", 1L, null)));
+    when(instructorRepository.findAll()).thenReturn(List.of());
+
+    Table table = service.table(recruitment(RecruitmentType.TA, false), "course", true);
+    assertFalse(table.published());
+    assertEquals(List.of("Course", "Instructor", "Instructor email", "TA"), table.headers());
+    assertEquals(
+        List.of(List.of("CMPSC 8", "CONRAD P", "Not mapped", "Ada Lovelace (ada@ucsb.edu)")),
+        table.rows());
+
+    Table student = service.table(recruitment(RecruitmentType.TA, null), "student", true);
+    assertFalse(student.published());
+    assertEquals(1, student.rows().size());
+
+    // The admin flag changes nothing once published, except that published reads true.
+    assertTrue(service.table(recruitment(RecruitmentType.TA, true), "course", true).published());
+    assertTrue(service.table(recruitment(RecruitmentType.TA, true), "course", false).published());
   }
 
   // ---- one row per course ----
 
   @Test
   public void course_layout_lists_every_live_section_in_order_with_its_people() {
-    Table table = service.table(recruitment(RecruitmentType.TA, true), "course");
+    Table table = service.table(recruitment(RecruitmentType.TA, true), "course", false);
 
     assertEquals(7L, table.recruitmentId());
     assertEquals(RecruitmentType.TA, table.type());
@@ -165,7 +191,7 @@ public class PublishedAssignmentsServiceTests {
     when(assignmentsService.realApplications(7L))
         .thenReturn(List.of(person(3L, "Alan", "Turing", "alan@ucsb.edu", null, null)));
 
-    Table table = service.table(recruitment(RecruitmentType.ULA, true), "course");
+    Table table = service.table(recruitment(RecruitmentType.ULA, true), "course", false);
 
     assertEquals(List.of("Course", "Instructor", "Instructor email"), table.headers());
     assertEquals(
@@ -181,7 +207,7 @@ public class PublishedAssignmentsServiceTests {
     when(assignmentsService.realApplications(7L))
         .thenReturn(List.of(person(1L, "Zed", "Brown", "zed@ucsb.edu", 30L, 0)));
 
-    Table table = service.table(recruitment(RecruitmentType.ULA, true), "course");
+    Table table = service.table(recruitment(RecruitmentType.ULA, true), "course", false);
 
     assertEquals(List.of("Course", "Instructor", "Instructor email", "ULA"), table.headers());
     assertEquals(
@@ -192,7 +218,7 @@ public class PublishedAssignmentsServiceTests {
 
   @Test
   public void student_layout_for_a_ULA_recruitment_says_who_is_a_first_time_ULA() {
-    Table table = service.table(recruitment(RecruitmentType.ULA, true), "student");
+    Table table = service.table(recruitment(RecruitmentType.ULA, true), "student", false);
 
     assertEquals("student", table.layout());
     assertEquals(
@@ -225,7 +251,7 @@ public class PublishedAssignmentsServiceTests {
 
   @Test
   public void student_layout_for_a_TA_recruitment_has_no_first_time_column() {
-    Table table = service.table(recruitment(RecruitmentType.TA, true), "student");
+    Table table = service.table(recruitment(RecruitmentType.TA, true), "student", false);
 
     assertEquals(
         List.of(
@@ -249,7 +275,7 @@ public class PublishedAssignmentsServiceTests {
     when(assignmentsService.realApplications(7L))
         .thenReturn(List.of(person(1L, "Zed", "Brown", "zed@ucsb.edu", 10L, 0)));
 
-    String csv = service.csv(recruitment(RecruitmentType.TA, true), "student");
+    String csv = service.csv(recruitment(RecruitmentType.TA, true), "student", false);
 
     assertEquals(
         "\"First name\",\"Last name\",\"Email\",\"Course assignment\",\"Course instructor\","
@@ -257,7 +283,7 @@ public class PublishedAssignmentsServiceTests {
             + "\"Zed\",\"Brown\",\"zed@ucsb.edu\",\"CMPSC 8\",\"CONRAD P\",\"pconrad@ucsb.edu\"\n",
         csv);
 
-    String byCourse = service.csv(recruitment(RecruitmentType.TA, true), "course");
+    String byCourse = service.csv(recruitment(RecruitmentType.TA, true), "course", false);
     assertEquals(
         "\"Course\",\"Instructor\",\"Instructor email\",\"TA\"\n"
             + "\"CMPSC 8\",\"CONRAD P\",\"pconrad@ucsb.edu\",\"Zed Brown (zed@ucsb.edu)\"\n"
@@ -267,10 +293,19 @@ public class PublishedAssignmentsServiceTests {
   }
 
   @Test
-  public void csv_of_unpublished_assignments_is_refused() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> service.csv(recruitment(RecruitmentType.TA, false), "course"));
+  public void csv_of_unpublished_assignments_is_refused_to_non_admins_but_not_admins() {
+    IllegalArgumentException e =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.csv(recruitment(RecruitmentType.TA, false), "course", false));
+    assertEquals("Assignments not published yet", e.getMessage());
+
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of());
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of());
+    when(instructorRepository.findAll()).thenReturn(List.of());
+    assertEquals(
+        "\"Course\",\"Instructor\",\"Instructor email\"\n",
+        service.csv(recruitment(RecruitmentType.TA, false), "course", true));
   }
 
   // ---- helpers ----
@@ -317,13 +352,13 @@ public class PublishedAssignmentsServiceTests {
     Recruitment r = recruitment(RecruitmentType.TA, true);
     r.setApplicationStatus(ApplicationStatus.CLOSED);
     r.setReviewStatus("Closed");
-    assertFalse(service.table(r, "course").tentative());
+    assertFalse(service.table(r, "course", false).tentative());
 
     r.setApplicationStatus(ApplicationStatus.OPEN);
-    assertTrue(service.table(r, "student").tentative());
+    assertTrue(service.table(r, "student", false).tentative());
 
     r.setApplicationStatus(ApplicationStatus.CLOSED);
     r.setReviewStatus("Open");
-    assertTrue(service.table(r, "course").tentative());
+    assertTrue(service.table(r, "course", false).tentative());
   }
 }

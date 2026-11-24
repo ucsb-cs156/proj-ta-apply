@@ -258,14 +258,15 @@ describe("PublishedAssignmentsPage tests", () => {
       })
       .reply(400, {
         type: "IllegalArgumentException",
-        message: "Assignments for recruitment 3 have not been published",
+        message: "Assignments not published yet",
       });
     renderPage(3);
 
     const alert = await screen.findByTestId("PublishedAssignmentsPage-error");
-    expect(alert).toHaveTextContent(
-      "Assignments for recruitment 3 have not been published",
-    );
+    expect(alert).toHaveTextContent("Assignments not published yet");
+    expect(
+      screen.queryByTestId("PublishedAssignmentsPage-unpublished"),
+    ).not.toBeInTheDocument();
     expect(alert).toHaveAttribute("role", "alert");
     expect(
       screen.queryByTestId("PublishedAssignmentsPage-table"),
@@ -278,6 +279,63 @@ describe("PublishedAssignmentsPage tests", () => {
       "href",
       "/api/assignments/csv?recruitmentId=3&layout=course",
     );
+  });
+
+  // Issue #471: the backend serves an admin the table before publishing, with published false.
+  test("an unpublished table (as an admin sees it) carries a red note above the table", async () => {
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.adminUser);
+    axiosMock
+      .onGet("/api/assignments", {
+        params: { recruitmentId: "1", layout: "course" },
+      })
+      .reply(200, publishedAssignmentsFixtures.taByCourseUnpublished);
+    renderPage();
+
+    const note = await screen.findByTestId(
+      "PublishedAssignmentsPage-unpublished",
+    );
+    expect(note).toHaveTextContent(
+      "Not published yet: only admins can see this table. Instructors will see it once the assignments are published.",
+    );
+    expect(note).toHaveClass("fw-bold", "text-danger");
+    expect(
+      note.compareDocumentPosition(
+        screen.getByTestId("PublishedAssignmentsPage-type"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // The table itself is there, as are the downloads, and nothing is said about an error.
+    await waitFor(() => expect(cellText(0, 0)).toBe("CMPSC 8"));
+    expect(
+      screen.queryByTestId("PublishedAssignmentsPage-error"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("PublishedAssignmentsPage-tentative"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("PublishedAssignmentsPage-csv-course"),
+    ).toHaveAttribute(
+      "href",
+      "/api/assignments/csv?recruitmentId=1&layout=course",
+    );
+  });
+
+  test("a published table has no unpublished note, even without the published field", async () => {
+    axiosMock
+      .onGet("/api/assignments", {
+        params: { recruitmentId: "1", layout: "course" },
+      })
+      .reply(200, {
+        ...publishedAssignmentsFixtures.taByCourse,
+        published: undefined,
+      });
+    renderPage();
+    await screen.findByTestId("PublishedAssignmentsPage-type");
+
+    expect(
+      screen.queryByTestId("PublishedAssignmentsPage-unpublished"),
+    ).not.toBeInTheDocument();
   });
 
   test("a tentative table carries the note above the type line", async () => {
@@ -308,6 +366,9 @@ describe("PublishedAssignmentsPage tests", () => {
 
     expect(
       screen.queryByTestId("PublishedAssignmentsPage-tentative"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("PublishedAssignmentsPage-unpublished"),
     ).not.toBeInTheDocument();
     expect(
       screen.getByTestId("PublishedAssignmentsPage").textContent,
