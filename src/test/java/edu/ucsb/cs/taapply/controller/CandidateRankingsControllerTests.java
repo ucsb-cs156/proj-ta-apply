@@ -95,6 +95,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
             .id(30L)
             .recruitmentId(10L)
             .email("student@ucsb.edu")
+            .permNumber("1234567")
             .firstName("Ada")
             .lastName("Lovelace")
             .major("Computer Science")
@@ -219,7 +220,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     String expectedRow =
         """
         {"applicationId":30,"rank":1,"preference":"1st Choice","firstName":"Ada","lastName":"Lovelace",
-        "email":"student@ucsb.edu","major":"Computer Science","classLevel":"PHD","yearInProgram":"2",
+        "email":"student@ucsb.edu","permNumber":"1234567","major":"Computer Science","classLevel":"PHD","yearInProgram":"2",
         "graduationDate":"Spring 2028","gpaMajor":3.8,"gpaOverall":3.7,"previousServiceAsUla":2,
         "videoLink":"https://example.edu/video","firstQuarter":false,"rankingVersion":0,
         "tookCourse":false,"courseTerm":null,"courseGrade":null,

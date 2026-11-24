@@ -27,6 +27,7 @@ export type Candidate = {
   firstName: string | null;
   lastName: string | null;
   email: string;
+  permNumber: string | null;
   major: string | null;
   classLevel: string | null;
   yearInProgram: string | null;
@@ -133,6 +134,7 @@ const names: Column[] = [
 const comments: Column = { key: "comments", label: "Comments" };
 const contact: Column[] = [
   { key: "email", label: "Email" },
+  { key: "permNumber", label: "Perm Number" },
   { key: "major", label: "Major" },
 ];
 

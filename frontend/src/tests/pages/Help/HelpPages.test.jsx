@@ -438,6 +438,12 @@ describe("Help pages (issue #140)", () => {
     ).toHaveTextContent(
       "The Comments column, between Last Name and Email, shows the comments each applicant wrote at the end of their application. It is hidden until you tick it in the Columns menu. To make it wider or narrower, drag the right edge of its heading, or click that edge and press the left and right arrow keys.",
     );
+    // Issue #469: the opt-in Perm Number column.
+    expect(
+      screen.getByTestId("HelpInstructorsPage-perm-number-column"),
+    ).toHaveTextContent(
+      "The Perm Number column, between Email and Major, shows each applicant's UCSB perm number, for when you need to look a student up. It too is hidden until you tick it in the Columns menu, and it sorts like the other text columns.",
+    );
     // Issue #364: the home page is one card per quarter, with a TA and/or ULA card per course.
     expect(
       screen.getByTestId("HelpInstructorsPage-home-cards"),

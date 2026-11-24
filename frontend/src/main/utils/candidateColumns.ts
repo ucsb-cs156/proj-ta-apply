@@ -24,10 +24,10 @@ export const candidateColumnChoices = (
     .map((column) => ({ id: column.key, label: column.label }));
 
 /**
- * The Comments column (issue #447 review) is hidden until the instructor shows it, even if they
- * have already chosen which of the other columns to hide.
+ * The Comments column (issue #447 review) and the Perm Number column (issue #469) are hidden until
+ * the instructor shows them, even if they have already chosen which of the other columns to hide.
  */
-export const OPT_IN_CANDIDATE_COLUMNS = ["comments"];
+export const OPT_IN_CANDIDATE_COLUMNS = ["comments", "permNumber"];
 
 /**
  * The width a drag of the Comments column can give it: at least 200px and at most 80% of the
