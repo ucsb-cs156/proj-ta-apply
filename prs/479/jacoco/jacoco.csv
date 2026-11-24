@@ -121,8 +121,8 @@ taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CoursesV
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.HiringTargetAuditTrailPageDTO,0,46,0,0,0,10,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.Candidate,0,66,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,640,0,36,0,133,0,47,0,29
-taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController,0,129,0,6,0,23,0,9,0,6
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController,0,395,0,26,0,67,0,32,0,19
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController,0,129,0,6,0,23,0,9,0,6
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.RankingScope,0,55,0,14,0,4,0,11,0,4
 taapply,edu.ucsb.cs.taapply.controller,SystemInfoController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,BudgetController,0,278,0,36,0,68,0,29,0,11
@@ -195,8 +195,8 @@ taapply,edu.ucsb.cs.taapply.jobs,PopulateRecruitmentCoursesJob,0,660,0,76,0,148,
 taapply,edu.ucsb.cs.taapply.jobs,RecruitmentCoursesRefreshScheduler,0,22,0,0,0,5,0,3,0,3
 taapply,edu.ucsb.cs.taapply.jobs,RefreshRecruitmentCoursesJob,0,162,0,10,0,33,0,8,0,3
 taapply,edu.ucsb.cs.taapply.jobs,RefreshRecruitmentCoursesJobFactory,0,21,0,0,0,8,0,3,0,3
-taapply,edu.ucsb.cs.taapply.jobs,CreateFakeApplicationsJobFactory,0,38,0,0,0,13,0,3,0,3
 taapply,edu.ucsb.cs.taapply.jobs,CreateFakeApplicationsJob,0,129,0,4,0,24,0,5,0,3
+taapply,edu.ucsb.cs.taapply.jobs,CreateFakeApplicationsJobFactory,0,38,0,0,0,13,0,3,0,3
 taapply,edu.ucsb.cs.taapply.models,UcsbSection,0,12,0,4,0,1,0,3,0,1
 taapply,edu.ucsb.cs.taapply.models,DraftConflict,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.models,CourseSections,0,157,0,14,0,38,0,16,0,9
