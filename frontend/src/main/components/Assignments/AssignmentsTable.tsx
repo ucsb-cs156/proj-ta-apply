@@ -104,11 +104,23 @@ const countLine = (label: string, count: number): string =>
 const COUNT_LINE_CLASSES = "course-heading-count fw-normal";
 
 /**
- * A lecture's column heading: its name, then three lines that stay put whatever the sort order:
- * the allocation, how many applicants are pencilled into it, and how many places are still to
- * assign (in red when more are assigned than allocated). Monospace with the spaces kept (issue
- * #355), so the counts line up under the name; the column itself is a fixed 100px (issue #415,
- * `course-column` in index.css), so every lecture column is the same width.
+ * The words over the To Assign number (issue #476). The spaces either side keep the heading's text
+ * whole (" Assigned 1 To Assign 1") for screen readers and tests; the line's class in index.css
+ * collapses them, so they do not show.
+ */
+const TO_ASSIGN_TEXT = " To Assign ";
+
+/** The class of a lecture column's heading while its To Assign is not zero (issue #476): yellow. */
+const NEEDS_ASSIGNMENT_CLASS = "course-needs-assignment";
+
+/**
+ * A lecture's column heading: its name, then lines that stay put whatever the sort order: the
+ * allocation, how many applicants are pencilled into it, and how many places are still to assign,
+ * the last as the words "To Assign" in the headings' font with the number centred under them half
+ * again as large (issue #476), in red when more are assigned than allocated, and blank (neither
+ * the words nor the number) when there is nothing to assign. Monospace with the
+ * spaces kept (issue #355), so the counts line up under the name; the column itself is a fixed
+ * 100px (issue #415, `course-column` in index.css), so every lecture column is the same width.
  */
 function CourseHeader({
   course,
@@ -139,10 +151,22 @@ function CourseHeader({
         {countLine("Assigned", course.assigned)}
       </div>
       <div
-        className={`${COUNT_LINE_CLASSES}${course.left < 0 ? " text-danger" : ""}`}
+        className={`course-heading-to-assign${course.left < 0 ? " text-danger" : ""}`}
         data-testid={`${id}-left`}
       >
-        {countLine("To Assign", course.left)}
+        {course.left !== 0 && (
+          <>
+            <div className="course-heading-to-assign-label">
+              {TO_ASSIGN_TEXT}
+            </div>
+            <div
+              className="course-heading-to-assign-count"
+              data-testid={`${id}-left-count`}
+            >
+              {course.left}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -154,6 +178,8 @@ type CourseColumnMeta = {
   testIdPrefix: string;
   /** On the heading and every cell (OurTable): 100px wide, right-aligned ranks (issue #415). */
   className: "course-column";
+  /** On the heading alone (OurTable): yellow while To Assign is not zero (issue #476). */
+  headerClassName?: typeof NEEDS_ASSIGNMENT_CLASS;
 };
 
 /**
@@ -269,6 +295,8 @@ export default function AssignmentsTable({
         course,
         testIdPrefix,
         className: "course-column",
+        // Over- as well as under-assigned: either still needs an admin's attention (issue #476).
+        ...(course.left !== 0 && { headerClassName: NEEDS_ASSIGNMENT_CLASS }),
       } satisfies CourseColumnMeta,
     })),
   ];

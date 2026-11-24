@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.web;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -501,7 +502,9 @@ public class AdminAssignmentsWebIT extends WebTestCase {
         page.locator("[data-testid^='AdminAssignmentsPage-table-header-course-']").first();
     assertThat(heading).hasClass(Pattern.compile("course-column"));
     assertThat(heading).containsText("156   (0100)");
-    assertThat(heading).containsText("To Assign");
+    // Issue #476: nothing to assign yet (allocation 0, assigned 0), so neither "To Assign" nor a
+    // number shows; the line is there but blank, and the heading is not yellow.
+    assertThat(heading).not().containsText("To Assign");
     assertThat(heading).not().containsText("Left");
     double headingWidth = heading.boundingBox().width;
     assertTrue(Math.abs(headingWidth - 100) <= 1.5, "heading width was " + headingWidth);
@@ -516,11 +519,31 @@ public class AdminAssignmentsWebIT extends WebTestCase {
         label.evaluate(
             "e => e.getBoundingClientRect().height < 2 * parseFloat(getComputedStyle(e).fontSize)"));
     // The count lines are smaller than the name, and each fits on one line of the column.
+    Locator allocation =
+        page.locator(
+                "[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-allocation']")
+            .first();
+    assertThat(allocation).hasClass(Pattern.compile("course-heading-count"));
+    assertEquals("10.4px", allocation.evaluate("e => getComputedStyle(e).fontSize"));
+    // Issue #476: the To Assign line is blank while there is nothing to assign, and the th is not
+    // yellow; what the line shows once there is something is checked after the assignment below.
     Locator toAssign =
         page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-left']")
             .first();
-    assertThat(toAssign).hasClass(Pattern.compile("course-heading-count"));
-    assertEquals("10.4px", toAssign.evaluate("e => getComputedStyle(e).fontSize"));
+    assertThat(toAssign).hasClass(Pattern.compile("course-heading-to-assign"));
+    assertThat(toAssign).not().hasClass(Pattern.compile("course-heading-count"));
+    assertThat(toAssign).not().hasClass(Pattern.compile("text-danger"));
+    assertThat(toAssign).isEmpty();
+    assertEquals(0, toAssign.locator(":scope > *").count());
+    assertEquals(
+        label.evaluate("e => getComputedStyle(e).fontFamily"),
+        allocation.evaluate("e => getComputedStyle(e).fontFamily"));
+    assertThat(heading).not().hasClass(Pattern.compile("course-needs-assignment"));
+    assertNotEquals(
+        "rgb(255, 255, 0)", heading.evaluate("e => getComputedStyle(e).backgroundColor"));
+    // Issue #476: lecture headings are aligned at the top (Bootstrap's thead is bottom-aligned),
+    // so the blank To Assign line leaves its room empty below.
+    assertEquals("top", heading.evaluate("e => getComputedStyle(e).verticalAlign"));
     for (String line : List.of("allocation", "assigned", "left")) {
       Locator count =
           page.locator(
@@ -554,6 +577,35 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(cell).hasClass(Pattern.compile("selected-course-assignment-cell"));
     assertEquals("5px solid rgb(0, 0, 0)", cell.evaluate("e => getComputedStyle(e).borderTop"));
     assertThat(heading).containsText("Assigned 1");
+    // Issue #476: one more assigned than allocated: "To Assign" appears in the headings' font at
+    // the size of the stacked "Tentative Assignment" heading (80% of 16px), centred, with the
+    // number -1 under it half again as large (120%), in red; and the th is yellow.
+    Locator toAssignLabel = toAssign.locator(".course-heading-to-assign-label");
+    Locator toAssignCount = toAssign.locator(".course-heading-to-assign-count");
+    assertThat(toAssignLabel).hasText("To Assign");
+    assertThat(toAssignCount).hasText("-1");
+    assertThat(heading).containsText("To Assign");
+    assertEquals("center", toAssign.evaluate("e => getComputedStyle(e).textAlign"));
+    assertEquals("12.8px", toAssignLabel.evaluate("e => getComputedStyle(e).fontSize"));
+    assertEquals("19.2px", toAssignCount.evaluate("e => getComputedStyle(e).fontSize"));
+    assertEquals(
+        page.getByTestId("AdminAssignmentsPage-table-header-tentativeAssignment")
+            .evaluate("e => getComputedStyle(e).fontFamily"),
+        toAssignLabel.evaluate("e => getComputedStyle(e).fontFamily"));
+    assertEquals(true, toAssign.evaluate("e => e.scrollWidth <= e.closest('th').clientWidth"));
+    assertThat(toAssign).hasClass(Pattern.compile("text-danger"));
+    // The other lecture still has nothing to assign: its name is on the same line as this one's,
+    // and the room under its counts is empty rather than its heading sitting lower.
+    Locator otherLabel =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-label']")
+            .nth(1);
+    assertEquals(label.boundingBox().y, otherLabel.boundingBox().y, 0.5);
+    Locator otherToAssign =
+        page.locator("[data-testid^='AdminAssignmentsPage-table-course-'][data-testid$='-left']")
+            .nth(1);
+    assertThat(otherToAssign).isEmpty();
+    assertThat(heading).hasClass(Pattern.compile("course-needs-assignment"));
+    assertEquals("rgb(255, 255, 0)", heading.evaluate("e => getComputedStyle(e).backgroundColor"));
     assertThat(cell).hasClass(Pattern.compile("candidate-course-rank-not-applicable"));
     // The other lecture's cell is not outlined, and the column is still 100px.
     Locator otherCell =

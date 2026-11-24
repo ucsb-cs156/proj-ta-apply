@@ -60,6 +60,11 @@ const Template = () => <AdminAssignmentsPage />;
  * Issue #415: each lecture column is 100px wide with "To Assign" (not "Left") as the third, smaller
  * count line, and the cell of the lecture each row is pencilled into (Ada's CMPSC 8, Grace's and
  * Alan's CMPSC 16) has a thick black outline. Moving Ada to CMPSC 24 moves her outline.
+ *
+ * Issue #476: "To Assign" is in the headings' font with its number centred under it, larger, and
+ * the headings of CMPSC 8 (1 to assign) and CMPSC 16 (-1, over-assigned) are highlighter yellow;
+ * CMPSC 24, with 0 to assign, shows neither the words nor the number and is not yellow, until Ada
+ * is moved there.
  */
 export const Default = Template.bind({});
 

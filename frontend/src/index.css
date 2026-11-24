@@ -169,6 +169,33 @@ body {
   font-size: 0.65em;
 }
 
+/* The To Assign lines under a lecture's name (CourseHeader, issue #476): the words in the headings'
+   own font at the size of the stacked "Tentative Assignment" heading beside them (80%), centred,
+   and the number centred under them half again as large (120% of the headings), so the eye finds
+   the columns with places still to fill. white-space is normal, not the wrapper's pre, so the
+   spaces around the words (kept for screen readers and tests) collapse away. */
+.course-heading-to-assign {
+  font-family: var(--bs-body-font-family);
+  white-space: normal;
+  text-align: center;
+}
+
+.course-heading-to-assign-label {
+  font-size: 80%;
+}
+
+.course-heading-to-assign-count {
+  font-size: 120%;
+}
+
+/* The heading of a lecture column whose To Assign is not zero (issue #476), whether places are
+   still to fill or more are assigned than allocated: highlighter yellow. It is a th of a Bootstrap
+   .table, so it sets --bs-table-bg too (issue #441; see .candidate-course-rank-enthusiastic). */
+.table .course-needs-assignment {
+  --bs-table-bg: #ffff00;
+  background-color: #ffff00;
+}
+
 /* A lecture column's heading and cells: 100px wide, with less horizontal padding than the table's
    16px (above) so a 12-character name still fits on one line, the ranks right-aligned and never
    wrapped. `.table .course-column` outranks the `.table th, td` rule above. */
@@ -179,6 +206,14 @@ body {
   padding-right: 3px;
   text-align: right;
   white-space: nowrap;
+}
+
+/* A lecture's heading starts at the top of the heading row, not at the bottom where Bootstrap
+   puts a thead's content (issue #476): a lecture with nothing to assign has a blank To Assign
+   line, so without this its name and counts would sit lower than its neighbours'. Every lecture's
+   name is on the same line, and the room for "To Assign" and its number is left empty. */
+.table > thead > tr > th.course-column {
+  vertical-align: top;
 }
 
 /* The lecture cell of the row's tentative assignment (CourseRankCell): a thick black outline. */

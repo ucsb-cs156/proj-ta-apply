@@ -97,33 +97,53 @@ describe("AssignmentsTable tests (issue #179)", () => {
     expect(screen.getByTestId("T-course-10-assigned").textContent).toBe(
       "  Assigned 1",
     );
-    // Issue #415: "To Assign" (it was "Left"), still right-aligned under "Allocation", and the
-    // three count lines a size smaller than `small` (the course-heading-count class in index.css).
+    // Issue #415: "To Assign" (it was "Left"); the two count lines a size smaller than `small`
+    // (the course-heading-count class in index.css). Issue #476: the To Assign line is the words
+    // over the number, in the classes below, with spaces around the words that keep the text whole,
+    // and blank when there is nothing to assign.
     expect(screen.getByTestId("T-course-10-left").textContent).toBe(
       " To Assign 1",
     );
     expect(screen.getByTestId("T-course-10-left")).not.toHaveClass(
       "text-danger",
     );
-    for (const line of ["allocation", "assigned", "left"]) {
+    for (const line of ["allocation", "assigned"]) {
       const element = screen.getByTestId(`T-course-10-${line}`);
       expect(element).toHaveClass("course-heading-count", "fw-normal");
       expect(element).not.toHaveClass("small");
       expect(element).not.toHaveAttribute("style");
     }
+    const toAssign = screen.getByTestId("T-course-10-left");
+    expect(toAssign.className).toBe("course-heading-to-assign");
+    expect(toAssign).not.toHaveAttribute("style");
+    expect(toAssign.children).toHaveLength(2);
+    expect(toAssign.children[0].className).toBe(
+      "course-heading-to-assign-label",
+    );
+    expect(toAssign.children[0].textContent).toBe(" To Assign ");
+    expect(toAssign.children[1]).toBe(
+      screen.getByTestId("T-course-10-left-count"),
+    );
+    expect(toAssign.children[1].className).toBe(
+      "course-heading-to-assign-count",
+    );
+    expect(toAssign.children[1].textContent).toBe("1");
     expect(screen.getByTestId("T-course-20-left")).toHaveTextContent(
       "To Assign -1",
     );
-    expect(screen.getByTestId("T-course-20-left")).toHaveClass(
-      "course-heading-count",
-      "fw-normal",
-      "text-danger",
+    expect(screen.getByTestId("T-course-20-left").className).toBe(
+      "course-heading-to-assign text-danger",
     );
-    expect(screen.getByTestId("T-course-30-left")).toHaveTextContent(
-      "To Assign 0",
+    expect(screen.getByTestId("T-course-20-left-count").textContent).toBe("-1");
+    // Nothing to assign: the line is there (so the heading keeps its shape) but blank, with
+    // neither the words nor the number.
+    expect(screen.getByTestId("T-course-30-left")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("T-course-30-left").className).toBe(
+      "course-heading-to-assign",
     );
-    expect(screen.getByTestId("T-course-30-left")).not.toHaveClass(
-      "text-danger",
+    expect(screen.queryByTestId("T-course-30-left-count")).toBeNull();
+    expect(screen.getByTestId("T-header-course-30")).not.toHaveTextContent(
+      "To Assign",
     );
     expect(screen.getByTestId("T-header-course-10")).not.toHaveTextContent(
       "Left",
@@ -179,6 +199,32 @@ describe("AssignmentsTable tests (issue #179)", () => {
     );
     expect(screen.getByTestId("M-course-105-left").textContent).toBe(
       " To Assign -1",
+    );
+  });
+
+  test("a lecture heading is yellow while its To Assign is not zero, over- or under-assigned (issue #476)", () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="Y" />,
+    );
+    // CMPSC 8 has 1 to assign and CMPSC 16 has -1 (over-assigned): both headings are yellow, with
+    // course-needs-assignment (index.css) after course-column. CMPSC 24, with 0, is not.
+    expect(screen.getByTestId("Y-header-course-10").className).toBe(
+      "course-column course-needs-assignment",
+    );
+    expect(screen.getByTestId("Y-header-course-20").className).toBe(
+      "course-column course-needs-assignment",
+    );
+    expect(screen.getByTestId("Y-header-course-30").className).toBe(
+      "course-column",
+    );
+    // The yellow is the heading's alone: the cells below it keep only course-column.
+    for (const row of [0, 1, 2, 3]) {
+      expect(
+        screen.getByTestId(`Y-cell-row-${row}-col-course-10`).className,
+      ).toBe("course-column");
+    }
+    expect(screen.getByTestId("Y-header-tentativeAssignment")).not.toHaveClass(
+      "course-needs-assignment",
     );
   });
 
