@@ -13,10 +13,13 @@ import {
   checkboxMark,
   COMMENTS_MIN_WIDTH,
   FEEDBACK_COLUMN_CHOICES,
+  FEEDBACK_COLUMN_CLASS,
   FEEDBACK_COLUMNS_STORAGE_KEY,
   NOT_APPLICABLE,
+  TOTALS_LABEL,
   commentsDefaultWidth,
   courseName,
+  feedbackTotals,
   instructorText,
   yesNo,
 } from "main/utils/instructorFeedbackColumns";
@@ -39,18 +42,20 @@ const renderTable = (props = {}) =>
 const cell = (row, column) =>
   screen.getByTestId(`${T}-cell-row-${row}-col-${column}`);
 
-/** The text of one column, top to bottom, as the rows are now sorted. */
+/** The headings, left to right; the totals row's cells are th elements too, so thead alone. */
+const headerCells = () =>
+  within(screen.getByTestId(T).querySelector("thead")).getAllByRole(
+    "columnheader",
+  );
+
+/** The text of one column, top to bottom, as the rows are now sorted (the totals row aside). */
 const columnText = (column) =>
-  screen
-    .getAllByRole("row")
-    .slice(1)
-    .map(
-      (tr) =>
-        within(tr)
-          .getAllByRole("cell")
-          .find((td) => td.dataset.testid.endsWith(`-col-${column}`))
-          .textContent,
-    );
+  [...screen.getByTestId(T).querySelectorAll("tbody tr")].map(
+    (tr) =>
+      within(tr)
+        .getAllByRole("cell")
+        .find((td) => td.dataset.testid.endsWith(`-col-${column}`)).textContent,
+  );
 
 const sortBy = (column) =>
   userEvent.click(screen.getByTestId(`${T}-header-${column}-sort-header`));
@@ -101,6 +106,47 @@ describe("InstructorFeedbackTable helpers", () => {
     expect(commentsDefaultWidth(100)).toBe(200);
   });
 
+  // Issue #473: the totals row's numbers.
+  test("feedbackTotals counts the rows, says k/n per box and sums the allocations", () => {
+    expect(feedbackTotals(rows)).toEqual({
+      count: 4,
+      allocReasonable: "1/4",
+      differentTACount: "2/4",
+      differentULACount: "2/4",
+      otherConcerns: "2/4",
+      taAllocation: 7,
+      ulaAllocation: 10,
+      // A blank preferred count stands for the current allocation; blank on both sides adds 0.
+      numTAsPreferred: 10,
+      numULAsPreferred: 10,
+    });
+    expect(feedbackTotals([])).toEqual({
+      count: 0,
+      allocReasonable: "0/0",
+      differentTACount: "0/0",
+      differentULACount: "0/0",
+      otherConcerns: "0/0",
+      taAllocation: 0,
+      ulaAllocation: 0,
+      numTAsPreferred: 0,
+      numULAsPreferred: 0,
+    });
+    // One row checked everywhere, preferring more than it has.
+    expect(feedbackTotals([rows[0]])).toEqual({
+      count: 1,
+      allocReasonable: "0/1",
+      differentTACount: "1/1",
+      differentULACount: "1/1",
+      otherConcerns: "0/1",
+      taAllocation: 3,
+      ulaAllocation: 4,
+      numTAsPreferred: 5,
+      numULAsPreferred: 2,
+    });
+    expect(TOTALS_LABEL).toBe("Totals/Counts");
+    expect(FEEDBACK_COLUMN_CLASS).toBe("instructor-feedback-column");
+  });
+
   test("the column choices are every column but Course Name, in table order", () => {
     expect(FEEDBACK_COLUMN_CHOICES.map((c) => c.id)).toEqual([
       "instructor",
@@ -110,8 +156,8 @@ describe("InstructorFeedbackTable helpers", () => {
       "numTAsPreferred",
       "differentULACount",
       "ulaAllocation",
-      "otherConcerns",
       "numULAsPreferred",
+      "otherConcerns",
       "comments",
       "lastUpdated",
     ]);
@@ -123,8 +169,8 @@ describe("InstructorFeedbackTable helpers", () => {
       "Preferred TA Allocation",
       "Diff ULA Count",
       "ULA Allocation",
-      "Other Concerns",
       "Preferred ULA Allocation",
+      "Other Concerns",
       "Comments",
       "Last Updated",
     ]);
@@ -137,9 +183,9 @@ describe("InstructorFeedbackTable helpers", () => {
 describe("InstructorFeedbackTable", () => {
   test("has the columns in the issue's order, then Last Updated", () => {
     renderTable();
-    const headers = screen
-      .getAllByRole("columnheader")
-      .map((th) => th.dataset.testid.replace(`${T}-header-`, ""));
+    const headers = headerCells().map((th) =>
+      th.dataset.testid.replace(`${T}-header-`, ""),
+    );
     expect(headers).toEqual([
       "course",
       "instructor",
@@ -149,14 +195,14 @@ describe("InstructorFeedbackTable", () => {
       "numTAsPreferred",
       "differentULACount",
       "ulaAllocation",
-      "otherConcerns",
       "numULAsPreferred",
+      "otherConcerns",
       "comments",
       "lastUpdated",
     ]);
-    const headings = screen
-      .getAllByRole("columnheader")
-      .map((th) => within(th).getByTestId(/-sort-header$/).textContent);
+    const headings = headerCells().map(
+      (th) => within(th).getByTestId(/-sort-header$/).textContent,
+    );
     expect(headings).toEqual([
       "Course Name",
       "Instructor",
@@ -166,13 +212,13 @@ describe("InstructorFeedbackTable", () => {
       "Preferred TA Allocation",
       "Diff ULA Count",
       "ULA Allocation",
-      "Other Concerns",
       "Preferred ULA Allocation",
+      "Other Concerns",
       "Comments",
       "Last Updated",
     ]);
     // Every heading but Course Name, Instructor and Comments is two lines in the smaller class.
-    for (const th of screen.getAllByRole("columnheader")) {
+    for (const th of headerCells()) {
       const id = th.dataset.testid.replace(`${T}-header-`, "");
       const sortHeader = within(th).getByTestId(/-sort-header$/);
       const small = sortHeader.querySelector(
@@ -203,6 +249,57 @@ describe("InstructorFeedbackTable", () => {
       screen.getByTestId(`${T}-header-numULAsPreferred-sort-header`),
     ).toHaveTextContent(/^Preferred ULA Allocation$/);
     expect(screen.getByTestId(T)).toHaveClass("w-auto");
+  });
+
+  // Issue #473: the Totals/Counts row.
+  test("ends with a Totals/Counts row under a thick line, blank under Comments and Last Updated", () => {
+    renderTable();
+    const footer = (column) => screen.getByTestId(`${T}-footer-${column}`);
+    expect(footer("course")).toHaveTextContent(/^Totals\/Counts$/);
+    expect(footer("course").querySelector("strong")).toHaveTextContent(
+      "Totals/Counts",
+    );
+    expect(footer("instructor")).toHaveTextContent(/^4$/);
+    expect(footer("allocReasonable")).toHaveTextContent(/^1\/4$/);
+    expect(footer("differentTACount")).toHaveTextContent(/^2\/4$/);
+    expect(footer("taAllocation")).toHaveTextContent(/^7$/);
+    expect(footer("numTAsPreferred")).toHaveTextContent(/^10$/);
+    expect(footer("differentULACount")).toHaveTextContent(/^2\/4$/);
+    expect(footer("ulaAllocation")).toHaveTextContent(/^10$/);
+    expect(footer("numULAsPreferred")).toHaveTextContent(/^10$/);
+    expect(footer("otherConcerns")).toHaveTextContent(/^2\/4$/);
+    expect(footer("comments")).toBeEmptyDOMElement();
+    expect(footer("lastUpdated")).toBeEmptyDOMElement();
+    // The row is the table's last, in a tfoot, and every cell carries the class index.css draws
+    // the thick black line on; the headings and body cells carry it too (harmlessly).
+    const tfoot = footer("course").closest("tfoot");
+    expect(tfoot).not.toBeNull();
+    expect(screen.getByTestId(T).lastElementChild).toBe(tfoot);
+    for (const th of tfoot.querySelectorAll("th")) {
+      expect(th).toHaveClass(FEEDBACK_COLUMN_CLASS);
+    }
+    expect(screen.getByTestId(`${T}-header-comments`)).toHaveClass(
+      FEEDBACK_COLUMN_CLASS,
+    );
+    expect(cell(0, "course")).toHaveClass(FEEDBACK_COLUMN_CLASS);
+    // The numbers are right-aligned like their columns; the label and count are not.
+    expect(footer("taAllocation")).toHaveStyle({ textAlign: "right" });
+    expect(footer("course")).not.toHaveStyle({ textAlign: "right" });
+    // Sorting does not change the totals.
+    expect(footer("taAllocation")).toHaveTextContent("7");
+  });
+
+  test("the totals row follows the rows it is given, and hides with its columns", () => {
+    renderTable({ rows: [rows[1], rows[2]], hiddenColumns: ["taAllocation"] });
+    const footer = (column) => screen.getByTestId(`${T}-footer-${column}`);
+    expect(footer("instructor")).toHaveTextContent(/^2$/);
+    expect(footer("allocReasonable")).toHaveTextContent(/^1\/2$/);
+    expect(footer("differentULACount")).toHaveTextContent(/^1\/2$/);
+    // Row 2 has no TA allocation and no preferred count: it adds nothing to either.
+    expect(footer("numTAsPreferred")).toHaveTextContent(/^2$/);
+    expect(footer("ulaAllocation")).toHaveTextContent(/^6$/);
+    expect(footer("numULAsPreferred")).toHaveTextContent(/^8$/);
+    expect(screen.queryByTestId(`${T}-footer-taAllocation`)).toBeNull();
   });
 
   test("shows each record's values", () => {
