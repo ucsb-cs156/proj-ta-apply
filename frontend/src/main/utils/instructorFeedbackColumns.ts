@@ -35,7 +35,8 @@ export const NOT_APPLICABLE = "N/A";
 
 /**
  * Every column but Course Name, which cannot be hidden, in table order: the Columns menu's
- * choices and the "hide" links. The issue's order, with Last Updated added after Comments.
+ * choices and the "hide" links. Issue #427's order, with Last Updated added after Comments and
+ * Preferred ULA Allocation moved before Other Concerns (issue #473).
  */
 export const FEEDBACK_COLUMN_CHOICES: ColumnChoice[] = [
   { id: "instructor", label: "Instructor" },
@@ -45,11 +46,62 @@ export const FEEDBACK_COLUMN_CHOICES: ColumnChoice[] = [
   { id: "numTAsPreferred", label: "Preferred TA Allocation" },
   { id: "differentULACount", label: "Diff ULA Count" },
   { id: "ulaAllocation", label: "ULA Allocation" },
-  { id: "otherConcerns", label: "Other Concerns" },
   { id: "numULAsPreferred", label: "Preferred ULA Allocation" },
+  { id: "otherConcerns", label: "Other Concerns" },
   { id: "comments", label: "Comments" },
   { id: "lastUpdated", label: "Last Updated" },
 ];
+
+/** The first cell of the totals row (issue #473). */
+export const TOTALS_LABEL = "Totals/Counts";
+
+/**
+ * The class every column's heading, cells and footer carry, so index.css can draw the extra
+ * thick black line above the totals row (issue #473).
+ */
+export const FEEDBACK_COLUMN_CLASS = "instructor-feedback-column";
+
+/** What the totals row shows under each column that has a total (issue #473). */
+export type FeedbackTotals = {
+  /** The number of rows, "n". */
+  count: number;
+  /** "k/n": how many rows checked the box, over the number of rows. */
+  allocReasonable: string;
+  differentTACount: string;
+  differentULACount: string;
+  otherConcerns: string;
+  /** The sum of the column, a missing allocation counting as 0. */
+  taAllocation: number;
+  ulaAllocation: number;
+  /** The sum of the preferred counts, a blank one standing in for the current allocation. */
+  numTAsPreferred: number;
+  numULAsPreferred: number;
+};
+
+/**
+ * The totals row of the admin's Instructor Feedback table (issue #473), computed from every row
+ * the table shows.
+ */
+export const feedbackTotals = (
+  rows: InstructorFeedbackRow[],
+): FeedbackTotals => {
+  const n = rows.length;
+  const yes = (id: keyof InstructorFeedbackRow): string =>
+    `${rows.filter((row) => row[id] === true).length}/${n}`;
+  const sum = (pick: (row: InstructorFeedbackRow) => number | null): number =>
+    rows.reduce((total, row) => total + (pick(row) ?? 0), 0);
+  return {
+    count: n,
+    allocReasonable: yes("allocReasonable"),
+    differentTACount: yes("differentTACount"),
+    differentULACount: yes("differentULACount"),
+    otherConcerns: yes("otherConcerns"),
+    taAllocation: sum((row) => row.taAllocation),
+    ulaAllocation: sum((row) => row.ulaAllocation),
+    numTAsPreferred: sum((row) => row.numTAsPreferred ?? row.taAllocation),
+    numULAsPreferred: sum((row) => row.numULAsPreferred ?? row.ulaAllocation),
+  };
+};
 
 /** Where the hidden columns are remembered, in this browser; the same for every quarter. */
 export const FEEDBACK_COLUMNS_STORAGE_KEY = "instructorFeedback.hiddenColumns";

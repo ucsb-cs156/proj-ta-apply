@@ -300,6 +300,13 @@ body {
   line-height: 1;
 }
 
+/* The extra thick black line between the admin's Instructor Feedback table and its Totals/Counts
+   row (issue #473). Every column of that table carries this class; only the footer cells draw the
+   line. */
+tfoot > tr > th.instructor-feedback-column {
+  border-top: 3px solid #000;
+}
+
 /* A course name in the admin's Instructor Feedback tables (issue #427): the course number in the
    monospaced form of the Combined Allocation page, at least as wide as "CMPSC 190DD" (11
    characters, COURSE_NUMBER_WIDTH in columnWidths.ts), so the digits line up. */

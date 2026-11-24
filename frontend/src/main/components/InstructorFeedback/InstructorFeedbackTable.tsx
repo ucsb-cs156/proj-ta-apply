@@ -8,20 +8,27 @@ import { formatPacificDateTime } from "main/utils/pacificTime";
 import {
   COMMENTS_MIN_WIDTH,
   FEEDBACK_COLUMN_CHOICES,
+  FEEDBACK_COLUMN_CLASS,
   NOT_APPLICABLE,
+  TOTALS_LABEL,
   checkboxMark,
   commentsDefaultWidth,
   courseName,
+  feedbackTotals,
   instructorText,
   yesNo,
+  type FeedbackTotals,
   type InstructorFeedbackRow,
 } from "main/utils/instructorFeedbackColumns";
 
+// Every column carries FEEDBACK_COLUMN_CLASS, for the thick line above the totals row (issue #473).
 const shrinkToContent = {
+  className: FEEDBACK_COLUMN_CLASS,
   style: { width: "1%", whiteSpace: "nowrap" as const },
 };
 
 const numeric = {
+  className: FEEDBACK_COLUMN_CLASS,
   style: { ...shrinkToContent.style, textAlign: "right" as const },
 };
 
@@ -53,7 +60,9 @@ type Props = {
 /**
  * The admin's table of a quarter's instructor feedback (issue #427): one row per feedback record,
  * every column sortable, every column but Course Name hideable. Comments starts at 80% of the
- * window (at least 200px), can be dragged no narrower than 200px, and wraps within its width.
+ * window (at least 200px), can be dragged no narrower than 200px, and wraps within its width. A
+ * Totals/Counts row under a thick black line (issue #473) counts the rows, says k/n for each
+ * checkbox column and sums the allocation columns; see feedbackTotals.
  */
 export default function InstructorFeedbackTable({
   rows,
@@ -62,9 +71,14 @@ export default function InstructorFeedbackTable({
   onCopyEmail,
   testIdPrefix = "InstructorFeedbackTable",
 }: Props): React.JSX.Element {
-  const flag = (id: keyof InstructorFeedbackRow, label: string) => ({
+  const totals = feedbackTotals(rows);
+  const flag = (
+    id: keyof FeedbackTotals & keyof InstructorFeedbackRow,
+    label: string,
+  ) => ({
     header: heading(label),
     id,
+    footer: totals[id],
     // Sorted on the answer itself, so checked and unchecked rows group together.
     accessorFn: (row: InstructorFeedbackRow) => row[id] as boolean,
     meta: shrinkToContent,
@@ -79,12 +93,13 @@ export default function InstructorFeedbackTable({
   });
   // A missing number has nothing to sort by, so it goes last either way.
   const count = (
-    id: keyof InstructorFeedbackRow,
+    id: keyof FeedbackTotals & keyof InstructorFeedbackRow,
     label: string,
     whenMissing: string,
   ) => ({
     header: heading(label),
     id,
+    footer: String(totals[id]),
     accessorFn: (row: InstructorFeedbackRow) => row[id] ?? undefined,
     sortUndefined: "last" as const,
     meta: numeric,
@@ -97,6 +112,7 @@ export default function InstructorFeedbackTable({
       header: "Course Name",
       id: "course",
       accessorFn: courseName,
+      footer: () => <strong>{TOTALS_LABEL}</strong>,
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<InstructorFeedbackRow, unknown> }) => (
         <span className="instructor-feedback-course">
@@ -108,6 +124,7 @@ export default function InstructorFeedbackTable({
       header: "Instructor",
       id: "instructor",
       accessorFn: instructorText,
+      footer: String(totals.count),
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<InstructorFeedbackRow, unknown> }) => {
         const row = cell.row.original;
@@ -135,8 +152,9 @@ export default function InstructorFeedbackTable({
     count("numTAsPreferred", "Preferred TA Allocation", ""),
     flag("differentULACount", "Diff ULA Count"),
     count("ulaAllocation", "ULA Allocation", NOT_APPLICABLE),
-    flag("otherConcerns", "Other Concerns"),
     count("numULAsPreferred", "Preferred ULA Allocation", ""),
+    flag("otherConcerns", "Other Concerns"),
+    // Comments and Last Updated have no total: their cells of the totals row are blank.
     {
       header: "Comments",
       id: "comments",
@@ -146,6 +164,7 @@ export default function InstructorFeedbackTable({
       maxSize: WIDE_COLUMN_MAX_WIDTH,
       enableResizing: true,
       meta: {
+        className: FEEDBACK_COLUMN_CLASS,
         style: { whiteSpace: "pre-wrap" as const, overflowWrap: "anywhere" },
       },
     },

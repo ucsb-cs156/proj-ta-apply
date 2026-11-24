@@ -726,8 +726,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           allocations. A preferred number shows only when its &ldquo;different
           number&rdquo; box is checked. Every column sorts, every column but
           Course Name can be hidden (this browser remembers which), and the
-          Comments column can be dragged wider or narrower, down to 200px. Below
-          it, <em>No Feedback Yet From These Instructors</em> lists each course
+          Comments column can be dragged wider or narrower, down to 200px. A{" "}
+          <strong>Totals/Counts</strong> row under a thick black line gives the
+          number of courses, how many of them checked each box (as k/n), the sum
+          of each allocation column, and the sum of each preferred count, where
+          a blank preferred count stands for the current allocation. Below it,{" "}
+          <em>No Feedback Yet From These Instructors</em> lists each course
           whose instructor has not checked any box, including instructors who
           never opened the form, with a button that copies their emails.
           Clicking anywhere else on that row closes or opens the quarter&apos;s
