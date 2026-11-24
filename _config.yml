@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"copilot/add-perm-number-optional-column","number":470,"title":"Add optional Perm Number column to candidate ranking page","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/470"}]
+pull_requests: []
