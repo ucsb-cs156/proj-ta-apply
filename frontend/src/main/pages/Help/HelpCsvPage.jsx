@@ -247,6 +247,21 @@ export default function HelpCsvPage() {
           applicant rows follow. Test applications are left out; the full layout
           is described on the For Admins help page.
         </p>
+        <p data-testid="assignmentsTableCsvDescription">
+          <b>Download CSV</b> on the admin Assignments page (beside the Columns
+          menu) saves the table shown there, header row first and every cell
+          quoted: the applicant columns headed as the table heads them (
+          <code>First Name</code>, <code>Last Name</code>, <code>Email</code>,{" "}
+          <code>Major</code> and so on for the recruitment&apos;s type), then{" "}
+          <code>Tentative Assignment</code> (the lecture&apos;s column heading,
+          blank if none), then one column per lecture on the page, headed as in
+          the rankings CSV (<code>16</code>, or <code>16 (section 0100)</code>{" "}
+          when the page has more than one section of that course), holding only
+          the rank that lecture&apos;s instructor gave the applicant, blank when
+          unranked. There are no Allocation, Assigned or To Assign rows, and no
+          planning rows; applicant rows follow the header directly, in the
+          table&apos;s unsorted order.
+        </p>
         <p data-testid="assignmentsCsvDescription">
           Once a recruitment&apos;s assignments are published, the assignments
           page offers two downloads of the same table it shows, header row first

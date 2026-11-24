@@ -1807,6 +1807,23 @@ describe("Help pages (issue #140)", () => {
     expect(assignments).toHaveTextContent(
       "Allocation, how many applicants are Assigned to it so far, and how many places are still To Assign, in red when more have been assigned than allocated; those numbers stay put when you sort. To Assign is shown only when it is not zero: then its number is larger than the other two and the lecture's heading is bright yellow, so the columns that still need attention stand out, while a lecture with nothing to assign has a blank line there and no yellow. In each row, the cell of the lecture chosen in the Tentative Assignment dropdown has a thick black outline.",
     );
+    // Issue #475: the table's own CSV download.
+    expect(
+      screen.getByTestId("HelpAdminsPage-assignments-csv"),
+    ).toHaveTextContent(
+      "Download CSV, beside the Columns menu, saves the table as a spreadsheet-ready file: the same applicants in the same order, with the applicant columns headed as the table heads them, the Tentative Assignment (the lecture's column heading, blank if none), then one column per lecture holding the rank its instructor gave the applicant, blank when unranked.",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-assignments-csv"),
+    ).toHaveTextContent(
+      "The Allocation, Assigned and To Assign counts are not in the file, and columns hidden on the page are still in it. It differs from Download Rankings CSV on the recruitment card, which keeps every section ever offered and the three planning rows.",
+    );
+    expect(
+      within(screen.getByTestId("HelpAdminsPage-assignments-csv")).getByRole(
+        "link",
+        { name: "Download Rankings CSV" },
+      ),
+    ).toHaveAttribute("href", "/#rankings-csv");
     expect(
       screen.getByTestId("HelpAdminsPage-tentative-assignment"),
     ).toHaveTextContent(

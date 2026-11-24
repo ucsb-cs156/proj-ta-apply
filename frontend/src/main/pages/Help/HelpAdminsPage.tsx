@@ -138,6 +138,22 @@ export default function HelpAdminsPage(): React.JSX.Element {
           enough for a full lecture name. The choice is kept for that
           recruitment, the same way as on the Courses and Applications pages.
         </p>
+        <p data-testid="HelpAdminsPage-assignments-csv">
+          <strong>Download CSV</strong>, beside the Columns menu, saves the
+          table as a spreadsheet-ready file: the same applicants in the same
+          order, with the applicant columns headed as the table heads them, the{" "}
+          <strong>Tentative Assignment</strong> (the lecture&apos;s column
+          heading, blank if none), then one column per lecture holding the rank
+          its instructor gave the applicant, blank when unranked. Each lecture
+          column is headed by the bare course number (16), with the section
+          added only when the recruitment has more than one section of that
+          course (16 (section 0100)), as in the rankings CSV. The Allocation,
+          Assigned and To Assign counts are not in the file, and columns hidden
+          on the page are still in it. It differs from{" "}
+          <Link to="#rankings-csv">Download Rankings CSV</Link> on the
+          recruitment card, which keeps every section ever offered and the three
+          planning rows.
+        </p>
         <p data-testid="HelpAdminsPage-interest-cells">
           Each lecture&apos;s ranking cell is right-aligned and coloured by the
           applicant&apos;s own interest in that lecture: light green for a first
