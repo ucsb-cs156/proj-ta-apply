@@ -3,11 +3,8 @@ package edu.ucsb.cs.taapply.config;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.RecruitmentCoursesRefreshScheduler;
-import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
-import edu.ucsb.cs.taapply.services.ApplicationAccessService;
-import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import edu.ucsb.cs.taapply.jobs.RefreshRecruitmentCoursesJobFactory;
 import edu.ucsb.cs156.jobs.services.JobService;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,11 +22,8 @@ public class SchedulingConfigTests {
   @Nested
   class SwitchedOn {
     @Autowired ApplicationContext context;
-    @MockitoBean RecruitmentRepository recruitmentRepository;
-    @MockitoBean PopulateRecruitmentCoursesJobFactory factory;
+    @MockitoBean RefreshRecruitmentCoursesJobFactory factory;
     @MockitoBean JobService jobService;
-    @MockitoBean JobRateLimit jobRateLimit;
-    @MockitoBean ApplicationAccessService applicationAccessService;
 
     @Test
     public void the_scheduler_and_scheduling_config_are_present() {
@@ -42,11 +36,8 @@ public class SchedulingConfigTests {
   @Nested
   class SwitchedOffByDefault {
     @Autowired ApplicationContext context;
-    @MockitoBean RecruitmentRepository recruitmentRepository;
-    @MockitoBean PopulateRecruitmentCoursesJobFactory factory;
+    @MockitoBean RefreshRecruitmentCoursesJobFactory factory;
     @MockitoBean JobService jobService;
-    @MockitoBean JobRateLimit jobRateLimit;
-    @MockitoBean ApplicationAccessService applicationAccessService;
 
     @Test
     public void neither_bean_is_present() {
