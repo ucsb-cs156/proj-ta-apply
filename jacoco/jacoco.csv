@@ -22,6 +22,7 @@ taapply,edu.ucsb.cs.taapply.services,DeveloperModeService,0,75,0,8,0,15,0,11,0,7
 taapply,edu.ucsb.cs.taapply.services,AllocationService,0,303,0,34,0,63,0,26,0,9
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Step,0,33,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService,0,418,0,28,0,106,0,31,0,17
+taapply,edu.ucsb.cs.taapply.services,AssignmentsCsvService,0,242,0,10,0,49,0,12,0,7
 taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService.Snapshot,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.RankingProgress,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,HiringDecisions,0,37,0,12,0,8,0,8,0,2
@@ -128,7 +129,7 @@ taapply,edu.ucsb.cs.taapply.controller,BudgetController,0,278,0,36,0,68,0,29,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,DeveloperModeController,0,12,0,0,0,3,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,0,0,0,7,0,2,0,2
-taapply,edu.ucsb.cs.taapply.controller,AdminAssignmentsController,0,188,0,6,0,38,0,16,0,13
+taapply,edu.ucsb.cs.taapply.controller,AdminAssignmentsController,0,222,0,6,0,44,0,17,0,14
 taapply,edu.ucsb.cs.taapply.controller,AdminDraftApplicationsController.AdminDraftView,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.ApplicationFields,0,131,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CandidateRankingPage,0,57,0,0,0,1,0,1,0,1
