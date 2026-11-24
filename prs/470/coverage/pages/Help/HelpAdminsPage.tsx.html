@@ -1436,7 +1436,8 @@
 <a name='L1371'></a><a href='#L1371'>1371</a>
 <a name='L1372'></a><a href='#L1372'>1372</a>
 <a name='L1373'></a><a href='#L1373'>1373</a>
-<a name='L1374'></a><a href='#L1374'>1374</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1374'></a><a href='#L1374'>1374</a>
+<a name='L1375'></a><a href='#L1375'>1375</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1709,6 +1710,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">348x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3606,16 +3608,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
             &lt;strong&gt;Courses.&lt;/strong&gt; The recruitment&amp;apos;s course list: one
             row per lecture of each flagged course offered that quarter, with
             instructor, meeting time, room and enrollment from the schedule.{" "}
-            &lt;em&gt;Populate&lt;/em&gt; re-runs the job: it picks up newly flagged
-            courses, refreshes the details, and marks &lt;em&gt;stale&lt;/em&gt; any lecture
-            it no longer finds; a stale or cancelled lecture is hidden from
-            applicants and comes back by itself if a later run finds it again.{" "}
-            &lt;em&gt;Remove&lt;/em&gt; takes a lecture out of the recruitment for good (a
-            later Populate will not put it back), and the toggle shows removed
-            rows so one can be restored. Open, upcoming and recently closed
-            recruitments are also refreshed automatically every night, and the
-            page says when the list was last refreshed. Enrollment estimates and
-            allocations are not on this page: it points to the{" "}
+            &lt;em&gt;Refresh&lt;/em&gt;, in small type just above the table on both the
+            view-only and the edit page, re-runs the job: it picks up newly
+            flagged courses, refreshes the details, and marks &lt;em&gt;stale&lt;/em&gt; any
+            lecture it no longer finds; a stale or cancelled lecture is hidden
+            from applicants and comes back by itself if a later run finds it
+            again. &lt;em&gt;Remove&lt;/em&gt; takes a lecture out of the recruitment for
+            good (a later Refresh will not put it back), and the toggle shows
+            removed rows so one can be restored. Open, upcoming and recently
+            closed recruitments are also refreshed automatically every night at
+            midnight, and the line beside Refresh says when the course data was
+            last updated from the UCSB API. Enrollment estimates and allocations
+            are not on this page: it points to the{" "}
             &lt;Link to="#combined-allocations"&gt;Combined Allocation page&lt;/Link&gt;,
             where they are edited for TAs and ULAs together.
           &lt;/li&gt;
@@ -4104,17 +4108,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           get when you open it: nothing on it can be changed, and any number of
           tabs or windows may show it, for you or for other admins, without any
           warning. Its &lt;strong&gt;Edit&lt;/strong&gt; button, beside the words
-          &amp;ldquo;Click Edit to: populate the course list, add a lecture by
-          enroll code, remove a course, or release allocations to
-          faculty&amp;rdquo;, takes you to the &lt;strong&gt;edit page&lt;/strong&gt;, where you
-          use Populate and the other controls; it has a link back to the
-          view-only page. The estimated enrollments and the allocations are
-          edited on the Combined Allocation page, which counts as a tab of this
-          edit page (below). Only &lt;em&gt;one&lt;/em&gt; tab or window should have a given
-          recruitment&amp;apos;s edit page open at a time, and edit pages of
-          different recruitments never warn each other. If another admin, or
-          another tab of yours, has the same edit page open, you get a warning
-          that looks like this:
+          &amp;ldquo;Click Edit to: add a lecture by enroll code, remove a course,
+          or release allocations to faculty&amp;rdquo;, takes you to the{" "}
+          &lt;strong&gt;edit page&lt;/strong&gt;, where you use those controls; it has a
+          link back to the view-only page. The estimated enrollments and the
+          allocations are edited on the Combined Allocation page, which counts
+          as a tab of this edit page (below). Only &lt;em&gt;one&lt;/em&gt; tab or window
+          should have a given recruitment&amp;apos;s edit page open at a time, and
+          edit pages of different recruitments never warn each other. If another
+          admin, or another tab of yours, has the same edit page open, you get a
+          warning that looks like this:
         &lt;/p&gt;
         &lt;MultipleTabsBanner
           others={EXAMPLE_OTHERS}
@@ -4189,7 +4192,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-24T05:07:25.732Z
+                at 2026-11-24T05:25:21.188Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
