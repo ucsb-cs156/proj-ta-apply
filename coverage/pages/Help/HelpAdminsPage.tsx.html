@@ -1437,7 +1437,13 @@
 <a name='L1372'></a><a href='#L1372'>1372</a>
 <a name='L1373'></a><a href='#L1373'>1373</a>
 <a name='L1374'></a><a href='#L1374'>1374</a>
-<a name='L1375'></a><a href='#L1375'>1375</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1375'></a><a href='#L1375'>1375</a>
+<a name='L1376'></a><a href='#L1376'>1376</a>
+<a name='L1377'></a><a href='#L1377'>1377</a>
+<a name='L1378'></a><a href='#L1378'>1378</a>
+<a name='L1379'></a><a href='#L1379'>1379</a>
+<a name='L1380'></a><a href='#L1380'>1380</a>
+<a name='L1381'></a><a href='#L1381'>1381</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1710,6 +1716,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">348x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3539,8 +3551,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           allocations. A preferred number shows only when its &amp;ldquo;different
           number&amp;rdquo; box is checked. Every column sorts, every column but
           Course Name can be hidden (this browser remembers which), and the
-          Comments column can be dragged wider or narrower, down to 200px. Below
-          it, &lt;em&gt;No Feedback Yet From These Instructors&lt;/em&gt; lists each course
+          Comments column can be dragged wider or narrower, down to 200px. A{" "}
+          &lt;strong&gt;Totals/Counts&lt;/strong&gt; row under a thick black line gives the
+          number of courses, how many of them checked each box (as k/n), the sum
+          of each allocation column, and the sum of each preferred count, where
+          a blank preferred count stands for the current allocation. Below it,{" "}
+          &lt;em&gt;No Feedback Yet From These Instructors&lt;/em&gt; lists each course
           whose instructor has not checked any box, including instructors who
           never opened the form, with a button that copies their emails.
           Clicking anywhere else on that row closes or opens the quarter&amp;apos;s
@@ -3562,10 +3578,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Make Assignments and View Assignments buttons:{" "}
           &lt;strong&gt;Make Assignments&lt;/strong&gt; opens the page where candidates are
           assigned to slots, and &lt;strong&gt;View Assignments&lt;/strong&gt; the read-only
-          assignments page that admins and faculty share (it says the
-          assignments are not published yet until they are). Apart from them, at
-          the right end of the same row, &lt;strong&gt;Change History&lt;/strong&gt; opens
-          the list of every change made to the recruitment itself (see{" "}
+          assignments page that admins and faculty share (until they are
+          published, admins see the assignments so far under a red note, and
+          faculty are told they are not published yet). Apart from them, at the
+          right end of the same row, &lt;strong&gt;Change History&lt;/strong&gt; opens the
+          list of every change made to the recruitment itself (see{" "}
           &lt;a href="#audit-trail"&gt;Audit Trail&lt;/a&gt; below). In the diagram, step
           3&amp;apos;s &lt;em&gt;Allocations&lt;/em&gt; and step 5&amp;apos;s{" "}
           &lt;em&gt;(see allocations)&lt;/em&gt; links open the quarter&amp;apos;s{" "}
@@ -3718,9 +3735,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
             that admins and faculty share, with its two CSV downloads (see{" "}
             &lt;a href="#publish-assignments"&gt;publishing&lt;/a&gt; above). The
             card&amp;apos;s &lt;strong&gt;View Assignments&lt;/strong&gt; button and step 9 of
-            the diagram open it; until &lt;em&gt;Publish Assignments&lt;/em&gt; has been
-            clicked at the top of the Assignments page it says the assignments
-            are not published yet.
+            the diagram open it. Until &lt;em&gt;Publish Assignments&lt;/em&gt; has been
+            clicked at the top of the Assignments page, admins see the
+            assignments so far under a red &lt;em&gt;Not published yet&lt;/em&gt; note, and
+            faculty are told only that the assignments are not published yet.
           &lt;/li&gt;
           &lt;li id="change-history" data-testid="HelpAdminsPage-change-history"&gt;
             &lt;strong&gt;Change History.&lt;/strong&gt; Every change to the recruitment
@@ -4192,7 +4210,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-24T05:13:21.017Z
+                at 2026-11-24T19:38:56.605Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
