@@ -114,7 +114,7 @@ import org.springframework.stereotype.Service;
 <span class="fc" id="L114">        cached,</span>
 <span class="fc" id="L115">        recruitment.getQuarter());</span>
 
-<span class="fc" id="L117">    recruitment.setLastPopulatedAt(AppTime.now());</span>
+<span class="fc" id="L117">    recruitment.setCourseDataLastUpdated(AppTime.now());</span>
 <span class="fc" id="L118">    recruitmentRepository.save(recruitment);</span>
 <span class="fc" id="L119">    return refreshed.size();</span>
   }

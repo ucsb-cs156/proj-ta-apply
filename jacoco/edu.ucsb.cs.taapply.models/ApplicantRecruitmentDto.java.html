@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
     LocalDate primaryConsiderationDate,
     LocalDate actualOpeningDate,
     LocalDate actualClosingDate,
-    LocalDateTime lastPopulatedAt) {
+    LocalDateTime courseDataLastUpdated) {
 
   public static ApplicantRecruitmentDto from(Recruitment recruitment) {
 <span class="fc" id="L22">    return new ApplicantRecruitmentDto(</span>
@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
 <span class="fc" id="L28">        recruitment.getPrimaryConsiderationDate(),</span>
 <span class="fc" id="L29">        recruitment.getActualOpeningDate(),</span>
 <span class="fc" id="L30">        recruitment.getActualClosingDate(),</span>
-<span class="fc" id="L31">        recruitment.getLastPopulatedAt());</span>
+<span class="fc" id="L31">        recruitment.getCourseDataLastUpdated());</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

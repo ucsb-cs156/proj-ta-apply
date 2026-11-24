@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,13 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * The published assignments of a recruitment (issue #180), for admins and instructors: the table in
- * either layout, and the same table as a CSV file for the financial office. Nothing is served until
- * the admin has published.
+ * either layout, and the same table as a CSV file for the financial office. Until the admin has
+ * published, only admins are served the table, so they can watch the assignments take shape (issue
+ * #471); everyone else gets a 400 saying it is not published yet.
  */
 @Tag(name = &quot;Assignments&quot;)
 @RequestMapping(&quot;/api/assignments&quot;)
 @RestController
-<span class="fc" id="L29">public class AssignmentsController extends ApiController {</span>
+<span class="fc" id="L31">public class AssignmentsController extends ApiController {</span>
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired PublishedAssignmentsService publishedAssignmentsService;
 
@@ -34,38 +36,48 @@ import org.springframework.web.bind.annotation.RestController;
       summary = &quot;A recruitment's published assignments&quot;,
       description =
           &quot;layout=course gives one row per course with the people assigned to it; layout=student&quot;
-              + &quot; one row per TA or ULA with their course. 400 while the recruitment's assignments&quot;
-              + &quot; are not published, or for another layout; 404 for a recruitment that does not&quot;
-              + &quot; exist.&quot;)
+              + &quot; one row per TA or ULA with their course. Admins get the table whether or not the&quot;
+              + &quot; assignments are published (published says which); for anyone else, 400 while&quot;
+              + &quot; the recruitment's assignments are not published. 400 for another layout; 404 for&quot;
+              + &quot; a recruitment that does not exist.&quot;)
   @PreAuthorize(&quot;hasAnyRole('ROLE_ADMIN', 'ROLE_INSTRUCTOR')&quot;)
   @GetMapping(&quot;&quot;)
   public PublishedAssignmentsService.Table table(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;layout&quot;, description = &quot;course or student&quot;) @RequestParam String layout) {
-<span class="fc" id="L45">    return publishedAssignmentsService.table(recruitmentOf(recruitmentId), layout);</span>
+<span class="fc" id="L48">    return publishedAssignmentsService.table(recruitmentOf(recruitmentId), layout, isAdmin());</span>
   }
 
   @Operation(
       summary = &quot;Download a recruitment's published assignments as CSV&quot;,
-      description = &quot;The same table as the JSON endpoint, in the same layout, every cell quoted.&quot;)
+      description =
+          &quot;The same table as the JSON endpoint, in the same layout, every cell quoted; refused the&quot;
+              + &quot; same way while the assignments are not published.&quot;)
   @PreAuthorize(&quot;hasAnyRole('ROLE_ADMIN', 'ROLE_INSTRUCTOR')&quot;)
   @GetMapping(value = &quot;/csv&quot;, produces = &quot;text/csv&quot;)
   public ResponseEntity&lt;String&gt; csv(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;layout&quot;, description = &quot;course or student&quot;) @RequestParam String layout) {
-<span class="fc" id="L56">    String body = publishedAssignmentsService.csv(recruitmentOf(recruitmentId), layout);</span>
-<span class="fc" id="L57">    return ResponseEntity.ok()</span>
-<span class="fc" id="L58">        .header(</span>
+<span class="fc" id="L61">    String body = publishedAssignmentsService.csv(recruitmentOf(recruitmentId), layout, isAdmin());</span>
+<span class="fc" id="L62">    return ResponseEntity.ok()</span>
+<span class="fc" id="L63">        .header(</span>
             HttpHeaders.CONTENT_DISPOSITION,
-<span class="fc" id="L60">            &quot;attachment; filename=\&quot;assignments-%d-%s.csv\&quot;&quot;.formatted(recruitmentId, layout))</span>
-<span class="fc" id="L61">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
-<span class="fc" id="L62">        .body(body);</span>
+<span class="fc" id="L65">            &quot;attachment; filename=\&quot;assignments-%d-%s.csv\&quot;&quot;.formatted(recruitmentId, layout))</span>
+<span class="fc" id="L66">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
+<span class="fc" id="L67">        .body(body);</span>
+  }
+
+  /** Whether the signed-in user holds the admin role. */
+  private boolean isAdmin() {
+<span class="fc" id="L72">    return getCurrentUser().getRoles().stream()</span>
+<span class="fc" id="L73">        .map(GrantedAuthority::getAuthority)</span>
+<span class="fc" id="L74">        .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
   }
 
   private Recruitment recruitmentOf(Long recruitmentId) {
-<span class="fc" id="L66">    return recruitmentRepository</span>
-<span class="fc" id="L67">        .findById(recruitmentId)</span>
-<span class="fc" id="L68">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L78">    return recruitmentRepository</span>
+<span class="fc" id="L79">        .findById(recruitmentId)</span>
+<span class="fc" id="L80">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

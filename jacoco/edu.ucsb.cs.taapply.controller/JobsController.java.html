@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
+import edu.ucsb.cs.taapply.jobs.RefreshRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.TestJob;
 import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -26,8 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * list/logs/delete) under the same {@code /api/jobs} prefix, on non-overlapping sub-paths — the
  * same pattern as proj-scaffold's app-level {@code JobsController}.
  *
- * &lt;p&gt;Iteration 1 has no real background work, so the only launcher here is the test job. Iterations
- * 2 and 3 will add jobs that pull course data from the UCSB API.
+ * &lt;p&gt;Besides the test job, these launch the jobs that pull course data from the UCSB API.
  */
 @Tag(name = &quot;Jobs&quot;)
 @RequestMapping(&quot;/api/jobs&quot;)
@@ -43,6 +43,8 @@ import org.springframework.web.bind.annotation.RestController;
 
   @Autowired private PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
 
+  @Autowired private RefreshRecruitmentCoursesJobFactory refreshRecruitmentCoursesJobFactory;
+
   @Autowired private RecruitmentRepository recruitmentRepository;
 
   @Operation(summary = &quot;Launch the test job&quot;)
@@ -51,7 +53,7 @@ import org.springframework.web.bind.annotation.RestController;
   public Job launchTestJob(
       @Parameter(name = &quot;fail&quot;) @RequestParam(defaultValue = &quot;false&quot;) boolean fail,
       @Parameter(name = &quot;sleepMs&quot;) @RequestParam(defaultValue = &quot;0&quot;) int sleepMs) {
-<span class="fc" id="L54">    return jobService.runAsJob(TestJob.builder().fail(fail).sleepMs(sleepMs).build());</span>
+<span class="fc" id="L56">    return jobService.runAsJob(TestJob.builder().fail(fail).sleepMs(sleepMs).build());</span>
   }
 
   @Operation(
@@ -72,13 +74,13 @@ import org.springframework.web.bind.annotation.RestController;
 
     // Validate before launching so a bad range is a 400 rather than a job that fails immediately.
     // ApiController maps IllegalArgumentException to 400.
-<span class="fc" id="L75">    Quarter.quarterList(startQuarter, endQuarter);</span>
-<span class="fc bfc" id="L76" title="All 2 branches covered.">    if (!VALID_LEVELS.contains(level)) {</span>
-<span class="fc" id="L77">      throw new IllegalArgumentException(</span>
-<span class="fc" id="L78">          String.format(&quot;Level must be one of %s, was: %s&quot;, VALID_LEVELS, level));</span>
+<span class="fc" id="L77">    Quarter.quarterList(startQuarter, endQuarter);</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    if (!VALID_LEVELS.contains(level)) {</span>
+<span class="fc" id="L79">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L80">          String.format(&quot;Level must be one of %s, was: %s&quot;, VALID_LEVELS, level));</span>
     }
 
-<span class="fc" id="L81">    return jobService.runAsJob(populateCoursesJobFactory.create(startQuarter, endQuarter, level));</span>
+<span class="fc" id="L83">    return jobService.runAsJob(populateCoursesJobFactory.create(startQuarter, endQuarter, level));</span>
   }
 
   @Operation(
@@ -91,12 +93,25 @@ import org.springframework.web.bind.annotation.RestController;
   public Job launchPopulateRecruitmentCourses(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
 
-<span class="fc" id="L94">    Recruitment recruitment =</span>
+<span class="fc" id="L96">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L96">            .findById(recruitmentId)</span>
-<span class="fc" id="L97">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L98">            .findById(recruitmentId)</span>
+<span class="fc" id="L99">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc" id="L99">    return jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
+<span class="fc" id="L101">    return jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
+  }
+
+  @Operation(
+      summary = &quot;Refresh every current recruitment's course list from the UCSB API&quot;,
+      description =
+          &quot;The job that runs nightly (issue #464), on demand: re-fills the course list of every&quot;
+              + &quot; recruitment open for applications, not yet opened, or closed within the last six&quot;
+              + &quot; months, refreshing each course's instructor, days, time, room and status and the&quot;
+              + &quot; quarter's enrollment figures. Courses the admin removed stay removed.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/launch/refreshRecruitmentCourses&quot;)
+  public Job launchRefreshRecruitmentCourses() {
+<span class="fc" id="L114">    return jobService.runAsJob(refreshRecruitmentCoursesJobFactory.create());</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
