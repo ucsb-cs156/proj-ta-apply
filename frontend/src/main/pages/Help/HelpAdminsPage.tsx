@@ -154,6 +154,27 @@ export default function HelpAdminsPage(): React.JSX.Element {
           recruitment card, which keeps every section ever offered and the three
           planning rows.
         </p>
+        <p data-testid="HelpAdminsPage-auto-assign-slots">
+          <strong>Automatically Assign No-Conflict Slots</strong>, beside
+          Download CSV, fills every place where there is one clear choice. A
+          lecture that still has places to fill gets its highest-ranked
+          unassigned candidate when that candidate is enthusiastic about the
+          course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture
+          that still has places to fill has ranked them at all; a ranking by a
+          lecture that is already full does not count. This repeats until no
+          more such assignments can be made, since filling a lecture frees the
+          other candidates it ranked. A lecture whose top remaining candidate is
+          only Would Consider, is wanted by another lecture too, or ties with
+          someone for the top rank gets nothing: those are the judgement calls,
+          and the run lists them with the reason. Applicants marked Not Hired
+          take no part, and nothing already assigned is changed. Before running
+          it warns if the faculty ranking deadline has not passed, if a lecture
+          with places to fill has no rankings yet, or if assignments are already
+          published; afterwards it lists what it did, and{" "}
+          <strong>Undo this run</strong> clears exactly those assignments. Make
+          a judgement call by hand, then run it again: that often frees more
+          clear choices.
+        </p>
         <p data-testid="HelpAdminsPage-interest-cells">
           Each lecture&apos;s ranking cell is right-aligned and coloured by the
           applicant&apos;s own interest in that lecture: light green for a first

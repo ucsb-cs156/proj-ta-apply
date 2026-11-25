@@ -9,6 +9,8 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import AssignmentsTable from "main/components/Assignments/AssignmentsTable";
 import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
+import AutoAssignModal from "main/components/Assignments/AutoAssignModal";
+import { AUTO_ASSIGN_LABEL } from "main/utils/autoAssign";
 import {
   NO_APPLICANTS_NOTE,
   canCreateFakeRankings,
@@ -133,8 +135,32 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
   // Stryker disable next-line all : the query's initial data is an empty list, never undefined
   const hiddenColumns = hiddenColumnsData ?? [];
 
-  // The response is the whole page with the new counts, so it goes straight into the cache and
-  // nothing has to be re-read.
+  // Every answer about the assignments is the whole page with the new counts, so it goes straight
+  // into the cache and nothing has to be re-read.
+  const showAssignments = (updated: Assignments) =>
+    queryClient.setQueryData(queryKey, updated);
+  // A failed save, move or run: a 409 carries the page as it now stands, which replaces the stale
+  // one; anything else is reported.
+  const reportFailure = (error: unknown) => {
+    if (isConflict(error)) {
+      const refreshed = (
+        error as {
+          response: { data: { assignments?: Assignments } | null };
+        }
+      ).response.data?.assignments;
+      if (refreshed) {
+        // The click is not replayed: after the refresh it may no longer be the right move.
+        showAssignments(refreshed);
+        toast(apiErrorMessage(error));
+        return;
+      }
+    }
+    if (shouldToastBackendError(error)) {
+      toast(`${error}`);
+    } else {
+      console.error("Backend request failed", error);
+    }
+  };
   const assignMutation = useBackendMutation<
     { applicationId: number; recruitmentCourseId: number | null },
     Assignments
@@ -149,30 +175,11 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           : { applicationId, recruitmentCourseId, version: page.version },
       headers: activity.headers,
     }),
-    {
-      onSuccess: (updated) => queryClient.setQueryData(queryKey, updated),
-      onError: (error) => {
-        if (isConflict(error)) {
-          const refreshed = (
-            error as {
-              response: { data: { assignments?: Assignments } | null };
-            }
-          ).response.data?.assignments;
-          if (refreshed) {
-            // The click is not replayed: after the refresh it may no longer be the right move.
-            queryClient.setQueryData(queryKey, refreshed);
-            toast(apiErrorMessage(error));
-            return;
-          }
-        }
-        if (shouldToastBackendError(error)) {
-          toast(`${error}`);
-        } else {
-          console.error("Backend request failed", error);
-        }
-      },
-    },
+    { onSuccess: showAssignments, onError: reportFailure },
   );
+
+  // Issue #481: the no-conflict run, from its own modal (confirmation, then what it did).
+  const [showAutoAssign, setShowAutoAssign] = useState(false);
 
   // Issue #385: Developer Mode's Create Fake Rankings lives in this page's footer slot (it used to
   // be on the Courses edit page), red like the other developer buttons while it can be used. The
@@ -313,6 +320,15 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           >
             Download CSV
           </a>
+          {/* Issue #481: fills every slot with one clear choice; see AutoAssignModal. */}
+          <Button
+            variant="outline-primary"
+            size="sm"
+            onClick={() => setShowAutoAssign(true)}
+            data-testid="AdminAssignmentsPage-auto-assign"
+          >
+            {AUTO_ASSIGN_LABEL}
+          </Button>
         </div>
         <AssignmentsTable
           data={page}
@@ -333,6 +349,18 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           audience="admin"
           testIdPrefix="AdminAssignmentsPage-cancelled"
         />
+        {showAutoAssign && (
+          <AutoAssignModal
+            recruitmentId={recruitmentId as string}
+            page={page}
+            recruitment={recruitment}
+            headers={activity.headers}
+            onUpdated={showAssignments}
+            onError={reportFailure}
+            onHide={() => setShowAutoAssign(false)}
+            testIdPrefix="AdminAssignmentsPage-auto-assign-modal"
+          />
+        )}
         {showFakeRankings && (
           <FakeRankingsModal
             recruitmentId={recruitmentId as string}

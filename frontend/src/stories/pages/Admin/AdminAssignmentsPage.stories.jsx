@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import AdminAssignmentsPage from "main/pages/Admin/AdminAssignmentsPage";
 import assignmentsFixtures from "fixtures/assignmentsFixtures";
+import autoAssignFixtures from "fixtures/autoAssignFixtures";
 import cancelledApplicationsFixtures from "fixtures/cancelledApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -28,6 +29,14 @@ const handlers = (page, after, others, hidden = []) => [
     HttpResponse.json(cancelledApplicationsFixtures.two),
   ),
   http.put("/api/admin/assignments/tentative", () => HttpResponse.json(after)),
+  // Issue #481: a run answers with what it made and why the rest was left; undoing it answers
+  // with the page as it was.
+  http.post("/api/admin/assignments/auto", () =>
+    HttpResponse.json({ ...autoAssignFixtures.twoMade, assignments: after }),
+  ),
+  http.post("/api/admin/assignments/auto/undo", () =>
+    HttpResponse.json({ assignments: page, cleared: 2 }),
+  ),
   http.post("/api/admin/assignments/heartbeat", () =>
     HttpResponse.json({
       others: others ?? [],
