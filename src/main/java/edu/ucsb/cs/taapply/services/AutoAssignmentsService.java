@@ -3,14 +3,18 @@ package edu.ucsb.cs.taapply.services;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService.AssignmentRow;
 import edu.ucsb.cs.taapply.services.AssignmentsService.Assignments;
 import edu.ucsb.cs.taapply.services.AssignmentsService.CourseSummary;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
  * rational choice. A lecture that still needs assignments gets its highest-ranked remaining
  * candidate when that candidate is enthusiastic about the course and no other lecture that still
  * needs assignments has ranked them at all. Passes are repeated until one makes no assignment.
+ *
+ * <p>For a TA recruitment (issue #488) only PhD students in Computer Science are ever assigned
+ * automatically. An MS student, or a PhD student in another major, is still a candidate, so a
+ * lecture whose top remaining candidate is one gets nothing and is listed with the reason: passing
+ * over them to the next PhD would override the instructor's ranking, which is a person's call. A
+ * ULA recruitment has no class levels and the rule does not apply.
  *
  * <p>The planning is pure ({@link #plan}) and works on the page's own data, so the controller tests
  * and this service's tests need no database. Within a pass, two assignments can never share a
@@ -41,6 +51,20 @@ public class AutoAssignmentsService {
   public static final String TIE = "TIE";
   public static final String NOT_ENTHUSIASTIC = "NOT_ENTHUSIASTIC";
   public static final String RANKED_ELSEWHERE = "RANKED_ELSEWHERE";
+
+  /** TA only (issue #488): the top remaining candidate is not a PhD student. */
+  public static final String NOT_PHD = "NOT_PHD";
+
+  /**
+   * TA only (issue #488): the top remaining candidate is a PhD student but not in Computer Science.
+   */
+  public static final String NOT_CS_MAJOR = "NOT_CS_MAJOR";
+
+  /**
+   * The majors that count as Computer Science for a TA auto-assignment (issue #488), as the TA
+   * majors list has spelt them; compared ignoring case and surrounding spaces.
+   */
+  static final Set<String> CS_MAJORS = Set.of("computer science", "computer science (cs)");
 
   /** The interests that count as enthusiastic: the preference scale's three strongest. */
   static final Set<String> ENTHUSIASTIC =
@@ -75,12 +99,20 @@ public class AutoAssignmentsService {
   /** The answer to an undo: the assignments as they now stand, and how many were cleared. */
   public record Undone(Assignments assignments, int cleared) {}
 
+  /** {@link #plan(Assignments, Set, Map)} with nobody restricted to manual assignment. */
+  public static Plan plan(Assignments page, Set<Long> ineligible) {
+    return plan(page, ineligible, Map.of());
+  }
+
   /**
    * Plans a run over the page as it stands, without changing anything. {@code ineligible} are the
    * applications never to assign (those marked Not Hired): they are left out of every ranking list,
-   * as if already placed, so they neither receive a place nor hold one up.
+   * as if already placed, so they neither receive a place nor hold one up. {@code manualOnly} are
+   * the applications that may only be assigned by hand (issue #488), each with the reason code
+   * ({@link #NOT_PHD} or {@link #NOT_CS_MAJOR}): they stay in every ranking list, so a lecture
+   * whose top remaining candidate is one of them gets nothing, with that reason.
    */
-  public static Plan plan(Assignments page, Set<Long> ineligible) {
+  public static Plan plan(Assignments page, Set<Long> ineligible, Map<Long, String> manualOnly) {
     Map<Long, Integer> left = new LinkedHashMap<>();
     for (CourseSummary course : page.courses()) {
       if (!course.historical()) {
@@ -102,7 +134,7 @@ public class AutoAssignmentsService {
       List<Made> thisPass = new ArrayList<>();
       skipped = new ArrayList<>();
       for (Long courseId : needing(left)) {
-        Skipped reason = consider(courseId, pool, left, page.rows(), pass, thisPass);
+        Skipped reason = consider(courseId, pool, left, page.rows(), manualOnly, pass, thisPass);
         if (reason != null) {
           skipped.add(reason);
         }
@@ -140,6 +172,7 @@ public class AutoAssignmentsService {
       List<AssignmentRow> pool,
       Map<Long, Integer> left,
       List<AssignmentRow> allRows,
+      Map<Long, String> manualOnly,
       int pass,
       List<Made> thisPass) {
     AssignmentRow top = null;
@@ -165,6 +198,10 @@ public class AutoAssignmentsService {
     }
     if (atTopRank > 1) {
       return new Skipped(courseId, TIE, null, topRank, List.of());
+    }
+    String manual = manualOnly.get(top.applicationId());
+    if (manual != null) {
+      return new Skipped(courseId, manual, top.applicationId(), topRank, List.of());
     }
     String preference = top.preferences().get(courseId);
     if (preference == null || !ENTHUSIASTIC.contains(preference)) {
@@ -192,12 +229,19 @@ public class AutoAssignmentsService {
   public Outcome run(Recruitment recruitment) {
     List<Application> applications = assignmentsService.realApplications(recruitment.getId());
     Set<Long> ineligible = new HashSet<>();
+    Map<Long, String> manualOnly = new HashMap<>();
+    boolean ta = recruitment.getType() == RecruitmentType.TA;
     for (Application application : applications) {
       if (application.getStatus() == ApplicationReviewStatus.NOT_HIRED) {
         ineligible.add(application.getId());
+      } else if (ta) {
+        String reason = manualOnlyReason(application);
+        if (reason != null) {
+          manualOnly.put(application.getId(), reason);
+        }
       }
     }
-    Plan plan = plan(assignmentsService.assignments(recruitment), ineligible);
+    Plan plan = plan(assignmentsService.assignments(recruitment), ineligible, manualOnly);
     for (Made assignment : plan.made()) {
       Application application = byId(applications, assignment.applicationId());
       application.setTentativeAssignmentId(assignment.recruitmentCourseId());
@@ -226,6 +270,22 @@ public class AutoAssignmentsService {
       }
     }
     return new Undone(assignmentsService.assignments(recruitment), cleared);
+  }
+
+  /**
+   * Why a TA applicant may only be assigned by hand (issue #488), or null when they may be assigned
+   * automatically: not a PhD student, or a PhD student whose major is not Computer Science. An
+   * application with no class level or no major recorded is not auto-assigned either.
+   */
+  static String manualOnlyReason(Application application) {
+    if (application.getClassLevel() != ClassLevel.PHD) {
+      return NOT_PHD;
+    }
+    String major = application.getMajor();
+    if (major == null || !CS_MAJORS.contains(major.strip().toLowerCase(Locale.ROOT))) {
+      return NOT_CS_MAJOR;
+    }
+    return null;
   }
 
   private static Application byId(List<Application> applications, Long id) {

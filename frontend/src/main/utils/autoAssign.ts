@@ -22,7 +22,10 @@ export type AutoAssignReason =
   | "ALL_RANKED_ASSIGNED"
   | "TIE"
   | "NOT_ENTHUSIASTIC"
-  | "RANKED_ELSEWHERE";
+  | "RANKED_ELSEWHERE"
+  // TA only (issue #488): the top remaining candidate may only be assigned by hand.
+  | "NOT_PHD"
+  | "NOT_CS_MAJOR";
 
 export type AutoAssignSkipped = {
   recruitmentCourseId: number;
@@ -48,6 +51,14 @@ export type AutoAssignUndone = {
 };
 
 export const AUTO_ASSIGN_LABEL = "Automatically Assign No-Conflict Slots";
+
+/** The rule in one breath, for the button's tooltip; the TA version adds the PhD rule (issue #488). */
+export const autoAssignTooltip = (type: "TA" | "ULA"): string =>
+  `Fills every place where there is one clear choice: the top-ranked unassigned candidate who is enthusiastic about the course and wanted by no other lecture that still has places.${type === "TA" ? " Only PhD students in Computer Science are ever assigned automatically; MS students are always assigned by hand." : ""} Can be undone.`;
+
+/** The modal's explanation; the TA version adds the PhD rule (issue #488). */
+export const autoAssignExplanation = (type: "TA" | "ULA"): string =>
+  `Fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all. This repeats until no more such assignments can be made. Applicants marked Not Hired take no part.${type === "TA" ? " Only PhD students whose major is Computer Science are ever assigned automatically; a lecture whose top remaining candidate is an MS student or in another major is left for you, and listed with the reason." : ""} Nothing already assigned is changed, and the run can be undone afterwards.`;
 
 /**
  * The lectures on offer with places still to fill that nobody has ranked anyone for. A run cannot
@@ -125,7 +136,7 @@ export const skippedSentence = (
   applicant: (id: number) => string,
 ): string => {
   const name = lecture(skipped.recruitmentCourseId);
-  // Only the last two reasons name a candidate, and the backend always sends one for them.
+  // Only the reasons about a candidate name one, and the backend always sends one for them.
   const candidate = () =>
     `${applicant(skipped.applicationId as number)} (ranked ${skipped.rank})`;
   switch (skipped.reason) {
@@ -139,5 +150,9 @@ export const skippedSentence = (
       return `${name}: its top remaining candidate, ${candidate()}, is not enthusiastic about it.`;
     case "RANKED_ELSEWHERE":
       return `${name}: its top remaining candidate, ${candidate()}, is also ranked by ${skipped.blockedBy.map(lecture).join(" and ")}.`;
+    case "NOT_PHD":
+      return `${name}: its top remaining candidate, ${candidate()}, is an MS student, so is assigned by hand only.`;
+    case "NOT_CS_MAJOR":
+      return `${name}: its top remaining candidate, ${candidate()}, is not a Computer Science major, so is assigned by hand only.`;
   }
 };

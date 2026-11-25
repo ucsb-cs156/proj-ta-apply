@@ -10,7 +10,7 @@ import AssignmentsTable from "main/components/Assignments/AssignmentsTable";
 import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
 import AutoAssignModal from "main/components/Assignments/AutoAssignModal";
-import { AUTO_ASSIGN_LABEL } from "main/utils/autoAssign";
+import { AUTO_ASSIGN_LABEL, autoAssignTooltip } from "main/utils/autoAssign";
 import {
   NO_APPLICANTS_NOTE,
   canCreateFakeRankings,
@@ -320,15 +320,28 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           >
             Download CSV
           </a>
-          {/* Issue #481: fills every slot with one clear choice; see AutoAssignModal. */}
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={() => setShowAutoAssign(true)}
-            data-testid="AdminAssignmentsPage-auto-assign"
+          {/* Issue #481: fills every slot with one clear choice; see AutoAssignModal. The tooltip
+              (issue #488) says the rule in a breath, and for a TA recruitment the PhD rule. */}
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip
+                id="AdminAssignmentsPage-auto-assign-tooltip"
+                data-testid="AdminAssignmentsPage-auto-assign-tooltip"
+              >
+                {autoAssignTooltip(page.type)}
+              </Tooltip>
+            }
           >
-            {AUTO_ASSIGN_LABEL}
-          </Button>
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => setShowAutoAssign(true)}
+              data-testid="AdminAssignmentsPage-auto-assign"
+            >
+              {AUTO_ASSIGN_LABEL}
+            </Button>
+          </OverlayTrigger>
         </div>
         <AssignmentsTable
           data={page}

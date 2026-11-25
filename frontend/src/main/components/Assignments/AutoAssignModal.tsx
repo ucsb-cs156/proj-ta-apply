@@ -11,6 +11,7 @@ import {
   type AutoAssignOutcome,
   type AutoAssignUndone,
   applicantNames,
+  autoAssignExplanation,
   deadlinePending,
   lectureNames,
   madeSentence,
@@ -212,15 +213,9 @@ export default function AutoAssignModal({
         <Modal.Title>{AUTO_ASSIGN_LABEL}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {/* Issue #488: the TA version adds that only PhD students in CS are assigned. */}
         <p data-testid={`${testIdPrefix}-explanation`}>
-          Fills every place where there is one clear choice. A lecture that
-          still has places to fill gets its highest-ranked unassigned candidate
-          when that candidate is enthusiastic about the course (1st Choice, 2nd
-          Choice or Enthusiastic) and no other lecture that still has places to
-          fill has ranked them at all. This repeats until no more such
-          assignments can be made. Applicants marked Not Hired take no part.
-          Nothing already assigned is changed, and the run can be undone
-          afterwards.
+          {autoAssignExplanation(page.type)}
         </p>
         {warnings.length > 0 && (
           <ul data-testid={`${testIdPrefix}-warnings`}>

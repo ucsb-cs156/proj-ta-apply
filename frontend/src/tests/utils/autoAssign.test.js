@@ -7,6 +7,8 @@ import {
   madeSentence,
   needingWithoutRankings,
   skippedSentence,
+  autoAssignExplanation,
+  autoAssignTooltip,
 } from "main/utils/autoAssign";
 
 describe("autoAssign utilities (issue #481)", () => {
@@ -90,8 +92,49 @@ describe("autoAssign utilities (issue #481)", () => {
     ).toBe("Ada Lovelace to 8, ranked 1 (pass 2)");
   });
 
+  test("autoAssignTooltip: the rule in a breath, with the PhD sentence for a TA recruitment only (issue #488)", () => {
+    expect(autoAssignTooltip("ULA")).toBe(
+      "Fills every place where there is one clear choice: the top-ranked unassigned candidate who is enthusiastic about the course and wanted by no other lecture that still has places. Can be undone.",
+    );
+    expect(autoAssignTooltip("TA")).toBe(
+      "Fills every place where there is one clear choice: the top-ranked unassigned candidate who is enthusiastic about the course and wanted by no other lecture that still has places. Only PhD students in Computer Science are ever assigned automatically; MS students are always assigned by hand. Can be undone.",
+    );
+  });
+
+  test("autoAssignExplanation: the modal's text, with the PhD sentence for a TA recruitment only (issue #488)", () => {
+    expect(autoAssignExplanation("ULA")).toBe(
+      "Fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all. This repeats until no more such assignments can be made. Applicants marked Not Hired take no part. Nothing already assigned is changed, and the run can be undone afterwards.",
+    );
+    expect(autoAssignExplanation("TA")).toBe(
+      "Fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all. This repeats until no more such assignments can be made. Applicants marked Not Hired take no part. Only PhD students whose major is Computer Science are ever assigned automatically; a lecture whose top remaining candidate is an MS student or in another major is left for you, and listed with the reason. Nothing already assigned is changed, and the run can be undone afterwards.",
+    );
+  });
+
   test("skippedSentence: one sentence per reason", () => {
     const sentence = (skipped) => skippedSentence(skipped, lecture, applicant);
+    // Issue #488: the two manual-only reasons.
+    expect(
+      sentence({
+        recruitmentCourseId: 10,
+        reason: "NOT_PHD",
+        applicationId: 2,
+        rank: 1,
+        blockedBy: [],
+      }),
+    ).toBe(
+      "8: its top remaining candidate, Grace Hopper (ranked 1), is an MS student, so is assigned by hand only.",
+    );
+    expect(
+      sentence({
+        recruitmentCourseId: 20,
+        reason: "NOT_CS_MAJOR",
+        applicationId: 3,
+        rank: 1,
+        blockedBy: [],
+      }),
+    ).toBe(
+      "16: its top remaining candidate, Alan Turing (ranked 1), is not a Computer Science major, so is assigned by hand only.",
+    );
     expect(
       sentence({
         recruitmentCourseId: 10,

@@ -1832,6 +1832,10 @@ describe("Help pages (issue #140)", () => {
     expect(autoAssign).toHaveTextContent(
       "Before running it warns if the faculty ranking deadline has not passed, if a lecture with places to fill has no rankings yet, or if assignments are already published; afterwards it lists what it did, and Undo this run clears exactly those assignments.",
     );
+    // Issue #488: the TA-only rule.
+    expect(autoAssign).toHaveTextContent(
+      "On a TA recruitment only PhD students whose major is Computer Science are ever assigned automatically: a lecture whose top remaining candidate is an MS student, or a PhD student in another major, is left for you and listed with that reason, since passing them over would override the instructor's ranking. The rule does not apply to ULA recruitments.",
+    );
     expect(
       screen
         .getByTestId("HelpAdminsPage-assignments-csv")
