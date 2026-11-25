@@ -25,6 +25,10 @@ export type Recruitment = {
   allocationVisibility?: AllocationVisibility;
   /** Whether the assignments page and its CSVs are open to admins and faculty (issue #180). */
   assignmentsPublished?: boolean;
+  /** When soft offers were released to the assigned ULA applicants (issue #485); null until then. */
+  softOffersReleasedAt?: string | null;
+  /** By when the assigned applicants are asked to answer their soft offer (issue #485). */
+  softOfferDeadline?: string | null;
 };
 
 /** The applicant-facing recruitment shape deliberately excludes faculty review fields. */

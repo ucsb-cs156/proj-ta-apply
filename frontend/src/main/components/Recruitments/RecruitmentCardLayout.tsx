@@ -14,6 +14,10 @@ import {
   type RecruitmentStepsData,
 } from "main/utils/recruitmentSteps";
 import { useRememberedOpen } from "main/utils/useRememberedOpen";
+import {
+  RELEASE_SOFT_OFFERS_LABEL,
+  canReleaseSoftOffers,
+} from "main/utils/softOffers";
 
 export const DELETE_TOOLTIP = "Delete this Recruitment";
 
@@ -39,6 +43,8 @@ type RecruitmentCardLayoutProps = {
   onDeleteRequested: (recruitment: Recruitment) => void;
   onAction?: (action: RecruitmentStepAction) => void;
   onNavigate?: (href: string) => void;
+  /** Issue #485: the Release Soft Offers button, on a ULA card once hiring decisions are released. */
+  onReleaseSoftOffers?: (recruitment: Recruitment) => void;
   testIdPrefix?: string;
 };
 
@@ -70,6 +76,7 @@ export default function RecruitmentCardLayout({
   onDeleteRequested,
   onAction,
   onNavigate,
+  onReleaseSoftOffers = () => {},
   testIdPrefix = "RecruitmentCardLayout",
 }: RecruitmentCardLayoutProps): React.JSX.Element {
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
@@ -239,6 +246,16 @@ export default function RecruitmentCardLayout({
             >
               View Assignments
             </Link>
+            {/* Issue #485: ULA only, once hiring decisions are released and until soft offers are. */}
+            {canReleaseSoftOffers(recruitment) && (
+              <Button
+                variant="outline-warning"
+                onClick={() => onReleaseSoftOffers(recruitment)}
+                data-testid={id("release-soft-offers-button")}
+              >
+                {RELEASE_SOFT_OFFERS_LABEL}
+              </Button>
+            )}
             {/* The faculty rankings exist only once the review has been opened (issue #358). */}
             {recruitment.reviewStatus !== "NotStarted" && (
               <a

@@ -19,6 +19,8 @@ const baseHandlers = [
   ),
   http.post("/api/admin/recruitments/post", () => HttpResponse.json({ id: 4 })),
   http.put("/api/admin/recruitments/status", () => HttpResponse.json({})),
+  http.put("/api/admin/recruitments/softOffers", () => HttpResponse.json({})),
+  http.get("/api/softOfferNotices/current", () => HttpResponse.json([])),
   http.delete("/api/admin/recruitments/delete", () =>
     HttpResponse.json({ message: "deleted" }),
   ),

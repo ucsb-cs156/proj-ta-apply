@@ -141,4 +141,18 @@ public class Recruitment {
   /** When the assignments were last published (issue #231); null until they have been. */
   @Column(name = "assignments_published_at")
   private LocalDateTime assignmentsPublishedAt;
+
+  /**
+   * When soft offers were released to the assigned applicants (issue #485, part of #483): a
+   * ULA-only step after hiring decisions are released. Null until released; never cleared. Audited.
+   */
+  @Column(name = "soft_offers_released_at")
+  private LocalDateTime softOffersReleasedAt;
+
+  /**
+   * By when the assigned applicants are asked to answer their soft offer (issue #485), Pacific
+   * wall-clock time; null until soft offers are released, and changeable afterwards. Audited.
+   */
+  @Column(name = "soft_offer_deadline")
+  private LocalDateTime softOfferDeadline;
 }

@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -839,6 +840,138 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                 .with(csrf()))
         .andExpect(status().isNotFound());
     verify(recruitmentRepository, never()).save(any());
+  }
+
+  // ---- PUT /api/admin/recruitments/softOffers (issue #485) ----
+
+  private static final String SOFT_OFFERS_URL =
+      "/api/admin/recruitments/softOffers?id=1&deadline=2999-12-01T17:00";
+
+  /** A ULA recruitment with hiring decisions released: soft offers may be released. */
+  private static Recruitment releasedUla() {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.ULA);
+    r.setReviewStatus("Closed");
+    r.setAssignmentsPublished(true);
+    return r;
+  }
+
+  private String softOffersRefusal(Recruitment r, String url) throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    MvcResult response =
+        mockMvc.perform(put(url).with(csrf())).andExpect(status().isBadRequest()).andReturn();
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
+    assertNull(r.getSoftOffersReleasedAt());
+    assertNull(r.getSoftOfferDeadline());
+    return (String) responseToJson(response).get("message");
+  }
+
+  @Test
+  public void logged_out_users_cannot_release_soft_offers() throws Exception {
+    mockMvc.perform(put(SOFT_OFFERS_URL).with(csrf())).andExpect(status().is(403));
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR", "USER"})
+  @Test
+  public void instructors_cannot_release_soft_offers() throws Exception {
+    mockMvc.perform(put(SOFT_OFFERS_URL).with(csrf())).andExpect(status().is(403));
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void releasing_soft_offers_for_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.empty());
+    MvcResult response =
+        mockMvc
+            .perform(put(SOFT_OFFERS_URL).with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+    assertEquals("Recruitment with id 1 not found", responseToJson(response).get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_deadline_without_a_time_is_a_400() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/recruitments/softOffers?id=1&deadline=2999-12-01").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void soft_offers_are_refused_for_a_ta_recruitment() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAssignmentsPublished(true);
+    assertEquals("Soft offers are a ULA feature.", softOffersRefusal(r, SOFT_OFFERS_URL));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void soft_offers_are_refused_before_hiring_decisions_are_released() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.ULA);
+    assertEquals(
+        "Release hiring decisions before releasing soft offers.",
+        softOffersRefusal(r, SOFT_OFFERS_URL));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_soft_offer_deadline_in_the_past_is_refused() throws Exception {
+    assertEquals(
+        "The soft offer deadline must be in the future.",
+        softOffersRefusal(
+            releasedUla(), "/api/admin/recruitments/softOffers?id=1&deadline=2000-01-01T17:00"));
+  }
+
+  /** The release stamps the moment and the deadline, and both go in the audit trail. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_release_soft_offers_and_it_is_audited() throws Exception {
+    Recruitment r = releasedUla();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("softOffersReleasedAt", "null"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+    LocalDateTime start = LocalDateTime.now().minusSeconds(1);
+
+    MvcResult response =
+        mockMvc.perform(put(SOFT_OFFERS_URL).with(csrf())).andExpect(status().isOk()).andReturn();
+
+    assertNotNull(r.getSoftOffersReleasedAt());
+    assertTrue(r.getSoftOffersReleasedAt().isAfter(start));
+    assertTrue(r.getSoftOffersReleasedAt().isBefore(LocalDateTime.now().plusSeconds(1)));
+    assertEquals(LocalDateTime.of(2999, 12, 1, 17, 0), r.getSoftOfferDeadline());
+    InOrder inOrder = inOrder(recruitmentAuditService);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentAuditService).saveAndRecordChanges(before, r);
+    verify(recruitmentRepository, never()).save(any());
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  /** Once released, the same call only moves the deadline; the release moment is kept. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void calling_again_changes_only_the_deadline() throws Exception {
+    Recruitment r = releasedUla();
+    LocalDateTime releasedAt = LocalDateTime.of(2026, 11, 20, 9, 30);
+    r.setSoftOffersReleasedAt(releasedAt);
+    r.setSoftOfferDeadline(LocalDateTime.of(2026, 11, 25, 17, 0));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("softOfferDeadline", "2026-11-25T17:00"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/softOffers?id=1&deadline=2999-01-05T12:30").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(releasedAt, r.getSoftOffersReleasedAt());
+    assertEquals(LocalDateTime.of(2999, 1, 5, 12, 30), r.getSoftOfferDeadline());
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
   }
 
   // ---- PUT /api/admin/recruitments/assignmentsPublished (issues #180 and #237) ----

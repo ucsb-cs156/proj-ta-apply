@@ -71,7 +71,9 @@ public class RecruitmentAuditServiceTests {
             "facultyRankingDeadline",
             "allocationVisibility",
             "assignmentsPublished",
-            "totalHiringTarget"),
+            "totalHiringTarget",
+            "softOffersReleasedAt",
+            "softOfferDeadline"),
         new ArrayList<>(RecruitmentAuditService.FIELDS.keySet()));
   }
 
@@ -116,7 +118,9 @@ public class RecruitmentAuditServiceTests {
             "facultyRankingDeadline",
             "allocationVisibility",
             "assignmentsPublished",
-            "totalHiringTarget"),
+            "totalHiringTarget",
+            "softOffersReleasedAt",
+            "softOfferDeadline"),
         new ArrayList<>(fields.keySet()));
     assertEquals("CLOSED", fields.get("applicationStatus"));
     assertEquals("2026-01-05", fields.get("tentativeOpeningDate"));
@@ -131,6 +135,9 @@ public class RecruitmentAuditServiceTests {
     assertEquals("false", fields.get("assignmentsPublished"));
     // Issue #391: the target defaults to 1 and is recorded as a plain number.
     assertEquals("1", fields.get("totalHiringTarget"));
+    // Issue #485: unreleased soft offers.
+    assertNull(fields.get("softOffersReleasedAt"));
+    assertNull(fields.get("softOfferDeadline"));
   }
 
   @Test

@@ -793,6 +793,84 @@ public class RecruitmentsWebIT extends WebTestCase {
   }
 
   /** Issue #141: the recruitments live on the admin's home page, and the old page is gone. */
+  /**
+   * Issue #485: a ULA recruitment with hiring decisions released offers Release Soft Offers on its
+   * card; the modal proposes a deadline, warns that no notice text is saved, releases on confirm,
+   * and the release and the deadline go in the Change History.
+   */
+  @Test
+  public void an_admin_releases_soft_offers_from_the_ula_card_and_it_is_in_the_change_history()
+      throws Exception {
+    Recruitment ula =
+        recruitmentRepository.save(
+            Recruitment.builder()
+                .quarter("20264")
+                .type(RecruitmentType.ULA)
+                .applicationStatus(ApplicationStatus.CLOSED)
+                .reviewStatus("Closed")
+                .tentativeOpeningDate(LocalDate.of(2026, 9, 1))
+                .primaryConsiderationDate(LocalDate.of(2026, 9, 20))
+                .assignmentsPublished(true)
+                .assignmentsPublishedAt(LocalDateTime.of(2026, 10, 1, 9, 0))
+                .build());
+    // A TA recruitment with decisions released too: its card must not offer the button.
+    recruitmentRepository.save(
+        Recruitment.builder()
+            .quarter("20264")
+            .type(RecruitmentType.TA)
+            .applicationStatus(ApplicationStatus.CLOSED)
+            .reviewStatus("Closed")
+            .tentativeOpeningDate(LocalDate.of(2026, 9, 1))
+            .primaryConsiderationDate(LocalDate.of(2026, 9, 20))
+            .assignmentsPublished(true)
+            .build());
+
+    setupAdminUser();
+    goToRecruitments();
+    // Newest quarter, TA before ULA: card 0 is the TA one, card 1 the ULA one.
+    String taCard = "HomePageLoggedIn-admin-card-0-";
+    String ulaCard = "HomePageLoggedIn-admin-card-1-";
+    waitFor(page.getByTestId(ulaCard + "release-soft-offers-button"));
+    assertThat(page.getByTestId(ulaCard + "type")).hasText("ULA");
+    assertEquals(0, page.getByTestId(taCard + "release-soft-offers-button").count());
+
+    page.getByTestId(ulaCard + "release-soft-offers-button").click();
+    String modal = "HomePageLoggedIn-admin-release-soft-offers";
+    assertThat(page.getByTestId(modal + "-modal")).isVisible();
+    assertThat(page.getByTestId(modal + "-explanation"))
+        .containsText("Please choose a date/time as a deadline for soft offers.");
+    // The box proposes 5:00 pm, five days on; no notice text is saved, so the warning shows.
+    assertThat(page.getByTestId(modal + "-deadline-input")).hasValue(Pattern.compile("T17:00$"));
+    assertThat(page.getByTestId(modal + "-warning-notice"))
+        .containsText("No Soft Offer Notices text has been saved");
+    assertEquals(0, page.getByTestId(modal + "-warning-tentative").count());
+
+    // A deadline in the past is refused in the modal and nothing changes.
+    page.getByTestId(modal + "-deadline-input").fill("2000-01-01T17:00");
+    page.getByTestId(modal + "-confirm").click();
+    assertThat(page.getByTestId(modal + "-deadline-error"))
+        .hasText("Enter a deadline in the future.");
+    assertEquals(
+        null, recruitmentRepository.findById(ula.getId()).orElseThrow().getSoftOffersReleasedAt());
+
+    page.getByTestId(modal + "-deadline-input").fill("2999-12-01T17:00");
+    page.getByTestId(modal + "-confirm").click();
+    assertThat(page.getByText("Soft offers released.")).isVisible();
+    assertThat(page.getByTestId(modal + "-modal")).isHidden();
+    // The button leaves the card.
+    assertThat(page.getByTestId(ulaCard + "release-soft-offers-button")).hasCount(0);
+    Recruitment released = recruitmentRepository.findById(ula.getId()).orElseThrow();
+    assertNotNull(released.getSoftOffersReleasedAt());
+    assertEquals(LocalDateTime.of(2999, 12, 1, 17, 0), released.getSoftOfferDeadline());
+
+    // Both fields are in the Change History, with the admin's email.
+    page.getByTestId(ulaCard + "change-history-button").click();
+    waitFor(page.getByText("softOffersReleasedAt"));
+    assertThat(page.getByText("softOffersReleasedAt")).isVisible();
+    assertThat(page.getByText("softOfferDeadline")).isVisible();
+    assertThat(page.getByText("2999-12-01T17:00").first()).isVisible();
+  }
+
   @Test
   public void non_admin_sees_no_recruitments_and_the_old_page_is_gone() throws Exception {
     setupRegularUser();

@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   PACIFIC_TIME_ZONE,
+  SOFT_OFFER_DEADLINE_DAYS,
+  defaultSoftOfferDeadline,
   formatLongDate,
   formatPacificDateTime,
+  isFutureWallClock,
+  pacificNowLocalIso,
   pacificTodayIso,
   pacificWallClock,
 } from "main/utils/pacificTime";
@@ -196,6 +200,62 @@ describe("formatLongDate", () => {
     }
   });
 });
+
+// Issue #485: the soft offer deadline box.
+describe.each(BROWSER_ZONES)(
+  "soft offer deadline with the browser in %s",
+  (zone) => {
+    // 6:30 pm on Nov 24 in California, already Nov 25 in UTC and Tokyo.
+    const evening = new Date("2026-11-25T02:30:00Z");
+
+    test("pacificNowLocalIso is the Pacific wall clock as a datetime-local value", () => {
+      inBrowserZone(zone, () => {
+        expect(pacificNowLocalIso(evening)).toBe("2026-11-24T18:30");
+        expect(pacificNowLocalIso(new Date("2026-07-01T07:05:00Z"))).toBe(
+          "2026-07-01T00:05",
+        );
+      });
+    });
+
+    test("defaultSoftOfferDeadline is 5:00 pm five calendar days after the Pacific date", () => {
+      inBrowserZone(zone, () => {
+        expect(SOFT_OFFER_DEADLINE_DAYS).toBe(5);
+        expect(defaultSoftOfferDeadline(evening)).toBe("2026-11-29T17:00");
+        // Across a month end, and across a year end.
+        expect(defaultSoftOfferDeadline(new Date("2026-11-28T08:00:00Z"))).toBe(
+          "2026-12-03T17:00",
+        );
+        expect(defaultSoftOfferDeadline(new Date("2026-12-30T20:00:00Z"))).toBe(
+          "2027-01-04T17:00",
+        );
+      });
+    });
+
+    test("isFutureWallClock: well formed and later than the Pacific clock now", () => {
+      inBrowserZone(zone, () => {
+        expect(isFutureWallClock("2026-11-24T18:31", evening)).toBe(true);
+        expect(isFutureWallClock("2026-11-25T00:00", evening)).toBe(true);
+        expect(isFutureWallClock("2026-11-24T18:30", evening)).toBe(false);
+        expect(isFutureWallClock("2026-11-24T18:29", evening)).toBe(false);
+        expect(isFutureWallClock("2026-11-24", evening)).toBe(false);
+        expect(isFutureWallClock("", evening)).toBe(false);
+        expect(isFutureWallClock("2999-01-01T00:00:00", evening)).toBe(false);
+        expect(isFutureWallClock("x2999-01-01T00:00", evening)).toBe(false);
+      });
+    });
+
+    test("with no argument, the clock is read", () => {
+      inBrowserZone(zone, () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(evening);
+        expect(pacificNowLocalIso()).toBe("2026-11-24T18:30");
+        expect(defaultSoftOfferDeadline()).toBe("2026-11-29T17:00");
+        expect(isFutureWallClock("2026-11-24T18:31")).toBe(true);
+        expect(isFutureWallClock("2026-11-24T18:30")).toBe(false);
+      });
+    });
+  },
+);
 
 test("the test run itself is not in California", () => {
   // vite.config.ts sets TZ=UTC for the run; the checks above mean nothing if this were Pacific

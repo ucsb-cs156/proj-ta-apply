@@ -1653,6 +1653,56 @@ describe("RecruitmentCards tests", () => {
     expect(screen.getByTestId("Cards-publish-modal")).toBeInTheDocument();
   });
 
+  // ---- Issue #485: Release Soft Offers ----
+
+  test("Release Soft Offers on a ULA card opens its modal; Cancel closes it; releasing puts and closes", async () => {
+    axiosMock.onGet("/api/softOfferNotices/current").reply(200, []);
+    axiosMock
+      .onPut("/api/admin/recruitments/softOffers")
+      .reply(200, recruitmentsFixtures.releasedUla);
+    renderCards([recruitmentsFixtures.publishedUla]);
+
+    const button = screen.getByTestId(
+      "Cards-card-0-release-soft-offers-button",
+    );
+    await userEvent.click(button);
+    const modal = await screen.findByTestId("Cards-release-soft-offers-modal");
+    expect(modal).toHaveTextContent("Release Soft Offers: F25 ULA");
+    // No notice text saved: the warning shows, from the mocked endpoint.
+    expect(
+      await screen.findByTestId("Cards-release-soft-offers-warning-notice"),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByTestId("Cards-release-soft-offers-cancel"),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(axiosMock.history.put).toHaveLength(0);
+
+    await userEvent.click(button);
+    fireEvent.change(
+      await screen.findByTestId("Cards-release-soft-offers-deadline-input"),
+      { target: { value: "2999-12-01T17:00" } },
+    );
+    await userEvent.click(
+      screen.getByTestId("Cards-release-soft-offers-confirm"),
+    );
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].url).toBe(
+      "/api/admin/recruitments/softOffers",
+    );
+    expect(axiosMock.history.put[0].params).toEqual({
+      id: 5,
+      deadline: "2999-12-01T17:00",
+    });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(mockToast).toHaveBeenCalledWith("Soft offers released.");
+  });
+
+  test("a TA card and an unpublished ULA card have no Release Soft Offers button", () => {
+    renderCards();
+    expect(screen.queryByText("Release Soft Offers")).not.toBeInTheDocument();
+  });
+
   test("the diagram's page links go to the budget, courses and assignments pages without a reload", async () => {
     renderCards();
     // Open the collapsed card 1 (W26 TA, id 1) so every kind of link is on screen.

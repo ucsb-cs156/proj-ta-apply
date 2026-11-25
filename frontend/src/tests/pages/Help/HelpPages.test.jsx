@@ -1728,7 +1728,16 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(11);
+    ).toHaveLength(12);
+    // Issue #485: Release Soft Offers, between View Assignments and Change History.
+    const softOffers = screen.getByTestId("HelpAdminsPage-soft-offers");
+    expect(softOffers.id).toBe("soft-offers");
+    expect(softOffers).toHaveTextContent(
+      "Release Soft Offers. On a ULA recruitment's card only, and only once hiring decisions are released. It asks for a deadline (the box proposes 5:00 pm Pacific five days from today, which you may change) and warns, in red, if no Soft Offer Notices text has been saved under ULA App Settings or if hiring decisions are tentative because applications or faculty ranking have been reopened. Releasing makes the recruitment's soft offers available to its assigned ULA applicants, who are asked to answer by the deadline; it records the moment and the deadline in the Change History, and the button then leaves the card. Soft offers are optional and not a step of the diagram.",
+    );
+    expect(softOffers.nextElementSibling).toBe(
+      screen.getByTestId("HelpAdminsPage-change-history"),
+    );
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
@@ -2109,12 +2118,16 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[8]).toMatch(
       /^View Assignments\. The read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\. The card's View Assignments button and step 9 of the diagram open it\. Until Publish Assignments has been clicked at the top of the Assignments page, admins see the assignments so far under a red Not published yet note, and faculty are told only that the assignments are not published yet\.$/,
     );
+    // Issue #485: Release Soft Offers sits between View Assignments and Change History.
+    expect(buttons[9]).toMatch(
+      /^Release Soft Offers\. On a ULA recruitment's card only, and only once hiring decisions are released\./,
+    );
     // Issue #390: the card's Change History button and page.
-    expect(buttons[9]).toBe(
+    expect(buttons[10]).toBe(
       "Change History. Every change to the recruitment itself, newest first: when it was created, each time applications or faculty reviews were opened or closed, each date or setting that changed, and (Changed By) who made the change. The button is at the right end of the card's row of buttons, apart from the others, and opens the recruitment's own Change History page, which shows the recruitment's row above the list and has a page-size control and Previous and Next buttons. Changes to individual applications are not here but in the Audit Trail.",
     );
-    expect(buttons[10]).toMatch(/^Delete\. Removes the recruitment/);
-    expect(buttons).toHaveLength(11);
+    expect(buttons[11]).toMatch(/^Delete\. Removes the recruitment/);
+    expect(buttons).toHaveLength(12);
     const changeHistory = screen.getByTestId("HelpAdminsPage-change-history");
     expect(changeHistory).toHaveAttribute("id", "change-history");
     expect(

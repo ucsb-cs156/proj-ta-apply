@@ -17,12 +17,14 @@ import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.HiringDecisions;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
+import edu.ucsb.cs.taapply.services.SoftOffers;
 import edu.ucsb.cs.taapply.time.AppTime;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -309,6 +311,49 @@ public class RecruitmentsController extends ApiController {
     }
     recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     recruitmentRepository.bumpAssignmentsVersion(id);
+    return recruitment;
+  }
+
+  @Operation(
+      summary = "Release a ULA recruitment's soft offers with a deadline, or change the deadline",
+      description =
+          "Issue #485 (part of #483). Releasing stamps the moment and sets the deadline, after which"
+              + " each assigned applicant sees their soft offer on their home page card and is asked"
+              + " to answer by the deadline. Once released, calling again changes only the deadline."
+              + " Refused with a 400 unless the recruitment is a ULA one with hiring decisions"
+              + " released, and unless the deadline (Pacific wall-clock time, yyyy-MM-ddTHH:mm) is"
+              + " in the future. Both fields are recorded in the audit trail.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @Transactional
+  @PutMapping("/softOffers")
+  public Recruitment releaseSoftOffers(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "deadline", description = "Pacific wall-clock time, e.g. 2026-12-01T17:00")
+          @RequestParam
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+          LocalDateTime deadline) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+
+    String unmet = SoftOffers.unmetPrerequisite(recruitment);
+    if (unmet != null) {
+      throw new IllegalArgumentException(unmet);
+    }
+    LocalDateTime now = AppTime.now();
+    String problem = SoftOffers.deadlineProblem(deadline, now);
+    if (problem != null) {
+      throw new IllegalArgumentException(problem);
+    }
+
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
+    if (!SoftOffers.isReleased(recruitment)) {
+      recruitment.setSoftOffersReleasedAt(now);
+    }
+    recruitment.setSoftOfferDeadline(deadline);
+    recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     return recruitment;
   }
 
