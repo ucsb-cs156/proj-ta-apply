@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/505-hiring-staff-section","number":507,"title":"Hiring Staff home page section with Soft Offer Results access (#505)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/507"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/504-hiring-staff-role","number":506,"title":"Add a Hiring Staff role with an Admin → Hiring Staff page (#504)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/506"}]
