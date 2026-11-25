@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -20,6 +21,16 @@ public abstract class ApiController {
 
   protected CurrentUser getCurrentUser() {
     return currentUserService.getCurrentUser();
+  }
+
+  /** Whether the signed-in user holds the admin role; false for no user or no roles. */
+  protected boolean isAdmin() {
+    CurrentUser currentUser = getCurrentUser();
+    return currentUser != null
+        && currentUser.getRoles() != null
+        && currentUser.getRoles().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch("ROLE_ADMIN"::equals);
   }
 
   protected Object genericMessage(String message) {

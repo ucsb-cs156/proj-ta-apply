@@ -1,5 +1,7 @@
 import { render } from "@testing-library/react";
 import {
+  EyeIcon,
+  EyeSlashIcon,
   GraphIcon,
   UserListIcon,
   InfoIcon,
@@ -111,6 +113,37 @@ describe("Icons tests", () => {
 
       expect(svg).toHaveAttribute("data-testid", "info-icon");
       expect(svg).toHaveAttribute("fill", "#00ff00");
+    });
+  });
+
+  /** Issue #496: the show/hide eye on the admin's recruitment card. */
+  describe("EyeIcon and EyeSlashIcon", () => {
+    test.each([
+      ["EyeIcon", EyeIcon, 2],
+      ["EyeSlashIcon", EyeSlashIcon, 3],
+    ])(
+      "%s is a 16px currentColor Bootstrap icon, hidden from readers",
+      (_name, Icon, paths) => {
+        const { container } = render(<Icon className="x" />);
+        const svg = container.querySelector("svg");
+
+        expect(svg).toHaveAttribute("width", "16");
+        expect(svg).toHaveAttribute("height", "16");
+        expect(svg).toHaveAttribute("fill", "currentColor");
+        expect(svg).toHaveAttribute("viewBox", "0 0 16 16");
+        expect(svg).toHaveAttribute("aria-hidden", "true");
+        expect(svg).toHaveClass("x");
+        expect(svg.querySelectorAll("path")).toHaveLength(paths);
+      },
+    );
+
+    test("the two icons draw different pictures", () => {
+      const eye = render(<EyeIcon />).container.innerHTML;
+      const slash = render(<EyeSlashIcon />).container.innerHTML;
+      expect(eye).not.toBe(slash);
+      // The slash icon's last path is the diagonal line through the eye.
+      expect(slash).toContain("12-12");
+      expect(eye).not.toContain("12-12");
     });
   });
 });

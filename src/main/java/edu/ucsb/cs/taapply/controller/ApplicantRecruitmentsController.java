@@ -20,6 +20,7 @@ import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -71,9 +72,23 @@ public class ApplicantRecruitmentsController extends ApiController {
   public static record ApplicationOptions(
       List<String> majors, List<String> topics, List<String> interests) {}
 
-  /** Every recruitment, most recent quarter first, TA before ULA within a quarter. */
+  /**
+   * Every recruitment this user may see, most recent quarter first, TA before ULA within a quarter:
+   * a recruitment the admin has hidden (issue #496) is left out for everyone but an admin.
+   */
   private List<Recruitment> all() {
-    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();
+    boolean admin = isAdmin();
+    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc().stream()
+        .filter(r -> RecruitmentVisibility.visibleTo(r, admin))
+        .toList();
+  }
+
+  /** The recruitment, or empty when it does not exist or this user may not see it (issue #496). */
+  private Optional<Recruitment> visible(Long recruitmentId) {
+    boolean admin = isAdmin();
+    return recruitmentRepository
+        .findById(recruitmentId)
+        .filter(r -> RecruitmentVisibility.visibleTo(r, admin));
   }
 
   @Operation(
@@ -143,7 +158,7 @@ public class ApplicantRecruitmentsController extends ApiController {
   public List<String> courseChoices(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
 
-    if (!recruitmentRepository.existsById(recruitmentId)) {
+    if (visible(recruitmentId).isEmpty()) {
       return List.of();
     }
 
@@ -167,7 +182,7 @@ public class ApplicantRecruitmentsController extends ApiController {
   public Map<String, String> courseInstructors(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
 
-    if (!recruitmentRepository.existsById(recruitmentId)) {
+    if (visible(recruitmentId).isEmpty()) {
       return Map.of();
     }
     return instructorsByCourse(recruitmentCourseRepository.findByRecruitmentId(recruitmentId));
@@ -208,8 +223,7 @@ public class ApplicantRecruitmentsController extends ApiController {
       throws Exception {
 
     Recruitment recruitment =
-        recruitmentRepository
-            .findById(recruitmentId)
+        visible(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
 
     // Any one lecture's enroll code finds the whole offering, every section included, so the
@@ -244,8 +258,7 @@ public class ApplicantRecruitmentsController extends ApiController {
   public ApplicationOptions applicationOptions(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
     Recruitment recruitment =
-        recruitmentRepository
-            .findById(recruitmentId)
+        visible(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
 
     if (recruitment.getType() == RecruitmentType.TA) {

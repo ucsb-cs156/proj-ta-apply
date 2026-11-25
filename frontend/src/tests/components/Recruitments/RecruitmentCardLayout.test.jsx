@@ -9,6 +9,7 @@ import RecruitmentCardLayout, {
 } from "main/components/Recruitments/RecruitmentCardLayout";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
+import { HIDE_TOOLTIP } from "main/utils/recruitmentVisibility";
 import {
   MINIMUM_RANKINGS_LABEL,
   RANKING_PROGRESS_NO_COURSES,
@@ -25,6 +26,7 @@ function renderCard(props = {}) {
   const onDeleteRequested = vi.fn();
   const onAction = vi.fn();
   const onReleaseSoftOffers = vi.fn();
+  const onToggleHidden = vi.fn();
   render(
     <MemoryRouter>
       <RecruitmentCardLayout
@@ -35,12 +37,19 @@ function renderCard(props = {}) {
         onDeleteRequested={onDeleteRequested}
         onAction={onAction}
         onReleaseSoftOffers={onReleaseSoftOffers}
+        onToggleHidden={onToggleHidden}
         testIdPrefix="C"
         {...props}
       />
     </MemoryRouter>,
   );
-  return { onChangeDeadline, onDeleteRequested, onAction, onReleaseSoftOffers };
+  return {
+    onChangeDeadline,
+    onDeleteRequested,
+    onAction,
+    onReleaseSoftOffers,
+    onToggleHidden,
+  };
 }
 
 describe("RecruitmentCardLayout tests", () => {
@@ -94,6 +103,68 @@ describe("RecruitmentCardLayout tests", () => {
       "id",
       "C-delete-tooltip",
     );
+  });
+
+  // ---- Issue #496: the show/hide eye beside the trash can ----
+
+  test("a shown recruitment: an open eye beside the trash can, no Hidden badge; clicking asks to toggle", async () => {
+    const { onToggleHidden } = renderCard();
+
+    const header = screen.getByTestId("C-card").querySelector(".card-header");
+    const eye = screen.getByTestId("C-hidden-button");
+    expect(eye).toHaveAttribute("aria-label", HIDE_TOOLTIP);
+    expect(eye).toHaveAttribute("aria-pressed", "false");
+    expect(eye).toHaveClass("btn-outline-secondary", "btn-sm", "me-2");
+    // Outside the toggle, just before the trash can.
+    expect(header).toContainElement(eye);
+    expect(screen.getByTestId("C-toggle")).not.toContainElement(eye);
+    expect(eye.nextElementSibling).toBe(screen.getByTestId("C-delete-button"));
+    // The open eye has two paths; the slashed one three.
+    expect(eye.querySelectorAll("svg path")).toHaveLength(2);
+    expect(screen.queryByTestId("C-hidden")).toBeNull();
+
+    await userEvent.click(eye);
+    expect(onToggleHidden).toHaveBeenCalledWith(ta);
+    expect(onToggleHidden).toHaveBeenCalledTimes(1);
+    // Toggling visibility is not opening or closing the card.
+    expect(screen.getByTestId("C-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await userEvent.hover(eye);
+    const tooltip = await screen.findByText(HIDE_TOOLTIP);
+    expect(tooltip.closest('[role="tooltip"]')).toHaveAttribute(
+      "id",
+      "C-hidden-tooltip",
+    );
+  });
+
+  test("a hidden recruitment: the slashed eye, pressed, and a dark Hidden badge among the badges", async () => {
+    const { onToggleHidden } = renderCard({
+      recruitment: recruitmentsFixtures.hiddenTa,
+    });
+
+    const eye = screen.getByTestId("C-hidden-button");
+    expect(eye).toHaveAttribute("aria-pressed", "true");
+    expect(eye.querySelectorAll("svg path")).toHaveLength(3);
+    const badge = screen.getByTestId("C-hidden");
+    expect(badge).toHaveTextContent("Hidden");
+    expect(badge).toHaveClass("badge", "bg-dark");
+    // Inside the toggle row, after Faculty Reviews and before the application count.
+    expect(screen.getByTestId("C-toggle")).toContainElement(badge);
+    expect(badge.previousElementSibling).toBe(
+      screen.getByTestId("C-reviewStatus"),
+    );
+    expect(badge.nextElementSibling).toBe(screen.getByTestId("C-applications"));
+
+    await userEvent.click(eye);
+    expect(onToggleHidden).toHaveBeenCalledWith(recruitmentsFixtures.hiddenTa);
+  });
+
+  test("without an onToggleHidden the eye still renders and a click does nothing", async () => {
+    renderCard({ onToggleHidden: undefined });
+    await userEvent.click(screen.getByTestId("C-hidden-button"));
+    expect(screen.getByTestId("C-hidden-button")).toBeInTheDocument();
   });
 
   // ---- Issue #379: the card's top row opens and closes it ----

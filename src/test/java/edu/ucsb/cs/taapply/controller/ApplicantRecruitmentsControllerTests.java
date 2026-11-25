@@ -302,7 +302,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"USER"})
   @Test
   public void course_choices_are_distinct_sorted_and_exclude_removed_and_stale() throws Exception {
-    when(recruitmentRepository.existsById(1L)).thenReturn(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
     // Issue #122: a stale row is as good as removed for an applicant.
     RecruitmentCourse stale = course(5L, "CMPSC    16", false);
     stale.setStale(true);
@@ -323,7 +323,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"USER"})
   @Test
   public void course_choices_are_empty_for_a_recruitment_that_does_not_exist() throws Exception {
-    when(recruitmentRepository.existsById(99L)).thenReturn(false);
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
 
     assertEquals("[]", getJson("/api/recruitments/courses?recruitmentId=99"));
     verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
@@ -340,7 +340,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"USER"})
   @Test
   public void a_course_whose_every_lecture_is_cancelled_is_not_offered() throws Exception {
-    when(recruitmentRepository.existsById(1L)).thenReturn(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
     when(recruitmentCourseRepository.findByRecruitmentId(1L))
         .thenReturn(
             List.of(
@@ -407,7 +407,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void course_instructors_are_joined_distinct_sorted_and_exclude_removed_and_blank()
       throws Exception {
-    when(recruitmentRepository.existsById(1L)).thenReturn(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
     when(recruitmentCourseRepository.findByRecruitmentId(1L))
         .thenReturn(
             List.of(
@@ -427,7 +427,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void course_instructors_are_empty_for_a_recruitment_that_does_not_exist()
       throws Exception {
-    when(recruitmentRepository.existsById(99L)).thenReturn(false);
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
 
     assertEquals("{}", getJson("/api/recruitments/instructors?recruitmentId=99"));
     verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
@@ -657,5 +657,113 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void logged_out_users_cannot_read_options() throws Exception {
     mockMvc.perform(get("/api/recruitments/options?recruitmentId=1")).andExpect(status().is(403));
+  }
+
+  // ---- hidden recruitments (issue #496) ----
+
+  /** An open TA recruitment the admin has hidden: students and instructors never see it. */
+  private static Recruitment hiddenTa() {
+    Recruitment r =
+        recruitment(
+            6L,
+            "20262",
+            RecruitmentType.TA,
+            ApplicationStatus.OPEN,
+            LocalDate.of(2026, 1, 5),
+            null);
+    r.setHidden(true);
+    return r;
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void a_hidden_recruitment_is_left_out_of_every_list_for_a_student() throws Exception {
+    Recruitment hiddenUpcoming =
+        recruitment(7L, "20263", RecruitmentType.ULA, ApplicationStatus.CLOSED, null, null);
+    hiddenUpcoming.setHidden(true);
+    Recruitment hiddenClosed =
+        recruitment(
+            8L,
+            "20261",
+            RecruitmentType.ULA,
+            ApplicationStatus.CLOSED,
+            LocalDate.of(2025, 10, 1),
+            LocalDate.of(2025, 11, 1));
+    hiddenClosed.setHidden(true);
+    when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc())
+        .thenReturn(
+            List.of(hiddenUpcoming, UPCOMING_TA, hiddenTa(), OPEN_TA, hiddenClosed, CLOSED_TA));
+
+    assertEquals(applicantJson(List.of(OPEN_TA)), getJson("/api/recruitments/open"));
+    assertEquals(applicantJson(List.of(UPCOMING_TA)), getJson("/api/recruitments/upcoming"));
+    assertEquals(applicantJson(List.of(CLOSED_TA)), getJson("/api/recruitments/recentlyClosed"));
+    assertEquals(
+        applicantJson(List.of(UPCOMING_TA, OPEN_TA, CLOSED_TA)),
+        getJson("/api/recruitments/applicable"));
+  }
+
+  /** Instructors hold no more than students here; only the admin role lifts the veil. */
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
+  @Test
+  public void a_hidden_recruitment_is_left_out_for_an_instructor_too() throws Exception {
+    when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc())
+        .thenReturn(List.of(hiddenTa(), OPEN_TA));
+
+    assertEquals(applicantJson(List.of(OPEN_TA)), getJson("/api/recruitments/applicable"));
+  }
+
+  /**
+   * An admin sees the hidden recruitment among the applicable ones (their own student section shows
+   * it, marked by the admin card). It is not "open", though: a hidden recruitment accepts no
+   * applications from anyone.
+   */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_sees_a_hidden_recruitment_but_it_is_not_open() throws Exception {
+    Recruitment hidden = hiddenTa();
+    when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc())
+        .thenReturn(List.of(hidden, OPEN_TA));
+
+    assertEquals(applicantJson(List.of(hidden, OPEN_TA)), getJson("/api/recruitments/applicable"));
+    assertEquals(applicantJson(List.of(OPEN_TA)), getJson("/api/recruitments/open"));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void a_hidden_recruitments_form_lists_are_empty_or_a_404_for_a_student() throws Exception {
+    when(recruitmentRepository.findById(6L)).thenReturn(Optional.of(hiddenTa()));
+    when(recruitmentCourseRepository.findByRecruitmentId(6L))
+        .thenReturn(List.of(course(1L, "CMPSC   156", false)));
+
+    assertEquals("[]", getJson("/api/recruitments/courses?recruitmentId=6"));
+    assertEquals("{}", getJson("/api/recruitments/instructors?recruitmentId=6"));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+    MvcResult options =
+        mockMvc
+            .perform(get("/api/recruitments/options?recruitmentId=6"))
+            .andExpect(status().is(404))
+            .andReturn();
+    assertEquals("Recruitment with id 6 not found", responseToJson(options).get("message"));
+    MvcResult sections =
+        mockMvc
+            .perform(get("/api/recruitments/sections?recruitmentId=6&courseId=CMPSC   156"))
+            .andExpect(status().is(404))
+            .andReturn();
+    assertEquals("Recruitment with id 6 not found", responseToJson(sections).get("message"));
+    verify(ucsbCurriculumService, never()).getOffering(any(), any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_may_read_a_hidden_recruitments_form_lists() throws Exception {
+    seedLists();
+    when(recruitmentRepository.findById(6L)).thenReturn(Optional.of(hiddenTa()));
+    when(recruitmentCourseRepository.findByRecruitmentId(6L))
+        .thenReturn(List.of(course(1L, "CMPSC   156", false)));
+
+    assertEquals(
+        mapper.writeValueAsString(List.of("CMPSC   156")),
+        getJson("/api/recruitments/courses?recruitmentId=6"));
+    mockMvc.perform(get("/api/recruitments/options?recruitmentId=6")).andExpect(status().isOk());
   }
 }

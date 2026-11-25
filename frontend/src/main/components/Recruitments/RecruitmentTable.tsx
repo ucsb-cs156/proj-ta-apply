@@ -29,6 +29,8 @@ export type Recruitment = {
   softOffersReleasedAt?: string | null;
   /** By when the assigned applicants are asked to answer their soft offer (issue #485). */
   softOfferDeadline?: string | null;
+  /** Issue #496: whether the admin has hidden the recruitment from students and instructors. */
+  hidden?: boolean;
 };
 
 /** The applicant-facing recruitment shape deliberately excludes faculty review fields. */

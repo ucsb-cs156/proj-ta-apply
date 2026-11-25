@@ -883,4 +883,69 @@ public class RecruitmentsWebIT extends WebTestCase {
     page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/recruitments"));
     assertThat(page.getByText("Page Not Found")).isVisible();
   }
+
+  /** Issue #496: an open TA recruitment for W26, shown unless told otherwise. */
+  private Recruitment openTa(boolean hidden) {
+    return recruitmentRepository.save(
+        Recruitment.builder()
+            .quarter("20261")
+            .type(RecruitmentType.TA)
+            .applicationStatus(ApplicationStatus.OPEN)
+            .reviewStatus("NotStarted")
+            .tentativeOpeningDate(LocalDate.of(2026, 1, 5))
+            .primaryConsiderationDate(LocalDate.of(2026, 1, 20))
+            .actualOpeningDate(LocalDate.of(2026, 1, 5))
+            .hidden(hidden)
+            .build());
+  }
+
+  @Test
+  public void an_admin_hides_a_recruitment_with_the_eye_and_shows_it_again() throws Exception {
+    Recruitment ta = openTa(false);
+    setupAdminUser();
+    goToRecruitments();
+    String card = "HomePageLoggedIn-admin-card-0-";
+    waitFor(page.getByTestId(card + "hidden-button"));
+    assertThat(page.getByTestId(card + "type")).hasText("TA");
+    assertEquals(0, page.getByTestId(card + "hidden").count());
+    assertThat(page.getByTestId(card + "hidden-button"))
+        .hasAttribute(
+            "aria-label",
+            "This button will show/hide the recruitment from students and instructors.");
+    assertThat(page.getByTestId(card + "hidden-button")).hasAttribute("aria-pressed", "false");
+
+    page.getByTestId(card + "hidden-button").click();
+    assertThat(page.getByText("Recruitment hidden from students and instructors.")).isVisible();
+    assertThat(page.getByTestId(card + "hidden")).hasText("Hidden");
+    assertThat(page.getByTestId(card + "hidden-button")).hasAttribute("aria-pressed", "true");
+    assertEquals(true, recruitmentRepository.findById(ta.getId()).orElseThrow().getHidden());
+
+    // The badge survives a reload, and the change is in the Change History with the admin's email.
+    reloadPage(page);
+    waitFor(page.getByTestId(card + "hidden"));
+    page.getByTestId(card + "change-history-button").click();
+    waitFor(page.getByText("hidden").first());
+    assertThat(page.getByText("hidden").first()).isVisible();
+    assertThat(page.getByText("admin@ucsb.edu").first()).isVisible();
+
+    goToRecruitments();
+    waitFor(page.getByTestId(card + "hidden-button"));
+    page.getByTestId(card + "hidden-button").click();
+    assertThat(page.getByText("Recruitment shown to students and instructors.")).isVisible();
+    assertThat(page.getByTestId(card + "hidden")).hasCount(0);
+    assertEquals(false, recruitmentRepository.findById(ta.getId()).orElseThrow().getHidden());
+  }
+
+  @Test
+  public void a_student_does_not_see_a_hidden_recruitment_on_the_home_page() throws Exception {
+    openTa(true);
+    setupRegularUser();
+    goToRecruitments();
+
+    // The recruitment is open, but hidden: as far as the student can tell nothing is open.
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
+        .containsText("Applications are not currently being accepted.");
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard")).not().containsText("W26");
+    assertThat(page.getByTestId("HomePageLoggedIn-student")).not().containsText("Apply");
+  }
 }

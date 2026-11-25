@@ -61,6 +61,8 @@ public class RecruitmentAuditService {
     // Issue #485: releasing soft offers, and the deadline given (or later changed).
     FIELDS.put("softOffersReleasedAt", Recruitment::getSoftOffersReleasedAt);
     FIELDS.put("softOfferDeadline", Recruitment::getSoftOfferDeadline);
+    // Issue #496: hiding the recruitment from students and instructors, and showing it again.
+    FIELDS.put("hidden", Recruitment::getHidden);
   }
 
   /** A recruitment's audited fields as strings, keyed by field name; a null field is null. */

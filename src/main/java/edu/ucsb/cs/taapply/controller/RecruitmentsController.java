@@ -357,6 +357,29 @@ public class RecruitmentsController extends ApiController {
     return recruitment;
   }
 
+  @Operation(
+      summary = "Hide a recruitment from students and instructors, or show it again",
+      description =
+          "Issue #496. While hidden, the recruitment is left out of the student and instructor"
+              + " home pages, its pages are refused to them and it accepts no new applications;"
+              + " admins see it as before. Nothing else about it changes. Recorded in the audit"
+              + " trail. 404 for an unknown recruitment.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @Transactional
+  @PutMapping("/hidden")
+  public Recruitment setHidden(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "hidden") @RequestParam boolean hidden) {
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
+    recruitment.setHidden(hidden);
+    recruitmentAuditService.saveAndRecordChanges(before, recruitment);
+    return recruitment;
+  }
+
   @Operation(summary = "List all recruitments, most recent quarter first")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/all")

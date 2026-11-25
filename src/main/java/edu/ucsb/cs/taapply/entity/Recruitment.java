@@ -155,4 +155,13 @@ public class Recruitment {
    */
   @Column(name = "soft_offer_deadline")
   private LocalDateTime softOfferDeadline;
+
+  /**
+   * Whether the admin has hidden the recruitment from students and instructors (issue #496): while
+   * true, it is left out of their home pages and its pages are refused to them, while admins see it
+   * as before, marked Hidden. False for every recruitment until an admin hides it. Audited.
+   */
+  @Column(name = "hidden", nullable = false)
+  @Builder.Default
+  private Boolean hidden = false;
 }

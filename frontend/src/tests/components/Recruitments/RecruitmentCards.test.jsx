@@ -668,6 +668,84 @@ describe("RecruitmentCards tests", () => {
     expect(ids(three)).toEqual([3, 2, 1]);
   });
 
+  // ---- Issue #496: the show/hide eye ----
+
+  test("the eye hides a shown recruitment: one PUT, a toast, and the lists re-read", async () => {
+    axiosMock.onPut("/api/admin/recruitments/hidden").reply(200, {});
+    const queryClient = new QueryClient();
+    const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RecruitmentCards recruitments={three} testIdPrefix="Cards" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    openClosedQuarters();
+
+    // Card 0 is S26 TA (id 3), shown.
+    const eye = screen.getByTestId("Cards-card-0-hidden-button");
+    expect(eye).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(eye);
+
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].url).toBe("/api/admin/recruitments/hidden");
+    expect(axiosMock.history.put[0].params).toEqual({ id: 3, hidden: true });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Recruitment hidden from students and instructors.",
+      ),
+    );
+    expect(mockToast).toHaveBeenCalledTimes(1);
+    // No confirmation dialog on the way.
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(5));
+    for (const key of [
+      "/api/admin/recruitments/all",
+      "/api/admin/recruitments/steps",
+      "/api/instructor/recruitments",
+      "/api/recruitments/applicable",
+      "/api/applications/mine",
+    ]) {
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: [key] });
+    }
+  });
+
+  test("the eye shows a hidden recruitment again, with the other toast", async () => {
+    axiosMock.onPut("/api/admin/recruitments/hidden").reply(200, {});
+    renderCards([recruitmentsFixtures.hiddenTa]);
+
+    const eye = screen.getByTestId("Cards-card-0-hidden-button");
+    expect(eye).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("Cards-card-0-hidden")).toHaveTextContent(
+      "Hidden",
+    );
+    await userEvent.click(eye);
+
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].params).toEqual({ id: 1, hidden: false });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Recruitment shown to students and instructors.",
+      ),
+    );
+  });
+
+  test("a failed hide toasts the error and nothing else", async () => {
+    axiosMock
+      .onPut("/api/admin/recruitments/hidden")
+      .reply(500, { message: "no" });
+    renderCards();
+
+    await userEvent.click(screen.getByTestId("Cards-card-0-hidden-button"));
+
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(mockToast.mock.calls[0][0]).not.toMatch(
+      /Recruitment (hidden|shown)/,
+    );
+  });
+
   test("Open Applications and Close Applications ask the backend to flip the status", async () => {
     const queryClient = new QueryClient();
     const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");

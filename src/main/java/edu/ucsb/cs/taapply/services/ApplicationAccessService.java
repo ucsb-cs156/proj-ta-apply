@@ -19,9 +19,14 @@ public class ApplicationAccessService {
   /** How long after closing a recruitment still counts as recent, for comments (issue #107). */
   public static final int RECENT_MONTHS = 6;
 
-  /** Applications may only be created against an open recruitment. */
+  /**
+   * Applications may only be created against an open recruitment, and not against one the admin has
+   * hidden from students (issue #496): a hidden recruitment's form is out of reach, so a request
+   * for it is refused the same way as a closed one.
+   */
   public boolean acceptingApplications(Recruitment recruitment) {
-    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN;
+    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN
+        && !RecruitmentVisibility.isHidden(recruitment);
   }
 
   /**

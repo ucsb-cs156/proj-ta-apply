@@ -754,4 +754,16 @@ class SoftOffersServiceTests {
             + "\"Proceed\",\"2026-11-21T08:05\",\"Yes, \"\"please\"\"\"",
         lines[1].trim());
   }
+
+  // ---- hidden recruitments (issue #496) ----
+
+  @Test
+  void a_hidden_recruitment_has_no_offer_even_when_released() {
+    Recruitment hidden = ula(true);
+    hidden.setHidden(true);
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(hidden));
+
+    assertNull(service.openOffer(assigned()));
+    verify(recruitmentCourseRepository, never()).findById(any());
+  }
 }

@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -1602,5 +1603,81 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentAuditService, never()).snapshot(any());
     verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     verify(allocationService, never()).recompute(any());
+  }
+
+  // ---- PUT /api/admin/recruitments/hidden (issue #496) ----
+
+  private static final String HIDE_URL = "/api/admin/recruitments/hidden?id=1&hidden=true";
+
+  @Test
+  public void logged_out_users_cannot_hide_a_recruitment() throws Exception {
+    mockMvc.perform(put(HIDE_URL).with(csrf())).andExpect(status().is(403));
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_hide_a_recruitment() throws Exception {
+    mockMvc.perform(put(HIDE_URL).with(csrf())).andExpect(status().is(403));
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void hiding_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.empty());
+    MvcResult response =
+        mockMvc.perform(put(HIDE_URL).with(csrf())).andExpect(status().isNotFound()).andReturn();
+    assertEquals("Recruitment with id 1 not found", responseToJson(response).get("message"));
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_hides_a_recruitment_and_the_change_is_recorded() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    assertFalse(r.getHidden());
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("hidden", "false"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    MvcResult response =
+        mockMvc.perform(put(HIDE_URL).with(csrf())).andExpect(status().isOk()).andReturn();
+
+    assertTrue(r.getHidden());
+    // The snapshot is taken before the change and the change saved through the audit service.
+    InOrder inOrder = inOrder(recruitmentAuditService);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentAuditService).saveAndRecordChanges(before, r);
+    verify(recruitmentRepository, never()).save(any());
+    assertEquals(Boolean.TRUE, responseToJson(response).get("hidden"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_shows_a_hidden_recruitment_again() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setHidden(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/admin/recruitments/hidden?id=1&hidden=false").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertFalse(r.getHidden());
+    verify(recruitmentAuditService).saveAndRecordChanges(any(), eq(r));
+    assertEquals(Boolean.FALSE, responseToJson(response).get("hidden"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void hiding_needs_the_hidden_parameter() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/recruitments/hidden?id=1").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 }

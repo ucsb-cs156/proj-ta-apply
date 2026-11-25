@@ -26,6 +26,7 @@ export default {
     onDeleteRequested: fn(),
     onAction: fn(),
     onNavigate: fn(),
+    onToggleHidden: fn(),
   },
 };
 
@@ -132,4 +133,16 @@ Published.args = {
   applicationCount: 15,
   steps: recruitmentStepsFixtures.published,
   defaultExpanded: true,
+};
+
+/**
+ * Issue #496: a recruitment the admin has hidden from students and instructors. The eye beside the
+ * trash can is slashed and pressed, and a dark Hidden badge sits among the status badges.
+ */
+export const HiddenCard = Template.bind({});
+HiddenCard.args = {
+  recruitment: recruitmentsFixtures.hiddenTa,
+  applicationCount: 15,
+  steps: recruitmentStepsFixtures.rankingsOpen,
+  defaultExpanded: false,
 };

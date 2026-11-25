@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -1327,5 +1328,94 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
 
     assertEquals("Recruitment with id 11 not found", responseToJson(response).get("message"));
     verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+  }
+
+  // ---- hidden recruitments (issue #496) ----
+
+  private static Recruitment hidden(long id, String quarter, RecruitmentType type) {
+    Recruitment r = recruitment(id, quarter, type);
+    r.setHidden(true);
+    r.setReviewStatus("Open");
+    return r;
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_hidden_recruitment_is_not_among_an_instructors_recruitments() throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    RecruitmentCourse inHidden = row(1L, 11L, "CMPSC   156", "0100", false);
+    RecruitmentCourse inShown = row(2L, 12L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findByInstructor("CONRAD P"))
+        .thenReturn(List.of(inHidden, inShown));
+    Recruitment hiddenTa = hidden(11L, "20261", RecruitmentType.TA);
+    Recruitment ula = recruitment(12L, "20261", RecruitmentType.ULA);
+    when(recruitmentRepository.findAllById(Set.of(11L, 12L))).thenReturn(List.of(hiddenTa, ula));
+
+    MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(InstructorRecruitment.of(ula, List.of(inShown)))),
+        response.getResponse().getContentAsString());
+    verify(budgetCourseService, never()).attach(any(), eq(List.of(inHidden)));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_asking_about_an_instructor_sees_the_hidden_recruitment_too()
+      throws Exception {
+    currentUser(EMAIL, true);
+    instructorWithCatalogName("CONRAD P");
+    RecruitmentCourse inHidden = row(1L, 11L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findByInstructor("CONRAD P")).thenReturn(List.of(inHidden));
+    Recruitment hiddenTa = hidden(11L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(hiddenTa));
+
+    MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(InstructorRecruitment.of(hiddenTa, List.of(inHidden)))),
+        response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_hidden_recruitments_courses_and_rankings_are_refused_to_an_instructor()
+      throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    when(recruitmentRepository.findById(10L))
+        .thenReturn(Optional.of(hidden(10L, "20261", RecruitmentType.TA)));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", false)));
+
+    MvcResult courses =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses"))
+            .andExpect(status().is(403))
+            .andReturn();
+    assertEquals(
+        "This recruitment is not currently available.", responseToJson(courses).get("message"));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+
+    MvcResult ranking =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().is(403))
+            .andReturn();
+    assertEquals(
+        "This recruitment is not currently available.", responseToJson(ranking).get("message"));
+    verify(applicationRepository, never()).findByRecruitmentIdOrderByIdAsc(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_may_read_a_hidden_recruitments_courses() throws Exception {
+    currentUser(EMAIL, true);
+    when(recruitmentRepository.findById(10L))
+        .thenReturn(Optional.of(hidden(10L, "20261", RecruitmentType.TA)));
+    when(recruitmentCourseRepository.findByRecruitmentId(10L)).thenReturn(List.of());
+
+    mockMvc.perform(get("/api/instructor/recruitments/10/courses")).andExpect(status().isOk());
   }
 }

@@ -73,7 +73,8 @@ public class RecruitmentAuditServiceTests {
             "assignmentsPublished",
             "totalHiringTarget",
             "softOffersReleasedAt",
-            "softOfferDeadline"),
+            "softOfferDeadline",
+            "hidden"),
         new ArrayList<>(RecruitmentAuditService.FIELDS.keySet()));
   }
 
@@ -120,7 +121,8 @@ public class RecruitmentAuditServiceTests {
             "assignmentsPublished",
             "totalHiringTarget",
             "softOffersReleasedAt",
-            "softOfferDeadline"),
+            "softOfferDeadline",
+            "hidden"),
         new ArrayList<>(fields.keySet()));
     assertEquals("CLOSED", fields.get("applicationStatus"));
     assertEquals("2026-01-05", fields.get("tentativeOpeningDate"));
@@ -138,6 +140,8 @@ public class RecruitmentAuditServiceTests {
     // Issue #485: unreleased soft offers.
     assertNull(fields.get("softOffersReleasedAt"));
     assertNull(fields.get("softOfferDeadline"));
+    // Issue #496: a recruitment starts shown.
+    assertEquals("false", fields.get("hidden"));
   }
 
   @Test

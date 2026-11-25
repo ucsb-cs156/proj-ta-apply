@@ -13,6 +13,11 @@ import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { sortRecruitments } from "main/utils/recruitmentSort";
 import {
+  HIDDEN_URL,
+  hiddenToast,
+  isHidden,
+} from "main/utils/recruitmentVisibility";
+import {
   MORE_ABOUT_TEXT,
   OPEN_REVIEWS_CONFIRMATION,
   CLOSE_REVIEWS_CONFIRMATION,
@@ -94,6 +99,7 @@ type AdminRecruitmentCardProps = {
   onDeleteRequested: (recruitment: Recruitment) => void;
   onAction: (recruitment: Recruitment, action: RecruitmentStepAction) => void;
   onReleaseSoftOffers: (recruitment: Recruitment) => void;
+  onToggleHidden: (recruitment: Recruitment) => void;
   testIdPrefix: string;
 };
 
@@ -109,6 +115,7 @@ function AdminRecruitmentCard({
   onDeleteRequested,
   onAction,
   onReleaseSoftOffers,
+  onToggleHidden,
   testIdPrefix,
 }: AdminRecruitmentCardProps): React.JSX.Element {
   const navigate = useNavigate();
@@ -134,6 +141,7 @@ function AdminRecruitmentCard({
       onAction={(action) => onAction(recruitment, action)}
       onNavigate={navigate}
       onReleaseSoftOffers={onReleaseSoftOffers}
+      onToggleHidden={onToggleHidden}
       testIdPrefix={testIdPrefix}
     />
   );
@@ -181,6 +189,21 @@ export default function RecruitmentCards({
       },
     }),
     { onSuccess: () => setStatusModal(null) },
+    REFRESH_KEYS,
+  );
+  // Issue #496: the show/hide eye moves the recruitment to the other state at once, no
+  // confirmation; the toast says which way it went and the lists are re-read, so the badge, the
+  // icon and the student and instructor sections of the home page all follow.
+  const hiddenMutation = useBackendMutation<Recruitment, unknown>(
+    (recruitment) => ({
+      url: HIDDEN_URL,
+      method: "PUT",
+      params: { id: recruitment.id, hidden: !isHidden(recruitment) },
+    }),
+    {
+      onSuccess: (_data, recruitment) =>
+        toast(hiddenToast(!isHidden(recruitment))),
+    },
     REFRESH_KEYS,
   );
   // The recruitment whose Open/Close Applications button was clicked, while the modal asks
@@ -409,6 +432,7 @@ export default function RecruitmentCards({
               onDeleteRequested={onDeleteRequested}
               onAction={onStepAction}
               onReleaseSoftOffers={(r) => setReleaseId(r.id)}
+              onToggleHidden={(r) => hiddenMutation.mutate(r)}
               testIdPrefix={`${testIdPrefix}-card-${index}`}
             />
           ))}
