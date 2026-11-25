@@ -1,0 +1,98 @@
+// GET /api/admin/softOffers (issue #487): the F25 ULA recruitment (id 5) of recruitmentsFixtures.
+const headers = [
+  "First name",
+  "Last name",
+  "Email",
+  "Course assignment",
+  "Course instructor",
+  "Course instructor email",
+  "First time ULA",
+  "Offer Status",
+  "Offer Response Date/Time",
+  "Comments",
+];
+const unassignedHeaders = [
+  "First name",
+  "Last name",
+  "Email",
+  "Course answered for",
+  "Offer Status",
+  "Offer Response Date/Time",
+  "Comments",
+];
+
+const softOfferResultsFixtures = {
+  /** Three assigned ULAs: one proceeded (late), one answered for another lecture, one not yet. */
+  three: {
+    recruitmentId: 5,
+    quarter: "20254",
+    releasedAt: "2025-10-20T09:30:00",
+    deadline: "2025-10-25T17:00:00",
+    counts: { assigned: 3, proceed: 1, declined: 0, none: 2 },
+    headers,
+    rows: [
+      [
+        "Grace",
+        "Hopper",
+        "grace@ucsb.edu",
+        "CMPSC 156",
+        "CONRAD P",
+        "phtcon@ucsb.edu",
+        "no",
+        "Proceed (for CMPSC 8)",
+        "2025-10-22T08:00",
+        "2025-10-22T08:00 call me (for details)",
+      ],
+      [
+        "Ada",
+        "Lovelace",
+        "ada@ucsb.edu",
+        "CMPSC 156",
+        "CONRAD P",
+        "phtcon@ucsb.edu",
+        "yes",
+        "Proceed",
+        "2025-10-26T09:00 (late)",
+        "Yes!",
+      ],
+      [
+        "Alan",
+        "Turing",
+        "alan@ucsb.edu",
+        "CMPSC 8",
+        "",
+        "Not mapped",
+        "no",
+        "",
+        "",
+        "",
+      ],
+    ],
+    unassignedHeaders,
+    unassigned: [
+      [
+        "Linus",
+        "Torvalds",
+        "linus@ucsb.edu",
+        "CMPSC 156",
+        "Declined",
+        "2025-10-23T10:30",
+        "Moving away",
+      ],
+    ],
+  },
+  /** Nobody assigned, nothing answered. */
+  empty: {
+    recruitmentId: 5,
+    quarter: "20254",
+    releasedAt: "2025-10-20T09:30:00",
+    deadline: "2025-10-25T17:00:00",
+    counts: { assigned: 0, proceed: 0, declined: 0, none: 0 },
+    headers,
+    rows: [],
+    unassignedHeaders,
+    unassigned: [],
+  },
+};
+
+export default softOfferResultsFixtures;

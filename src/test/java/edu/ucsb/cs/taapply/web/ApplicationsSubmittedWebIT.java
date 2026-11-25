@@ -577,6 +577,31 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
     reloadPage(page);
     assertThat(page.getByTestId(section + "-answer-decision")).isVisible();
     assertThat(page.getByTestId(section + "-form")).hasCount(0);
+
+    // Issue #487: an admin sees the answer on the Soft Offer Results page, and in its CSV.
+    com.microsoft.playwright.Page admin =
+        openAsAdmin("/admin/recruitments/" + recruitment.getId() + "/softOffers");
+    assertThat(admin.getByTestId("SoftOfferResultsPage-title"))
+        .hasText("Soft Offer Results: F21 ULA");
+    assertThat(admin.getByTestId("SoftOfferResultsPage-counts"))
+        .hasText("1 assigned ULA: 1 proceed, 0 declined, 0 no response yet.");
+    assertThat(admin.getByTestId("SoftOfferResultsPage-table-row-0-c7")).hasText("Proceed");
+    assertThat(admin.getByTestId("SoftOfferResultsPage-table-row-0-c9"))
+        .hasText("Looking forward to it.");
+    assertThat(admin.getByTestId("SoftOfferResultsPage-unassigned")).hasCount(0);
+    com.microsoft.playwright.Download download =
+        admin.waitForDownload(() -> admin.getByTestId("SoftOfferResultsPage-csv").click());
+    assertEquals("soft-offers-" + recruitment.getId() + ".csv", download.suggestedFilename());
+    java.util.List<String> lines = java.nio.file.Files.readAllLines(download.path());
+    assertEquals(
+        "\"First name\",\"Last name\",\"Email\",\"Course assignment\",\"Course instructor\","
+            + "\"Course instructor email\",\"First time ULA\",\"Offer Status\","
+            + "\"Offer Response Date/Time\",\"Comments\"",
+        lines.get(0));
+    org.junit.jupiter.api.Assertions.assertTrue(
+        lines.get(1).startsWith("\"Chris\",\"Gaucho\",\"cgaucho@ucsb.edu\",\"CMPSC 156\""),
+        lines.get(1));
+    org.junit.jupiter.api.Assertions.assertTrue(lines.get(1).contains("\"Proceed\""), lines.get(1));
   }
 
   private Application seedApplication(Recruitment recruitment, String email, String firstName) {

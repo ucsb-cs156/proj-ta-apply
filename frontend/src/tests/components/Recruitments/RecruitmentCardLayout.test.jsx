@@ -560,6 +560,38 @@ describe("RecruitmentCardLayout tests", () => {
     expect(screen.queryByText("Release Soft Offers")).toBeNull();
   });
 
+  test("once soft offers are released, Soft Offer Results takes the button's place (issue #487)", () => {
+    renderCard({ recruitment: recruitmentsFixtures.releasedUla });
+
+    const results = screen.getByTestId("C-soft-offer-results-button");
+    expect(results).toHaveTextContent("Soft Offer Results");
+    expect(results.tagName).toBe("A");
+    expect(results).toHaveAttribute("href", "/admin/recruitments/5/softOffers");
+    expect(results).toHaveClass("btn", "btn-warning");
+    expect(results.previousElementSibling).toBe(
+      screen.getByTestId("C-view-assignments-button"),
+    );
+    expect(results.nextElementSibling).toBe(
+      screen.getByTestId("C-rankings-csv-button"),
+    );
+    expect(screen.queryByTestId("C-release-soft-offers-button")).toBeNull();
+  });
+
+  test.each([
+    ["a TA recruitment", { ...ta, assignmentsPublished: true }],
+    [
+      "a ULA recruitment whose soft offers are not released",
+      recruitmentsFixtures.publishedUla,
+    ],
+    [
+      "a TA recruitment with the soft offer fields set",
+      { ...ta, softOffersReleasedAt: "2025-10-20T09:30:00" },
+    ],
+  ])("%s has no Soft Offer Results button", (_name, recruitment) => {
+    renderCard({ recruitment });
+    expect(screen.queryByTestId("C-soft-offer-results-button")).toBeNull();
+  });
+
   test("the button does nothing without an onReleaseSoftOffers handler", async () => {
     render(
       <MemoryRouter>

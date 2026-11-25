@@ -50,6 +50,66 @@ export const canReleaseSoftOffers = (
   recruitment.assignmentsPublished === true &&
   !softOffersReleased(recruitment);
 
+// ---- the admin's results (issue #487) ----
+
+export const SOFT_OFFER_RESULTS_LABEL = "Soft Offer Results";
+export const SOFT_OFFER_RESULTS_URL = "/api/admin/softOffers";
+export const DEADLINE_CHANGED_TOAST = "Soft offer deadline changed.";
+export const CHANGE_DEADLINE_LABEL = "Change Deadline";
+
+/** The admin page of a recruitment's soft offer results. */
+export const softOfferResultsPath = (recruitmentId: number | string): string =>
+  `/admin/recruitments/${recruitmentId}/softOffers`;
+
+export const softOfferResultsCsvUrl = (
+  recruitmentId: number | string,
+): string => `${SOFT_OFFER_RESULTS_URL}/csv?recruitmentId=${recruitmentId}`;
+
+/** The file name the browser saves the CSV under, matching the backend's. */
+export const softOfferResultsCsvFileName = (
+  recruitmentId: number | string,
+): string => `soft-offers-${recruitmentId}.csv`;
+
+/** What GET /api/admin/softOffers answers: text tables, like the published assignments. */
+export type SoftOfferResults = {
+  recruitmentId: number;
+  quarter: string;
+  releasedAt: string;
+  deadline: string;
+  counts: { assigned: number; proceed: number; declined: number; none: number };
+  headers: string[];
+  rows: string[][];
+  unassignedHeaders: string[];
+  unassigned: string[][];
+};
+
+/** The column of the Offer Status cells in the main table. */
+export const STATUS_COLUMN = 7;
+/** The column of the Offer Response Date/Time cells in the main table. */
+export const STAMP_COLUMN = 8;
+/** The same two columns in the second table. */
+export const UNASSIGNED_STATUS_COLUMN = 4;
+export const UNASSIGNED_STAMP_COLUMN = 5;
+
+/** An answer given for a lecture other than the one now held: "Proceed (for CMPSC 8)". */
+export const isStaleStatus = (cell: string): boolean => cell.includes(" (for ");
+
+/**
+ * A response stamp cell as the page shows it: the backend's "2026-11-21T08:05" in Pacific form,
+ * keeping its " (late)" mark; an empty cell stays empty. (The formatter reads the stamp at the
+ * start of the text and ignores what follows, and gives "" for "".)
+ */
+export const formatStamp = (cell: string): string =>
+  formatPacificDateTime(cell) + (cell.endsWith(" (late)") ? " (late)" : "");
+
+/** A stored deadline ("2025-10-25T17:00:00", or none) as the datetime-local box takes it. */
+export const deadlineAsLocal = (deadline: string | null | undefined): string =>
+  (deadline ?? "").slice(0, 16);
+
+/** "3 assigned ULAs: 1 proceed, 0 declined, 2 no response yet." */
+export const countsSentence = (counts: SoftOfferResults["counts"]): string =>
+  `${counts.assigned} assigned ULA${counts.assigned === 1 ? "" : "s"}: ${counts.proceed} proceed, ${counts.declined} declined, ${counts.none} no response yet.`;
+
 // ---- the applicant's side (issue #486) ----
 
 export type SoftOfferDecision = "PROCEED" | "DECLINE";

@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.services;
 
+import com.opencsv.CSVWriter;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
@@ -19,11 +20,15 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.SoftOfferNoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.SoftOfferResponseRepository;
+import java.io.StringWriter;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,12 +52,67 @@ public class SoftOffersService {
   @Autowired SoftOfferResponseRepository softOfferResponseRepository;
   @Autowired PublishedAssignmentsService publishedAssignmentsService;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
+  @Autowired AssignmentsService assignmentsService;
 
   public static final String NO_OFFER = "There is no soft offer open for this application.";
   public static final String ALREADY_ANSWERED = "This soft offer has already been answered.";
   public static final int COMMENTS_MAX = 4000;
   public static final String COMMENTS_TOO_LONG =
       "Comments may be at most " + COMMENTS_MAX + " characters.";
+  public static final String NOT_RELEASED =
+      "Soft offers have not been released for this recruitment.";
+
+  /** The Offer Status words of the results page (issue #487). */
+  public static final String PROCEED = "Proceed";
+
+  public static final String DECLINED = "Declined";
+
+  /** Appended to a response's date and time when it came after the deadline. */
+  public static final String LATE = " (late)";
+
+  /** The results table's columns: the one-row-per-ULA layout's seven, then the answer's three. */
+  public static final List<String> RESULTS_HEADERS =
+      List.of(
+          "First name",
+          "Last name",
+          "Email",
+          "Course assignment",
+          "Course instructor",
+          "Course instructor email",
+          "First time ULA",
+          "Offer Status",
+          "Offer Response Date/Time",
+          "Comments");
+
+  /** The second table: answers from applicants who no longer hold an assignment. */
+  public static final List<String> UNASSIGNED_HEADERS =
+      List.of(
+          "First name",
+          "Last name",
+          "Email",
+          "Course answered for",
+          "Offer Status",
+          "Offer Response Date/Time",
+          "Comments");
+
+  /** How many assigned ULAs there are, and how many have answered each way, or not yet. */
+  public record Counts(int assigned, int proceed, int declined, int none) {}
+
+  /**
+   * The admin's Soft Offer Results (issue #487): one row per assigned ULA with their answer for the
+   * lecture they now hold (an answer for another lecture is marked "(for ...)"), and a second table
+   * of answers from applicants no longer assigned anywhere, so a decline is never lost.
+   */
+  public record Results(
+      Long recruitmentId,
+      String quarter,
+      LocalDateTime releasedAt,
+      LocalDateTime deadline,
+      Counts counts,
+      List<String> headers,
+      List<List<String>> rows,
+      List<String> unassignedHeaders,
+      List<List<String>> unassigned) {}
 
   /** An application with an open soft offer: the recruitment and the lecture it is assigned to. */
   public record Offer(Application application, Recruitment recruitment, RecruitmentCourse course) {}
@@ -146,6 +206,156 @@ public class SoftOffersService {
             .comments(text.isEmpty() ? null : text)
             .softOfferNoticeVersionId(notice == null ? null : notice.id())
             .build());
+  }
+
+  /**
+   * The results of a released ULA recruitment's soft offers (issue #487).
+   *
+   * @throws IllegalArgumentException unless the recruitment is a ULA one with soft offers released
+   */
+  public Results results(Recruitment recruitment) {
+    String unmet = SoftOffers.unmetPrerequisite(recruitment);
+    if (unmet != null) {
+      throw new IllegalArgumentException(unmet);
+    }
+    if (!SoftOffers.isReleased(recruitment)) {
+      throw new IllegalArgumentException(NOT_RELEASED);
+    }
+    Map<Long, RecruitmentCourse> courses = new HashMap<>();
+    for (RecruitmentCourse course :
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId())) {
+      courses.put(course.getId(), course);
+    }
+    List<Application> all = assignmentsService.realApplications(recruitment.getId());
+    Map<String, String> emails = publishedAssignmentsService.emailsByCatalogName();
+    Map<Long, List<SoftOfferResponse>> answers =
+        softOfferResponseRepository
+            .findByApplicationIdIn(all.stream().map(Application::getId).toList())
+            .stream()
+            .collect(Collectors.groupingBy(SoftOfferResponse::getApplicationId));
+    LocalDateTime deadline = recruitment.getSoftOfferDeadline();
+
+    List<List<String>> rows = new ArrayList<>();
+    int proceed = 0;
+    int declined = 0;
+    List<Application> assigned =
+        all.stream()
+            .filter(a -> courses.containsKey(a.getTentativeAssignmentId()))
+            .sorted(PublishedAssignmentsService.BY_NAME)
+            .toList();
+    for (Application person : assigned) {
+      RecruitmentCourse course = courses.get(person.getTentativeAssignmentId());
+      List<SoftOfferResponse> mine = answers.getOrDefault(person.getId(), List.of());
+      SoftOfferResponse current =
+          mine.stream()
+              .filter(r -> course.getId().equals(r.getRecruitmentCourseId()))
+              .findFirst()
+              .orElse(null);
+      // With no answer for the lecture now held, the newest answer for another lecture is shown,
+      // marked with the lecture it was for.
+      SoftOfferResponse shown =
+          current != null
+              ? current
+              : mine.stream()
+                  .max(Comparator.comparing(SoftOfferResponse::getRespondedAt))
+                  .orElse(null);
+      if (current != null) {
+        if (current.getDecision() == SoftOfferDecision.PROCEED) {
+          proceed++;
+        } else {
+          declined++;
+        }
+      }
+      List<String> row = new ArrayList<>();
+      row.add(ApplicationCsvService.text(person.getFirstName()));
+      row.add(ApplicationCsvService.text(person.getLastName()));
+      row.add(ApplicationCsvService.text(person.getEmail()));
+      row.add(PublishedAssignmentsService.courseNumber(course));
+      row.add(ApplicationCsvService.text(course.getInstructor()));
+      row.add(instructorEmail(course, emails));
+      row.add(PublishedAssignmentsService.firstTimeUla(person));
+      row.add(
+          shown == null
+              ? ""
+              : current != null
+                  ? status(shown)
+                  : status(shown) + " (for " + lectureName(shown, courses) + ")");
+      row.add(shown == null ? "" : stamp(shown, deadline));
+      row.add(shown == null ? "" : ApplicationCsvService.text(shown.getComments()));
+      rows.add(row);
+    }
+
+    List<List<String>> unassigned = new ArrayList<>();
+    for (Application person : all) {
+      if (courses.containsKey(person.getTentativeAssignmentId())) {
+        continue;
+      }
+      for (SoftOfferResponse answer : answers.getOrDefault(person.getId(), List.of())) {
+        unassigned.add(
+            List.of(
+                ApplicationCsvService.text(person.getFirstName()),
+                ApplicationCsvService.text(person.getLastName()),
+                ApplicationCsvService.text(person.getEmail()),
+                lectureName(answer, courses),
+                status(answer),
+                stamp(answer, deadline),
+                ApplicationCsvService.text(answer.getComments())));
+      }
+    }
+    unassigned.sort(
+        Comparator.comparing((List<String> r) -> r.get(1), String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(r -> r.get(0), String.CASE_INSENSITIVE_ORDER));
+
+    return new Results(
+        recruitment.getId(),
+        recruitment.getQuarter(),
+        recruitment.getSoftOffersReleasedAt(),
+        deadline,
+        new Counts(assigned.size(), proceed, declined, assigned.size() - proceed - declined),
+        RESULTS_HEADERS,
+        rows,
+        UNASSIGNED_HEADERS,
+        unassigned);
+  }
+
+  /** The main results table as CSV: the header row, then a row per assigned ULA. */
+  public String resultsCsv(Recruitment recruitment) {
+    Results results = results(recruitment);
+    StringWriter out = new StringWriter();
+    CSVWriter writer = new CSVWriter(out);
+    writer.writeNext(results.headers().toArray(String[]::new));
+    for (List<String> row : results.rows()) {
+      writer.writeNext(row.toArray(String[]::new));
+    }
+    return out.toString();
+  }
+
+  private static String status(SoftOfferResponse answer) {
+    return answer.getDecision() == SoftOfferDecision.PROCEED ? PROCEED : DECLINED;
+  }
+
+  /** "2026-11-21T08:05", with " (late)" when after the deadline. */
+  private static String stamp(SoftOfferResponse answer, LocalDateTime deadline) {
+    String text = ApplicationCsvService.text(answer.getRespondedAt());
+    boolean late =
+        deadline != null
+            && answer.getRespondedAt() != null
+            && answer.getRespondedAt().isAfter(deadline);
+    return late ? text + LATE : text;
+  }
+
+  /** The lecture an answer was for, by number, or "lecture N" when it is no longer on file. */
+  private static String lectureName(
+      SoftOfferResponse answer, Map<Long, RecruitmentCourse> courses) {
+    RecruitmentCourse course = courses.get(answer.getRecruitmentCourseId());
+    return course == null
+        ? "lecture " + answer.getRecruitmentCourseId()
+        : PublishedAssignmentsService.courseNumber(course);
+  }
+
+  private static String instructorEmail(RecruitmentCourse course, Map<String, String> emails) {
+    String email = course.getInstructor() == null ? null : emails.get(course.getInstructor());
+    return email == null ? PublishedAssignmentsService.NOT_MAPPED : email;
   }
 
   private SoftOfferDto.Notice currentNotice() {

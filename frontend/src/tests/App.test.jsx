@@ -7,6 +7,7 @@ import App from "App";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
+import softOfferResultsFixtures from "fixtures/softOfferResultsFixtures";
 import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -179,6 +180,35 @@ describe("App", () => {
       await screen.findByText("You do not have access to this page."),
     ).toBeInTheDocument();
     expect(screen.queryByText(/changes recorded/)).toBeNull();
+  });
+
+  test("/admin/recruitments/:id/softOffers is the soft offer results page, for admins only (issue #487)", async () => {
+    axiosMock
+      .onGet("/api/admin/softOffers")
+      .reply(200, softOfferResultsFixtures.empty);
+    window.history.pushState({}, "", "/admin/recruitments/1/softOffers");
+    renderApp();
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Soft Offer Results: W26 TA",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("SoftOfferResultsPage-counts"),
+    ).toHaveTextContent(
+      "0 assigned ULAs: 0 proceed, 0 declined, 0 no response yet.",
+    );
+    cleanup();
+
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.userOnly);
+    renderApp();
+    expect(
+      await screen.findByText("You do not have access to this page."),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("SoftOfferResultsPage")).toBeNull();
   });
 
   test("/admin/draft-applications/:id is the draft's page, for admins only (issue #296)", async () => {
