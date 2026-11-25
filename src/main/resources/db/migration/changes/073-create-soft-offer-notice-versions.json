@@ -1,0 +1,47 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "073-create-soft-offer-notice-versions",
+        "author": "pc",
+        "comment": "The Soft Offer Notices card of ULA App Settings (issue #484, part of the soft offers of issue #483): one row per saved version, never updated, the id being the version number. content is the Markdown shown to an assigned ULA applicant above the proceed-or-decline question once soft offers are released; created_at is Pacific wall-clock time set by the server. Shaped like notice_versions (changeset 012) without the type column: the text is ULA only. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "soft_offer_notice_versions" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "soft_offer_notice_versions",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "content",
+                    "type": "VARCHAR(100000)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "created_at",
+                    "type": "TIMESTAMP",
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "rollback": [{ "dropTable": { "tableName": "soft_offer_notice_versions" } }]
+      }
+    }
+  ]
+}

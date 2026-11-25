@@ -1,18 +1,14 @@
-import { useState } from "react";
-import { Card, Form } from "react-bootstrap";
+import { Card } from "react-bootstrap";
 import {
-  defaultPreviewQuarter,
-  fillNoticeFields,
   KNOWN_NOTICE_FIELDS,
   NOTICE_FIELDS_HINT,
 } from "main/utils/noticeFields";
-import type { UcsbApiQuarter } from "main/utils/quarterCalendar";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
-import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { toast } from "react-toastify";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import type { NoticeVersion } from "main/utils/notices";
 import MarkdownVersionEditor from "main/components/Notices/MarkdownVersionEditor";
+import PreviewQuarterPicker from "main/components/Notices/PreviewQuarterPicker";
+import { useNoticePreviewQuarter } from "main/utils/useNoticePreviewQuarter";
 
 type NoticeEditorCardProps = {
   type: "TA" | "ULA";
@@ -57,50 +53,8 @@ export default function NoticeEditorCard({
 
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
 
-  // Issue #192: the preview is filled in for a chosen quarter, by default the one after today's,
-  // from the quarter calendar on file and that quarter's recruitment of this type, if any.
-  const { data: calendarRows } = useBackend<UcsbApiQuarter[]>(
-    // Stryker disable next-line all : the query key is only observable through invalidation
-    ["/api/admin/quarters/all", "desc"],
-    {
-      // Stryker disable next-line all : GET is axios's default method
-      method: "GET",
-      url: "/api/admin/quarters/all",
-      params: { direction: "desc" },
-    },
-    // Stryker disable next-line all : don't test default value of empty list
-    [],
-  );
-  const { data: recruitments } = useBackend<Recruitment[]>(
-    // Stryker disable next-line all : the query key is only observable through invalidation
-    ["/api/admin/recruitments/all"],
-    // Stryker disable next-line all : GET is axios's default method
-    { method: "GET", url: "/api/admin/recruitments/all" },
-    // Stryker disable next-line all : don't test default value of empty list
-    [],
-  );
-  const [previewQuarter, setPreviewQuarter] = useState(() =>
-    defaultPreviewQuarter(),
-  );
-  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
-  const calendars = calendarRows ?? [];
-  // The quarters on file, plus the chosen one if it is not among them, so the box always shows it.
-  const quarterOptions = calendars.some((row) => row.quarter === previewQuarter)
-    ? calendars.map((row) => row.quarter)
-    : [previewQuarter, ...calendars.map((row) => row.quarter)];
-  const calendar =
-    calendars.find((row) => row.quarter === previewQuarter) ?? null;
-  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
-  const recruitment = (recruitments ?? []).find(
-    (r) => r.quarter === previewQuarter && r.type === type,
-  );
-  const fill = (text: string) =>
-    fillNoticeFields(text, {
-      quarter: previewQuarter,
-      primaryConsiderationDate: recruitment?.primaryConsiderationDate,
-      calendar,
-    });
-  const previewQyy = yyyyqToQyy(previewQuarter);
+  // Issue #192: the preview is filled in for a chosen quarter, by default the one after today's.
+  const preview = useNoticePreviewQuarter(type);
 
   return (
     <Card className="mb-4" data-testid={testIdPrefix}>
@@ -130,43 +84,11 @@ export default function NoticeEditorCard({
           </a>
           .
         </p>
-        <Form.Group
-          className="d-flex align-items-center gap-2 mb-2"
-          controlId={id("preview-quarter")}
-        >
-          <Form.Label className="mb-0">Preview for quarter:</Form.Label>
-          <Form.Select
-            size="sm"
-            style={{ width: "8em" }}
-            value={previewQuarter}
-            onChange={(event) => setPreviewQuarter(event.target.value)}
-            data-testid={id("preview-quarter")}
-          >
-            {quarterOptions.map((quarter) => (
-              <option key={quarter} value={quarter}>
-                {yyyyqToQyy(quarter)}
-              </option>
-            ))}
-          </Form.Select>
-          {calendar === null && (
-            <span
-              className="text-muted small"
-              data-testid={id("preview-no-calendar")}
-            >
-              The quarter calendar for {previewQyy} is not on file (see Admin
-              &rarr; Quarters), so its dates are shown as written.
-            </span>
-          )}
-          {recruitment === undefined && (
-            <span
-              className="text-muted small"
-              data-testid={id("preview-no-recruitment")}
-            >
-              No {type} recruitment for {previewQyy} yet, so{" "}
-              <code>{"${primaryConsiderationDate}"}</code> is shown as written.
-            </span>
-          )}
-        </Form.Group>
+        <PreviewQuarterPicker
+          type={type}
+          preview={preview}
+          testIdPrefix={testIdPrefix}
+        />
         <MarkdownVersionEditor
           testIdPrefix={testIdPrefix}
           versions={versions}
@@ -174,7 +96,7 @@ export default function NoticeEditorCard({
           onSave={(text, onSaved) =>
             saveMutation.mutate(text, { onSuccess: onSaved })
           }
-          fill={fill}
+          fill={preview.fill}
           knownFields={KNOWN_NOTICE_FIELDS}
           fieldsHelpPath="/help/notice-fields"
           noVersionMessage="No version saved yet: applicants are not shown a notice."

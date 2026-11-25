@@ -1070,6 +1070,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the same <a href="#notice-fields">fields</a> available), and the
           import of the old ULA Google Form&apos;s response sheet.
         </p>
+        <p data-testid="HelpAdminsPage-soft-offer-notices">
+          Its <strong>Soft Offer Notices</strong> card holds the text a ULA
+          applicant who has been assigned to a course reads when soft offers
+          have been released (an optional, ULA-only step after hiring decisions
+          are released), above the question whether to proceed to a formal offer
+          or to decline. It is edited like the notices, with the same fields and
+          preview, and every save is a new version, so a response can always
+          show the exact text its applicant read. Until a version is saved, a
+          soft offer shows the course details and the question alone.
+        </p>
 
         <h2 className="my-3 h4" id="instructor-feedback-settings">
           Instructor Feedback Settings

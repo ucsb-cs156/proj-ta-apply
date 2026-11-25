@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
+import softOfferNoticeFixtures from "fixtures/softOfferNoticeFixtures";
 import quartersFixtures from "fixtures/quartersFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -19,6 +20,13 @@ const common = [
     HttpResponse.json(quartersFixtures.threeNewestFirst),
   ),
   http.get("/api/admin/notices/all", () => HttpResponse.json([])),
+  // Issue #484: the Soft Offer Notices card.
+  http.get("/api/admin/softOfferNotices/all", () =>
+    HttpResponse.json(softOfferNoticeFixtures.history),
+  ),
+  http.post("/api/admin/softOfferNotices", () =>
+    HttpResponse.json({ ...softOfferNoticeFixtures.v2, id: 3 }),
+  ),
   http.get("/api/admin/recruitments/all", () =>
     HttpResponse.json(recruitmentsFixtures.threeRecruitments),
   ),

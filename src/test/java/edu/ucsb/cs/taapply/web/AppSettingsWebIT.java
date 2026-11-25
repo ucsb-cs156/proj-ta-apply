@@ -146,6 +146,33 @@ public class AppSettingsWebIT extends WebTestCase {
     assertThat(page.getByTestId("UlaAppSettingsPage-notices-save-button")).isDisabled();
   }
 
+  /** Issue #484: the Soft Offer Notices card works the same way, below the notices card. */
+  @Test
+  public void admin_can_save_a_new_version_of_the_soft_offer_notices() throws Exception {
+    setupAdminUser();
+    goTo("/admin/settings/ula");
+    String card = "UlaAppSettingsPage-softOfferNotices";
+
+    assertThat(page.getByTestId(card)).containsText("Soft Offer Notices");
+    assertThat(page.getByTestId(card + "-choices"))
+        .containsText("Please proceed with a formal offer; I am likely to accept.");
+    assertThat(page.getByTestId(card + "-current")).containsText("No version saved yet");
+    assertThat(page.getByTestId(card + "-save-button")).isDisabled();
+
+    page.getByTestId(card + "-editor").locator(".CodeMirror").click();
+    page.keyboard().type("# Congratulations");
+    assertThat(page.getByTestId(card + "-preview").locator("h1")).containsText("Congratulations");
+    page.getByTestId(card + "-save-button").click();
+
+    assertThat(page.getByText("Saved version 1 of the soft offer notices")).isVisible();
+    assertThat(page.getByTestId(card + "-current")).containsText("Current: Version 1");
+    assertThat(page.getByTestId(card + "-history-row-0")).containsText("1");
+    assertThat(page.getByTestId(card + "-save-button")).isDisabled();
+    // The notices card above it is untouched.
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-current"))
+        .containsText("No version saved yet");
+  }
+
   @Test
   public void non_admins_are_denied_the_settings_pages() throws Exception {
     setupInstructorUser();

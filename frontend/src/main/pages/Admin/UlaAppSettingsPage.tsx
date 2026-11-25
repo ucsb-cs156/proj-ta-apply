@@ -1,6 +1,7 @@
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import NameListCard from "main/components/AppSettings/NameListCard";
 import NoticeEditorCard from "main/components/Notices/NoticeEditorCard";
+import SoftOfferNoticeEditorCard from "main/components/Notices/SoftOfferNoticeEditorCard";
 import LegacyApplicationsUploadCard from "main/components/Applications/LegacyApplicationsUploadCard";
 
 /** The admin-maintained lists behind the ULA application form: /admin/settings/ula */
@@ -35,6 +36,8 @@ export default function UlaAppSettingsPage(): React.JSX.Element {
           type="ULA"
           testIdPrefix="UlaAppSettingsPage-notices"
         />
+        {/* Issue #484: the text of a soft offer, ULA only. */}
+        <SoftOfferNoticeEditorCard testIdPrefix="UlaAppSettingsPage-softOfferNotices" />
         <LegacyApplicationsUploadCard
           type="ULA"
           testIdPrefix="UlaAppSettingsPage-legacy"

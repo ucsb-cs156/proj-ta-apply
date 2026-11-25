@@ -42,6 +42,7 @@ describe("UlaAppSettingsPage tests", () => {
       .onGet("/api/admin/settings/ula-interests/all")
       .reply(200, appSettingsFixtures.twoInterests);
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
+    axiosMock.onGet("/api/admin/softOfferNotices/all").reply(200, []);
     axiosMock.onGet("/api/admin/quarters/all").reply(200, []);
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
     axiosMock
@@ -64,6 +65,29 @@ describe("UlaAppSettingsPage tests", () => {
           (r) => r.url === "/api/admin/notices/all",
         )[0].params,
       ).toEqual({ type: "ULA" }),
+    );
+  });
+
+  /** Issue #484: the Soft Offer Notices card, below the notices card. */
+  test("has a Soft Offer Notices card after the Notices, Terms and Conditions card", async () => {
+    renderPage();
+
+    const card = screen.getByTestId("UlaAppSettingsPage-softOfferNotices");
+    expect(card).toHaveClass("card");
+    expect(
+      screen.getByRole("heading", { name: "Soft Offer Notices" }),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getByTestId("UlaAppSettingsPage-notices")
+        .compareDocumentPosition(card),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/softOfferNotices/all",
+        ),
+      ).toHaveLength(1),
     );
   });
 
