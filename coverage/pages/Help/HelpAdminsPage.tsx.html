@@ -1556,7 +1556,25 @@
 <a name='L1491'></a><a href='#L1491'>1491</a>
 <a name='L1492'></a><a href='#L1492'>1492</a>
 <a name='L1493'></a><a href='#L1493'>1493</a>
-<a name='L1494'></a><a href='#L1494'>1494</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1494'></a><a href='#L1494'>1494</a>
+<a name='L1495'></a><a href='#L1495'>1495</a>
+<a name='L1496'></a><a href='#L1496'>1496</a>
+<a name='L1497'></a><a href='#L1497'>1497</a>
+<a name='L1498'></a><a href='#L1498'>1498</a>
+<a name='L1499'></a><a href='#L1499'>1499</a>
+<a name='L1500'></a><a href='#L1500'>1500</a>
+<a name='L1501'></a><a href='#L1501'>1501</a>
+<a name='L1502'></a><a href='#L1502'>1502</a>
+<a name='L1503'></a><a href='#L1503'>1503</a>
+<a name='L1504'></a><a href='#L1504'>1504</a>
+<a name='L1505'></a><a href='#L1505'>1505</a>
+<a name='L1506'></a><a href='#L1506'>1506</a>
+<a name='L1507'></a><a href='#L1507'>1507</a>
+<a name='L1508'></a><a href='#L1508'>1508</a>
+<a name='L1509'></a><a href='#L1509'>1509</a>
+<a name='L1510'></a><a href='#L1510'>1510</a>
+<a name='L1511'></a><a href='#L1511'>1511</a>
+<a name='L1512'></a><a href='#L1512'>1512</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1578,9 +1596,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1884,7 +1902,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">348x</span>
+<span class="cline-any cline-yes">390x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3397,11 +3433,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
         &lt;p&gt;
           &lt;Link to="/admin/users"&gt;Users&lt;/Link&gt; lists everyone who has ever
           signed in to the app: first and last name, email, when they were last
-          online, and whether they are an admin or an instructor. It is paged,
-          with the page size chosen above the table. The page is a roster, not
-          where roles are granted: make someone an admin on the Admins page or
-          an instructor on the Instructors page. A student needs no entry
-          anywhere; any signed-in user may apply.
+          online, and whether they are an admin, an instructor or hiring staff.
+          It is paged, with the page size chosen above the table. The page is a
+          roster, not where roles are granted: make someone an admin on the
+          Admins page, an instructor on the Instructors page, or hiring staff on
+          the Hiring Staff page. A student needs no entry anywhere; any
+          signed-in user may apply.
         &lt;/p&gt;
 &nbsp;
         &lt;h2 className="my-3 h4" id="admins"&gt;
@@ -3433,6 +3470,23 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Set it so the instructor&amp;apos;s courses can be matched to them; until
           it is set, their Instructor section says no recruitment includes a
           course they teach.
+        &lt;/p&gt;
+&nbsp;
+        &lt;h2 className="my-3 h4" id="hiring-staff"&gt;
+          Hiring Staff
+        &lt;/h2&gt;
+        &lt;p data-testid="HelpAdminsPage-hiring-staff"&gt;
+          &lt;Link to="/admin/hiringStaff"&gt;Hiring Staff&lt;/Link&gt; lists who holds the
+          Hiring Staff role: the hiring and financial office staff who process
+          the ULA soft offers. Add one with &lt;em&gt;New Hiring Staff&lt;/em&gt;; each row
+          has a Delete button, and the first and last name fill in when that
+          person first signs in. The role is independent of Admin and
+          Instructor, and an outside (non-UCSB) address on the list can sign in.
+          Hiring staff see a Hiring Staff section on their home page with a card
+          for each ULA recruitment whose soft offers have been released, and
+          that card&amp;apos;s one button, &lt;em&gt;Soft Offer Results&lt;/em&gt;, opens the
+          same results page as the admin&amp;apos;s, Change Deadline and Download
+          CSV included. They have no Admin menu and no other admin page.
         &lt;/p&gt;
 &nbsp;
         &lt;h2 className="my-3 h4" id="courses"&gt;
@@ -4549,7 +4603,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-25T20:19:21.232Z
+                at 2026-11-25T22:34:38.273Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
