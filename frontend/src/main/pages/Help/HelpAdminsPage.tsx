@@ -982,12 +982,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
             the one-row-per-ULA assignments table plus Offer Status (Proceed,
             Declined or blank), Offer Response Date/Time (marked
             &ldquo;(late)&rdquo; after the deadline) and the applicant&apos;s
-            Comments, with a Download CSV of that table; an answer given for a
-            lecture the applicant no longer holds reads &ldquo;Proceed (for
-            CMPSC 8)&rdquo;, and answers from applicants no longer assigned at
-            all are listed in a second table. Admins only: the page holds the
-            applicants&apos; comments. Soft offers are optional and not a step
-            of the diagram.
+            Comments; an answer given for a lecture the applicant no longer
+            holds reads &ldquo;Proceed (for CMPSC 8)&rdquo;, and answers from
+            applicants no longer assigned at all are listed in a second table.
+            Above the table, <strong>Download CSV</strong> saves it with every
+            column, and the <strong>Columns</strong> menu hides and shows any
+            column but First name and Last name (each hideable heading has a
+            small <em>hide</em> link too); the choice is kept in your browser
+            for every recruitment&apos;s results, and the second table follows
+            it. The Comments column can be dragged, by the handle at the right
+            edge of its heading, between 200px and 80% of the window&apos;s
+            width. Admins only: the page holds the applicants&apos; comments.
+            Soft offers are optional and not a step of the diagram.
           </li>
           <li id="change-history" data-testid="HelpAdminsPage-change-history">
             <strong>Change History.</strong> Every change to the recruitment

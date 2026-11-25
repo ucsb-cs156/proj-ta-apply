@@ -17,6 +17,7 @@ import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import softOfferResultsFixtures from "fixtures/softOfferResultsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import { SOFT_OFFER_COLUMNS_STORAGE_KEY } from "main/utils/softOfferResultsColumns";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -54,9 +55,16 @@ const cells = (testid) =>
     (td) => td.textContent,
   );
 
+/** The headings of a table, left to right, without their "hide" links and sort carets. */
+const headings = (testid) =>
+  [...screen.getByTestId(testid).querySelectorAll("thead th")].map((th) =>
+    th.querySelector("[data-testid$='-sort-header']").textContent.trim(),
+  );
+
 describe("SoftOfferResultsPage tests (issue #487)", () => {
   beforeEach(() => {
     mockToast.mockClear();
+    localStorage.clear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -103,9 +111,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     renderPage();
 
     const table = await screen.findByTestId(T);
-    expect(
-      [...table.querySelectorAll("th")].map((th) => th.textContent),
-    ).toEqual(softOfferResultsFixtures.three.headers);
+    expect(headings(T)).toEqual(softOfferResultsFixtures.three.headers);
     expect(table.querySelectorAll("tbody tr")).toHaveLength(3);
     expect(cells(`${T}-row-0`)).toEqual([
       "Grace",
@@ -119,13 +125,13 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       "10/22/2025, 8:00:00 AM",
       "2025-10-22T08:00 call me (for details)",
     ]);
-    expect(screen.getByTestId(`${T}-row-0-c7`)).toHaveClass(
-      "text-muted",
-      "fst-italic",
-    );
+    const stale = screen.getByTestId(`${T}-cell-row-0-col-status`);
+    expect(stale.firstElementChild).toHaveClass("text-muted", "fst-italic");
     // Only the status column is styled and only the stamp column is formatted.
-    expect(screen.getByTestId(`${T}-row-0-c9`)).not.toHaveClass("text-muted");
-    expect(screen.getByTestId(`${T}-header-7`)).toHaveTextContent(
+    expect(
+      screen.getByTestId(`${T}-cell-row-0-col-comments`).querySelector("span"),
+    ).toBeNull();
+    expect(screen.getByTestId(`${T}-header-status`)).toHaveTextContent(
       "Offer Status",
     );
     expect(cells(`${T}-row-1`)).toEqual([
@@ -140,9 +146,13 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       "10/26/2025, 9:00:00 AM (late)",
       "Yes!",
     ]);
-    expect(screen.getByTestId(`${T}-row-1-c7`)).not.toHaveClass("text-muted");
+    expect(
+      screen.getByTestId(`${T}-cell-row-1-col-status`).querySelector("span"),
+    ).toBeNull();
     expect(cells(`${T}-row-2`).slice(7)).toEqual(["", "", ""]);
-    expect(screen.getByTestId(`${T}-row-2-c8`)).toHaveTextContent("");
+    expect(
+      screen.getByTestId(`${T}-cell-row-2-col-respondedAt`),
+    ).toHaveTextContent("");
   });
 
   test("the second table lists answers from applicants no longer assigned, with its own columns", async () => {
@@ -151,10 +161,9 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     expect(
       await screen.findByTestId(`${P}-unassigned-title`),
     ).toHaveTextContent("Responses from applicants no longer assigned");
-    const table = screen.getByTestId(`${P}-unassigned`);
-    expect(
-      [...table.querySelectorAll("th")].map((th) => th.textContent),
-    ).toEqual(softOfferResultsFixtures.three.unassignedHeaders);
+    expect(headings(`${P}-unassigned`)).toEqual(
+      softOfferResultsFixtures.three.unassignedHeaders,
+    );
     expect(cells(`${P}-unassigned-row-0`)).toEqual([
       "Linus",
       "Torvalds",
@@ -164,9 +173,129 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       "10/23/2025, 10:30:00 AM",
       "Moving away",
     ]);
-    expect(screen.getByTestId(`${P}-unassigned-row-0-c4`)).not.toHaveClass(
-      "text-muted",
+    expect(
+      screen
+        .getByTestId(`${P}-unassigned-cell-row-0-col-status`)
+        .querySelector("span"),
+    ).toBeNull();
+  });
+
+  // ---- issue #494: the toolbar above the table, and the Columns menu ----
+
+  test("Download CSV and the Columns menu sit in a toolbar just above the main table", async () => {
+    renderPage();
+
+    const toolbar = await screen.findByTestId(`${P}-toolbar`);
+    expect(toolbar).toHaveClass("d-flex", "gap-2", "mb-2");
+    expect(toolbar).toContainElement(screen.getByTestId(`${P}-columns`));
+    expect(toolbar).toContainElement(screen.getByTestId(`${P}-csv`));
+    expect(screen.getByTestId(`${P}-csv`)).toHaveClass("btn-sm");
+    // The table comes right after the toolbar: nothing but the table's wrapper between them.
+    expect(toolbar.nextElementSibling).toContainElement(screen.getByTestId(T));
+    expect(screen.getByTestId(`${P}-counts`).nextElementSibling).toBe(toolbar);
+  });
+
+  test("the Columns menu offers every column but First name and Last name, labelled by the headings", async () => {
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId(`${P}-columns-toggle`));
+    expect(
+      screen.getAllByRole("checkbox").map((box) => box.labels[0].textContent),
+    ).toEqual([
+      "Email",
+      "Course assignment",
+      "Course instructor",
+      "Course instructor email",
+      "First time ULA",
+      "Offer Status",
+      "Offer Response Date/Time",
+      "Comments",
+    ]);
+    // No "hide" link over First name or Last name, in either table.
+    expect(
+      screen.queryByRole("button", { name: "Hide First name column" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Hide Last name column" }),
+    ).toBeNull();
+    expect(
+      screen.getAllByRole("button", { name: "Hide Comments column" }),
+    ).toHaveLength(2);
+    // The second table's own column is always shown.
+    expect(
+      screen.queryByRole("button", { name: "Hide Course answered for column" }),
+    ).toBeNull();
+  });
+
+  test("unticking a column hides it in both tables and is remembered; the hide link and Show All work too", async () => {
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId(`${P}-columns-toggle`));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Comments" }));
+    expect(screen.queryByTestId(`${T}-header-comments`)).toBeNull();
+    expect(screen.queryByTestId(`${T}-cell-row-0-col-comments`)).toBeNull();
+    expect(screen.queryByTestId(`${P}-unassigned-header-comments`)).toBeNull();
+    expect(screen.getByTestId(`${T}-header-firstName`)).toBeInTheDocument();
+    expect(
+      JSON.parse(localStorage.getItem(SOFT_OFFER_COLUMNS_STORAGE_KEY)),
+    ).toEqual(["comments"]);
+    expect(screen.getByTestId(`${P}-columns-toggle`)).toHaveTextContent(
+      "Columns (1 hidden)",
     );
+
+    // The "hide" link over a heading of the second table hides the column in both tables.
+    await userEvent.click(
+      screen.getByTestId(`${P}-unassigned-header-email-hide`),
+    );
+    expect(screen.queryByTestId(`${T}-header-email`)).toBeNull();
+    expect(
+      JSON.parse(localStorage.getItem(SOFT_OFFER_COLUMNS_STORAGE_KEY)),
+    ).toEqual(["comments", "email"]);
+
+    await userEvent.click(screen.getByTestId(`${P}-columns-select-all`));
+    expect(screen.getByTestId(`${T}-header-comments`)).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`${P}-unassigned-header-email`),
+    ).toBeInTheDocument();
+    expect(
+      JSON.parse(localStorage.getItem(SOFT_OFFER_COLUMNS_STORAGE_KEY)),
+    ).toEqual([]);
+  });
+
+  test("columns hidden on an earlier visit start hidden", async () => {
+    localStorage.setItem(
+      SOFT_OFFER_COLUMNS_STORAGE_KEY,
+      JSON.stringify(["instructorEmail", "status"]),
+    );
+    renderPage();
+
+    await screen.findByTestId(`${T}-row-0`);
+    expect(screen.queryByTestId(`${T}-header-instructorEmail`)).toBeNull();
+    expect(screen.queryByTestId(`${T}-header-status`)).toBeNull();
+    expect(screen.queryByTestId(`${P}-unassigned-header-status`)).toBeNull();
+    expect(cells(`${T}-row-1`)).toEqual([
+      "Ada",
+      "Lovelace",
+      "ada@ucsb.edu",
+      "CMPSC 156",
+      "CONRAD P",
+      "yes",
+      "10/26/2025, 9:00:00 AM (late)",
+      "Yes!",
+    ]);
+  });
+
+  test("Comments has the only drag handle, starting at 300px", async () => {
+    renderPage();
+
+    await screen.findByTestId(`${T}-row-0`);
+    expect(screen.getAllByRole("separator")).toHaveLength(2);
+    expect(screen.getByTestId(`${T}-header-comments`).style.width).toBe(
+      "300px",
+    );
+    expect(
+      screen.getByTestId(`${P}-unassigned-header-comments`).style.width,
+    ).toBe("300px");
   });
 
   test("the CSV link downloads the backend's file under its name", async () => {
@@ -179,7 +308,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       "/api/admin/softOffers/csv?recruitmentId=5",
     );
     expect(link).toHaveAttribute("download", "soft-offers-5.csv");
-    expect(link).toHaveClass("btn", "btn-outline-secondary");
+    expect(link).toHaveClass("btn", "btn-outline-secondary", "btn-sm");
   });
 
   test("with nobody assigned the table is empty and the second table is absent", async () => {
