@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AutoAssignmentsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">AutoAssignmentsService.java</span></div><h1>AutoAssignmentsService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsService.AssignmentRow;
+import edu.ucsb.cs.taapply.services.AssignmentsService.Assignments;
+import edu.ucsb.cs.taapply.services.AssignmentsService.CourseSummary;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Automatically Assign No-Conflict Slots (issue #481): fills every place where there is one clear,
+ * rational choice. A lecture that still needs assignments gets its highest-ranked remaining
+ * candidate when that candidate is enthusiastic about the course and no other lecture that still
+ * needs assignments has ranked them at all. Passes are repeated until one makes no assignment.
+ *
+ * &lt;p&gt;The planning is pure ({@link #plan}) and works on the page's own data, so the controller tests
+ * and this service's tests need no database. Within a pass, two assignments can never share a
+ * candidate (a shared candidate is ranked by two needing lectures, so blocked for both) or a
+ * lecture, and making one only removes blockers, never adds one; so the result does not depend on
+ * the order lectures are visited, and repeating until nothing changes is safe.
+ */
+@Service
+<span class="fc" id="L33">public class AutoAssignmentsService {</span>
+  @Autowired AssignmentsService assignmentsService;
+  @Autowired ApplicationRepository applicationRepository;
+
+  /** Why a lecture that still needs assignments got none in the final pass. */
+  public static final String NO_RANKINGS = &quot;NO_RANKINGS&quot;;
+
+  public static final String ALL_RANKED_ASSIGNED = &quot;ALL_RANKED_ASSIGNED&quot;;
+  public static final String TIE = &quot;TIE&quot;;
+  public static final String NOT_ENTHUSIASTIC = &quot;NOT_ENTHUSIASTIC&quot;;
+  public static final String RANKED_ELSEWHERE = &quot;RANKED_ELSEWHERE&quot;;
+
+  /** The interests that count as enthusiastic: the preference scale's three strongest. */
+<span class="fc" id="L46">  static final Set&lt;String&gt; ENTHUSIASTIC =</span>
+<span class="fc" id="L47">      Set.of(</span>
+          AssignmentsService.FIRST_CHOICE,
+          AssignmentsService.SECOND_CHOICE,
+          AssignmentsService.ENTHUSIASTIC);
+
+  /** One assignment the run made: who, to which lecture, at what rank, in which pass. */
+<span class="fc" id="L53">  public record Made(Long applicationId, Long recruitmentCourseId, Integer rank, int pass) {}</span>
+
+  /**
+   * One lecture still needing assignments after the final pass, and why it got none: the reason
+   * code; the candidate it looked at and their rank, when there was one; and, for {@code
+   * RANKED_ELSEWHERE}, the other needing lectures that ranked that candidate.
+   */
+<span class="fc" id="L60">  public record Skipped(</span>
+      Long recruitmentCourseId,
+      String reason,
+      Long applicationId,
+      Integer rank,
+      List&lt;Long&gt; blockedBy) {}
+
+  /** What a run would do: the assignments to make, and the final pass's unfilled lectures. */
+<span class="fc" id="L68">  public record Plan(List&lt;Made&gt; made, List&lt;Skipped&gt; skipped) {}</span>
+
+  /**
+   * The answer to a run: the assignments as they now stand, and what the run did and did not do.
+   */
+<span class="fc" id="L73">  public record Outcome(Assignments assignments, List&lt;Made&gt; made, List&lt;Skipped&gt; skipped) {}</span>
+
+  /** The answer to an undo: the assignments as they now stand, and how many were cleared. */
+<span class="fc" id="L76">  public record Undone(Assignments assignments, int cleared) {}</span>
+
+  /**
+   * Plans a run over the page as it stands, without changing anything. {@code ineligible} are the
+   * applications never to assign (those marked Not Hired): they are left out of every ranking list,
+   * as if already placed, so they neither receive a place nor hold one up.
+   */
+  public static Plan plan(Assignments page, Set&lt;Long&gt; ineligible) {
+<span class="fc" id="L84">    Map&lt;Long, Integer&gt; left = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    for (CourseSummary course : page.courses()) {</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">      if (!course.historical()) {</span>
+<span class="fc" id="L87">        left.put(course.id(), course.left());</span>
+      }
+<span class="fc" id="L89">    }</span>
+<span class="fc" id="L90">    List&lt;AssignmentRow&gt; pool = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">    for (AssignmentRow row : page.rows()) {</span>
+<span class="fc bfc" id="L92" title="All 4 branches covered.">      if (row.tentativeAssignment() == null &amp;&amp; !ineligible.contains(row.applicationId())) {</span>
+<span class="fc" id="L93">        pool.add(row);</span>
+      }
+<span class="fc" id="L95">    }</span>
+
+<span class="fc" id="L97">    List&lt;Made&gt; made = new ArrayList&lt;&gt;();</span>
+    List&lt;Skipped&gt; skipped;
+<span class="fc" id="L99">    int pass = 0;</span>
+    while (true) {
+<span class="fc" id="L101">      pass++;</span>
+<span class="fc" id="L102">      List&lt;Made&gt; thisPass = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L103">      skipped = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">      for (Long courseId : needing(left)) {</span>
+<span class="fc" id="L105">        Skipped reason = consider(courseId, pool, left, page.rows(), pass, thisPass);</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (reason != null) {</span>
+<span class="fc" id="L107">          skipped.add(reason);</span>
+        }
+<span class="fc" id="L109">      }</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">      if (thisPass.isEmpty()) {</span>
+<span class="fc" id="L111">        break;</span>
+      }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">      for (Made assignment : thisPass) {</span>
+<span class="fc" id="L114">        pool.removeIf(row -&gt; row.applicationId().equals(assignment.applicationId()));</span>
+<span class="fc" id="L115">        left.merge(assignment.recruitmentCourseId(), -1, Integer::sum);</span>
+<span class="fc" id="L116">      }</span>
+<span class="fc" id="L117">      made.addAll(thisPass);</span>
+<span class="fc" id="L118">    }</span>
+<span class="fc" id="L119">    return new Plan(made, skipped);</span>
+  }
+
+  /** The lectures on offer with places still to fill, in the page's order. */
+  private static List&lt;Long&gt; needing(Map&lt;Long, Integer&gt; left) {
+<span class="fc" id="L124">    List&lt;Long&gt; ids = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L125">    left.forEach(</span>
+        (id, places) -&gt; {
+<span class="fc bfc" id="L127" title="All 2 branches covered.">          if (places &gt; 0) {</span>
+<span class="fc" id="L128">            ids.add(id);</span>
+          }
+<span class="fc" id="L130">        });</span>
+<span class="fc" id="L131">    return ids;</span>
+  }
+
+  /**
+   * One lecture's turn in a pass: adds its assignment to {@code thisPass} and returns null, or
+   * returns why it made none.
+   */
+  private static Skipped consider(
+      Long courseId,
+      List&lt;AssignmentRow&gt; pool,
+      Map&lt;Long, Integer&gt; left,
+      List&lt;AssignmentRow&gt; allRows,
+      int pass,
+      List&lt;Made&gt; thisPass) {
+<span class="fc" id="L145">    AssignmentRow top = null;</span>
+<span class="fc" id="L146">    int topRank = Integer.MAX_VALUE;</span>
+<span class="fc" id="L147">    int atTopRank = 0;</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">    for (AssignmentRow row : pool) {</span>
+<span class="fc" id="L149">      Integer rank = row.rankings().get(courseId);</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">      if (rank == null) {</span>
+<span class="fc" id="L151">        continue;</span>
+      }
+<span class="fc bfc" id="L153" title="All 2 branches covered.">      if (rank &lt; topRank) {</span>
+<span class="fc" id="L154">        top = row;</span>
+<span class="fc" id="L155">        topRank = rank;</span>
+<span class="fc" id="L156">        atTopRank = 1;</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">      } else if (rank == topRank) {</span>
+<span class="fc" id="L158">        atTopRank++;</span>
+      }
+<span class="fc" id="L160">    }</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">    if (top == null) {</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">      boolean anyRanked = allRows.stream().anyMatch(row -&gt; row.rankings().get(courseId) != null);</span>
+<span class="fc" id="L163">      return new Skipped(</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">          courseId, anyRanked ? ALL_RANKED_ASSIGNED : NO_RANKINGS, null, null, List.of());</span>
+    }
+<span class="fc bfc" id="L166" title="All 2 branches covered.">    if (atTopRank &gt; 1) {</span>
+<span class="fc" id="L167">      return new Skipped(courseId, TIE, null, topRank, List.of());</span>
+    }
+<span class="fc" id="L169">    String preference = top.preferences().get(courseId);</span>
+<span class="fc bfc" id="L170" title="All 4 branches covered.">    if (preference == null || !ENTHUSIASTIC.contains(preference)) {</span>
+<span class="fc" id="L171">      return new Skipped(courseId, NOT_ENTHUSIASTIC, top.applicationId(), topRank, List.of());</span>
+    }
+<span class="fc" id="L173">    List&lt;Long&gt; blockedBy = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">    for (Long other : needing(left)) {</span>
+<span class="fc bfc" id="L175" title="All 4 branches covered.">      if (!other.equals(courseId) &amp;&amp; top.rankings().get(other) != null) {</span>
+<span class="fc" id="L176">        blockedBy.add(other);</span>
+      }
+<span class="fc" id="L178">    }</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">    if (!blockedBy.isEmpty()) {</span>
+<span class="fc" id="L180">      return new Skipped(courseId, RANKED_ELSEWHERE, top.applicationId(), topRank, blockedBy);</span>
+    }
+<span class="fc" id="L182">    thisPass.add(new Made(top.applicationId(), courseId, topRank, pass));</span>
+<span class="fc" id="L183">    return null;</span>
+  }
+
+  /**
+   * Plans and makes the run's assignments, all in one transaction: if any application cannot be
+   * saved (its own version moved, issue #302), none of them is changed. The answer carries the
+   * assignments as they stand afterwards.
+   */
+  @Transactional
+  public Outcome run(Recruitment recruitment) {
+<span class="fc" id="L193">    List&lt;Application&gt; applications = assignmentsService.realApplications(recruitment.getId());</span>
+<span class="fc" id="L194">    Set&lt;Long&gt; ineligible = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc bfc" id="L196" title="All 2 branches covered.">      if (application.getStatus() == ApplicationReviewStatus.NOT_HIRED) {</span>
+<span class="fc" id="L197">        ineligible.add(application.getId());</span>
+      }
+<span class="fc" id="L199">    }</span>
+<span class="fc" id="L200">    Plan plan = plan(assignmentsService.assignments(recruitment), ineligible);</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">    for (Made assignment : plan.made()) {</span>
+<span class="fc" id="L202">      Application application = byId(applications, assignment.applicationId());</span>
+<span class="fc" id="L203">      application.setTentativeAssignmentId(assignment.recruitmentCourseId());</span>
+<span class="fc" id="L204">      applicationRepository.save(application);</span>
+<span class="fc" id="L205">    }</span>
+<span class="fc" id="L206">    return new Outcome(assignmentsService.assignments(recruitment), plan.made(), plan.skipped());</span>
+  }
+
+  /**
+   * Undoes a run: clears exactly the given assignments, and only where the application is still
+   * pencilled into the lecture the run put it in, so a placement changed by hand since is kept. All
+   * in one transaction.
+   */
+  @Transactional
+  public Undone undo(Recruitment recruitment, List&lt;Made&gt; made) {
+<span class="fc" id="L216">    List&lt;Application&gt; applications = assignmentsService.realApplications(recruitment.getId());</span>
+<span class="fc" id="L217">    int cleared = 0;</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">    for (Made assignment : made) {</span>
+<span class="fc" id="L219">      Application application = byId(applications, assignment.applicationId());</span>
+<span class="fc bfc" id="L220" title="All 2 branches covered.">      if (application != null</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">          &amp;&amp; assignment.recruitmentCourseId() != null</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">          &amp;&amp; assignment.recruitmentCourseId().equals(application.getTentativeAssignmentId())) {</span>
+<span class="fc" id="L223">        application.setTentativeAssignmentId(null);</span>
+<span class="fc" id="L224">        applicationRepository.save(application);</span>
+<span class="fc" id="L225">        cleared++;</span>
+      }
+<span class="fc" id="L227">    }</span>
+<span class="fc" id="L228">    return new Undone(assignmentsService.assignments(recruitment), cleared);</span>
+  }
+
+  private static Application byId(List&lt;Application&gt; applications, Long id) {
+<span class="fc" id="L232">    return applications.stream().filter(a -&gt; a.getId().equals(id)).findFirst().orElse(null);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
