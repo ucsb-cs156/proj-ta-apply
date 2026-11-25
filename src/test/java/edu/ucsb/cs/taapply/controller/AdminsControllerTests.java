@@ -19,6 +19,7 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Admin;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.HiringStaffRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import java.time.Instant;
@@ -47,6 +48,7 @@ public class AdminsControllerTests extends ControllerTestCase {
 
   @MockitoBean AdminRepository adminRepository;
   @MockitoBean InstructorRepository instructorRepository;
+  @MockitoBean HiringStaffRepository hiringStaffRepository;
   @MockitoBean UserRepository userRepository;
 
   // Authorization tests for post
@@ -227,20 +229,22 @@ public class AdminsControllerTests extends ControllerTestCase {
 
     PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("id"));
     Page<User> usersPage = new PageImpl<>(List.of(user1, user2), pageRequest, 2);
-    // user1 is both an admin and a grad student: the roles are independent, so a user may hold
-    // any combination of them.
+    // user1 is an admin and hiring staff, user2 an instructor: the roles are independent, so a user
+    // may hold any combination of them (issue #504).
     List<AdminsController.UserDTO> expectedUsers =
         List.of(
-            new AdminsController.UserDTO(user1, true, false),
-            new AdminsController.UserDTO(user2, false, true));
+            new AdminsController.UserDTO(user1, true, false, true),
+            new AdminsController.UserDTO(user2, false, true, false));
     AdminsController.UsersPageDTO expectedPage =
         new AdminsController.UsersPageDTO(expectedUsers, 0, 10, 2, 1);
 
     when(userRepository.findAll(eq(pageRequest))).thenReturn(usersPage);
     when(adminRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(true);
     when(instructorRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
+    when(hiringStaffRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(true);
     when(adminRepository.existsByEmail("craig.zzyzx@example.org")).thenReturn(false);
     when(instructorRepository.existsByEmail("craig.zzyzx@example.org")).thenReturn(true);
+    when(hiringStaffRepository.existsByEmail("craig.zzyzx@example.org")).thenReturn(false);
 
     MvcResult response =
         mockMvc.perform(get("/api/admin/users")).andExpect(status().isOk()).andReturn();
@@ -250,6 +254,8 @@ public class AdminsControllerTests extends ControllerTestCase {
     verify(instructorRepository, times(1)).existsByEmail("phtcon@ucsb.edu");
     verify(adminRepository, times(1)).existsByEmail("craig.zzyzx@example.org");
     verify(instructorRepository, times(1)).existsByEmail("craig.zzyzx@example.org");
+    verify(hiringStaffRepository, times(1)).existsByEmail("phtcon@ucsb.edu");
+    verify(hiringStaffRepository, times(1)).existsByEmail("craig.zzyzx@example.org");
     String expectedJson = mapper.writeValueAsString(expectedPage);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);
@@ -262,10 +268,12 @@ public class AdminsControllerTests extends ControllerTestCase {
     assertEquals("phtcon@ucsb.edu", dto1.email());
     assertTrue(dto1.admin());
     assertFalse(dto1.instructor());
+    assertTrue(dto1.hiringStaff());
     assertEquals(Instant.parse("2026-04-01T17:30:00Z"), dto1.lastOnline());
     AdminsController.UserDTO dto2 = expectedUsers.get(1);
     assertFalse(dto2.admin());
     assertTrue(dto2.instructor());
+    assertFalse(dto2.hiringStaff());
     assertNull(dto2.lastOnline());
     assertEquals(0, expectedPage.number());
     assertEquals(2, new AdminsController.UsersPageDTO(List.of(), 2, 10, 0, 0).number());

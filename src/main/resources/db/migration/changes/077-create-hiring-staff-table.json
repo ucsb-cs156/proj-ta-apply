@@ -1,0 +1,32 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "077-create-hiring-staff-table",
+        "author": "pc",
+        "comment": "The emails that hold the Hiring Staff role (issue #504), one per row, like the admins and instructors tables. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "hiring_staff" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "hiring_staff",
+              "columns": [
+                {
+                  "column": {
+                    "name": "email",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "rollback": [{ "dropTable": { "tableName": "hiring_staff" } }]
+      }
+    }
+  ]
+}

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.ucsb.cs.taapply.config.SecurityConfig;
 import edu.ucsb.cs.taapply.controller.DummyController;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.HiringStaffRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.RoleAssignmentService;
@@ -30,6 +31,7 @@ public class RoleUpdateInterceptorTests {
 
   @MockitoBean AdminRepository adminRepository;
   @MockitoBean InstructorRepository instructorRepository;
+  @MockitoBean HiringStaffRepository hiringStaffRepository;
   // LastOnlineInterceptor is a HandlerInterceptor too, so @WebMvcTest loads it; give it its repo.
   @MockitoBean UserRepository userRepository;
 
@@ -111,6 +113,39 @@ public class RoleUpdateInterceptorTests {
                         .authorities(
                             new SimpleGrantedAuthority("ROLE_USER"),
                             new SimpleGrantedAuthority("ROLE_INSTRUCTOR"))))
+        .andExpect(authenticated().withRoles("USER"));
+  }
+
+  /**
+   * Issue #504: the hiring staff table grants the role on the next request, and its removal too.
+   */
+  @Test
+  public void hiring_staff_in_db_gets_hiring_staff_role() throws Exception {
+    when(hiringStaffRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
+
+    mockMvc
+        .perform(
+            get("/dummycontroller/interceptorTest")
+                .with(
+                    oidcLogin()
+                        .userInfoToken(t -> t.email("user@ucsb.edu"))
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+        .andExpect(authenticated().withRoles("USER", "HIRING_STAFF"));
+  }
+
+  @Test
+  public void hiring_staff_role_removed_when_user_loses_hiring_staff_status() throws Exception {
+    when(hiringStaffRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
+
+    mockMvc
+        .perform(
+            get("/dummycontroller/interceptorTest")
+                .with(
+                    oidcLogin()
+                        .userInfoToken(t -> t.email("user@ucsb.edu"))
+                        .authorities(
+                            new SimpleGrantedAuthority("ROLE_USER"),
+                            new SimpleGrantedAuthority("ROLE_HIRING_STAFF"))))
         .andExpect(authenticated().withRoles("USER"));
   }
 

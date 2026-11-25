@@ -11,6 +11,8 @@ import AdminsIndexPage from "main/pages/Admin/AdminsIndexPage";
 import AdminsCreatePage from "main/pages/Admin/AdminsCreatePage";
 import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
+import HiringStaffIndexPage from "main/pages/Admin/HiringStaffIndexPage";
+import HiringStaffCreatePage from "main/pages/Admin/HiringStaffCreatePage";
 import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
 import QuartersPage from "main/pages/Admin/QuartersPage";
 import BudgetSelectQuarterPage from "main/pages/Admin/BudgetSelectQuarterPage";
@@ -228,6 +230,26 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<InstructorsCreatePage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/hiringStaff"
+            element={
+              <ProtectedPage
+                component={<HiringStaffIndexPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/hiringStaff/create"
+            element={
+              <ProtectedPage
+                component={<HiringStaffCreatePage />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />

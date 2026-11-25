@@ -23,6 +23,7 @@ describe("UserTable tests", () => {
       "Last Online",
       "Admin",
       "Instructor",
+      "Hiring Staff",
     ];
     const expectedFields = [
       "id",
@@ -32,6 +33,7 @@ describe("UserTable tests", () => {
       "lastOnline",
       "admin",
       "instructor",
+      "hiringStaff",
     ];
     const testId = "UsersTable";
 
@@ -61,6 +63,14 @@ describe("UserTable tests", () => {
     expect(
       screen.getByTestId(`${testId}-cell-row-2-col-instructor`),
     ).toHaveTextContent("true");
+
+    // Issue #504: the Hiring Staff column, and a row from before the role existed reads false.
+    expect(
+      screen.getByTestId(`${testId}-cell-row-1-col-hiringStaff`),
+    ).toHaveTextContent("true");
+    expect(
+      screen.getByTestId(`${testId}-cell-row-0-col-hiringStaff`),
+    ).toHaveTextContent("false");
 
     expect(screen.queryByText("Grad Student")).toBeNull();
     expect(
@@ -100,5 +110,16 @@ describe("UserTable tests", () => {
     header.click();
     await screen.findByText("🔽");
     expect(idsInOrder()).toEqual(["1", "2", "3"]);
+  });
+});
+
+describe("UsersTable hiring staff column (issue #504)", () => {
+  test("a row without the hiringStaff field shows false", () => {
+    const { hiringStaff: _dropped, ...legacyRow } = usersFixtures.threeUsers[1];
+    render(<UsersTable users={[legacyRow]} />);
+    expect(
+      screen.getByTestId("UsersTable-cell-row-0-col-hiringStaff"),
+    ).toHaveTextContent("false");
+    expect(screen.getByText("Hiring Staff")).toBeInTheDocument();
   });
 });

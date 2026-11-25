@@ -2551,3 +2551,32 @@ describe("admin Help: the home page's quarter cards (issues #357, #379)", () => 
     ).toHaveAttribute("href", "/#combined-allocations");
   });
 });
+
+describe("Hiring Staff on the admins help page (issue #504)", () => {
+  test("the admins page has a Hiring Staff section and the Users section names the role", async () => {
+    renderPage(<HelpAdminsPage />);
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Hiring Staff" }),
+    ).toHaveAttribute("id", "hiring-staff");
+    const section = screen.getByTestId("HelpAdminsPage-hiring-staff");
+    expect(section).toHaveTextContent(
+      "Hiring Staff lists who holds the Hiring Staff role: the hiring and financial office staff who process the ULA soft offers. Add one with New Hiring Staff; each row has a Delete button, and the first and last name fill in when that person first signs in. The role is independent of Admin and Instructor, and an outside (non-UCSB) address on the list can sign in. Hiring staff see a Hiring Staff section on their home page with a card for each ULA recruitment whose soft offers have been released, and that card's one button, Soft Offer Results, opens the same results page as the admin's, Change Deadline and Download CSV included. They have no Admin menu and no other admin page.",
+    );
+    expect(
+      within(section).getByRole("link", { name: "Hiring Staff" }),
+    ).toHaveAttribute("href", "/admin/hiringStaff");
+    expect(
+      screen.getByText(/whether they are an admin, an instructor or hiring/, {
+        exact: false,
+      }),
+    ).toHaveTextContent(
+      "make someone an admin on the Admins page, an instructor on the Instructors page, or hiring staff on the Hiring Staff page.",
+    );
+    // The menu table lists the new page with its summary.
+    expect(
+      screen.getByTestId("HelpAdminsPage-menu-hiring-staff"),
+    ).toHaveTextContent(
+      "Who gets the Hiring Staff section and the Soft Offer Results pages; add or remove by email.",
+    );
+  });
+});

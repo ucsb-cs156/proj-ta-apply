@@ -14,10 +14,12 @@ import com.microsoft.playwright.Request;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.options.LoadState;
 import edu.ucsb.cs.taapply.entity.Admin;
+import edu.ucsb.cs.taapply.entity.HiringStaff;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
+import edu.ucsb.cs.taapply.repository.HiringStaffRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -48,9 +50,10 @@ import org.wiremock.extension.jwt.JwtExtensionFactory;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public abstract class WebTestCase {
 
-  @Autowired UserRepository userRepository;
+  @Autowired protected UserRepository userRepository;
   @Autowired AdminRepository adminRepository;
   @Autowired InstructorRepository instructorRepository;
+  @Autowired protected HiringStaffRepository hiringStaffRepository;
   @Autowired protected CourseRepository courseRepository;
   @Autowired protected RecruitmentRepository recruitmentRepository;
   @Autowired protected RecruitmentCourseRepository recruitmentCourseRepository;
@@ -183,6 +186,25 @@ public abstract class WebTestCase {
 
   public void setupInstructorUser() {
     setupUser(false, true);
+  }
+
+  /**
+   * Logs in as hiringstaff@ucsb.edu, who holds the Hiring Staff role and nothing else (issue #504).
+   */
+  public void setupHiringStaffUser() {
+    String email = "hiringstaff@ucsb.edu";
+    User user =
+        User.builder()
+            .email(email)
+            .familyName("Gaucho")
+            .givenName("Chris")
+            .fullName("Chris Gaucho")
+            .googleSub("123456789")
+            .pictureUrl("")
+            .build();
+    userRepository.save(user);
+    hiringStaffRepository.save(HiringStaff.builder().email(email).build());
+    login(email);
   }
 
   /**
