@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SoftOffersService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">SoftOffersService.java</span></div><h1>SoftOffersService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.entity.SoftOfferNoticeVersion;
+import edu.ucsb.cs.taapply.entity.SoftOfferResponse;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.enums.SoftOfferDecision;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.models.SoftOfferDto;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.repository.SoftOfferNoticeVersionRepository;
+import edu.ucsb.cs.taapply.repository.SoftOfferResponseRepository;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * The applicant's side of soft offers (issue #486, part of #483): which of the signed-in user's
+ * applications has an open soft offer, what it says, and recording the answer.
+ *
+ * &lt;p&gt;An offer is open for an application when its recruitment is a ULA one whose soft offers are
+ * released (issue #485), the application is live (not cancelled, not hidden by an admin) and it has
+ * a tentative assignment to a lecture of that recruitment. The rules live here so the admin's
+ * results page (issue #487) agrees with what applicants see.
+ */
+@Service
+<span class="fc" id="L41">@Slf4j</span>
+<span class="fc" id="L42">public class SoftOffersService {</span>
+  @Autowired ApplicationRepository applicationRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired SoftOfferNoticeVersionRepository softOfferNoticeVersionRepository;
+  @Autowired SoftOfferResponseRepository softOfferResponseRepository;
+  @Autowired PublishedAssignmentsService publishedAssignmentsService;
+  @Autowired UCSBCurriculumService ucsbCurriculumService;
+
+  public static final String NO_OFFER = &quot;There is no soft offer open for this application.&quot;;
+  public static final String ALREADY_ANSWERED = &quot;This soft offer has already been answered.&quot;;
+  public static final int COMMENTS_MAX = 4000;
+  public static final String COMMENTS_TOO_LONG =
+      &quot;Comments may be at most &quot; + COMMENTS_MAX + &quot; characters.&quot;;
+
+  /** An application with an open soft offer: the recruitment and the lecture it is assigned to. */
+<span class="fc" id="L58">  public record Offer(Application application, Recruitment recruitment, RecruitmentCourse course) {}</span>
+
+  /** The signed-in applicant's open soft offers, newest application first. */
+  public List&lt;SoftOfferDto&gt; mine(String email) {
+<span class="fc" id="L62">    List&lt;SoftOfferDto&gt; offers = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L63">    Map&lt;String, String&gt; emails = null;</span>
+<span class="fc" id="L64">    SoftOfferDto.Notice notice = null;</span>
+<span class="fc" id="L65">    boolean looked = false;</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">    for (Application application : applicationRepository.findByEmailOrderByIdDesc(email)) {</span>
+<span class="fc" id="L67">      Offer offer = openOffer(application);</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">      if (offer == null) {</span>
+<span class="fc" id="L69">        continue;</span>
+      }
+<span class="fc bfc" id="L71" title="All 2 branches covered.">      if (!looked) {</span>
+        // Asked for once, and only when there is an offer to describe.
+<span class="fc" id="L73">        emails = publishedAssignmentsService.emailsByCatalogName();</span>
+<span class="fc" id="L74">        notice = currentNotice();</span>
+<span class="fc" id="L75">        looked = true;</span>
+      }
+<span class="fc" id="L77">      offers.add(describe(offer, emails, notice));</span>
+<span class="fc" id="L78">    }</span>
+<span class="fc" id="L79">    return offers;</span>
+  }
+
+  /**
+   * The open soft offer of an application, or null: the recruitment must be a ULA one with soft
+   * offers released, the application live, and its tentative assignment a lecture of that
+   * recruitment.
+   */
+  public Offer openOffer(Application application) {
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    if (application.getStatus() == ApplicationReviewStatus.CANCELLED</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        || application.isHidden()</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        || application.getTentativeAssignmentId() == null) {</span>
+<span class="fc" id="L91">      return null;</span>
+    }
+<span class="fc" id="L93">    Optional&lt;Recruitment&gt; recruitment =</span>
+<span class="fc" id="L94">        recruitmentRepository.findById(application.getRecruitmentId());</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">    if (recruitment.isEmpty()</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        || recruitment.get().getType() != RecruitmentType.ULA</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        || !SoftOffers.isReleased(recruitment.get())) {</span>
+<span class="fc" id="L98">      return null;</span>
+    }
+<span class="fc" id="L100">    Optional&lt;RecruitmentCourse&gt; course =</span>
+<span class="fc" id="L101">        recruitmentCourseRepository.findById(application.getTentativeAssignmentId());</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">    if (course.isEmpty()</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        || !application.getRecruitmentId().equals(course.get().getRecruitmentId())) {</span>
+<span class="fc" id="L104">      return null;</span>
+    }
+<span class="fc" id="L106">    return new Offer(application, recruitment.get(), course.get());</span>
+  }
+
+  /**
+   * Records the applicant's answer to their open soft offer.
+   *
+   * @throws EntityNotFoundException for an unknown application
+   * @throws ForbiddenException for someone else's application
+   * @throws IllegalArgumentException when no soft offer is open for it, or the comments are too
+   *     long
+   * @throws IllegalStateException when this (application, lecture) offer has been answered already
+   */
+  public SoftOfferResponse respond(
+      String email, Long applicationId, SoftOfferDecision decision, String comments) {
+<span class="fc" id="L120">    Application application =</span>
+        applicationRepository
+<span class="fc" id="L122">            .findById(applicationId)</span>
+<span class="fc" id="L123">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, applicationId));</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">    if (!email.equals(application.getEmail())) {</span>
+<span class="fc" id="L125">      throw new ForbiddenException(&quot;That application belongs to someone else&quot;);</span>
+    }
+<span class="fc" id="L127">    Offer offer = openOffer(application);</span>
+<span class="fc bfc" id="L128" title="All 2 branches covered.">    if (offer == null) {</span>
+<span class="fc" id="L129">      throw new IllegalArgumentException(NO_OFFER);</span>
+    }
+<span class="fc bfc" id="L131" title="All 2 branches covered.">    String text = comments == null ? &quot;&quot; : comments.strip();</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">    if (text.length() &gt; COMMENTS_MAX) {</span>
+<span class="fc" id="L133">      throw new IllegalArgumentException(COMMENTS_TOO_LONG);</span>
+    }
+<span class="fc" id="L135">    if (softOfferResponseRepository</span>
+<span class="fc" id="L136">        .findByApplicationIdAndRecruitmentCourseId(applicationId, offer.course().getId())</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        .isPresent()) {</span>
+<span class="fc" id="L138">      throw new IllegalStateException(ALREADY_ANSWERED);</span>
+    }
+<span class="fc" id="L140">    SoftOfferDto.Notice notice = currentNotice();</span>
+<span class="fc" id="L141">    return softOfferResponseRepository.save(</span>
+<span class="fc" id="L142">        SoftOfferResponse.builder()</span>
+<span class="fc" id="L143">            .applicationId(applicationId)</span>
+<span class="fc" id="L144">            .recruitmentCourseId(offer.course().getId())</span>
+<span class="fc" id="L145">            .decision(decision)</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">            .comments(text.isEmpty() ? null : text)</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">            .softOfferNoticeVersionId(notice == null ? null : notice.id())</span>
+<span class="fc" id="L148">            .build());</span>
+  }
+
+  private SoftOfferDto.Notice currentNotice() {
+<span class="fc" id="L152">    return softOfferNoticeVersionRepository</span>
+<span class="fc" id="L153">        .findFirstByOrderByIdDesc()</span>
+<span class="fc" id="L154">        .map(this::notice)</span>
+<span class="fc" id="L155">        .orElse(null);</span>
+  }
+
+  private SoftOfferDto.Notice notice(SoftOfferNoticeVersion version) {
+<span class="fc" id="L159">    return new SoftOfferDto.Notice(version.getId(), version.getContent());</span>
+  }
+
+  private SoftOfferDto describe(
+      Offer offer, Map&lt;String, String&gt; emails, SoftOfferDto.Notice notice) {
+<span class="fc" id="L164">    Recruitment recruitment = offer.recruitment();</span>
+<span class="fc" id="L165">    RecruitmentCourse course = offer.course();</span>
+<span class="fc" id="L166">    Application application = offer.application();</span>
+    // The stored meeting time reads &quot;09:30 - 10:45&quot;.
+<span class="fc bfc" id="L168" title="All 2 branches covered.">    String time = course.getTime() == null ? &quot;&quot; : course.getTime();</span>
+    // split always yields at least one part, so the start is parts[0] and the end, if any,
+    // parts[1].
+<span class="fc" id="L171">    String[] parts = time.split(&quot; - &quot;, 2);</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">    String begin = parts[0].isBlank() ? null : parts[0].strip();</span>
+<span class="fc bfc" id="L173" title="All 4 branches covered.">    String end = parts.length == 2 &amp;&amp; !parts[1].isBlank() ? parts[1].strip() : null;</span>
+<span class="fc" id="L174">    SoftOfferDto.Course courseDto =</span>
+        new SoftOfferDto.Course(
+<span class="fc" id="L176">            course.getId(),</span>
+<span class="fc" id="L177">            PublishedAssignmentsService.courseNumber(course),</span>
+<span class="fc" id="L178">            course.getSection(),</span>
+<span class="fc" id="L179">            course.getTitle(),</span>
+<span class="fc" id="L180">            course.getInstructor(),</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">            course.getInstructor() == null ? null : emails.get(course.getInstructor()),</span>
+<span class="fc" id="L182">            course.getDays(),</span>
+            begin,
+            end);
+<span class="fc" id="L185">    SoftOfferDto.Response response =</span>
+        softOfferResponseRepository
+<span class="fc" id="L187">            .findByApplicationIdAndRecruitmentCourseId(application.getId(), course.getId())</span>
+<span class="fc" id="L188">            .map(</span>
+                r -&gt;
+<span class="fc" id="L190">                    new SoftOfferDto.Response(r.getDecision(), r.getComments(), r.getRespondedAt()))</span>
+<span class="fc" id="L191">            .orElse(null);</span>
+<span class="fc" id="L192">    return new SoftOfferDto(</span>
+<span class="fc" id="L193">        recruitment.getId(),</span>
+<span class="fc" id="L194">        recruitment.getQuarter(),</span>
+<span class="fc" id="L195">        application.getId(),</span>
+<span class="fc" id="L196">        recruitment.getSoftOffersReleasedAt(),</span>
+<span class="fc" id="L197">        recruitment.getSoftOfferDeadline(),</span>
+        notice,
+        courseDto,
+<span class="fc" id="L200">        sectionsOf(recruitment.getQuarter(), course),</span>
+        response);
+  }
+
+  /**
+   * The lecture's discussion sections from the UCSB API, in section order, one row per meeting (a
+   * section with no scheduled time is one row with no days or times). For a course with two
+   * lectures, only the sections whose number shares the lecture's first two digits (0101 to 0199
+   * under 0100). Null when the API cannot be reached, so the offer still shows without them.
+   */
+  List&lt;SoftOfferDto.Meeting&gt; sectionsOf(String quarter, RecruitmentCourse course) {
+    UcsbCourseOffering offering;
+    try {
+<span class="fc" id="L213">      offering = ucsbCurriculumService.getOffering(quarter, course.getEnrollCode());</span>
+<span class="fc" id="L214">    } catch (Exception e) {</span>
+<span class="fc" id="L215">      log.warn(</span>
+<span class="fc" id="L216">          &quot;Soft offer: no sections for {} ({}): {}&quot;, course.getCourseId(), quarter, e.toString());</span>
+<span class="fc" id="L217">      return null;</span>
+<span class="fc" id="L218">    }</span>
+<span class="fc" id="L219">    String lecture = course.getSection();</span>
+    // A lecture number shorter than two digits cannot say which sections are its own.
+<span class="fc bfc" id="L221" title="All 4 branches covered.">    String prefix = lecture != null &amp;&amp; lecture.length() &gt;= 2 ? lecture.substring(0, 2) : null;</span>
+    List&lt;UcsbSection&gt; sections =
+<span class="fc bfc" id="L223" title="All 2 branches covered.">        offering.getClassSections() == null ? List.&lt;UcsbSection&gt;of() : offering.getClassSections();</span>
+<span class="fc" id="L224">    List&lt;SoftOfferDto.Meeting&gt; meetings = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L225">    sections.stream()</span>
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        .filter(section -&gt; !section.isPrimary())</span>
+<span class="fc" id="L227">        .filter(</span>
+            section -&gt;
+<span class="fc bfc" id="L229" title="All 2 branches covered.">                prefix == null</span>
+<span class="fc bfc" id="L230" title="All 4 branches covered.">                    || (section.getSection() != null &amp;&amp; section.getSection().startsWith(prefix)))</span>
+<span class="fc" id="L231">        .sorted(</span>
+<span class="fc" id="L232">            Comparator.comparing(</span>
+<span class="fc" id="L233">                UcsbSection::getSection, Comparator.nullsFirst(Comparator.naturalOrder())))</span>
+<span class="fc" id="L234">        .forEach(</span>
+            section -&gt; {
+<span class="fc" id="L236">              List&lt;UcsbTimeLocation&gt; locations = section.getTimeLocations();</span>
+<span class="fc bfc" id="L237" title="All 4 branches covered.">              if (locations == null || locations.isEmpty()) {</span>
+<span class="fc" id="L238">                meetings.add(new SoftOfferDto.Meeting(section.getSection(), null, null, null));</span>
+<span class="fc" id="L239">                return;</span>
+              }
+<span class="fc bfc" id="L241" title="All 2 branches covered.">              for (UcsbTimeLocation location : locations) {</span>
+<span class="fc" id="L242">                meetings.add(</span>
+                    new SoftOfferDto.Meeting(
+<span class="fc" id="L244">                        section.getSection(),</span>
+<span class="fc" id="L245">                        location.getDays(),</span>
+<span class="fc" id="L246">                        location.getBeginTime(),</span>
+<span class="fc" id="L247">                        location.getEndTime()));</span>
+<span class="fc" id="L248">              }</span>
+<span class="fc" id="L249">            });</span>
+<span class="fc" id="L250">    return meetings;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
