@@ -69,9 +69,10 @@ taapply,edu.ucsb.cs.taapply.services,AssignmentsService.CourseSummary,0,27,0,0,0
 taapply,edu.ucsb.cs.taapply.services,JobUserProviderImpl,0,39,0,4,0,10,0,7,0,5
 taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Made,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.Assignments,0,21,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService,0,227,0,8,0,52,0,18,0,14
+taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService,0,237,0,8,0,54,0,18,0,14
 taapply,edu.ucsb.cs.taapply.services,RankingVersionService,0,62,0,8,0,16,0,8,0,4
 taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Plan,0,9,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,SoftOffers,0,30,0,8,0,7,0,7,0,3
 taapply,edu.ucsb.cs.taapply.services,ApplicationAccessService,0,48,0,12,0,7,0,11,0,5
 taapply,edu.ucsb.cs.taapply.migration,UtcToPacificTimestamps,0,391,0,32,0,86,0,31,0,15
 taapply,edu.ucsb.cs.taapply.time,AppTime,0,26,0,0,0,8,0,6,0,6
@@ -101,7 +102,7 @@ taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.Applicati
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController,0,323,0,26,0,77,0,36,0,23
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController.NameItem,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentStepsController,0,23,0,0,0,5,0,3,0,3
-taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,551,0,56,0,126,0,50,0,22
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,611,0,62,0,142,0,55,0,24
 taapply,edu.ucsb.cs.taapply.controller,InstructorFeedbackController,0,366,0,48,0,98,0,42,0,18
 taapply,edu.ucsb.cs.taapply.controller,DeveloperAllocationsController,0,20,0,2,0,4,0,3,0,2
 taapply,edu.ucsb.cs.taapply.controller,NoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
