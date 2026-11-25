@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssignmentsCsvService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">AssignmentsCsvService.java</span></div><h1>AssignmentsCsvService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.opencsv.CSVWriter;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.services.AssignmentsService.AssignmentRow;
+import edu.ucsb.cs.taapply.services.AssignmentsService.Assignments;
+import edu.ucsb.cs.taapply.services.AssignmentsService.CourseSummary;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * The admin Assignments page's table as a CSV (issue #475): the same applicants in the same order,
+ * the identity columns headed as the page heads them, the Tentative Assignment, then one column per
+ * lecture holding the rank its instructor gave the applicant (blank when unranked). A lecture
+ * column is headed by the bare course number, with the section only when the page has more than one
+ * section of that course, as the rankings CSV heads its columns; the allocation, assigned and To
+ * Assign counts of the page's headings are left out.
+ */
+@Service
+<span class="fc" id="L25">public class AssignmentsCsvService {</span>
+  @Autowired AssignmentsService assignmentsService;
+
+  /** How the page heads each identity column (assignments.ts on the frontend). */
+<span class="fc" id="L29">  static final Map&lt;String, String&gt; IDENTITY_LABELS =</span>
+<span class="fc" id="L30">      Map.ofEntries(</span>
+<span class="fc" id="L31">          Map.entry(&quot;firstName&quot;, &quot;First Name&quot;),</span>
+<span class="fc" id="L32">          Map.entry(&quot;lastName&quot;, &quot;Last Name&quot;),</span>
+<span class="fc" id="L33">          Map.entry(&quot;email&quot;, &quot;Email&quot;),</span>
+<span class="fc" id="L34">          Map.entry(&quot;major&quot;, &quot;Major&quot;),</span>
+<span class="fc" id="L35">          Map.entry(&quot;classLevel&quot;, &quot;Class Level&quot;),</span>
+<span class="fc" id="L36">          Map.entry(&quot;yearInProgram&quot;, &quot;Year in Program&quot;),</span>
+<span class="fc" id="L37">          Map.entry(&quot;graduationDate&quot;, &quot;Graduation Date&quot;),</span>
+<span class="fc" id="L38">          Map.entry(&quot;gpaMajor&quot;, &quot;GPA (Major)&quot;),</span>
+<span class="fc" id="L39">          Map.entry(&quot;gpaOverall&quot;, &quot;GPA (Overall)&quot;),</span>
+<span class="fc" id="L40">          Map.entry(&quot;previousServiceAsUla&quot;, &quot;Previous ULA Quarters&quot;));</span>
+
+  /** The heading of the Tentative Assignment column, as on the page. */
+  static final String TENTATIVE_HEADER = &quot;Tentative Assignment&quot;;
+
+  /** A heading for an identity field; a field with no label of its own is headed by its name. */
+  static String identityLabel(String header) {
+<span class="fc" id="L47">    return IDENTITY_LABELS.getOrDefault(header, header);</span>
+  }
+
+  /** The table as CSV: the header row, then a row per applicant, every cell quoted. */
+  public String csv(Recruitment recruitment) {
+<span class="fc" id="L52">    Assignments page = assignmentsService.assignments(recruitment);</span>
+    // The headings need only what the page's summaries carry: the section rule looks at the
+    // lectures on the page, so a removed lecture the page leaves out does not force a section
+    // onto the heading of the one still offered.
+<span class="fc" id="L56">    Map&lt;Long, String&gt; headings =</span>
+<span class="fc" id="L57">        AssignmentsService.headings(</span>
+<span class="fc" id="L58">            page.courses().stream()</span>
+<span class="fc" id="L59">                .map(</span>
+                    (CourseSummary course) -&gt;
+<span class="fc" id="L61">                        RecruitmentCourse.builder()</span>
+<span class="fc" id="L62">                            .id(course.id())</span>
+<span class="fc" id="L63">                            .courseId(course.courseId())</span>
+<span class="fc" id="L64">                            .section(course.section())</span>
+<span class="fc" id="L65">                            .enrollCode(course.enrollCode())</span>
+<span class="fc" id="L66">                            .build())</span>
+<span class="fc" id="L67">                .toList());</span>
+
+<span class="fc" id="L69">    List&lt;String&gt; header = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">    for (String identity : page.identityHeaders()) {</span>
+<span class="fc" id="L71">      header.add(identityLabel(identity));</span>
+<span class="fc" id="L72">    }</span>
+<span class="fc" id="L73">    header.add(TENTATIVE_HEADER);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    for (CourseSummary course : page.courses()) {</span>
+<span class="fc" id="L75">      header.add(headings.get(course.id()));</span>
+<span class="fc" id="L76">    }</span>
+
+<span class="fc" id="L78">    StringWriter out = new StringWriter();</span>
+<span class="fc" id="L79">    CSVWriter writer = new CSVWriter(out);</span>
+<span class="fc" id="L80">    writer.writeNext(header.toArray(String[]::new));</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    for (AssignmentRow row : page.rows()) {</span>
+<span class="fc" id="L82">      List&lt;String&gt; cells = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">      for (String identity : page.identityHeaders()) {</span>
+<span class="fc" id="L84">        cells.add(ApplicationCsvService.text(row.identity().get(identity)));</span>
+<span class="fc" id="L85">      }</span>
+<span class="fc" id="L86">      cells.add(ApplicationCsvService.text(headings.get(row.tentativeAssignment())));</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">      for (CourseSummary course : page.courses()) {</span>
+<span class="fc" id="L88">        cells.add(ApplicationCsvService.text(row.rankings().get(course.id())));</span>
+<span class="fc" id="L89">      }</span>
+<span class="fc" id="L90">      writer.writeNext(cells.toArray(String[]::new));</span>
+<span class="fc" id="L91">    }</span>
+<span class="fc" id="L92">    return out.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

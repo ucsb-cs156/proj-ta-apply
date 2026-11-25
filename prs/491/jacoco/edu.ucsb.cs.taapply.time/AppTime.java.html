@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AppTime.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.time</a> &gt; <span class="el_source">AppTime.java</span></div><h1>AppTime.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.time;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.TimeZone;
+
+/**
+ * The one place the app decides what time and what day it is (issue #293). Everything people see or
+ * type is in Pacific time ({@code America/Los_Angeles}), and the date-time columns of the database
+ * hold Pacific wall-clock time, so every &quot;now&quot; and every &quot;today&quot; is taken here rather than from the
+ * server's own time zone, which on a deployed server is UTC.
+ *
+ * &lt;p&gt;The exception is a column that holds an exact instant (the users' {@code last_online}, a
+ * {@code TIMESTAMP WITH TIME ZONE}); it stays an {@link Instant}.
+ */
+public final class AppTime {
+  /** The app's time zone: UC Santa Barbara's. */
+<span class="fc" id="L21">  public static final ZoneId ZONE = ZoneId.of(&quot;America/Los_Angeles&quot;);</span>
+
+<span class="fc" id="L23">  private static final Clock CLOCK = Clock.system(ZONE);</span>
+
+  private AppTime() {}
+
+  /** The current Pacific wall-clock time, as stored in the date-time columns. */
+  public static LocalDateTime now() {
+<span class="fc" id="L29">    return now(CLOCK);</span>
+  }
+
+  /** The current Pacific date. */
+  public static LocalDate today() {
+<span class="fc" id="L34">    return today(CLOCK);</span>
+  }
+
+  /** The Pacific wall-clock time of the clock's instant; the clock's own zone is ignored. */
+  public static LocalDateTime now(Clock clock) {
+<span class="fc" id="L39">    return LocalDateTime.ofInstant(clock.instant(), ZONE);</span>
+  }
+
+  /** The Pacific date of the clock's instant; the clock's own zone is ignored. */
+  public static LocalDate today(Clock clock) {
+<span class="fc" id="L44">    return now(clock).toLocalDate();</span>
+  }
+
+  /**
+   * Makes Pacific time the JVM's default zone, so that anything that asks the JVM for local time
+   * (JDBC drivers, log lines, library code) agrees with {@link #now()} whatever the server's own TZ
+   * is. Safe to call more than once.
+   */
+  public static void installAsDefaultTimeZone() {
+<span class="fc" id="L53">    TimeZone.setDefault(TimeZone.getTimeZone(ZONE));</span>
+<span class="fc" id="L54">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
