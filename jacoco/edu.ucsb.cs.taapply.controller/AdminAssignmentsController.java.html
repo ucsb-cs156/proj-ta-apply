@@ -13,6 +13,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsCsvService;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,12 +46,13 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;AdminAssignments&quot;)
 @RequestMapping(&quot;/api/admin/assignments&quot;)
 @RestController
-<span class="fc" id="L47">public class AdminAssignmentsController extends ApiController {</span>
+<span class="fc" id="L49">public class AdminAssignmentsController extends ApiController {</span>
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired ApplicationRepository applicationRepository;
   @Autowired AssignmentsService assignmentsService;
   @Autowired AssignmentsCsvService assignmentsCsvService;
+  @Autowired AutoAssignmentsService autoAssignmentsService;
   @Autowired ClientActivityDetector clientActivityDetector;
 
   @Operation(
@@ -64,7 +67,7 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(&quot;&quot;)
   public AssignmentsService.Assignments forRecruitment(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L67">    return assignmentsService.assignments(recruitmentOf(recruitmentId));</span>
+<span class="fc" id="L70">    return assignmentsService.assignments(recruitmentOf(recruitmentId));</span>
   }
 
   @Operation(
@@ -80,13 +83,13 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(value = &quot;/csv&quot;, produces = &quot;text/csv&quot;)
   public ResponseEntity&lt;String&gt; csv(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L83">    String body = assignmentsCsvService.csv(recruitmentOf(recruitmentId));</span>
-<span class="fc" id="L84">    return ResponseEntity.ok()</span>
-<span class="fc" id="L85">        .header(</span>
+<span class="fc" id="L86">    String body = assignmentsCsvService.csv(recruitmentOf(recruitmentId));</span>
+<span class="fc" id="L87">    return ResponseEntity.ok()</span>
+<span class="fc" id="L88">        .header(</span>
             HttpHeaders.CONTENT_DISPOSITION,
-<span class="fc" id="L87">            &quot;attachment; filename=\&quot;assignments-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
-<span class="fc" id="L88">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
-<span class="fc" id="L89">        .body(body);</span>
+<span class="fc" id="L90">            &quot;attachment; filename=\&quot;assignments-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
+<span class="fc" id="L91">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
+<span class="fc" id="L92">        .body(body);</span>
   }
 
   @Operation(
@@ -99,7 +102,7 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(&quot;/cancelled&quot;)
   public List&lt;AssignmentsService.CancelledApplication&gt; cancelled(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L102">    return assignmentsService.cancelledApplications(recruitmentOf(recruitmentId).getId());</span>
+<span class="fc" id="L105">    return assignmentsService.cancelledApplications(recruitmentOf(recruitmentId).getId());</span>
   }
 
   @Operation(
@@ -122,48 +125,109 @@ import org.springframework.web.bind.annotation.RestController;
           Long recruitmentCourseId,
       @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L125">    Application application =</span>
+<span class="fc" id="L128">    Application application =</span>
         applicationRepository
-<span class="fc" id="L127">            .findById(applicationId)</span>
-<span class="fc" id="L128">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, applicationId));</span>
-<span class="fc bfc" id="L129" title="All 2 branches covered.">    if (recruitmentCourseId != null) {</span>
-<span class="fc" id="L130">      RecruitmentCourse course =</span>
+<span class="fc" id="L130">            .findById(applicationId)</span>
+<span class="fc" id="L131">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, applicationId));</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">    if (recruitmentCourseId != null) {</span>
+<span class="fc" id="L133">      RecruitmentCourse course =</span>
           recruitmentCourseRepository
-<span class="fc" id="L132">              .findById(recruitmentCourseId)</span>
-<span class="fc" id="L133">              .orElseThrow(</span>
-<span class="fc" id="L134">                  () -&gt; new EntityNotFoundException(RecruitmentCourse.class, recruitmentCourseId));</span>
-<span class="fc bfc" id="L135" title="All 2 branches covered.">      if (!course.getRecruitmentId().equals(application.getRecruitmentId())) {</span>
-<span class="fc" id="L136">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L135">              .findById(recruitmentCourseId)</span>
+<span class="fc" id="L136">              .orElseThrow(</span>
+<span class="fc" id="L137">                  () -&gt; new EntityNotFoundException(RecruitmentCourse.class, recruitmentCourseId));</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">      if (!course.getRecruitmentId().equals(application.getRecruitmentId())) {</span>
+<span class="fc" id="L139">        throw new IllegalArgumentException(</span>
             &quot;RecruitmentCourse %d is not part of recruitment %d&quot;
-<span class="fc" id="L138">                .formatted(recruitmentCourseId, application.getRecruitmentId()));</span>
+<span class="fc" id="L141">                .formatted(recruitmentCourseId, application.getRecruitmentId()));</span>
       }
     }
-<span class="fc" id="L141">    Long recruitmentId = application.getRecruitmentId();</span>
-<span class="fc" id="L142">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc" id="L144">    Long recruitmentId = application.getRecruitmentId();</span>
+<span class="fc" id="L145">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
     // One atomic statement: it counts the version up only if it is still the one the page saw.
-<span class="fc bfc" id="L144" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
-<span class="fc" id="L145">      return conflict(recruitmentId);</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
+<span class="fc" id="L148">      return conflict(recruitmentId);</span>
     }
-<span class="fc" id="L147">    application.setTentativeAssignmentId(recruitmentCourseId);</span>
+<span class="fc" id="L150">    application.setTentativeAssignmentId(recruitmentCourseId);</span>
     try {
-<span class="fc" id="L149">      applicationRepository.save(application);</span>
-<span class="fc" id="L150">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L152">      applicationRepository.save(application);</span>
+<span class="fc" id="L153">    } catch (ObjectOptimisticLockingFailureException e) {</span>
       // The application has a version of its own (issue #302): the applicant or another admin saved
       // it between reading it and writing it. The placement is not made; the page is refreshed.
-<span class="fc" id="L153">      return conflict(recruitmentId);</span>
-<span class="fc" id="L154">    }</span>
-<span class="fc" id="L155">    return ResponseEntity.ok(assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
+<span class="fc" id="L156">      return conflict(recruitmentId);</span>
+<span class="fc" id="L157">    }</span>
+<span class="fc" id="L158">    return ResponseEntity.ok(assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
+  }
+
+  @Operation(
+      summary = &quot;Automatically assign the no-conflict slots&quot;,
+      description =
+          &quot;Issue #481. Repeats until a pass makes no assignment: every lecture on offer with places&quot;
+              + &quot; still to fill gets its highest-ranked remaining candidate if that candidate is&quot;
+              + &quot; enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no&quot;
+              + &quot; other lecture with places to fill has ranked them at all. Candidates marked Not&quot;
+              + &quot; Hired take no part. Admins only. Carries the assignments version the page saw: if&quot;
+              + &quot; it has moved, nothing is changed and the answer is 409 Conflict with the&quot;
+              + &quot; assignments as they now stand, as a tentative assignment's is. Otherwise all the&quot;
+              + &quot; run's assignments are saved in one transaction (none if any one fails) and the&quot;
+              + &quot; answer is the assignments as the GET returns them, the list of assignments made&quot;
+              + &quot; (application, lecture, rank, pass) and, for each lecture still unfilled, why the&quot;
+              + &quot; final pass left it (NO_RANKINGS, ALL_RANKED_ASSIGNED, TIE, NOT_ENTHUSIASTIC or&quot;
+              + &quot; RANKED_ELSEWHERE with the lectures that rank the candidate).&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/auto&quot;)
+  public ResponseEntity&lt;Object&gt; autoAssign(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+<span class="fc" id="L182">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L183">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
+<span class="fc" id="L185">      return conflict(recruitmentId);</span>
+    }
+    try {
+      // Re-read after the bump, so the answer carries the new version.
+<span class="fc" id="L189">      return ResponseEntity.ok(autoAssignmentsService.run(recruitmentOf(recruitmentId)));</span>
+<span class="fc" id="L190">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L191">      return conflict(recruitmentId);</span>
+    }
+  }
+
+  @Operation(
+      summary = &quot;Undo an automatic assignment run&quot;,
+      description =
+          &quot;Issue #481. Takes the list of assignments a run made (as its answer listed them) and&quot;
+              + &quot; clears each one whose application is still pencilled into the lecture the run&quot;
+              + &quot; put it in; a placement changed by hand since is kept. Admins only; the same&quot;
+              + &quot; version check and 409 as the run; all in one transaction. Answers with the&quot;
+              + &quot; assignments as they now stand and how many were cleared.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/auto/undo&quot;)
+  public ResponseEntity&lt;Object&gt; undoAutoAssign(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
+      @RequestBody List&lt;AutoAssignmentsService.Made&gt; made,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+<span class="fc" id="L210">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L211">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
+<span class="fc" id="L213">      return conflict(recruitmentId);</span>
+    }
+    try {
+<span class="fc" id="L216">      return ResponseEntity.ok(autoAssignmentsService.undo(recruitmentOf(recruitmentId), made));</span>
+<span class="fc" id="L217">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L218">      return conflict(recruitmentId);</span>
+    }
   }
 
   /** The 409 for a stale placement: why, and the assignments as they now stand. */
   private ResponseEntity&lt;Object&gt; conflict(Long recruitmentId) {
-<span class="fc" id="L160">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L161">    body.put(</span>
+<span class="fc" id="L224">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L225">    body.put(</span>
         &quot;message&quot;,
         &quot;Assignments changed while you were working. The page has been refreshed; please check&quot;
             + &quot; the placement and try again.&quot;);
-<span class="fc" id="L165">    body.put(&quot;assignments&quot;, assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
-<span class="fc" id="L166">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc" id="L229">    body.put(&quot;assignments&quot;, assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
+<span class="fc" id="L230">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
   }
 
   @Operation(
@@ -181,8 +245,8 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // The role check (PreAuthorize) and the existence check come before the detector is touched.
-<span class="fc" id="L184">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L185">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc" id="L248">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L249">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
   }
 
   @Operation(
@@ -197,26 +261,26 @@ import org.springframework.web.bind.annotation.RestController;
   public void leave(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L200">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L201">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
-<span class="fc" id="L202">  }</span>
+<span class="fc" id="L264">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L265">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
+<span class="fc" id="L266">  }</span>
 
   /** The detector's name for a recruitment's whole assignments page. */
   private static String resourceKey(Long recruitmentId) {
-<span class="fc" id="L206">    return &quot;assignments:&quot; + recruitmentId;</span>
+<span class="fc" id="L270">    return &quot;assignments:&quot; + recruitmentId;</span>
   }
 
   /**
    * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
    */
   private ClientIdentity identity() {
-<span class="fc" id="L213">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
+<span class="fc" id="L277">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
   }
 
   private Recruitment recruitmentOf(Long recruitmentId) {
-<span class="fc" id="L217">    return recruitmentRepository</span>
-<span class="fc" id="L218">        .findById(recruitmentId)</span>
-<span class="fc" id="L219">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L281">    return recruitmentRepository</span>
+<span class="fc" id="L282">        .findById(recruitmentId)</span>
+<span class="fc" id="L283">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
