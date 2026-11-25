@@ -1,6 +1,7 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
 taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService.QuarterRefresh,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,BudgetService.Summary,0,27,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,SoftOffersService.Results,0,30,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService,0,191,0,24,0,47,0,17,0,5
 taapply,edu.ucsb.cs.taapply.services,RankingsCsvService,0,237,0,8,0,45,0,12,0,8
 taapply,edu.ucsb.cs.taapply.services,SystemInfoService,0,3,0,0,0,1,0,1,0,1
@@ -36,6 +37,7 @@ taapply,edu.ucsb.cs.taapply.services,BudgetCreationService,0,75,0,0,0,22,0,6,0,6
 taapply,edu.ucsb.cs.taapply.services,MinimaxAllocator,0,54,0,6,0,9,0,4,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService,0,550,0,62,0,92,0,44,0,13
 taapply,edu.ucsb.cs.taapply.services,AllocationVisibilityService,0,34,0,6,0,10,0,5,0,2
+taapply,edu.ucsb.cs.taapply.services,SoftOffersService.Counts,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,TaSeedFromUla,0,91,0,0,0,28,0,5,0,5
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService.Offered,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService,0,222,0,20,0,47,0,14,0,4
@@ -52,6 +54,7 @@ taapply,edu.ucsb.cs.taapply.services,RankingsCsvService.Column,0,9,0,0,0,1,0,1,0
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Link,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.SectionKey,0,17,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService.CourseTargets,0,21,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,SoftOffersService,0,984,0,112,0,228,0,82,0,26
 taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService,0,556,0,76,0,113,0,52,0,14
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService,0,143,0,8,0,29,0,15,0,11
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
@@ -71,6 +74,7 @@ taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Made,0,15,0,0,0,1,0,
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.Assignments,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService,0,237,0,8,0,54,0,18,0,14
 taapply,edu.ucsb.cs.taapply.services,RankingVersionService,0,62,0,8,0,16,0,8,0,4
+taapply,edu.ucsb.cs.taapply.services,SoftOffersService.Offer,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Plan,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,SoftOffers,0,30,0,8,0,7,0,7,0,3
 taapply,edu.ucsb.cs.taapply.services,ApplicationAccessService,0,48,0,12,0,7,0,11,0,5
@@ -80,6 +84,7 @@ taapply,edu.ucsb.cs.taapply.startup,ScaffoldApplicationRunner,0,14,0,0,0,5,0,3,0
 taapply,edu.ucsb.cs.taapply.startup,WiremockApplicationRunner,0,17,0,0,0,6,0,3,0,3
 taapply,edu.ucsb.cs.taapply.startup,ScaffoldStartup,0,34,0,0,0,11,0,4,0,4
 taapply,edu.ucsb.cs.taapply.enums,StudentStatus,0,15,0,0,0,3,0,1,0,1
+taapply,edu.ucsb.cs.taapply.enums,SoftOfferDecision,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ApplicationReviewStatus,0,27,0,0,0,5,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,CourseInterest,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ResidencyStatus,0,33,0,0,0,6,0,1,0,1
@@ -103,6 +108,7 @@ taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController,0,323,0,2
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController.NameItem,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentStepsController,0,23,0,0,0,5,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,611,0,62,0,142,0,55,0,24
+taapply,edu.ucsb.cs.taapply.controller,AdminSoftOffersController,0,63,0,0,0,12,0,6,0,6
 taapply,edu.ucsb.cs.taapply.controller,InstructorFeedbackController,0,366,0,48,0,98,0,42,0,18
 taapply,edu.ucsb.cs.taapply.controller,DeveloperAllocationsController,0,20,0,2,0,4,0,3,0,2
 taapply,edu.ucsb.cs.taapply.controller,NoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
@@ -134,12 +140,14 @@ taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController,0,129,0,6
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.RankingScope,0,55,0,14,0,4,0,11,0,4
 taapply,edu.ucsb.cs.taapply.controller,SystemInfoController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,BudgetController,0,278,0,36,0,68,0,29,0,11
+taapply,edu.ucsb.cs.taapply.controller,SoftOffersController,0,44,0,2,0,10,0,6,0,5
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,SoftOfferNoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,DeveloperModeController,0,12,0,0,0,3,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,0,0,0,7,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,AdminAssignmentsController,0,293,0,10,0,58,0,21,0,16
 taapply,edu.ucsb.cs.taapply.controller,AdminDraftApplicationsController.AdminDraftView,0,9,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.controller,SoftOffersController.Answer,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.ApplicationFields,0,131,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CandidateRankingPage,0,57,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,InstructorsCSVController,0,176,0,10,0,36,0,13,0,8
@@ -170,6 +178,7 @@ taapply,edu.ucsb.cs.taapply.entity,DraftApplication.LevelsConverter,0,7,0,0,0,2,
 taapply,edu.ucsb.cs.taapply.entity,RecruitmentCourse,0,40,0,12,0,5,0,8,0,2
 taapply,edu.ucsb.cs.taapply.entity,RecruitmentAuditTrail,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,PriorCoursework,0,104,0,14,0,19,0,11,0,4
+taapply,edu.ucsb.cs.taapply.entity,SoftOfferResponse,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeAllocationsService.Estimates,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeCoursework,0,582,0,48,0,111,0,43,0,19
@@ -206,8 +215,13 @@ taapply,edu.ucsb.cs.taapply.jobs,RefreshRecruitmentCoursesJob,0,162,0,10,0,33,0,
 taapply,edu.ucsb.cs.taapply.jobs,RefreshRecruitmentCoursesJobFactory,0,21,0,0,0,8,0,3,0,3
 taapply,edu.ucsb.cs.taapply.jobs,CreateFakeApplicationsJob,0,129,0,4,0,24,0,5,0,3
 taapply,edu.ucsb.cs.taapply.jobs,CreateFakeApplicationsJobFactory,0,38,0,0,0,13,0,3,0,3
+taapply,edu.ucsb.cs.taapply.models,SoftOfferDto.Notice,0,9,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.models,SoftOfferDto.Course,0,30,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.models,SoftOfferDto,0,30,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.models,UcsbSection,0,12,0,4,0,1,0,3,0,1
+taapply,edu.ucsb.cs.taapply.models,SoftOfferDto.Response,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.models,DraftConflict,0,12,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.models,SoftOfferDto.Meeting,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.models,CourseSections,0,157,0,14,0,38,0,16,0,9
 taapply,edu.ucsb.cs.taapply.models,Quarter,0,169,0,18,0,37,0,19,0,10
 taapply,edu.ucsb.cs.taapply.models,ApplicantRecruitmentDto,0,52,0,0,0,11,0,2,0,2

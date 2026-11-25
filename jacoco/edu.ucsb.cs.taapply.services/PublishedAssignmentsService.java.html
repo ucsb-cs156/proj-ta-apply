@@ -190,29 +190,32 @@ import org.springframework.stereotype.Service;
 <span class="fc bfc" id="L190" title="All 4 branches covered.">    return quarters == null || quarters == 0 ? &quot;yes&quot; : &quot;no&quot;;</span>
   }
 
-  /** Each catalog name that exactly one instructor goes by, with that instructor's email. */
-  private Map&lt;String, String&gt; emailsByCatalogName() {
-<span class="fc" id="L195">    Map&lt;String, List&lt;String&gt;&gt; all =</span>
-<span class="fc" id="L196">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
-<span class="fc bfc" id="L197" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
-<span class="fc" id="L198">            .collect(</span>
-<span class="fc" id="L199">                Collectors.groupingBy(</span>
+  /**
+   * Each catalog name that exactly one instructor goes by, with that instructor's email. Public
+   * since issue #486, for the applicant's soft offer, which names the lecture's instructor too.
+   */
+  public Map&lt;String, String&gt; emailsByCatalogName() {
+<span class="fc" id="L198">    Map&lt;String, List&lt;String&gt;&gt; all =</span>
+<span class="fc" id="L199">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
+<span class="fc" id="L201">            .collect(</span>
+<span class="fc" id="L202">                Collectors.groupingBy(</span>
                     Instructor::getCatalogName,
-<span class="fc" id="L201">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
-<span class="fc" id="L202">    Map&lt;String, String&gt; unique = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L203">    all.forEach(</span>
+<span class="fc" id="L204">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
+<span class="fc" id="L205">    Map&lt;String, String&gt; unique = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L206">    all.forEach(</span>
         (name, emails) -&gt; {
-<span class="fc bfc" id="L205" title="All 2 branches covered.">          if (emails.size() == 1) {</span>
-<span class="fc" id="L206">            unique.put(name, emails.get(0));</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">          if (emails.size() == 1) {</span>
+<span class="fc" id="L209">            unique.put(name, emails.get(0));</span>
           }
-<span class="fc" id="L208">        });</span>
-<span class="fc" id="L209">    return unique;</span>
+<span class="fc" id="L211">        });</span>
+<span class="fc" id="L212">    return unique;</span>
   }
 
   private static String emailFor(RecruitmentCourse course, Map&lt;String, String&gt; emails) {
     // A null instructor is simply absent from the map.
-<span class="fc" id="L214">    String email = emails.get(course.getInstructor());</span>
-<span class="fc bfc" id="L215" title="All 2 branches covered.">    return email == null ? NOT_MAPPED : email;</span>
+<span class="fc" id="L217">    String email = emails.get(course.getInstructor());</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">    return email == null ? NOT_MAPPED : email;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
