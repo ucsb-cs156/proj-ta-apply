@@ -2183,6 +2183,25 @@ describe("Help pages (issue #140)", () => {
     expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
       /View submitted application/,
     );
+    // Issue #486: the soft offers section, before Simultaneous editing.
+    const softOffers = screen.getByTestId("HelpUlaApplicantsPage-soft-offers");
+    expect(softOffers.id).toBe("soft-offers");
+    expect(softOffers).toHaveTextContent("Soft offers");
+    expect(
+      screen.getByTestId("HelpUlaApplicantsPage-soft-offer-what"),
+    ).toHaveTextContent(
+      "After hiring decisions are made, the department may release soft offers. If you have been recommended for a ULA position, the recruitment's card on your home page then shows a Soft Offer section: the course, its instructor and lecture times, the course's discussion sections (which section you would staff is decided by the instructor), and the notices that go with the offer.",
+    );
+    expect(
+      screen.getByTestId("HelpUlaApplicantsPage-soft-offer-answer"),
+    ).toHaveTextContent(
+      "You are asked to choose, by the deadline shown, between Please proceed with a formal offer; I am likely to accept and I would like to decline this offer, with a box for comments, and to click Submit My Response. If you do not respond by the deadline, the position may be offered to another candidate. Once submitted, the section shows your choice, the time you submitted it and your comments, and cannot be changed here: if you change your mind, contact the ULA program directors or the CS Department Student Affairs Manager. A soft offer is not yet a formal offer; the formal offer follows separately.",
+    );
+    expect(
+      softOffers.compareDocumentPosition(
+        screen.getByTestId("HelpUlaApplicantsPage-simultaneous-editing"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     const items = [
       ...screen
         .getByTestId("HelpUlaApplicantsPage-asked-for")

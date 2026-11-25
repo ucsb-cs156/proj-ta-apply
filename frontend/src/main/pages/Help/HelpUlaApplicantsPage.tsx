@@ -231,6 +231,35 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
 
         <h2
           className="my-3 h4"
+          id="soft-offers"
+          data-testid="HelpUlaApplicantsPage-soft-offers"
+        >
+          Soft offers
+        </h2>
+        <p data-testid="HelpUlaApplicantsPage-soft-offer-what">
+          After hiring decisions are made, the department may release{" "}
+          <strong>soft offers</strong>. If you have been recommended for a ULA
+          position, the recruitment&apos;s card on your home page then shows a{" "}
+          <strong>Soft Offer</strong> section: the course, its instructor and
+          lecture times, the course&apos;s discussion sections (which section
+          you would staff is decided by the instructor), and the notices that go
+          with the offer.
+        </p>
+        <p data-testid="HelpUlaApplicantsPage-soft-offer-answer">
+          You are asked to choose, by the deadline shown, between{" "}
+          <em>Please proceed with a formal offer; I am likely to accept</em> and{" "}
+          <em>I would like to decline this offer</em>, with a box for comments,
+          and to click <strong>Submit My Response</strong>. If you do not
+          respond by the deadline, the position may be offered to another
+          candidate. Once submitted, the section shows your choice, the time you
+          submitted it and your comments, and cannot be changed here: if you
+          change your mind, contact the ULA program directors or the CS
+          Department Student Affairs Manager. A soft offer is not yet a formal
+          offer; the formal offer follows separately.
+        </p>
+
+        <h2
+          className="my-3 h4"
           data-testid="HelpUlaApplicantsPage-simultaneous-editing"
         >
           Simultaneous Editing

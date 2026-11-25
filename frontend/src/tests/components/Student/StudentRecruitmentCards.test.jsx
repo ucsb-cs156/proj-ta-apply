@@ -9,6 +9,10 @@ import StudentRecruitmentCards, {
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
+import softOfferFixtures from "fixtures/softOfferFixtures";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import axios from "axios";
+import AxiosMockAdapter from "axios-mock-adapter";
 
 // W26 ULA OPEN (id 2); W26 TA CLOSED on 2026-02-01 (id 1).
 const [, openUla, closedTa] = recruitmentsFixtures.threeRecruitments;
@@ -347,5 +351,83 @@ describe("StudentRecruitmentCards tests", () => {
     expect(
       screen.getByTestId("StudentRecruitmentCards-card-2-cancel"),
     ).toBeInTheDocument();
+  });
+
+  // ---- Issue #486: the Soft Offer section ----
+
+  describe("soft offers", () => {
+    const axiosMock = new AxiosMockAdapter(axios);
+
+    function renderWithOffers(softOffers, props = {}) {
+      axiosMock.reset();
+      axiosMock.onGet("/api/quarters/one").reply(404, {});
+      const onRespondToOffer = vi.fn();
+      render(
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter>
+            <StudentRecruitmentCards
+              recruitments={[openUla, closedTa]}
+              applications={[ulaApp, taApp]}
+              softOffers={softOffers}
+              onRespondToOffer={onRespondToOffer}
+              testIdPrefix="S"
+              {...props}
+            />
+          </MemoryRouter>
+        </QueryClientProvider>,
+      );
+      return onRespondToOffer;
+    }
+
+    test("a recruitment with an open soft offer shows the section in its card body; the others do not", () => {
+      renderWithOffers([softOfferFixtures.pending]);
+
+      const section = screen.getByTestId("S-card-2-soft-offer");
+      expect(
+        screen.getByTestId("S-card-2-card").querySelector(".card-body"),
+      ).toContainElement(section);
+      // After the dates.
+      expect(
+        screen
+          .getByTestId("S-card-2-tentativeOpeningDate")
+          .compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        screen.getByTestId("S-card-2-soft-offer-course-number"),
+      ).toHaveTextContent("CMPSC 156");
+      expect(screen.queryByTestId("S-card-1-soft-offer")).toBeNull();
+    });
+
+    test("answering passes the offer, the choice and the comments up, and the sending state disables the button", async () => {
+      const onRespondToOffer = renderWithOffers([softOfferFixtures.pending]);
+
+      await userEvent.click(
+        screen.getByTestId("S-card-2-soft-offer-choice-PROCEED"),
+      );
+      await userEvent.type(
+        screen.getByTestId("S-card-2-soft-offer-comments"),
+        "Yes",
+      );
+      await userEvent.click(screen.getByTestId("S-card-2-soft-offer-submit"));
+
+      expect(onRespondToOffer).toHaveBeenCalledWith(
+        softOfferFixtures.pending,
+        "PROCEED",
+        "Yes",
+      );
+    });
+
+    test("while an answer is being sent the submit button is disabled", async () => {
+      renderWithOffers([softOfferFixtures.pending], { responding: true });
+      await userEvent.click(
+        screen.getByTestId("S-card-2-soft-offer-choice-PROCEED"),
+      );
+      expect(screen.getByTestId("S-card-2-soft-offer-submit")).toBeDisabled();
+    });
+
+    test("without soft offers no card has the section", () => {
+      renderCards([openUla, closedTa], [ulaApp, taApp]);
+      expect(screen.queryByTestId(/soft-offer$/)).toBeNull();
+    });
   });
 });

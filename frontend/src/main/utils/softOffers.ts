@@ -1,4 +1,6 @@
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import { formatPacificDateTime } from "main/utils/pacificTime";
+import { SOFT_OFFER_CHOICES } from "main/utils/softOfferNotices";
 
 // Soft offers (issue #483): the optional, ULA-only step after hiring decisions are released in
 // which each assigned applicant is asked whether to proceed to a formal offer. This file is the
@@ -47,6 +49,98 @@ export const canReleaseSoftOffers = (
   recruitment.type === "ULA" &&
   recruitment.assignmentsPublished === true &&
   !softOffersReleased(recruitment);
+
+// ---- the applicant's side (issue #486) ----
+
+export type SoftOfferDecision = "PROCEED" | "DECLINE";
+
+/** One meeting of one discussion section; a section with no scheduled time has nulls. */
+export type SoftOfferMeeting = {
+  section: string | null;
+  days: string | null;
+  beginTime: string | null;
+  endTime: string | null;
+};
+
+export type SoftOfferCourse = {
+  recruitmentCourseId: number;
+  courseNumber: string;
+  section: string | null;
+  title: string | null;
+  instructor: string | null;
+  instructorEmail: string | null;
+  days: string | null;
+  beginTime: string | null;
+  endTime: string | null;
+};
+
+export type SoftOfferAnswer = {
+  decision: SoftOfferDecision;
+  comments: string | null;
+  /** Pacific wall-clock time, e.g. 2026-11-21T08:00:00. */
+  respondedAt: string;
+};
+
+/** One open soft offer, as GET /api/softOffers/mine answers. */
+export type SoftOffer = {
+  recruitmentId: number;
+  quarter: string;
+  applicationId: number;
+  releasedAt: string;
+  deadline: string;
+  notice: { id: number; content: string } | null;
+  course: SoftOfferCourse;
+  /** Null when the UCSB API could not be reached. */
+  sections: SoftOfferMeeting[] | null;
+  response: SoftOfferAnswer | null;
+};
+
+export const SOFT_OFFERS_MINE_URL = "/api/softOffers/mine";
+export const SOFT_OFFERS_RESPOND_URL = "/api/softOffers/respond";
+
+export const SOFT_OFFER_INTRO =
+  "You have been recommended for a ULA position for the following course:";
+
+/** The two radio buttons, in the order the design lists them. */
+export const SOFT_OFFER_DECISIONS: {
+  decision: SoftOfferDecision;
+  label: string;
+}[] = [
+  { decision: "PROCEED", label: SOFT_OFFER_CHOICES[0] },
+  { decision: "DECLINE", label: SOFT_OFFER_CHOICES[1] },
+];
+
+export const SECTIONS_UNAVAILABLE =
+  "Section times are not available right now.";
+export const SECTIONS_NONE = "This lecture has no discussion sections listed.";
+export const SECTIONS_NOTE =
+  "Which section(s) you will staff is decided by the instructor.";
+export const SUBMIT_RESPONSE_LABEL = "Submit My Response";
+export const RESPONSE_RECORDED_TOAST = "Your response has been recorded.";
+
+const CONTACT_SENTENCE =
+  "If you change your mind after submitting this form, please contact the ULA program directors, or the CS Department Student Affairs Manager.";
+
+/** What the read-only section says under the recorded answer. */
+export const decisionSentence = (decision: SoftOfferDecision): string =>
+  decision === "PROCEED"
+    ? `You have indicated that you would like to proceed to a formal offer. ${CONTACT_SENTENCE}`
+    : `You have indicated that you would like to decline this offer. ${CONTACT_SENTENCE}`;
+
+/** The label of a decision, as the radio button read. */
+export const decisionLabel = (decision: SoftOfferDecision): string =>
+  decision === "PROCEED" ? SOFT_OFFER_CHOICES[0] : SOFT_OFFER_CHOICES[1];
+
+/** The sentence above the radio buttons, with the deadline in Pacific time. */
+export const deadlineSentence = (deadline: string): string =>
+  `Please choose an option below by ${formatPacificDateTime(deadline)}. If you do not respond by that deadline, we may need to offer this position to another candidate.`;
+
+/** The open soft offer for one recruitment's card, if any. */
+export const offerFor = (
+  offers: readonly SoftOffer[],
+  recruitmentId: number,
+): SoftOffer | undefined =>
+  offers.find((offer) => offer.recruitmentId === recruitmentId);
 
 /**
  * Whether the released hiring decisions are tentative (issue #237): applications or faculty

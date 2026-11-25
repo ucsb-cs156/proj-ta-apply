@@ -10,6 +10,12 @@ import {
   draftFor,
   type DraftApplication,
 } from "main/utils/draftApplications";
+import SoftOfferSection from "main/components/Student/SoftOfferSection";
+import {
+  offerFor,
+  type SoftOffer,
+  type SoftOfferDecision,
+} from "main/utils/softOffers";
 
 /**
  * The button for an applicant who cancelled while applications are still open (issues #318,
@@ -35,6 +41,15 @@ type StudentRecruitmentCardsProps = {
   onRestartRequested?: (application: Application) => void;
   /** While a Create a new application request is under way, so it is not sent twice. */
   restarting?: boolean;
+  /** The student's open soft offers (issue #486), shown on the card of their recruitment. */
+  softOffers?: SoftOffer[];
+  onRespondToOffer?: (
+    offer: SoftOffer,
+    decision: SoftOfferDecision,
+    comments: string,
+  ) => void;
+  /** While an answer to a soft offer is being sent. */
+  responding?: boolean;
   testIdPrefix?: string;
 };
 
@@ -55,6 +70,10 @@ export default function StudentRecruitmentCards({
   onCancelRequested = () => {},
   onRestartRequested = () => {},
   restarting = false,
+  // Stryker disable next-line all : don't test default value of empty list
+  softOffers = [],
+  onRespondToOffer = () => {},
+  responding = false,
   testIdPrefix = "StudentRecruitmentCards",
 }: StudentRecruitmentCardsProps): React.JSX.Element {
   const list = Array.isArray(recruitments) ? recruitments : [];
@@ -71,6 +90,7 @@ export default function StudentRecruitmentCards({
         const application = applicationFor(applicationList, recruitment.id);
         const cancelled = application?.status === "CANCELLED";
         const draft = draftFor(draftList, recruitment.id);
+        const offer = offerFor(softOffers, recruitment.id);
         // Nothing submitted, or only a cancelled application: the applicant may begin one while
         // applications are open (issue #318).
         const mayApply = application === undefined || cancelled;
@@ -120,6 +140,18 @@ export default function StudentRecruitmentCards({
                   </div>
                 ))}
               </dl>
+              {/* Issue #486: the soft offer, once released, for an applicant assigned to a lecture. */}
+              {offer !== undefined && (
+                <SoftOfferSection
+                  offer={offer}
+                  recruitment={recruitment}
+                  onRespond={(decision, comments) =>
+                    onRespondToOffer(offer, decision, comments)
+                  }
+                  responding={responding}
+                  testIdPrefix={id("soft-offer")}
+                />
+              )}
             </Card.Body>
             <Card.Footer className="d-flex flex-wrap gap-2">
               {mayApply && open && draft !== undefined && (

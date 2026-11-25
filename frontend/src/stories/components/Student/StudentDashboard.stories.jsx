@@ -6,6 +6,7 @@ import StudentRecruitmentCards from "main/components/Student/StudentRecruitmentC
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import softOfferFixtures from "fixtures/softOfferFixtures";
 
 // S26 TA not yet opened; W26 ULA open; W26 TA closed on 2026-02-01.
 const three = recruitmentsFixtures.threeRecruitments;
@@ -23,6 +24,13 @@ export default {
         // Create a new application (issue #420): the cancelled one comes back as a draft.
         http.post("/api/draftApplications/fromCancelled", () =>
           HttpResponse.json(draftApplicationsFixtures.savedUlaDraft),
+        ),
+        // Issue #486: answering a soft offer.
+        http.post("/api/softOffers/respond", () =>
+          HttpResponse.json({ id: 1, decision: "PROCEED" }),
+        ),
+        http.get("/api/quarters/one", () =>
+          HttpResponse.json({ message: "not on file" }, { status: 404 }),
         ),
       ],
     },
@@ -50,6 +58,30 @@ export const WithApplications = Template.bind({});
 WithApplications.args = {
   recruitments: three,
   applications: applicationsFixtures.twoApplications,
+};
+
+/** Issue #486: soft offers released and this applicant assigned: the Soft Offer section asks. */
+export const WithASoftOffer = Template.bind({});
+WithASoftOffer.args = {
+  recruitments: [openUla],
+  applications: [applicationsFixtures.oneUlaApplication],
+  softOffers: [softOfferFixtures.pending],
+};
+
+/** The same offer once answered: read-only, with the time and whom to contact. */
+export const SoftOfferAnswered = Template.bind({});
+SoftOfferAnswered.args = {
+  recruitments: [openUla],
+  applications: [applicationsFixtures.oneUlaApplication],
+  softOffers: [softOfferFixtures.proceeded],
+};
+
+/** The UCSB API down and no notice text saved: the lecture alone, and the question. */
+export const SoftOfferWithoutSectionsOrNotice = Template.bind({});
+SoftOfferWithoutSectionsOrNotice.args = {
+  recruitments: [openUla],
+  applications: [applicationsFixtures.oneUlaApplication],
+  softOffers: [softOfferFixtures.bare],
 };
 
 export const OneCancelled = Template.bind({});

@@ -493,6 +493,92 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
   @Autowired edu.ucsb.cs.taapply.repository.AdminRepository itAdminRepository;
 
   /** A submitted application of the given student, to the given recruitment. */
+  @org.springframework.beans.factory.annotation.Autowired
+  edu.ucsb.cs.taapply.repository.SoftOfferNoticeVersionRepository softOfferNoticeVersionRepository;
+
+  @org.springframework.beans.factory.annotation.Autowired
+  edu.ucsb.cs.taapply.repository.SoftOfferResponseRepository softOfferResponseRepository;
+
+  /**
+   * Issue #486: once soft offers are released for a ULA recruitment, an applicant assigned to a
+   * lecture sees the Soft Offer section on the recruitment's card, with the lecture, its sections
+   * (from the UCSB API), the notice text filled in for the quarter and the question; answering once
+   * turns it read-only, and a second answer is refused by the backend.
+   */
+  @Test
+  public void an_assigned_ula_applicant_answers_their_soft_offer_once() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.ULA, LocalDate.of(2021, 9, 20));
+    recruitment.setApplicationStatus(ApplicationStatus.CLOSED);
+    recruitment.setActualClosingDate(LocalDate.now());
+    recruitment.setReviewStatus("Closed");
+    recruitment.setAssignmentsPublished(true);
+    recruitment.setSoftOffersReleasedAt(java.time.LocalDateTime.of(2026, 11, 20, 9, 30));
+    recruitment.setSoftOfferDeadline(java.time.LocalDateTime.of(2099, 12, 1, 17, 0));
+    recruitmentRepository.save(recruitment);
+    edu.ucsb.cs.taapply.entity.RecruitmentCourse lecture =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
+            .filter(c -> "07492".equals(c.getEnrollCode()))
+            .findFirst()
+            .orElseThrow();
+    lecture.setInstructor("CONRAD P");
+    lecture.setDays("T R");
+    lecture.setTime("14:00 - 15:15");
+    recruitmentCourseRepository.save(lecture);
+    softOfferNoticeVersionRepository.save(
+        edu.ucsb.cs.taapply.entity.SoftOfferNoticeVersion.builder()
+            .content("# Congratulations\n\nThis is for ${quarter}.")
+            .createdAt(java.time.LocalDateTime.of(2026, 11, 1, 9, 0))
+            .build());
+    Application mine = seedApplication(recruitment, "cgaucho@ucsb.edu", "Chris");
+    mine.setTentativeAssignmentId(lecture.getId());
+    applicationRepository.save(mine);
+    // Another applicant, not assigned: no soft offer for them (checked through the API below).
+    seedApplication(recruitment, "other@ucsb.edu", "Grace");
+
+    setupRegularUser();
+    String section =
+        "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-soft-offer";
+    assertThat(page.getByTestId(section + "-title")).hasText("Soft Offer");
+    assertThat(page.getByTestId(section + "-intro"))
+        .hasText("You have been recommended for a ULA position for the following course:");
+    assertThat(page.getByTestId(section + "-course-number")).hasText("CMPSC 156");
+    assertThat(page.getByTestId(section + "-course-instructor")).hasText("CONRAD P");
+    assertThat(page.getByTestId(section + "-course-days")).hasText("T R");
+    assertThat(page.getByTestId(section + "-course-begin")).hasText("14:00");
+    assertThat(page.getByTestId(section + "-course-end")).hasText("15:15");
+    // The two discussion sections the stubbed UCSB API lists under lecture 0100.
+    assertThat(page.getByTestId(section + "-section-0")).containsText("0101");
+    assertThat(page.getByTestId(section + "-section-0")).containsText("09:50");
+    assertThat(page.getByTestId(section + "-section-1")).containsText("0102");
+    assertThat(page.getByTestId(section + "-notice").locator("h1")).hasText("Congratulations");
+    assertThat(page.getByTestId(section + "-notice")).containsText("This is for Fall 2021.");
+    assertThat(page.getByTestId(section + "-deadline"))
+        .containsText("Please choose an option below by 12/1/2099, 5:00:00 PM.");
+    assertThat(page.getByTestId(section + "-submit")).isDisabled();
+
+    page.getByTestId(section + "-choice-PROCEED").check();
+    page.getByTestId(section + "-comments").fill("Looking forward to it.");
+    page.getByTestId(section + "-submit").click();
+
+    assertThat(page.getByText("Your response has been recorded.")).isVisible();
+    assertThat(page.getByTestId(section + "-answer-decision"))
+        .hasText("Please proceed with a formal offer; I am likely to accept.");
+    assertThat(page.getByTestId(section + "-answer-comments")).hasText("Looking forward to it.");
+    assertThat(page.getByTestId(section + "-answer-sentence"))
+        .containsText("You have indicated that you would like to proceed to a formal offer.");
+    assertThat(page.getByTestId(section + "-form")).hasCount(0);
+    java.util.List<edu.ucsb.cs.taapply.entity.SoftOfferResponse> answers =
+        softOfferResponseRepository.findByApplicationIdIn(java.util.List.of(mine.getId()));
+    assertEquals(1, answers.size());
+    assertEquals(edu.ucsb.cs.taapply.enums.SoftOfferDecision.PROCEED, answers.get(0).getDecision());
+    assertEquals(lecture.getId(), answers.get(0).getRecruitmentCourseId());
+
+    // Still read-only after a reload.
+    reloadPage(page);
+    assertThat(page.getByTestId(section + "-answer-decision")).isVisible();
+    assertThat(page.getByTestId(section + "-form")).hasCount(0);
+  }
+
   private Application seedApplication(Recruitment recruitment, String email, String firstName) {
     return applicationRepository.save(
         Application.builder()
