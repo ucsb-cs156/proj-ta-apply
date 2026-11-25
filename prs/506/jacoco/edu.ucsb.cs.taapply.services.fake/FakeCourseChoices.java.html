@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FakeCourseChoices.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services.fake</a> &gt; <span class="el_source">FakeCourseChoices.java</span></div><h1>FakeCourseChoices.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services.fake;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+/**
+ * First choice, second choice and course interests for a batch of fake applications (issue #219),
+ * following the rules of the Developer Mode design.
+ *
+ * &lt;p&gt;&lt;b&gt;ALL&lt;/b&gt; (&quot;cover all courses with a reasonable number of applicants&quot;): the courses are dealt
+ * out so that each has at least one applicant, first as first choices (applicant 0 gets course 0,
+ * applicant 1 course 1, and so on), and only if the courses outnumber the applicants, as second
+ * choices and then as Enthusiastic interests. Everything else is random. A first choice is uniform
+ * over the courses. A second choice is uniform over the other courses and &quot;no second choice&quot;, so it
+ * is absent one time in the number of courses, and never equals the first. Every other course is
+ * Enthusiastic for 20 percent of applicants, Would Consider for 40 percent, and not mentioned for
+ * 40 percent.
+ *
+ * &lt;p&gt;&lt;b&gt;SPARSE&lt;/b&gt; (&quot;leave some courses with few or no applicants&quot;): one course, chosen at random,
+ * is mentioned by nobody. A second course is mentioned by exactly three applicants, one
+ * Enthusiastic and two Would Consider, and by none of them as a first or second choice. The rest
+ * are filled exactly as for ALL.
+ */
+public final class FakeCourseChoices {
+  private FakeCourseChoices() {}
+
+  /** Percent of the other courses an applicant is Enthusiastic about. */
+  static final int ENTHUSIASTIC_PERCENT = 20;
+
+  /** Percent (after the Enthusiastic ones) they would consider. */
+  static final int WOULD_CONSIDER_PERCENT = 40;
+
+  /** How many applicants mention SPARSE's one thinly covered course. */
+  static final int THIN_COURSE_APPLICANTS = 3;
+
+  public static void assign(
+      List&lt;Application&gt; applications,
+      List&lt;String&gt; courseIds,
+      FakeCoverage coverage,
+      Random random) {
+<span class="fc bfc" id="L46" title="All 4 branches covered.">    if (courseIds.isEmpty() || applications.isEmpty()) {</span>
+<span class="fc" id="L47">      return;</span>
+    }
+<span class="fc" id="L49">    List&lt;String&gt; allowed = new ArrayList&lt;&gt;(courseIds);</span>
+<span class="fc" id="L50">    String thin = null;</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">    if (coverage == FakeCoverage.SPARSE) {</span>
+<span class="fc" id="L52">      allowed.remove(random.nextInt(allowed.size())); // mentioned by no one</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">      if (!allowed.isEmpty()) {</span>
+<span class="fc" id="L54">        thin = allowed.remove(random.nextInt(allowed.size()));</span>
+      }
+    }
+
+<span class="fc" id="L58">    int n = applications.size();</span>
+    // Deal the allowed courses out: slot k goes to applicant k % n, as the first choice, then the
+    // second, then an Enthusiastic interest, so that every course has someone.
+<span class="fc" id="L61">    String[] firsts = new String[n];</span>
+<span class="fc" id="L62">    String[] seconds = new String[n];</span>
+<span class="fc" id="L63">    String[] enthusiastic = new String[n];</span>
+<span class="fc bfc" id="L64" title="All 4 branches covered.">    for (int k = 0; k &lt; allowed.size() &amp;&amp; k &lt; 3 * n; k++) {</span>
+<span class="fc bfc" id="L65" title="All 4 branches covered.">      String[] column = k / n == 0 ? firsts : k / n == 1 ? seconds : enthusiastic;</span>
+<span class="fc" id="L66">      column[k % n] = allowed.get(k);</span>
+    }
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc" id="L70">      Application application = applications.get(i);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">      String first = firsts[i] != null ? firsts[i] : uniform(allowed, seconds[i], random);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">      String second = seconds[i] != null ? seconds[i] : secondChoice(allowed, first, random);</span>
+<span class="fc" id="L73">      application.setFirstChoiceCourse(first);</span>
+<span class="fc" id="L74">      application.setSecondChoiceCourse(second);</span>
+<span class="fc" id="L75">      application.setCourseInterests(interests(allowed, first, second, enthusiastic[i], random));</span>
+    }
+
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    if (thin != null) {</span>
+<span class="fc" id="L79">      List&lt;Integer&gt; indices = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">      for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc" id="L81">        indices.add(i);</span>
+      }
+<span class="fc" id="L83">      java.util.Collections.shuffle(indices, random);</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">      for (int k = 0; k &lt; Math.min(THIN_COURSE_APPLICANTS, n); k++) {</span>
+<span class="fc" id="L85">        applications</span>
+<span class="fc" id="L86">            .get(indices.get(k))</span>
+<span class="fc" id="L87">            .getCourseInterests()</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">            .put(thin, k == 0 ? CourseInterest.ENTHUSIASTIC : CourseInterest.WOULD_CONSIDER);</span>
+      }
+    }
+<span class="fc" id="L91">  }</span>
+
+  /** A course chosen uniformly, other than {@code except}; null when there is none to choose. */
+  private static String uniform(List&lt;String&gt; courses, String except, Random random) {
+<span class="fc" id="L95">    List&lt;String&gt; candidates = new ArrayList&lt;&gt;(courses);</span>
+<span class="fc" id="L96">    candidates.remove(except);</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    return candidates.isEmpty() ? null : candidates.get(random.nextInt(candidates.size()));</span>
+  }
+
+  /**
+   * Uniform over the courses other than the first choice and &quot;no second choice&quot; together, so the
+   * second choice is absent as often as any one course is chosen.
+   */
+  private static String secondChoice(List&lt;String&gt; courses, String first, Random random) {
+<span class="fc bfc" id="L105" title="All 2 branches covered.">    if (first == null) {</span>
+<span class="fc" id="L106">      return null;</span>
+    }
+<span class="fc" id="L108">    List&lt;String&gt; others = new ArrayList&lt;&gt;(courses);</span>
+<span class="fc" id="L109">    others.remove(first);</span>
+<span class="fc" id="L110">    int pick = random.nextInt(others.size() + 1);</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">    return pick == others.size() ? null : others.get(pick);</span>
+  }
+
+  private static Map&lt;String, CourseInterest&gt; interests(
+      List&lt;String&gt; courses,
+      String first,
+      String second,
+      String guaranteedEnthusiastic,
+      Random random) {
+<span class="fc" id="L120">    Map&lt;String, CourseInterest&gt; interests = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">    for (String course : courses) {</span>
+<span class="fc bfc" id="L122" title="All 4 branches covered.">      if (course.equals(first) || course.equals(second)) {</span>
+<span class="fc" id="L123">        continue;</span>
+      }
+<span class="fc" id="L125">      int roll = random.nextInt(100);</span>
+<span class="fc bfc" id="L126" title="All 4 branches covered.">      if (course.equals(guaranteedEnthusiastic) || roll &lt; ENTHUSIASTIC_PERCENT) {</span>
+<span class="fc" id="L127">        interests.put(course, CourseInterest.ENTHUSIASTIC);</span>
+<span class="fc bfc" id="L128" title="All 2 branches covered.">      } else if (roll &lt; ENTHUSIASTIC_PERCENT + WOULD_CONSIDER_PERCENT) {</span>
+<span class="fc" id="L129">        interests.put(course, CourseInterest.WOULD_CONSIDER);</span>
+      }
+<span class="fc" id="L131">    }</span>
+<span class="fc" id="L132">    return interests;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

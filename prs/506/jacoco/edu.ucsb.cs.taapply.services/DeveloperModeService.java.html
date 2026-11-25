@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DeveloperModeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">DeveloperModeService.java</span></div><h1>DeveloperModeService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.GlobalSetting;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.GlobalSettingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+/**
+ * The Developer Mode switch (issue #217). Two gates: the {@code ENABLE_DEVELOPER_MODE} environment
+ * flag says whether the feature exists on this instance at all (it must stay false in production),
+ * and the {@code developerMode} row of {@code global_settings} says whether it is switched on. A
+ * later feature counts as enabled only when both hold, so a database edit alone can never turn fake
+ * data on where the flag is off.
+ */
+@Service
+<span class="fc" id="L18">public class DeveloperModeService {</span>
+
+  /** The setting's key in {@code global_settings}. */
+  public static final String SETTING_KEY = &quot;developerMode&quot;;
+
+  public static final String ON = &quot;On&quot;;
+  public static final String OFF = &quot;Off&quot;;
+
+  @Value(&quot;${app.enableDeveloperMode:false}&quot;)
+  private boolean enableDeveloperMode;
+
+  @Autowired GlobalSettingRepository globalSettingRepository;
+
+  /** What the frontend needs: whether the switch exists here, and whether it is on. */
+<span class="fc" id="L32">  public record Status(boolean available, boolean on) {}</span>
+
+  /** Whether the environment flag makes the switch available on this instance. */
+  public boolean isAvailable() {
+<span class="fc" id="L36">    return enableDeveloperMode;</span>
+  }
+
+  /** Whether developer mode is switched on: available, and the setting is &quot;On&quot;. */
+  public boolean isOn() {
+<span class="fc bfc" id="L41" title="All 2 branches covered.">    return isAvailable()</span>
+        &amp;&amp; globalSettingRepository
+<span class="fc" id="L43">            .findById(SETTING_KEY)</span>
+<span class="fc" id="L44">            .map(setting -&gt; ON.equals(setting.getValue()))</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">            .orElse(false);</span>
+  }
+
+  public Status status() {
+<span class="fc" id="L49">    return new Status(isAvailable(), isOn());</span>
+  }
+
+  /**
+   * Switches developer mode on or off.
+   *
+   * @throws EntityNotFoundException when the switch is not available on this instance
+   */
+  public Status setOn(boolean on) {
+<span class="fc bfc" id="L58" title="All 2 branches covered.">    if (!isAvailable()) {</span>
+<span class="fc" id="L59">      throw new EntityNotFoundException(&quot;Developer mode is not enabled on this instance&quot;);</span>
+    }
+<span class="fc" id="L61">    GlobalSetting setting =</span>
+        globalSettingRepository
+<span class="fc" id="L63">            .findById(SETTING_KEY)</span>
+<span class="fc" id="L64">            .orElseGet(() -&gt; GlobalSetting.builder().key(SETTING_KEY).build());</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    setting.setValue(on ? ON : OFF);</span>
+<span class="fc" id="L66">    globalSettingRepository.save(setting);</span>
+<span class="fc" id="L67">    return status();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
