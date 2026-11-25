@@ -149,6 +149,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
           <section className="mb-4" data-testid="HomePageLoggedIn-hiring-staff">
             <h2>Hiring Staff</h2>
             <HiringStaffDashboard
+              // Stryker disable next-line all : don't test default value of empty list
               recruitments={hiringStaffRecruitments ?? []}
               testIdPrefix="HomePageLoggedIn-hiring-staff-recruitments"
             />
