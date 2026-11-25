@@ -55,4 +55,32 @@ const recruitmentsFixtures = {
   ],
 };
 
+/**
+ * Issue #485: a ULA recruitment (F25) whose hiring decisions are released and whose soft offers
+ * are not: the card offers Release Soft Offers.
+ */
+recruitmentsFixtures.publishedUla = {
+  ...recruitmentsFixtures.threeRecruitments[1],
+  id: 5,
+  quarter: "20254",
+  applicationStatus: "CLOSED",
+  reviewStatus: "Closed",
+  tentativeOpeningDate: "2025-09-01",
+  primaryConsiderationDate: "2025-09-20",
+  actualOpeningDate: "2025-09-01",
+  actualClosingDate: "2025-10-01",
+  facultyReviewOpeningDate: "2025-10-02",
+  facultyRankingDeadline: "2025-10-15",
+  assignmentsPublished: true,
+  softOffersReleasedAt: null,
+  softOfferDeadline: null,
+};
+
+/** The same recruitment once its soft offers are released. */
+recruitmentsFixtures.releasedUla = {
+  ...recruitmentsFixtures.publishedUla,
+  softOffersReleasedAt: "2025-10-20T09:30:00",
+  softOfferDeadline: "2025-10-25T17:00:00",
+};
+
 export default recruitmentsFixtures;

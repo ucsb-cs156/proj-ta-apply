@@ -965,6 +965,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
             assignments so far under a red <em>Not published yet</em> note, and
             faculty are told only that the assignments are not published yet.
           </li>
+          <li id="soft-offers" data-testid="HelpAdminsPage-soft-offers">
+            <strong>Release Soft Offers.</strong> On a ULA recruitment&apos;s
+            card only, and only once hiring decisions are released. It asks for
+            a deadline (the box proposes 5:00 pm Pacific five days from today,
+            which you may change) and warns, in red, if no Soft Offer Notices
+            text has been saved under ULA App Settings or if hiring decisions
+            are tentative because applications or faculty ranking have been
+            reopened. Releasing makes the recruitment&apos;s soft offers
+            available to its assigned ULA applicants, who are asked to answer by
+            the deadline; it records the moment and the deadline in the Change
+            History, and the button then leaves the card. Soft offers are
+            optional and not a step of the diagram.
+          </li>
           <li id="change-history" data-testid="HelpAdminsPage-change-history">
             <strong>Change History.</strong> Every change to the recruitment
             itself, newest first: when it was created, each time applications or

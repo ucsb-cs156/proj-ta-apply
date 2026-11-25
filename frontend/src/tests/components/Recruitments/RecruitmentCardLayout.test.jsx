@@ -24,6 +24,7 @@ function renderCard(props = {}) {
   const onChangeDeadline = vi.fn();
   const onDeleteRequested = vi.fn();
   const onAction = vi.fn();
+  const onReleaseSoftOffers = vi.fn();
   render(
     <MemoryRouter>
       <RecruitmentCardLayout
@@ -33,12 +34,13 @@ function renderCard(props = {}) {
         onChangeDeadline={onChangeDeadline}
         onDeleteRequested={onDeleteRequested}
         onAction={onAction}
+        onReleaseSoftOffers={onReleaseSoftOffers}
         testIdPrefix="C"
         {...props}
       />
     </MemoryRouter>,
   );
-  return { onChangeDeadline, onDeleteRequested, onAction };
+  return { onChangeDeadline, onDeleteRequested, onAction, onReleaseSoftOffers };
 }
 
 describe("RecruitmentCardLayout tests", () => {
@@ -515,6 +517,64 @@ describe("RecruitmentCardLayout tests", () => {
         child.classList.contains("ms-auto"),
       ),
     ).toEqual([button]);
+  });
+
+  // ---- Issue #485: Release Soft Offers ----
+
+  test("a ULA card with hiring decisions released offers Release Soft Offers after View Assignments", async () => {
+    const { onReleaseSoftOffers } = renderCard({
+      recruitment: recruitmentsFixtures.publishedUla,
+    });
+
+    const button = screen.getByTestId("C-release-soft-offers-button");
+    expect(button).toHaveTextContent("Release Soft Offers");
+    expect(button.tagName).toBe("BUTTON");
+    expect(button).toHaveClass("btn", "btn-outline-warning");
+    expect(button.previousElementSibling).toBe(
+      screen.getByTestId("C-view-assignments-button"),
+    );
+    // Reviews are closed, so the CSV button follows it; Change History is still last.
+    expect(button.nextElementSibling).toBe(
+      screen.getByTestId("C-rankings-csv-button"),
+    );
+    expect(button.parentElement.lastElementChild).toBe(
+      screen.getByTestId("C-change-history-button"),
+    );
+
+    await userEvent.click(button);
+    expect(onReleaseSoftOffers).toHaveBeenCalledWith(
+      recruitmentsFixtures.publishedUla,
+    );
+  });
+
+  test.each([
+    ["a TA recruitment", { ...ta, assignmentsPublished: true }],
+    ["a ULA recruitment whose hiring decisions are not released", ula],
+    [
+      "a ULA recruitment whose soft offers are released",
+      recruitmentsFixtures.releasedUla,
+    ],
+  ])("%s has no Release Soft Offers button", (_name, recruitment) => {
+    renderCard({ recruitment });
+    expect(screen.queryByTestId("C-release-soft-offers-button")).toBeNull();
+    expect(screen.queryByText("Release Soft Offers")).toBeNull();
+  });
+
+  test("the button does nothing without an onReleaseSoftOffers handler", async () => {
+    render(
+      <MemoryRouter>
+        <RecruitmentCardLayout
+          recruitment={recruitmentsFixtures.publishedUla}
+          onChangeDeadline={vi.fn()}
+          onDeleteRequested={vi.fn()}
+          testIdPrefix="C"
+        />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByTestId("C-release-soft-offers-button"));
+    expect(
+      screen.getByTestId("C-release-soft-offers-button"),
+    ).toBeInTheDocument();
   });
 
   test("there is no Download Rankings CSV before faculty reviews have started", () => {

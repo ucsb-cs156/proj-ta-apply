@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
 import AllocationVisibilityModal from "main/components/Recruitments/AllocationVisibilityModal";
 import PublishAssignmentsModal from "main/components/Recruitments/PublishAssignmentsModal";
+import ReleaseSoftOffersModal from "main/components/Recruitments/ReleaseSoftOffersModal";
 import AdminQuarterCard from "main/components/Recruitments/AdminQuarterCard";
 import RecruitmentCardLayout from "main/components/Recruitments/RecruitmentCardLayout";
 import { useBackendMutation } from "main/utils/useBackend";
@@ -92,6 +93,7 @@ type AdminRecruitmentCardProps = {
   onChangeDeadline: (recruitment: Recruitment) => void;
   onDeleteRequested: (recruitment: Recruitment) => void;
   onAction: (recruitment: Recruitment, action: RecruitmentStepAction) => void;
+  onReleaseSoftOffers: (recruitment: Recruitment) => void;
   testIdPrefix: string;
 };
 
@@ -106,6 +108,7 @@ function AdminRecruitmentCard({
   onChangeDeadline,
   onDeleteRequested,
   onAction,
+  onReleaseSoftOffers,
   testIdPrefix,
 }: AdminRecruitmentCardProps): React.JSX.Element {
   const navigate = useNavigate();
@@ -130,6 +133,7 @@ function AdminRecruitmentCard({
       onDeleteRequested={onDeleteRequested}
       onAction={(action) => onAction(recruitment, action)}
       onNavigate={navigate}
+      onReleaseSoftOffers={onReleaseSoftOffers}
       testIdPrefix={testIdPrefix}
     />
   );
@@ -196,6 +200,8 @@ export default function RecruitmentCards({
   // #233), by id so the modal always shows the latest data; null when closed.
   const [visibilityId, setVisibilityId] = useState<number | null>(null);
   const [publishId, setPublishId] = useState<number | null>(null);
+  // Issue #485: the recruitment whose Release Soft Offers modal is open, by id; null when closed.
+  const [releaseId, setReleaseId] = useState<number | null>(null);
 
   const reviewStatusMutation = useBackendMutation<
     { recruitment: Recruitment; status: "Open" | "Closed"; deadline?: string },
@@ -345,6 +351,7 @@ export default function RecruitmentCards({
 
   const visibilityRecruitment = all.find((r) => r.id === visibilityId);
   const publishRecruitment = all.find((r) => r.id === publishId);
+  const releaseRecruitment = all.find((r) => r.id === releaseId);
 
   return (
     <div data-testid={`${testIdPrefix}-cards`}>
@@ -401,6 +408,7 @@ export default function RecruitmentCards({
               onChangeDeadline={(r) => openReviewModal(r, "editDeadline")}
               onDeleteRequested={onDeleteRequested}
               onAction={onStepAction}
+              onReleaseSoftOffers={(r) => setReleaseId(r.id)}
               testIdPrefix={`${testIdPrefix}-card-${index}`}
             />
           ))}
@@ -420,6 +428,14 @@ export default function RecruitmentCards({
           show
           onHide={() => setPublishId(null)}
           testIdPrefix={`${testIdPrefix}-publish`}
+        />
+      )}
+      {releaseRecruitment !== undefined && (
+        <ReleaseSoftOffersModal
+          recruitment={releaseRecruitment}
+          show
+          onHide={() => setReleaseId(null)}
+          testIdPrefix={`${testIdPrefix}-release-soft-offers`}
         />
       )}
       <Modal

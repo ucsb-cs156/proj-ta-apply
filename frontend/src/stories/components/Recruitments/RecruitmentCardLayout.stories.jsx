@@ -104,6 +104,19 @@ NoRankingsYet.args = {
   steps: recruitmentStepsFixtures.ulaFresh,
 };
 
+/**
+ * Issue #485: a ULA recruitment with hiring decisions released and soft offers not yet: the
+ * Release Soft Offers button follows View Assignments. The button calls onReleaseSoftOffers; the
+ * modal itself is RecruitmentCards' and has its own story.
+ */
+export const UlaReadyForSoftOffers = Template.bind({});
+UlaReadyForSoftOffers.args = {
+  recruitment: recruitmentsFixtures.publishedUla,
+  applicationCount: 9,
+  steps: recruitmentStepsFixtures.published,
+  onReleaseSoftOffers: fn(),
+};
+
 /** Published: every step done, the badge in the header. */
 export const Published = Template.bind({});
 Published.args = {

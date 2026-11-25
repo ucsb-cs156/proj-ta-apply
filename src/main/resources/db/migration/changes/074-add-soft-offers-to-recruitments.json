@@ -1,0 +1,34 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "074-add-soft-offers-to-recruitments",
+        "author": "pc",
+        "comment": "Soft offers (issue #485, part of #483): when a ULA recruitment's soft offers were released to its assigned applicants, and the deadline they are asked to answer by. Both Pacific wall-clock times set by the server; null until released. Roll back with liquibase rollback-count 1: the two columns are dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "recruitments", "columnName": "soft_offers_released_at" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                { "column": { "name": "soft_offers_released_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "soft_offer_deadline", "type": "TIMESTAMP" } }
+              ]
+            }
+          }
+        ],
+        "rollback": [
+          { "dropColumn": { "tableName": "recruitments", "columnName": "soft_offers_released_at" } },
+          { "dropColumn": { "tableName": "recruitments", "columnName": "soft_offer_deadline" } }
+        ]
+      }
+    }
+  ]
+}

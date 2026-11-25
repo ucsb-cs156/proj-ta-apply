@@ -67,6 +67,34 @@ export const pacificTodayIso = (now: Date = new Date()): string => {
   return `${p.year}-${pad(p.month)}-${pad(p.day)}`;
 };
 
+/** The Pacific wall clock at an instant as "YYYY-MM-DDTHH:mm", the form a datetime-local box takes. */
+export const pacificNowLocalIso = (now: Date = new Date()): string => {
+  const p = pacificParts(now);
+  return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
+};
+
+/** How many calendar days ahead the soft offer deadline box is set by default (issue #485). */
+export const SOFT_OFFER_DEADLINE_DAYS = 5;
+
+/**
+ * The default soft offer deadline (issue #485): 5:00 pm Pacific, five calendar days after today's
+ * Pacific date, as a datetime-local value.
+ */
+export const defaultSoftOfferDeadline = (now: Date = new Date()): string => {
+  const p = pacificParts(now);
+  // The Date constructor carries a day past the month's end into the next month.
+  const day = new Date(p.year, p.month - 1, p.day + SOFT_OFFER_DEADLINE_DAYS);
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T17:00`;
+};
+
+/** Whether a datetime-local value is well formed and later than the Pacific clock now. */
+export const isFutureWallClock = (
+  value: string,
+  now: Date = new Date(),
+): boolean =>
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) &&
+  value > pacificNowLocalIso(now);
+
 /** A stamp that names its zone: "...Z" or "...-08:00". */
 const HAS_ZONE = /(?:Z|[+-]\d{2}:?\d{2})$/;
 const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/;

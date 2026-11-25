@@ -58,6 +58,9 @@ public class RecruitmentAuditService {
     // Issue #391: the hiring target, a planning figure, is audited too; the Budget page lists its
     // changes for the quarter's two recruitments.
     FIELDS.put("totalHiringTarget", Recruitment::getTotalHiringTarget);
+    // Issue #485: releasing soft offers, and the deadline given (or later changed).
+    FIELDS.put("softOffersReleasedAt", Recruitment::getSoftOffersReleasedAt);
+    FIELDS.put("softOfferDeadline", Recruitment::getSoftOfferDeadline);
   }
 
   /** A recruitment's audited fields as strings, keyed by field name; a null field is null. */

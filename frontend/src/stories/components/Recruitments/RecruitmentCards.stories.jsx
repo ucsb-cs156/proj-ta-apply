@@ -48,6 +48,11 @@ export default {
         http.put("/api/admin/recruitments/facultyRankingDeadline", () =>
           HttpResponse.json({}),
         ),
+        // Issue #485: releasing soft offers, and the notice text it warns about.
+        http.put("/api/admin/recruitments/softOffers", () =>
+          HttpResponse.json({}),
+        ),
+        http.get("/api/softOfferNotices/current", () => HttpResponse.json([])),
       ],
     },
   },
@@ -145,5 +150,17 @@ OnePublished.decorators = [
 ];
 
 /** No recruitments: the Quarters control and the message. */
+/**
+ * Issue #485: an F25 ULA recruitment with hiring decisions released: its card has the Release
+ * Soft Offers button, which opens the modal with the deadline box and (no notice text saved) the
+ * warning in red.
+ */
+export const UlaReadyForSoftOffers = Template.bind({});
+UlaReadyForSoftOffers.args = {
+  recruitments: [recruitmentsFixtures.publishedUla],
+  applicationCounts: { 5: 9 },
+  onDeleteRequested: threeArgs.onDeleteRequested,
+};
+
 export const Empty = Template.bind({});
 Empty.args = { recruitments: [] };
