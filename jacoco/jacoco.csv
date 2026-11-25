@@ -52,7 +52,7 @@ taapply,edu.ucsb.cs.taapply.services,RankingsCsvService.Column,0,9,0,0,0,1,0,1,0
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Link,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.SectionKey,0,17,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService.CourseTargets,0,21,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService,0,478,0,62,0,96,0,43,0,12
+taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService,0,556,0,76,0,113,0,52,0,14
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService,0,143,0,8,0,29,0,15,0,11
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,596,0,32,0,123,0,31,0,15
@@ -92,6 +92,7 @@ taapply,edu.ucsb.cs.taapply.enums,OtherCampusJob,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,EnrollmentEstimateSource,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ApplicationOrigin,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CourseRow,0,109,0,6,0,20,0,5,0,2
+taapply,edu.ucsb.cs.taapply.controller,SoftOfferNoticesController,0,62,0,4,0,12,0,9,0,7
 taapply,edu.ucsb.cs.taapply.controller,DeveloperFakeApplicationsController,0,168,0,14,0,35,0,15,0,8
 taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
 taapply,edu.ucsb.cs.taapply.controller,HiddenColumnsController,0,146,0,14,0,43,0,14,0,7
@@ -133,6 +134,7 @@ taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.RankingS
 taapply,edu.ucsb.cs.taapply.controller,SystemInfoController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,BudgetController,0,278,0,36,0,68,0,29,0,11
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
+taapply,edu.ucsb.cs.taapply.controller,SoftOfferNoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,DeveloperModeController,0,12,0,0,0,3,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,0,0,0,7,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,AdminAssignmentsController,0,293,0,10,0,58,0,21,0,16
