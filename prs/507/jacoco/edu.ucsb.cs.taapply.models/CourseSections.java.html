@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CourseSections.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.models</a> &gt; <span class="el_source">CourseSections.java</span></div><h1>CourseSections.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.models;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * When and where one course's lectures and sections meet in one quarter, as shown to an applicant
+ * who has just chosen that course. Built from the UCSB API's view of the course, narrowed to what
+ * helps someone decide whether they are free at those times.
+ *
+ * @param courseId the padded course id the applicant chose
+ * @param quarter the recruitment's quarter, YYYYQ
+ * @param title the course title, or null if the API had nothing for this course
+ * @param meetings one row per meeting time, in section order; empty if nothing is known
+ */
+<span class="fc" id="L17">public record CourseSections(</span>
+    String courseId, String quarter, String title, List&lt;Meeting&gt; meetings) {
+
+  /**
+   * One meeting of one section. A section that meets at two times (say a lecture on M W and again
+   * on F) is two rows, and a section with no scheduled time (an online class) is one row with no
+   * days, time or location, so it is still listed.
+   */
+<span class="fc" id="L25">  public record Meeting(</span>
+      String section,
+      boolean lecture,
+      String enrollCode,
+      String days,
+      String beginTime,
+      String endTime,
+      String location,
+      String instructors) {}
+
+  /** What to show when the recruitment has no section of this course to look up. */
+  public static CourseSections none(String courseId, String quarter) {
+<span class="fc" id="L37">    return new CourseSections(courseId, quarter, null, List.of());</span>
+  }
+
+  public static CourseSections from(String courseId, String quarter, UcsbCourseOffering offering) {
+<span class="fc" id="L41">    List&lt;Meeting&gt; meetings = new ArrayList&lt;&gt;();</span>
+    List&lt;UcsbSection&gt; sections =
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        offering.getClassSections() == null ? List.of() : offering.getClassSections();</span>
+<span class="fc" id="L44">    sections.stream()</span>
+<span class="fc" id="L45">        .sorted(</span>
+<span class="fc" id="L46">            Comparator.comparing(</span>
+<span class="fc" id="L47">                UcsbSection::getSection, Comparator.nullsFirst(Comparator.naturalOrder())))</span>
+<span class="fc" id="L48">        .forEach(section -&gt; meetings.addAll(meetingsOf(section)));</span>
+<span class="fc" id="L49">    return new CourseSections(courseId, quarter, offering.getTitle(), meetings);</span>
+  }
+
+  private static List&lt;Meeting&gt; meetingsOf(UcsbSection section) {
+<span class="fc" id="L53">    String instructors = instructorsOf(section);</span>
+<span class="fc" id="L54">    List&lt;UcsbTimeLocation&gt; locations = section.getTimeLocations();</span>
+<span class="fc bfc" id="L55" title="All 4 branches covered.">    if (locations == null || locations.isEmpty()) {</span>
+<span class="fc" id="L56">      return List.of(</span>
+          new Meeting(
+<span class="fc" id="L58">              section.getSection(),</span>
+<span class="fc" id="L59">              section.isPrimary(),</span>
+<span class="fc" id="L60">              section.getEnrollCode(),</span>
+              null,
+              null,
+              null,
+              null,
+              instructors));
+    }
+<span class="fc" id="L67">    return locations.stream()</span>
+<span class="fc" id="L68">        .map(</span>
+            location -&gt;
+<span class="fc" id="L70">                new Meeting(</span>
+<span class="fc" id="L71">                    section.getSection(),</span>
+<span class="fc" id="L72">                    section.isPrimary(),</span>
+<span class="fc" id="L73">                    section.getEnrollCode(),</span>
+<span class="fc" id="L74">                    location.getDays(),</span>
+<span class="fc" id="L75">                    location.getBeginTime(),</span>
+<span class="fc" id="L76">                    location.getEndTime(),</span>
+<span class="fc" id="L77">                    locationOf(location),</span>
+                    instructors))
+<span class="fc" id="L79">        .toList();</span>
+  }
+
+  /** Building and room together, as on the job's recruitment course rows. */
+  private static String locationOf(UcsbTimeLocation location) {
+<span class="fc bfc" id="L84" title="All 2 branches covered.">    String building = location.getBuilding() == null ? &quot;&quot; : location.getBuilding();</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    String room = location.getRoom() == null ? &quot;&quot; : location.getRoom();</span>
+<span class="fc" id="L86">    return (building + &quot; &quot; + room).trim();</span>
+  }
+
+  /** Every instructor of record, comma separated; blank rather than null when none is listed. */
+  private static String instructorsOf(UcsbSection section) {
+<span class="fc bfc" id="L91" title="All 2 branches covered.">    if (section.getInstructors() == null) {</span>
+<span class="fc" id="L92">      return &quot;&quot;;</span>
+    }
+<span class="fc" id="L94">    return String.join(</span>
+        &quot;, &quot;,
+<span class="fc" id="L96">        section.getInstructors().stream()</span>
+<span class="fc" id="L97">            .map(UcsbInstructor::getInstructor)</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">            .filter(name -&gt; name != null)</span>
+<span class="fc" id="L99">            .toList());</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
