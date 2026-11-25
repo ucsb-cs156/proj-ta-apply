@@ -19,9 +19,14 @@ import org.springframework.stereotype.Service;
   /** How long after closing a recruitment still counts as recent, for comments (issue #107). */
   public static final int RECENT_MONTHS = 6;
 
-  /** Applications may only be created against an open recruitment. */
+  /**
+   * Applications may only be created against an open recruitment, and not against one the admin has
+   * hidden from students (issue #496): a hidden recruitment's form is out of reach, so a request
+   * for it is refused the same way as a closed one.
+   */
   public boolean acceptingApplications(Recruitment recruitment) {
-<span class="fc bfc" id="L24" title="All 2 branches covered.">    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN;</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        &amp;&amp; !RecruitmentVisibility.isHidden(recruitment);</span>
   }
 
   /**
@@ -30,7 +35,7 @@ import org.springframework.stereotype.Service;
    * changes, so it plays no part here.
    */
   public boolean editable(Recruitment recruitment) {
-<span class="fc" id="L33">    return acceptingApplications(recruitment);</span>
+<span class="fc" id="L38">    return acceptingApplications(recruitment);</span>
   }
 
   /**
@@ -39,10 +44,10 @@ import org.springframework.stereotype.Service;
    * closing date, is not &quot;recently closed&quot;.
    */
   public boolean recentlyClosed(Recruitment recruitment, LocalDate today) {
-<span class="fc bfc" id="L42" title="All 4 branches covered.">    if (acceptingApplications(recruitment) || recruitment.getActualClosingDate() == null) {</span>
-<span class="fc" id="L43">      return false;</span>
+<span class="fc bfc" id="L47" title="All 4 branches covered.">    if (acceptingApplications(recruitment) || recruitment.getActualClosingDate() == null) {</span>
+<span class="fc" id="L48">      return false;</span>
     }
-<span class="fc bfc" id="L45" title="All 2 branches covered.">    return !today.isAfter(recruitment.getActualClosingDate().plusMonths(RECENT_MONTHS));</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">    return !today.isAfter(recruitment.getActualClosingDate().plusMonths(RECENT_MONTHS));</span>
   }
 
   /**
@@ -50,7 +55,7 @@ import org.springframework.stereotype.Service;
    * six months after it closes (issue #107), as the place for what has changed since applying.
    */
   public boolean commentable(Recruitment recruitment, LocalDate today) {
-<span class="fc bfc" id="L53" title="All 4 branches covered.">    return acceptingApplications(recruitment) || recentlyClosed(recruitment, today);</span>
+<span class="fc bfc" id="L58" title="All 4 branches covered.">    return acceptingApplications(recruitment) || recentlyClosed(recruitment, today);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

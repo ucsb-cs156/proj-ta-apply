@@ -10,50 +10,61 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-<span class="fc" id="L16">@Slf4j</span>
-<span class="fc" id="L17">public abstract class ApiController {</span>
+<span class="fc" id="L17">@Slf4j</span>
+<span class="fc" id="L18">public abstract class ApiController {</span>
 
   @Autowired private CurrentUserService currentUserService;
 
   protected CurrentUser getCurrentUser() {
-<span class="fc" id="L22">    return currentUserService.getCurrentUser();</span>
+<span class="fc" id="L23">    return currentUserService.getCurrentUser();</span>
+  }
+
+  /** Whether the signed-in user holds the admin role; false for no user or no roles. */
+  protected boolean isAdmin() {
+<span class="fc" id="L28">    CurrentUser currentUser = getCurrentUser();</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">    return currentUser != null</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        &amp;&amp; currentUser.getRoles() != null</span>
+<span class="fc" id="L31">        &amp;&amp; currentUser.getRoles().stream()</span>
+<span class="fc" id="L32">            .map(GrantedAuthority::getAuthority)</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">            .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
   }
 
   protected Object genericMessage(String message) {
-<span class="fc" id="L26">    return Map.of(&quot;message&quot;, message);</span>
+<span class="fc" id="L37">    return Map.of(&quot;message&quot;, message);</span>
   }
 
   @ExceptionHandler({EntityNotFoundException.class})
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public Object handleEntityNotFoundException(Throwable e) {
-<span class="fc" id="L32">    return Map.of(</span>
-<span class="fc" id="L33">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
-<span class="fc" id="L34">        &quot;message&quot;, e.getMessage());</span>
+<span class="fc" id="L43">    return Map.of(</span>
+<span class="fc" id="L44">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
+<span class="fc" id="L45">        &quot;message&quot;, e.getMessage());</span>
   }
 
   @ExceptionHandler({ForbiddenException.class})
   @ResponseStatus(HttpStatus.FORBIDDEN)
   public Object handleForbiddenException(Throwable e) {
-<span class="fc" id="L40">    return Map.of(</span>
-<span class="fc" id="L41">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
-<span class="fc" id="L42">        &quot;message&quot;, e.getMessage());</span>
+<span class="fc" id="L51">    return Map.of(</span>
+<span class="fc" id="L52">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
+<span class="fc" id="L53">        &quot;message&quot;, e.getMessage());</span>
   }
 
   @ExceptionHandler({UpstreamApiException.class})
   @ResponseStatus(HttpStatus.BAD_GATEWAY)
   public Object handleUpstreamApiException(Throwable e) {
-<span class="fc" id="L48">    return Map.of(</span>
-<span class="fc" id="L49">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
-<span class="fc" id="L50">        &quot;message&quot;, e.getMessage());</span>
+<span class="fc" id="L59">    return Map.of(</span>
+<span class="fc" id="L60">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
+<span class="fc" id="L61">        &quot;message&quot;, e.getMessage());</span>
   }
 
   @ExceptionHandler(UnsupportedOperationException.class)
   public ResponseEntity&lt;Map&lt;String, String&gt;&gt; handleUnsupportedOperation(
       UnsupportedOperationException ex) {
-<span class="fc" id="L56">    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(&quot;message&quot;, ex.getMessage()));</span>
+<span class="fc" id="L67">    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(&quot;message&quot;, ex.getMessage()));</span>
   }
 
   /**
@@ -65,9 +76,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
   @ExceptionHandler({IllegalArgumentException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Object handleIllegalArgument(Throwable e) {
-<span class="fc" id="L68">    return Map.of(</span>
-<span class="fc" id="L69">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
-<span class="fc" id="L70">        &quot;message&quot;, e.getMessage());</span>
+<span class="fc" id="L79">    return Map.of(</span>
+<span class="fc" id="L80">        &quot;type&quot;, e.getClass().getSimpleName(),</span>
+<span class="fc" id="L81">        &quot;message&quot;, e.getMessage());</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

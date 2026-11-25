@@ -2,8 +2,10 @@
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.PublishedAssignmentsService;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,7 +15,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;Assignments&quot;)
 @RequestMapping(&quot;/api/assignments&quot;)
 @RestController
-<span class="fc" id="L31">public class AssignmentsController extends ApiController {</span>
+<span class="fc" id="L32">public class AssignmentsController extends ApiController {</span>
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired PublishedAssignmentsService publishedAssignmentsService;
 
@@ -45,7 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
   public PublishedAssignmentsService.Table table(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;layout&quot;, description = &quot;course or student&quot;) @RequestParam String layout) {
-<span class="fc" id="L48">    return publishedAssignmentsService.table(recruitmentOf(recruitmentId), layout, isAdmin());</span>
+<span class="fc" id="L49">    return publishedAssignmentsService.table(recruitmentOf(recruitmentId), layout, isAdmin());</span>
   }
 
   @Operation(
@@ -58,26 +59,25 @@ import org.springframework.web.bind.annotation.RestController;
   public ResponseEntity&lt;String&gt; csv(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;layout&quot;, description = &quot;course or student&quot;) @RequestParam String layout) {
-<span class="fc" id="L61">    String body = publishedAssignmentsService.csv(recruitmentOf(recruitmentId), layout, isAdmin());</span>
-<span class="fc" id="L62">    return ResponseEntity.ok()</span>
-<span class="fc" id="L63">        .header(</span>
+<span class="fc" id="L62">    String body = publishedAssignmentsService.csv(recruitmentOf(recruitmentId), layout, isAdmin());</span>
+<span class="fc" id="L63">    return ResponseEntity.ok()</span>
+<span class="fc" id="L64">        .header(</span>
             HttpHeaders.CONTENT_DISPOSITION,
-<span class="fc" id="L65">            &quot;attachment; filename=\&quot;assignments-%d-%s.csv\&quot;&quot;.formatted(recruitmentId, layout))</span>
-<span class="fc" id="L66">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
-<span class="fc" id="L67">        .body(body);</span>
+<span class="fc" id="L66">            &quot;attachment; filename=\&quot;assignments-%d-%s.csv\&quot;&quot;.formatted(recruitmentId, layout))</span>
+<span class="fc" id="L67">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
+<span class="fc" id="L68">        .body(body);</span>
   }
 
-  /** Whether the signed-in user holds the admin role. */
-  private boolean isAdmin() {
-<span class="fc" id="L72">    return getCurrentUser().getRoles().stream()</span>
-<span class="fc" id="L73">        .map(GrantedAuthority::getAuthority)</span>
-<span class="fc" id="L74">        .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
-  }
-
+  /** The recruitment; refused to an instructor while the admin has hidden it (issue #496). */
   private Recruitment recruitmentOf(Long recruitmentId) {
-<span class="fc" id="L78">    return recruitmentRepository</span>
-<span class="fc" id="L79">        .findById(recruitmentId)</span>
-<span class="fc" id="L80">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L73">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L75">            .findById(recruitmentId)</span>
+<span class="fc" id="L76">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">    if (!RecruitmentVisibility.visibleTo(recruitment, isAdmin())) {</span>
+<span class="fc" id="L78">      throw new ForbiddenException(RecruitmentVisibility.HIDDEN);</span>
+    }
+<span class="fc" id="L80">    return recruitment;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
