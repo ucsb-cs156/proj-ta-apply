@@ -83,13 +83,42 @@ describe("AutoAssignModal tests (issue #481)", () => {
         selector: ".modal-title",
       }),
     ).toBeInTheDocument();
+    // A TA page (issue #488): the explanation carries the PhD rule.
     expect(screen.getByTestId("Auto-explanation")).toHaveTextContent(
-      "Fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all. This repeats until no more such assignments can be made. Applicants marked Not Hired take no part. Nothing already assigned is changed, and the run can be undone afterwards.",
+      "Fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all. This repeats until no more such assignments can be made. Applicants marked Not Hired take no part. Only PhD students whose major is Computer Science are ever assigned automatically; a lecture whose top remaining candidate is an MS student or in another major is left for you, and listed with the reason. Nothing already assigned is changed, and the run can be undone afterwards.",
     );
     expect(screen.queryByTestId("Auto-warnings")).toBeNull();
     expect(screen.getByTestId("Auto-run")).toHaveTextContent("Assign");
     expect(screen.getByTestId("Auto-run")).toBeEnabled();
     expect(screen.getByTestId("Auto-cancel")).toHaveTextContent("Cancel");
+  });
+
+  test("the explanation of a ULA page leaves out the PhD rule, which is TA only (issue #488)", () => {
+    renderModal({ page: assignmentsFixtures.ulaPage });
+
+    const explanation = screen.getByTestId("Auto-explanation");
+    expect(explanation).toHaveTextContent(
+      "Applicants marked Not Hired take no part. Nothing already assigned is changed",
+    );
+    expect(explanation).not.toHaveTextContent("PhD");
+  });
+
+  test("a TA run left to a person for class level or major lists both reasons (issue #488)", async () => {
+    axiosMock
+      .onPost("/api/admin/assignments/auto")
+      .reply(200, autoAssignFixtures.manualOnly);
+    renderModal();
+
+    await userEvent.click(screen.getByTestId("Auto-run"));
+
+    expect(await screen.findByTestId("Auto-none")).toBeInTheDocument();
+    const skipped = within(screen.getByTestId("Auto-skipped")).getAllByRole(
+      "listitem",
+    );
+    expect(skipped.map((item) => item.textContent)).toEqual([
+      "8: its top remaining candidate, Grace Hopper (ranked 1), is an MS student, so is assigned by hand only.",
+      "16: its top remaining candidate, Alan Turing (ranked 1), is not a Computer Science major, so is assigned by hand only.",
+    ]);
   });
 
   test("warns when no ranking deadline is set", () => {

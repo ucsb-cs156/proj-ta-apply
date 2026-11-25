@@ -167,13 +167,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           only Would Consider, is wanted by another lecture too, or ties with
           someone for the top rank gets nothing: those are the judgement calls,
           and the run lists them with the reason. Applicants marked Not Hired
-          take no part, and nothing already assigned is changed. Before running
-          it warns if the faculty ranking deadline has not passed, if a lecture
-          with places to fill has no rankings yet, or if assignments are already
-          published; afterwards it lists what it did, and{" "}
-          <strong>Undo this run</strong> clears exactly those assignments. Make
-          a judgement call by hand, then run it again: that often frees more
-          clear choices.
+          take no part, and nothing already assigned is changed. On a TA
+          recruitment only PhD students whose major is Computer Science are ever
+          assigned automatically: a lecture whose top remaining candidate is an
+          MS student, or a PhD student in another major, is left for you and
+          listed with that reason, since passing them over would override the
+          instructor&apos;s ranking. The rule does not apply to ULA
+          recruitments. The button&apos;s tooltip says all this in a breath.
+          Before running it warns if the faculty ranking deadline has not
+          passed, if a lecture with places to fill has no rankings yet, or if
+          assignments are already published; afterwards it lists what it did,
+          and <strong>Undo this run</strong> clears exactly those assignments.
+          Make a judgement call by hand, then run it again: that often frees
+          more clear choices.
         </p>
         <p data-testid="HelpAdminsPage-interest-cells">
           Each lecture&apos;s ranking cell is right-aligned and coloured by the

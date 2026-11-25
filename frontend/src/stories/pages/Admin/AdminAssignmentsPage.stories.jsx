@@ -89,6 +89,24 @@ UlaRecruitment.parameters = {
 };
 
 /**
+ * Issue #488: a TA recruitment whose run makes nothing because the top candidates may only be
+ * assigned by hand (an MS student, a PhD student in another major). Hover the button for the TA
+ * tooltip; the modal's explanation carries the PhD sentence; the results list both reasons.
+ */
+export const TaManualOnly = Template.bind({});
+TaManualOnly.parameters = {
+  reactRouter: { initialEntries: ["/admin/recruitments/7/assignments"] },
+  msw: {
+    handlers: [
+      http.post("/api/admin/assignments/auto", () =>
+        HttpResponse.json(autoAssignFixtures.manualOnly),
+      ),
+      ...handlers(assignmentsFixtures.taPage, assignmentsFixtures.taPage),
+    ],
+  },
+};
+
+/**
  * Issue #358: the Publish Assignments panel is at the top of this page. Here the assignments are
  * already published, so the line and its link to the published page show instead of the button.
  */

@@ -204,6 +204,20 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
       (r) => r.url === "/api/admin/assignments/auto",
     );
 
+  test("hovering the auto-assign button shows the tooltip, with the PhD rule for a TA page (issue #488)", async () => {
+    renderPage();
+    const button = await screen.findByTestId(AUTO);
+    expect(screen.queryByTestId(`${AUTO}-tooltip`)).toBeNull();
+
+    await userEvent.hover(button);
+
+    expect(await screen.findByTestId(`${AUTO}-tooltip`)).toHaveTextContent(
+      "Fills every place where there is one clear choice: the top-ranked unassigned candidate who is enthusiastic about the course and wanted by no other lecture that still has places. Only PhD students in Computer Science are ever assigned automatically; MS students are always assigned by hand. Can be undone.",
+    );
+    // The tooltip is the button's own description, so the button itself is unchanged.
+    expect(button).toHaveTextContent("Automatically Assign No-Conflict Slots");
+  });
+
   test("the auto-assign button sits beside Download CSV and opens the confirmation, which Cancel closes", async () => {
     renderPage();
     const button = await screen.findByTestId(AUTO);

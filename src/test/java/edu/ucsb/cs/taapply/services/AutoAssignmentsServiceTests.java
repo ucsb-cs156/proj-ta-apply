@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService.AssignmentRow;
@@ -327,6 +328,70 @@ class AutoAssignmentsServiceTests {
         List.of(new Skipped(B, "ALL_RANKED_ASSIGNED", null, null, List.of())), plan.skipped());
   }
 
+  // ---- TA: only PhD students in Computer Science are auto-assigned (issue #488) ----
+
+  @Test
+  void a_lecture_whose_top_candidate_may_only_be_assigned_by_hand_gets_nothing_with_that_reason() {
+    // Grace (MS) tops A; Ada (PhD, CS) is second. The run does not pass Grace over to reach Ada.
+    Assignments page =
+        page(
+            List.of(course(A, 1, 0), course(B, 1, 0)),
+            List.of(
+                row(1L, null, Map.of(A, 2), Map.of(A, "1st Choice")),
+                row(2L, null, Map.of(A, 1, B, 1), Map.of(A, "1st Choice", B, "1st Choice")),
+                row(3L, null, Map.of(B, 2), Map.of(B, "Enthusiastic"))));
+
+    Plan plan =
+        AutoAssignmentsService.plan(
+            page, Set.of(), Map.of(2L, AutoAssignmentsService.NOT_PHD, 3L, "NOT_CS_MAJOR"));
+
+    assertEquals(List.of(), plan.made());
+    assertEquals(
+        List.of(
+            new Skipped(A, "NOT_PHD", 2L, 1, List.of()),
+            new Skipped(B, "NOT_PHD", 2L, 1, List.of())),
+        plan.skipped());
+  }
+
+  @Test
+  void a_manual_only_candidate_still_blocks_as_ranked_elsewhere_and_is_checked_before_enthusiasm() {
+    // Ada (eligible) tops A but B ranks her too: A is blocked. B's top is Grace, manual only and
+    // not even enthusiastic: the manual-only reason is the one named.
+    Assignments page =
+        page(
+            List.of(course(A, 1, 0), course(B, 1, 0)),
+            List.of(
+                row(1L, null, Map.of(A, 1, B, 2), Map.of(A, "1st Choice")),
+                row(2L, null, Map.of(B, 1), Map.of(B, "Would Consider"))));
+
+    Plan plan = AutoAssignmentsService.plan(page, Set.of(), Map.of(2L, "NOT_CS_MAJOR"));
+
+    assertEquals(List.of(), plan.made());
+    assertEquals(
+        List.of(
+            new Skipped(A, "RANKED_ELSEWHERE", 1L, 1, List.of(B)),
+            new Skipped(B, "NOT_CS_MAJOR", 2L, 1, List.of())),
+        plan.skipped());
+  }
+
+  @Test
+  void manual_only_reason_wants_a_phd_in_computer_science_spelt_either_way_in_any_case() {
+    assertNull(reasonFor(ClassLevel.PHD, "Computer Science"));
+    assertNull(reasonFor(ClassLevel.PHD, "Computer Science (CS)"));
+    assertNull(reasonFor(ClassLevel.PHD, "  computer science (cs) "));
+    assertNull(reasonFor(ClassLevel.PHD, "COMPUTER SCIENCE"));
+    assertEquals("NOT_CS_MAJOR", reasonFor(ClassLevel.PHD, "Electrical Engineering"));
+    assertEquals("NOT_CS_MAJOR", reasonFor(ClassLevel.PHD, "Computer Science (CE)"));
+    assertEquals("NOT_CS_MAJOR", reasonFor(ClassLevel.PHD, null));
+    assertEquals("NOT_PHD", reasonFor(ClassLevel.MS, "Computer Science"));
+    assertEquals("NOT_PHD", reasonFor(null, "Computer Science"));
+  }
+
+  private static String reasonFor(ClassLevel level, String major) {
+    return AutoAssignmentsService.manualOnlyReason(
+        Application.builder().id(1L).classLevel(level).major(major).build());
+  }
+
   // ---- run and undo ----
 
   private static Application application(long id, Long tentative, ApplicationReviewStatus status) {
@@ -341,9 +406,14 @@ class AutoAssignmentsServiceTests {
 
   @Test
   void run_saves_each_planned_assignment_and_answers_with_the_page_as_it_then_stands() {
+    // A TA recruitment: Ada and Alan are PhD students in Computer Science (issue #488).
     Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
+    ada.setClassLevel(ClassLevel.PHD);
+    ada.setMajor("Computer Science");
     Application grace = application(2L, null, ApplicationReviewStatus.NOT_HIRED);
     Application alan = application(3L, null, ApplicationReviewStatus.HIRED);
+    alan.setClassLevel(ClassLevel.PHD);
+    alan.setMajor("Computer Science (CS)");
     when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace, alan));
     // Grace tops A's list but is Not Hired, so Ada is A's candidate; Alan is B's.
     Assignments before =
@@ -367,6 +437,85 @@ class AutoAssignmentsServiceTests {
     assertNull(grace.getTentativeAssignmentId());
     assertSame(after, outcome.assignments());
     assertEquals(List.of(new Made(1L, A, 2, 1), new Made(3L, B, 1, 1)), outcome.made());
+    assertEquals(List.of(), outcome.skipped());
+  }
+
+  @Test
+  void run_on_a_ta_recruitment_leaves_a_lecture_topped_by_an_ms_student_alone() {
+    // Grace (MS, CS) tops A and Ada (PhD, CS) is second: A gets nothing. Alan (PhD, CS) tops B.
+    Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
+    ada.setClassLevel(ClassLevel.PHD);
+    ada.setMajor("Computer Science (CS)");
+    Application grace = application(2L, null, ApplicationReviewStatus.PENDING);
+    grace.setClassLevel(ClassLevel.MS);
+    grace.setMajor("Computer Science");
+    Application alan = application(3L, null, ApplicationReviewStatus.PENDING);
+    alan.setClassLevel(ClassLevel.PHD);
+    alan.setMajor("computer science");
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace, alan));
+    Assignments before =
+        page(
+            List.of(course(A, 1, 0), course(B, 1, 0)),
+            List.of(
+                row(1L, null, Map.of(A, 2), Map.of(A, "1st Choice")),
+                row(2L, null, Map.of(A, 1), Map.of(A, "1st Choice")),
+                row(3L, null, Map.of(B, 1), Map.of(B, "Enthusiastic"))));
+    Assignments after = page(List.of(course(A, 1, 0), course(B, 1, 1)), List.of());
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(before, after);
+
+    Outcome outcome = service.run(RECRUITMENT);
+
+    verify(applicationRepository, org.mockito.Mockito.times(1)).save(alan);
+    assertEquals(B, alan.getTentativeAssignmentId());
+    assertNull(ada.getTentativeAssignmentId());
+    assertNull(grace.getTentativeAssignmentId());
+    assertEquals(List.of(new Made(3L, B, 1, 1)), outcome.made());
+    assertEquals(List.of(new Skipped(A, "NOT_PHD", 2L, 1, List.of())), outcome.skipped());
+  }
+
+  @Test
+  void run_on_a_ta_recruitment_does_not_mark_a_not_hired_applicant_manual_only_too() {
+    // Grace is Not Hired (and MS): left out of the pool, so Ada, PhD in CS, is A's candidate.
+    Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
+    ada.setClassLevel(ClassLevel.PHD);
+    ada.setMajor("Computer Science");
+    Application grace = application(2L, null, ApplicationReviewStatus.NOT_HIRED);
+    grace.setClassLevel(ClassLevel.MS);
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace));
+    Assignments before =
+        page(
+            List.of(course(A, 1, 0)),
+            List.of(
+                row(1L, null, Map.of(A, 2), Map.of(A, "1st Choice")),
+                row(2L, null, Map.of(A, 1), Map.of(A, "1st Choice"))));
+    Assignments after = page(List.of(course(A, 1, 1)), List.of());
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(before, after);
+
+    Outcome outcome = service.run(RECRUITMENT);
+
+    assertEquals(List.of(new Made(1L, A, 2, 1)), outcome.made());
+    assertEquals(List.of(), outcome.skipped());
+  }
+
+  @Test
+  void run_on_a_ula_recruitment_ignores_class_level_and_major() {
+    Recruitment ula =
+        Recruitment.builder().id(7L).type(RecruitmentType.ULA).assignmentsVersion(4).build();
+    // A ULA application has no class level and Ada's major is not CS; she is assigned all the same.
+    Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
+    ada.setMajor("Mathematics");
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada));
+    Assignments before =
+        page(
+            List.of(course(A, 1, 0)),
+            List.of(row(1L, null, Map.of(A, 1), Map.of(A, "1st Choice"))));
+    Assignments after = page(List.of(course(A, 1, 1)), List.of());
+    when(assignmentsService.assignments(ula)).thenReturn(before, after);
+
+    Outcome outcome = service.run(ula);
+
+    assertEquals(A, ada.getTentativeAssignmentId());
+    assertEquals(List.of(new Made(1L, A, 1, 1)), outcome.made());
     assertEquals(List.of(), outcome.skipped());
   }
 

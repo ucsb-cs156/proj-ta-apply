@@ -640,6 +640,9 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     recruitmentCourseRepository.save(course);
     Application ada = seedApplicant(recruitment);
     ada.setFirstChoiceCourse("CMPSC   156");
+    // Issue #488: a TA recruitment assigns only PhD students in Computer Science automatically.
+    ada.setClassLevel(edu.ucsb.cs.taapply.enums.ClassLevel.PHD);
+    ada.setMajor("Computer Science (CS)");
     ada = applicationRepository.save(ada);
     Application grace =
         applicationRepository.save(
@@ -648,6 +651,8 @@ public class AdminAssignmentsWebIT extends WebTestCase {
                 .email("grace@ucsb.edu")
                 .firstName("Grace")
                 .lastName("Hopper")
+                .classLevel(edu.ucsb.cs.taapply.enums.ClassLevel.PHD)
+                .major("Computer Science")
                 .courseInterests(
                     new java.util.HashMap<>(
                         java.util.Map.of(
@@ -663,9 +668,15 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     Locator button = page.getByTestId("AdminAssignmentsPage-auto-assign");
     assertThat(button).hasText("Automatically Assign No-Conflict Slots");
     assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("0 assigned so far");
+    // Issue #488: the tooltip, with the TA-only sentence.
+    button.hover();
+    assertThat(page.getByTestId("AdminAssignmentsPage-auto-assign-tooltip"))
+        .containsText("Only PhD students in Computer Science are ever assigned automatically");
 
     button.click();
     assertThat(page.getByTestId(modal + "-modal")).isVisible();
+    assertThat(page.getByTestId(modal + "-explanation"))
+        .containsText("Only PhD students whose major is Computer Science");
     assertEquals(0, page.getByTestId(modal + "-warnings").count());
     page.getByTestId(modal + "-run").click();
 
@@ -692,6 +703,58 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertEquals(
         3,
         recruitmentRepository.findById(recruitment.getId()).orElseThrow().getAssignmentsVersion());
+  }
+
+  /**
+   * Issue #488: on a TA recruitment an MS student at the top of a lecture's list leaves the lecture
+   * to a person, even though a PhD student in Computer Science is ranked right below.
+   */
+  @Test
+  public void on_a_ta_recruitment_an_ms_student_at_the_top_leaves_the_lecture_to_a_person()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    recruitment.setFacultyRankingDeadline(LocalDate.of(2026, 1, 15));
+    recruitmentRepository.save(recruitment);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    course.setAllocation(1);
+    recruitmentCourseRepository.save(course);
+    Application ada = seedApplicant(recruitment);
+    ada.setFirstChoiceCourse("CMPSC   156");
+    ada.setClassLevel(edu.ucsb.cs.taapply.enums.ClassLevel.PHD);
+    ada.setMajor("Computer Science");
+    ada = applicationRepository.save(ada);
+    Application grace =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(recruitment.getId())
+                .email("grace@ucsb.edu")
+                .firstName("Grace")
+                .lastName("Hopper")
+                .firstChoiceCourse("CMPSC   156")
+                .classLevel(edu.ucsb.cs.taapply.enums.ClassLevel.MS)
+                .major("Computer Science")
+                .build());
+    rank(course, grace, 1);
+    rank(course, ada, 2);
+
+    setupAdminUser();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
+    String modal = "AdminAssignmentsPage-auto-assign-modal";
+    page.getByTestId("AdminAssignmentsPage-auto-assign").click();
+    page.getByTestId(modal + "-run").click();
+
+    assertThat(page.getByTestId(modal + "-result-modal")).isVisible();
+    assertThat(page.getByTestId(modal + "-none")).isVisible();
+    assertThat(page.getByTestId(modal + "-skipped-0"))
+        .hasText(
+            "156: its top remaining candidate, Grace Hopper (ranked 1), is an MS student, so is"
+                + " assigned by hand only.");
+    assertEquals(0, page.getByTestId(modal + "-undo").count());
+    assertNull(
+        applicationRepository.findById(ada.getId()).orElseThrow().getTentativeAssignmentId());
+    assertNull(
+        applicationRepository.findById(grace.getId()).orElseThrow().getTentativeAssignmentId());
   }
 
   @Test

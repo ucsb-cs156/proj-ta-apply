@@ -56,6 +56,30 @@ const autoAssignFixtures = {
       },
     ],
   },
+  /**
+   * Issue #488: a TA run where nothing qualified because the top candidates may only be assigned
+   * by hand: Grace (MS) tops CMPSC 8 and Alan (PhD, not CS) tops CMPSC 16.
+   */
+  manualOnly: {
+    assignments: assignmentsFixtures.taPage,
+    made: [],
+    skipped: [
+      {
+        recruitmentCourseId: 10,
+        reason: "NOT_PHD",
+        applicationId: 2,
+        rank: 1,
+        blockedBy: [],
+      },
+      {
+        recruitmentCourseId: 20,
+        reason: "NOT_CS_MAJOR",
+        applicationId: 3,
+        rank: 1,
+        blockedBy: [],
+      },
+    ],
+  },
   /** One assignment and every lecture now filled. */
   oneMadeAllFilled: {
     assignments: assignmentsFixtures.taPageAfterMove,
