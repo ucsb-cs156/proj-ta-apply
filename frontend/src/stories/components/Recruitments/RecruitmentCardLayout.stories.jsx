@@ -117,6 +117,14 @@ UlaReadyForSoftOffers.args = {
   onReleaseSoftOffers: fn(),
 };
 
+/** Issue #487: soft offers released, so Soft Offer Results takes the button's place. */
+export const UlaSoftOffersReleased = Template.bind({});
+UlaSoftOffersReleased.args = {
+  recruitment: recruitmentsFixtures.releasedUla,
+  applicationCount: 9,
+  steps: recruitmentStepsFixtures.published,
+};
+
 /** Published: every step done, the badge in the header. */
 export const Published = Template.bind({});
 Published.args = {

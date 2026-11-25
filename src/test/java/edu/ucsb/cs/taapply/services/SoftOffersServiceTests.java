@@ -49,6 +49,7 @@ class SoftOffersServiceTests {
   @Mock SoftOfferResponseRepository softOfferResponseRepository;
   @Mock PublishedAssignmentsService publishedAssignmentsService;
   @Mock UCSBCurriculumService ucsbCurriculumService;
+  @Mock AssignmentsService assignmentsService;
   @InjectMocks SoftOffersService service;
 
   private static final String EMAIL = "cgaucho@ucsb.edu";
@@ -486,5 +487,271 @@ class SoftOffersServiceTests {
 
     assertEquals("This soft offer has already been answered.", again.getMessage());
     verify(softOfferResponseRepository, never()).save(any());
+  }
+
+  // ---- results (issue #487) ----
+
+  private static Application person(long id, String first, String last, Long tentative) {
+    return Application.builder()
+        .id(id)
+        .recruitmentId(2L)
+        .email(first.toLowerCase() + "@ucsb.edu")
+        .firstName(first)
+        .lastName(last)
+        .status(ApplicationReviewStatus.PENDING)
+        .tentativeAssignmentId(tentative)
+        .previousServiceAsUla(id == 1L ? 0 : 2)
+        .build();
+  }
+
+  private static SoftOfferResponse answer(
+      long applicationId,
+      long courseId,
+      SoftOfferDecision decision,
+      String comments,
+      LocalDateTime at) {
+    return SoftOfferResponse.builder()
+        .applicationId(applicationId)
+        .recruitmentCourseId(courseId)
+        .decision(decision)
+        .comments(comments)
+        .respondedAt(at)
+        .build();
+  }
+
+  @Test
+  void results_list_each_assigned_ula_with_their_answer_for_the_lecture_they_now_hold() {
+    Recruitment ula = ula(true);
+    RecruitmentCourse cs156 = lecture();
+    RecruitmentCourse cs8 = lecture();
+    cs8.setId(20L);
+    cs8.setCourseId("CMPSC     8");
+    cs8.setInstructor(null);
+    when(recruitmentCourseRepository.findByRecruitmentId(2L)).thenReturn(List.of(cs156, cs8));
+    // Ada answered for 156 (late); Grace answered for 8 but now holds 156; Alan has not answered;
+    // Linus declined 156 and has since been unassigned; Edsger was never assigned.
+    Application ada = person(1L, "Ada", "Lovelace", 10L);
+    Application grace = person(2L, "Grace", "Hopper", 10L);
+    Application alan = person(3L, "Alan", "Turing", 20L);
+    Application linus = person(4L, "Linus", "Torvalds", null);
+    Application edsger = person(5L, "Edsger", "Dijkstra", null);
+    when(assignmentsService.realApplications(2L))
+        .thenReturn(List.of(grace, ada, alan, linus, edsger));
+    when(publishedAssignmentsService.emailsByCatalogName())
+        .thenReturn(Map.of("CONRAD P", "phtcon@ucsb.edu"));
+    when(softOfferResponseRepository.findByApplicationIdIn(List.of(2L, 1L, 3L, 4L, 5L)))
+        .thenReturn(
+            List.of(
+                answer(
+                    1L,
+                    10L,
+                    SoftOfferDecision.PROCEED,
+                    "Yes!",
+                    LocalDateTime.of(2026, 11, 26, 9, 0)),
+                answer(
+                    2L, 20L, SoftOfferDecision.PROCEED, null, LocalDateTime.of(2026, 11, 22, 8, 0)),
+                answer(
+                    2L,
+                    30L,
+                    SoftOfferDecision.DECLINE,
+                    "old",
+                    LocalDateTime.of(2026, 11, 21, 8, 0)),
+                answer(
+                    4L,
+                    10L,
+                    SoftOfferDecision.DECLINE,
+                    "Moving",
+                    LocalDateTime.of(2026, 11, 23, 10, 30))));
+
+    SoftOffersService.Results results = service.results(ula);
+
+    assertEquals(2L, results.recruitmentId());
+    assertEquals("20264", results.quarter());
+    assertEquals(RELEASED, results.releasedAt());
+    assertEquals(DEADLINE, results.deadline());
+    assertEquals(new SoftOffersService.Counts(3, 1, 0, 2), results.counts());
+    assertEquals(SoftOffersService.RESULTS_HEADERS, results.headers());
+    assertEquals(
+        List.of(
+            List.of(
+                "Grace",
+                "Hopper",
+                "grace@ucsb.edu",
+                "CMPSC 156",
+                "CONRAD P",
+                "phtcon@ucsb.edu",
+                "no",
+                "Proceed (for CMPSC 8)",
+                "2026-11-22T08:00",
+                ""),
+            List.of(
+                "Ada",
+                "Lovelace",
+                "ada@ucsb.edu",
+                "CMPSC 156",
+                "CONRAD P",
+                "phtcon@ucsb.edu",
+                "yes",
+                "Proceed",
+                "2026-11-26T09:00 (late)",
+                "Yes!"),
+            List.of(
+                "Alan", "Turing", "alan@ucsb.edu", "CMPSC 8", "", "Not mapped", "no", "", "", "")),
+        results.rows());
+    assertEquals(SoftOffersService.UNASSIGNED_HEADERS, results.unassignedHeaders());
+    assertEquals(
+        List.of(
+            List.of(
+                "Linus",
+                "Torvalds",
+                "linus@ucsb.edu",
+                "CMPSC 156",
+                "Declined",
+                "2026-11-23T10:30",
+                "Moving")),
+        results.unassigned());
+  }
+
+  @Test
+  void results_name_a_lecture_no_longer_on_file_by_id_and_cope_with_no_deadline_or_stamp() {
+    Recruitment ula = ula(true);
+    ula.setSoftOfferDeadline(null);
+    when(recruitmentCourseRepository.findByRecruitmentId(2L)).thenReturn(List.of(lecture()));
+    Application ada = person(1L, "Ada", "Lovelace", 10L);
+    Application bob = person(2L, "Bob", "Builder", null);
+    when(assignmentsService.realApplications(2L)).thenReturn(List.of(ada, bob));
+    when(publishedAssignmentsService.emailsByCatalogName()).thenReturn(Map.of());
+    when(softOfferResponseRepository.findByApplicationIdIn(List.of(1L, 2L)))
+        .thenReturn(
+            List.of(
+                answer(1L, 99L, SoftOfferDecision.DECLINE, null, null),
+                answer(
+                    2L, 10L, SoftOfferDecision.DECLINE, "no", LocalDateTime.of(2026, 1, 1, 1, 1))));
+
+    SoftOffersService.Results results = service.results(ula);
+
+    assertEquals(new SoftOffersService.Counts(1, 0, 0, 1), results.counts());
+    assertEquals(
+        List.of(
+            "Ada",
+            "Lovelace",
+            "ada@ucsb.edu",
+            "CMPSC 156",
+            "CONRAD P",
+            "Not mapped",
+            "yes",
+            "Declined (for lecture 99)",
+            "",
+            ""),
+        results.rows().get(0));
+    assertEquals(
+        List.of(
+            "Bob", "Builder", "bob@ucsb.edu", "CMPSC 156", "Declined", "2026-01-01T01:01", "no"),
+        results.unassigned().get(0));
+  }
+
+  @Test
+  void
+      a_declined_answer_for_the_current_lecture_counts_as_declined_and_is_on_time_at_the_deadline() {
+    Recruitment ula = ula(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(2L)).thenReturn(List.of(lecture()));
+    Application ada = person(1L, "Ada", "Lovelace", 10L);
+    when(assignmentsService.realApplications(2L)).thenReturn(List.of(ada));
+    when(publishedAssignmentsService.emailsByCatalogName()).thenReturn(Map.of());
+    when(softOfferResponseRepository.findByApplicationIdIn(List.of(1L)))
+        .thenReturn(List.of(answer(1L, 10L, SoftOfferDecision.DECLINE, null, DEADLINE)));
+
+    SoftOffersService.Results results = service.results(ula);
+
+    assertEquals(new SoftOffersService.Counts(1, 0, 1, 0), results.counts());
+    assertEquals("Declined", results.rows().get(0).get(7));
+    assertEquals("2026-11-25T17:00", results.rows().get(0).get(8));
+  }
+
+  @Test
+  void an_answer_with_no_stamp_is_not_late_even_with_a_deadline() {
+    Recruitment ula = ula(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(2L)).thenReturn(List.of(lecture()));
+    when(assignmentsService.realApplications(2L))
+        .thenReturn(List.of(person(1L, "Ada", "Lovelace", 10L)));
+    when(publishedAssignmentsService.emailsByCatalogName()).thenReturn(Map.of());
+    when(softOfferResponseRepository.findByApplicationIdIn(List.of(1L)))
+        .thenReturn(List.of(answer(1L, 10L, SoftOfferDecision.PROCEED, "x", null)));
+
+    SoftOffersService.Results results = service.results(ula);
+
+    assertEquals("", results.rows().get(0).get(8));
+    assertEquals("Proceed", results.rows().get(0).get(7));
+  }
+
+  @Test
+  void unassigned_answers_are_listed_by_last_name_then_first_name() {
+    Recruitment ula = ula(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(2L)).thenReturn(List.of(lecture()));
+    // By last name ignoring case, then first name: Adams/adams before Young, Amy before Zed.
+    Application zed = person(1L, "Zed", "Adams", null);
+    Application bob = person(2L, "Bob", "Young", null);
+    Application amy = person(3L, "Amy", "adams", null);
+    when(assignmentsService.realApplications(2L)).thenReturn(List.of(zed, bob, amy));
+    when(publishedAssignmentsService.emailsByCatalogName()).thenReturn(Map.of());
+    LocalDateTime at = LocalDateTime.of(2026, 1, 1, 1, 1);
+    when(softOfferResponseRepository.findByApplicationIdIn(List.of(1L, 2L, 3L)))
+        .thenReturn(
+            List.of(
+                answer(1L, 10L, SoftOfferDecision.DECLINE, null, at),
+                answer(2L, 10L, SoftOfferDecision.PROCEED, null, at),
+                answer(3L, 10L, SoftOfferDecision.DECLINE, null, at)));
+
+    SoftOffersService.Results results = service.results(ula);
+
+    assertEquals(
+        List.of("Amy", "Zed", "Bob"),
+        results.unassigned().stream().map(row -> row.get(0)).toList());
+    assertEquals(new SoftOffersService.Counts(0, 0, 0, 0), results.counts());
+  }
+
+  @Test
+  void results_are_refused_for_a_ta_recruitment_or_before_soft_offers_are_released() {
+    Recruitment ta = Recruitment.builder().id(2L).type(RecruitmentType.TA).build();
+    assertEquals(
+        "Soft offers are a ULA feature.",
+        assertThrows(IllegalArgumentException.class, () -> service.results(ta)).getMessage());
+    assertEquals(
+        "Soft offers have not been released for this recruitment.",
+        assertThrows(IllegalArgumentException.class, () -> service.results(ula(false)))
+            .getMessage());
+    verify(assignmentsService, never()).realApplications(any());
+  }
+
+  @Test
+  void the_csv_is_the_header_row_then_a_row_per_assigned_ula_every_cell_quoted() {
+    Recruitment ula = ula(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(2L)).thenReturn(List.of(lecture()));
+    when(assignmentsService.realApplications(2L))
+        .thenReturn(List.of(person(1L, "Ada", "Lovelace", 10L)));
+    when(publishedAssignmentsService.emailsByCatalogName()).thenReturn(Map.of());
+    when(softOfferResponseRepository.findByApplicationIdIn(List.of(1L)))
+        .thenReturn(
+            List.of(
+                answer(
+                    1L,
+                    10L,
+                    SoftOfferDecision.PROCEED,
+                    "Yes, \"please\"",
+                    LocalDateTime.of(2026, 11, 21, 8, 5))));
+
+    String csv = service.resultsCsv(ula);
+
+    String[] lines = csv.split("\n");
+    assertEquals(2, lines.length);
+    assertEquals(
+        "\"First name\",\"Last name\",\"Email\",\"Course assignment\",\"Course instructor\","
+            + "\"Course instructor email\",\"First time ULA\",\"Offer Status\","
+            + "\"Offer Response Date/Time\",\"Comments\"",
+        lines[0].trim());
+    assertEquals(
+        "\"Ada\",\"Lovelace\",\"ada@ucsb.edu\",\"CMPSC 156\",\"CONRAD P\",\"Not mapped\",\"yes\","
+            + "\"Proceed\",\"2026-11-21T08:05\",\"Yes, \"\"please\"\"\"",
+        lines[1].trim());
   }
 }

@@ -16,7 +16,10 @@ import {
 import { useRememberedOpen } from "main/utils/useRememberedOpen";
 import {
   RELEASE_SOFT_OFFERS_LABEL,
+  SOFT_OFFER_RESULTS_LABEL,
   canReleaseSoftOffers,
+  softOfferResultsPath,
+  softOffersReleased,
 } from "main/utils/softOffers";
 
 export const DELETE_TOOLTIP = "Delete this Recruitment";
@@ -255,6 +258,16 @@ export default function RecruitmentCardLayout({
               >
                 {RELEASE_SOFT_OFFERS_LABEL}
               </Button>
+            )}
+            {/* Issue #487: once released, the results page takes the button's place. */}
+            {recruitment.type === "ULA" && softOffersReleased(recruitment) && (
+              <Link
+                className="btn btn-warning"
+                to={softOfferResultsPath(recruitment.id)}
+                data-testid={id("soft-offer-results-button")}
+              >
+                {SOFT_OFFER_RESULTS_LABEL}
+              </Link>
             )}
             {/* The faculty rankings exist only once the review has been opened (issue #358). */}
             {recruitment.reviewStatus !== "NotStarted" && (

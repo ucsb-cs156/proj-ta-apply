@@ -975,8 +975,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
             reopened. Releasing makes the recruitment&apos;s soft offers
             available to its assigned ULA applicants, who are asked to answer by
             the deadline; it records the moment and the deadline in the Change
-            History, and the button then leaves the card. Soft offers are
-            optional and not a step of the diagram.
+            History. Once released, <strong>Soft Offer Results</strong> takes
+            the button&apos;s place and opens a page with the release time, the
+            deadline (and <strong>Change Deadline</strong>, recorded in the
+            Change History too), the counts, and one row per assigned ULA as on
+            the one-row-per-ULA assignments table plus Offer Status (Proceed,
+            Declined or blank), Offer Response Date/Time (marked
+            &ldquo;(late)&rdquo; after the deadline) and the applicant&apos;s
+            Comments, with a Download CSV of that table; an answer given for a
+            lecture the applicant no longer holds reads &ldquo;Proceed (for
+            CMPSC 8)&rdquo;, and answers from applicants no longer assigned at
+            all are listed in a second table. Admins only: the page holds the
+            applicants&apos; comments. Soft offers are optional and not a step
+            of the diagram.
           </li>
           <li id="change-history" data-testid="HelpAdminsPage-change-history">
             <strong>Change History.</strong> Every change to the recruitment

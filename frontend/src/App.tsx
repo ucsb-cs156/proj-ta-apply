@@ -52,6 +52,7 @@ import AdminAssignmentsPage from "main/pages/Admin/AdminAssignmentsPage";
 import AdminApplicationPage from "main/pages/Admin/AdminApplicationPage";
 import RecruitmentDraftApplicationsPage from "main/pages/Admin/RecruitmentDraftApplicationsPage";
 import RecruitmentHistoryPage from "main/pages/Admin/RecruitmentHistoryPage";
+import SoftOfferResultsPage from "main/pages/Admin/SoftOfferResultsPage";
 import AdminApplicationEditPage from "main/pages/Admin/AdminApplicationEditPage";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
@@ -382,6 +383,16 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<RecruitmentHistoryPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/recruitments/:recruitmentId/softOffers"
+            element={
+              <ProtectedPage
+                component={<SoftOfferResultsPage />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />
