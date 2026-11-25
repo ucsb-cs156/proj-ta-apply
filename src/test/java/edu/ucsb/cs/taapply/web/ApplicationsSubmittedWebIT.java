@@ -595,12 +595,21 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
     assertEquals("soft-offers-" + recruitment.getId() + ".csv", download.suggestedFilename());
     java.util.List<String> lines = java.nio.file.Files.readAllLines(download.path());
     assertEquals(
-        "\"First name\",\"Last name\",\"Email\",\"Course assignment\",\"Course instructor\","
+        "\"First name\",\"Last name\",\"Email\",\"Perm number\",\"Prev LA Qtrs\","
+            + "\"Expected grad date\",\"Other Campus Job?\",\"Employee ID number\","
+            + "\"Course assignment\",\"Funding\",\"Course instructor\","
             + "\"Course instructor email\",\"First time ULA\",\"Offer Status\","
-            + "\"Offer Response Date/Time\",\"Comments\"",
+            + "\"Offer Response Date/Time\",\"Student Comments\",\"Formal Offer Sent\","
+            + "\"Formal Offer Accepted\",\"New Hire form done (or not needed)\","
+            + "\"Other Campus Job FLSA conflict found\","
+            + "\"Other Campus Job FLSA conflict resolved\",\"In UCPath\",\"I-9 Complete\","
+            + "\"Staff Comments\"",
         lines.get(0));
     org.junit.jupiter.api.Assertions.assertTrue(
-        lines.get(1).startsWith("\"Chris\",\"Gaucho\",\"cgaucho@ucsb.edu\",\"CMPSC 156\""),
+        lines
+            .get(1)
+            .startsWith(
+                "\"Chris\",\"Gaucho\",\"cgaucho@ucsb.edu\",\"\",\"\",\"\",\"\",\"\",\"CMPSC 156\",\"\","),
         lines.get(1));
     org.junit.jupiter.api.Assertions.assertTrue(lines.get(1).contains("\"Proceed\""), lines.get(1));
   }

@@ -19,6 +19,7 @@ import {
   type SoftOfferResults,
 } from "main/utils/softOffers";
 import {
+  OPT_IN_COLUMN_IDS,
   RESULTS_COLUMN_IDS,
   SOFT_OFFER_COLUMNS_STORAGE_KEY,
   UNASSIGNED_COLUMN_IDS,
@@ -42,6 +43,7 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
   const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
     SOFT_OFFER_COLUMNS_STORAGE_KEY,
     [],
+    [...OPT_IN_COLUMN_IDS],
   );
   const hide = (columnId: string) => toggleColumn(columnId, true);
 

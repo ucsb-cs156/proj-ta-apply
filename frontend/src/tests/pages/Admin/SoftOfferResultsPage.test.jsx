@@ -111,7 +111,10 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     renderPage();
 
     const table = await screen.findByTestId(T);
-    expect(headings(T)).toEqual(softOfferResultsFixtures.three.headers);
+    // Issue #500: the five columns for the financial office staff start hidden.
+    expect(headings(T)).toEqual(
+      softOfferResultsFixtures.three.headers.filter((h, i) => i < 3 || i > 7),
+    );
     expect(table.querySelectorAll("tbody tr")).toHaveLength(3);
     expect(cells(`${T}-row-0`)).toEqual([
       "Grace",
@@ -203,6 +206,11 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       screen.getAllByRole("checkbox").map((box) => box.labels[0].textContent),
     ).toEqual([
       "Email",
+      "Perm number",
+      "Prev LA Qtrs",
+      "Expected grad date",
+      "Other Campus Job?",
+      "Employee ID number",
       "Course assignment",
       "Course instructor",
       "Course instructor email",
@@ -227,6 +235,41 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     ).toBeNull();
   });
 
+  test("the five columns for the financial office staff start hidden, unticked in the menu; showing one is remembered apart (issue #500)", async () => {
+    renderPage();
+    await screen.findByTestId(`${T}-row-0`);
+
+    expect(screen.queryByTestId(`${T}-header-permNumber`)).toBeNull();
+    expect(screen.queryByTestId(`${T}-header-employeeId`)).toBeNull();
+    expect(screen.getByTestId(`${P}-columns-toggle`)).toHaveTextContent(
+      "Columns (5 hidden)",
+    );
+    await userEvent.click(screen.getByTestId(`${P}-columns-toggle`));
+    expect(
+      screen.getByRole("checkbox", { name: "Perm number" }),
+    ).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Email" })).toBeChecked();
+
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Perm number" }),
+    );
+    expect(screen.getByTestId(`${T}-header-permNumber`)).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`${T}-cell-row-1-col-permNumber`),
+    ).toHaveTextContent("B234567");
+    // Right after Email.
+    expect(screen.getByTestId(`${T}-header-email`).nextElementSibling).toBe(
+      screen.getByTestId(`${T}-header-permNumber`),
+    );
+    // Remembered under the ".shown" key, apart from the hidden list (which is untouched).
+    expect(
+      JSON.parse(
+        localStorage.getItem(`${SOFT_OFFER_COLUMNS_STORAGE_KEY}.shown`),
+      ),
+    ).toEqual(["permNumber"]);
+    expect(localStorage.getItem(SOFT_OFFER_COLUMNS_STORAGE_KEY)).toBeNull();
+  });
+
   test("unticking a column hides it in both tables and is remembered; the hide link and Show All work too", async () => {
     renderPage();
 
@@ -240,7 +283,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       JSON.parse(localStorage.getItem(SOFT_OFFER_COLUMNS_STORAGE_KEY)),
     ).toEqual(["comments"]);
     expect(screen.getByTestId(`${P}-columns-toggle`)).toHaveTextContent(
-      "Columns (1 hidden)",
+      "Columns (6 hidden)",
     );
 
     // The "hide" link over a heading of the second table hides the column in both tables.
@@ -260,6 +303,9 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     expect(
       JSON.parse(localStorage.getItem(SOFT_OFFER_COLUMNS_STORAGE_KEY)),
     ).toEqual([]);
+    // Show All shows the five opt-in columns too (issue #500).
+    expect(screen.getByTestId(`${T}-header-employeeId`)).toBeInTheDocument();
+    expect(headings(T)).toEqual(softOfferResultsFixtures.three.headers);
   });
 
   test("columns hidden on an earlier visit start hidden", async () => {

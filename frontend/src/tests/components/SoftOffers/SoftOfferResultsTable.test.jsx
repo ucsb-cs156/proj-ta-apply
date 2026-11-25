@@ -55,10 +55,16 @@ describe("SoftOfferResultsTable tests (issue #494)", () => {
         screen.getByTestId(`${T}-header-${id}-sort-header`),
       ).toHaveTextContent(three.headers[i]);
     });
-    expect(screen.getAllByRole("columnheader")).toHaveLength(10);
+    expect(screen.getAllByRole("columnheader")).toHaveLength(15);
     expect(
       screen.getByTestId(`${T}-row-0`).querySelectorAll("td"),
-    ).toHaveLength(10);
+    ).toHaveLength(15);
+    // Issue #500: the five applicant columns, between Email and Course assignment.
+    expect(cell(1, "permNumber")).toHaveTextContent("B234567");
+    expect(cell(1, "previousServiceAsUla")).toHaveTextContent("0");
+    expect(cell(1, "graduationDate")).toHaveTextContent("Winter 2027");
+    expect(cell(0, "otherCampusJob")).toHaveTextContent("Not sure yet");
+    expect(cell(1, "employeeId")).toHaveTextContent("12345678");
     expect(cell(0, "firstName")).toHaveTextContent("Grace");
     expect(cell(1, "comments")).toHaveTextContent("Yes!");
     expect(cell(2, "instructorEmail")).toHaveTextContent("Not mapped");
@@ -68,7 +74,7 @@ describe("SoftOfferResultsTable tests (issue #494)", () => {
   });
 
   test("a heading the backend did not send is the id", () => {
-    renderTable({ headers: three.headers.slice(0, 9) });
+    renderTable({ headers: three.headers.slice(0, 14) });
     expect(
       screen.getByTestId(`${T}-header-comments-sort-header`),
     ).toHaveTextContent("comments");
@@ -101,7 +107,7 @@ describe("SoftOfferResultsTable tests (issue #494)", () => {
     expect(
       [...screen.getAllByRole("row")]
         .slice(1)
-        .map((row) => row.cells[7].textContent),
+        .map((row) => row.cells[12].textContent),
     ).toEqual(["", "Proceed", "Proceed (for CMPSC 8)"]);
   });
 
@@ -112,10 +118,10 @@ describe("SoftOfferResultsTable tests (issue #494)", () => {
     expect(screen.queryByTestId(`${T}-cell-row-0-col-comments`)).toBeNull();
     expect(
       screen.getByTestId(`${T}-row-0`).querySelectorAll("td"),
-    ).toHaveLength(8);
+    ).toHaveLength(13);
     expect(screen.queryByTestId(`${T}-header-firstName-hide`)).toBeNull();
     expect(screen.queryByTestId(`${T}-header-lastName-hide`)).toBeNull();
-    expect(screen.getAllByRole("button", { name: /^Hide / })).toHaveLength(6);
+    expect(screen.getAllByRole("button", { name: /^Hide / })).toHaveLength(11);
     await userEvent.click(screen.getByTestId(`${T}-header-status-hide`));
     expect(onHide).toHaveBeenCalledWith("status");
     expect(onHide).toHaveBeenCalledTimes(1);

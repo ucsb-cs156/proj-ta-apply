@@ -15,6 +15,7 @@ import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.SoftOfferNoticeVersion;
 import edu.ucsb.cs.taapply.entity.SoftOfferResponse;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.SoftOfferDecision;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
@@ -501,6 +502,11 @@ class SoftOffersServiceTests {
         .status(ApplicationReviewStatus.PENDING)
         .tentativeAssignmentId(tentative)
         .previousServiceAsUla(id == 1L ? 0 : 2)
+        // Issue #500: the fields the financial office staff need; Ada has them all, the rest none.
+        .permNumber(id == 1L ? "A123456" : null)
+        .graduationDate(id == 1L ? "Spring 2027" : null)
+        .otherCampusJob(id == 1L ? OtherCampusJob.NOT_SURE : null)
+        .employeeId(id == 1L ? "12345678" : null)
         .build();
   }
 
@@ -577,6 +583,11 @@ class SoftOffersServiceTests {
                 "Grace",
                 "Hopper",
                 "grace@ucsb.edu",
+                "",
+                "2",
+                "",
+                "",
+                "",
                 "CMPSC 156",
                 "CONRAD P",
                 "phtcon@ucsb.edu",
@@ -588,6 +599,11 @@ class SoftOffersServiceTests {
                 "Ada",
                 "Lovelace",
                 "ada@ucsb.edu",
+                "A123456",
+                "0",
+                "Spring 2027",
+                "Not sure yet",
+                "12345678",
                 "CMPSC 156",
                 "CONRAD P",
                 "phtcon@ucsb.edu",
@@ -596,7 +612,21 @@ class SoftOffersServiceTests {
                 "2026-11-26T09:00 (late)",
                 "Yes!"),
             List.of(
-                "Alan", "Turing", "alan@ucsb.edu", "CMPSC 8", "", "Not mapped", "no", "", "", "")),
+                "Alan",
+                "Turing",
+                "alan@ucsb.edu",
+                "",
+                "2",
+                "",
+                "",
+                "",
+                "CMPSC 8",
+                "",
+                "Not mapped",
+                "no",
+                "",
+                "",
+                "")),
         results.rows());
     assertEquals(SoftOffersService.UNASSIGNED_HEADERS, results.unassignedHeaders());
     assertEquals(
@@ -636,6 +666,11 @@ class SoftOffersServiceTests {
             "Ada",
             "Lovelace",
             "ada@ucsb.edu",
+            "A123456",
+            "0",
+            "Spring 2027",
+            "Not sure yet",
+            "12345678",
             "CMPSC 156",
             "CONRAD P",
             "Not mapped",
@@ -664,8 +699,8 @@ class SoftOffersServiceTests {
     SoftOffersService.Results results = service.results(ula);
 
     assertEquals(new SoftOffersService.Counts(1, 0, 1, 0), results.counts());
-    assertEquals("Declined", results.rows().get(0).get(7));
-    assertEquals("2026-11-25T17:00", results.rows().get(0).get(8));
+    assertEquals("Declined", results.rows().get(0).get(12));
+    assertEquals("2026-11-25T17:00", results.rows().get(0).get(13));
   }
 
   @Test
@@ -680,8 +715,8 @@ class SoftOffersServiceTests {
 
     SoftOffersService.Results results = service.results(ula);
 
-    assertEquals("", results.rows().get(0).get(8));
-    assertEquals("Proceed", results.rows().get(0).get(7));
+    assertEquals("", results.rows().get(0).get(13));
+    assertEquals("Proceed", results.rows().get(0).get(12));
   }
 
   @Test
@@ -744,14 +779,58 @@ class SoftOffersServiceTests {
 
     String[] lines = csv.split("\n");
     assertEquals(2, lines.length);
+    // Issue #500: the five applicant columns, Funding, Student Comments and the staff's columns.
     assertEquals(
-        "\"First name\",\"Last name\",\"Email\",\"Course assignment\",\"Course instructor\","
+        "\"First name\",\"Last name\",\"Email\",\"Perm number\",\"Prev LA Qtrs\","
+            + "\"Expected grad date\",\"Other Campus Job?\",\"Employee ID number\","
+            + "\"Course assignment\",\"Funding\",\"Course instructor\","
             + "\"Course instructor email\",\"First time ULA\",\"Offer Status\","
-            + "\"Offer Response Date/Time\",\"Comments\"",
+            + "\"Offer Response Date/Time\",\"Student Comments\",\"Formal Offer Sent\","
+            + "\"Formal Offer Accepted\",\"New Hire form done (or not needed)\","
+            + "\"Other Campus Job FLSA conflict found\","
+            + "\"Other Campus Job FLSA conflict resolved\",\"In UCPath\",\"I-9 Complete\","
+            + "\"Staff Comments\"",
         lines[0].trim());
     assertEquals(
-        "\"Ada\",\"Lovelace\",\"ada@ucsb.edu\",\"CMPSC 156\",\"CONRAD P\",\"Not mapped\",\"yes\","
-            + "\"Proceed\",\"2026-11-21T08:05\",\"Yes, \"\"please\"\"\"",
+        "\"Ada\",\"Lovelace\",\"ada@ucsb.edu\",\"A123456\",\"0\",\"Spring 2027\",\"Not sure yet\","
+            + "\"12345678\",\"CMPSC 156\",\"\",\"CONRAD P\",\"Not mapped\",\"yes\","
+            + "\"Proceed\",\"2026-11-21T08:05\",\"Yes, \"\"please\"\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"",
         lines[1].trim());
+    assertEquals(24, SoftOffersService.CSV_HEADERS.size());
+    assertEquals(24, lines[1].split("\",\"").length);
+  }
+
+  // ---- issue #500: the page's headers against the CSV's ----
+
+  @Test
+  void the_page_headers_hold_the_five_applicant_columns_between_email_and_course_assignment() {
+    assertEquals(
+        List.of(
+            "Email",
+            "Perm number",
+            "Prev LA Qtrs",
+            "Expected grad date",
+            "Other Campus Job?",
+            "Employee ID number",
+            "Course assignment"),
+        SoftOffersService.RESULTS_HEADERS.subList(2, 9));
+    assertEquals("Comments", SoftOffersService.RESULTS_HEADERS.get(14));
+    assertEquals(15, SoftOffersService.RESULTS_HEADERS.size());
+    // The CSV differs only as issue #500 asks: Funding after Course assignment, Student Comments,
+    // and the staff's columns at the end.
+    List<String> csv = SoftOffersService.CSV_HEADERS;
+    assertEquals(SoftOffersService.RESULTS_HEADERS.subList(0, 9), csv.subList(0, 9));
+    assertEquals("Funding", csv.get(9));
+    assertEquals(SoftOffersService.RESULTS_HEADERS.subList(9, 14), csv.subList(10, 15));
+    assertEquals("Student Comments", csv.get(15));
+    assertEquals(SoftOffersService.STAFF_HEADERS, csv.subList(16, 24));
+  }
+
+  @Test
+  void the_other_campus_job_answer_is_shown_as_the_form_offered_it() {
+    assertEquals("Yes", SoftOffersService.otherCampusJob(OtherCampusJob.YES));
+    assertEquals("No", SoftOffersService.otherCampusJob(OtherCampusJob.NO));
+    assertEquals("Not sure yet", SoftOffersService.otherCampusJob(OtherCampusJob.NOT_SURE));
+    assertEquals("", SoftOffersService.otherCampusJob(null));
   }
 }
