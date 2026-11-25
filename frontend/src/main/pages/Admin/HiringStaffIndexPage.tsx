@@ -37,6 +37,7 @@ export default function HiringStaffIndexPage(): React.JSX.Element {
         <p data-testid="HiringStaffIndexPage-names-note">{NAMES_NOTE}</p>
         <p data-testid="HiringStaffIndexPage-role-note">{HIRING_STAFF_NOTE}</p>
         <RoleEmailTable
+          // Stryker disable next-line all : the query's initial data is an empty list, never undefined
           data={hiringStaff ?? []}
           deleteEndpoint={HIRING_STAFF_DELETE_URL}
           getEndpoint={HIRING_STAFF_ALL_URL}
