@@ -8,6 +8,7 @@ import { vi } from "vitest";
 
 import StudentDashboard from "main/components/Student/StudentDashboard";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import softOfferFixtures from "fixtures/softOfferFixtures";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 
@@ -297,5 +298,59 @@ describe("StudentDashboard tests", () => {
     expect(
       screen.getByTestId("StudentDashboard-none-open"),
     ).toBeInTheDocument();
+  });
+
+  // ---- Issue #486: answering a soft offer ----
+
+  describe("soft offers", () => {
+    test("Submit My Response posts the choice and comments for the offer's application, toasts, and re-reads the offers", async () => {
+      axiosMock.onGet("/api/quarters/one").reply(404, {});
+      axiosMock
+        .onPost("/api/softOffers/respond")
+        .reply(200, { id: 1, decision: "DECLINE" });
+      const queryClient = new QueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <StudentDashboard
+              recruitments={[openUla]}
+              applications={[applicationsFixtures.oneUlaApplication]}
+              softOffers={[softOfferFixtures.pending]}
+              testIdPrefix="D"
+            />
+          </MemoryRouter>
+        </QueryClientProvider>,
+      );
+      const section = "D-current-card-2-soft-offer";
+
+      await userEvent.click(screen.getByTestId(`${section}-choice-DECLINE`));
+      await userEvent.type(screen.getByTestId(`${section}-comments`), "Sorry");
+      await userEvent.click(screen.getByTestId(`${section}-submit`));
+
+      await waitFor(() => expect(axiosMock.history.post).toHaveLength(1));
+      const request = axiosMock.history.post[0];
+      expect(request.url).toBe("/api/softOffers/respond");
+      expect(request.params).toEqual({ applicationId: 2, decision: "DECLINE" });
+      expect(JSON.parse(request.data)).toEqual({ comments: "Sorry" });
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Your response has been recorded.",
+        ),
+      );
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ["/api/softOffers/mine"],
+      });
+    });
+
+    test("an answered offer is shown read-only", () => {
+      renderDashboard(
+        [openUla],
+        [applicationsFixtures.oneUlaApplication],
+        undefined,
+      );
+      // No offers passed: nothing shown.
+      expect(screen.queryByTestId("D-current-card-2-soft-offer")).toBeNull();
+    });
   });
 });

@@ -14,6 +14,7 @@ import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
+import softOfferFixtures from "fixtures/softOfferFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -45,6 +46,9 @@ function renderHome(currentUserFixture, backend = {}) {
   axiosMock
     .onGet("/api/draftApplications/mine")
     .reply(200, backend.drafts ?? []);
+  // Issue #486: the student's soft offers.
+  axiosMock.onGet("/api/softOffers/mine").reply(200, backend.softOffers ?? []);
+  axiosMock.onGet("/api/quarters/one").reply(404, {});
   axiosMock
     .onGet("/api/instructor/recruitments")
     .reply(200, backend.instructorRecruitments ?? []);
@@ -334,5 +338,45 @@ describe("HomePageLoggedIn tests", () => {
           r.url === "/api/recruitments/applicable",
       ),
     ).toHaveLength(0);
+  });
+
+  // ---- Issue #486: soft offers ----
+
+  test("a student's open soft offer reaches the card of its recruitment", async () => {
+    renderHome(apiCurrentUserFixtures.userOnly, {
+      recruitments: [openUla],
+      applications: [applicationsFixtures.oneUlaApplication],
+      softOffers: [softOfferFixtures.pending],
+    });
+
+    expect(
+      await screen.findByTestId(
+        "HomePageLoggedIn-dashboard-current-card-2-soft-offer",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(
+        "HomePageLoggedIn-dashboard-current-card-2-soft-offer-course-number",
+      ),
+    ).toHaveTextContent("CMPSC 156");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/softOffers/mine"),
+      ).toHaveLength(1),
+    );
+  });
+
+  test("with no soft offers the card has no Soft Offer section", async () => {
+    renderHome(apiCurrentUserFixtures.userOnly, {
+      recruitments: [openUla],
+      applications: [applicationsFixtures.oneUlaApplication],
+    });
+
+    await screen.findByTestId("HomePageLoggedIn-dashboard-current-card-2-card");
+    expect(
+      screen.queryByTestId(
+        "HomePageLoggedIn-dashboard-current-card-2-soft-offer",
+      ),
+    ).toBeNull();
   });
 });

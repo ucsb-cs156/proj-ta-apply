@@ -1,0 +1,75 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "075-create-soft-offer-responses",
+        "author": "pc",
+        "comment": "An assigned ULA applicant's answer to their soft offer (issue #486, part of #483): PROCEED or DECLINE, optional comments, when (Pacific wall-clock time set by the server), and the Soft Offer Notices version they read. One row per (application, lecture), since an applicant moved to another lecture is asked again. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "soft_offer_responses" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "soft_offer_responses",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "application_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false,
+                      "foreignKeyName": "fk_soft_offer_responses_application",
+                      "references": "applications(id)",
+                      "deleteCascade": true
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "recruitment_course_id",
+                    "type": "BIGINT",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "decision",
+                    "type": "VARCHAR(16)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "comments", "type": "VARCHAR(4000)" } },
+                {
+                  "column": {
+                    "name": "responded_at",
+                    "type": "TIMESTAMP",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "soft_offer_notice_version_id", "type": "BIGINT" } }
+              ]
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "soft_offer_responses",
+              "columnNames": "application_id, recruitment_course_id",
+              "constraintName": "uk_soft_offer_responses_application_course"
+            }
+          }
+        ],
+        "rollback": [{ "dropTable": { "tableName": "soft_offer_responses" } }]
+      }
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import InstructorRecruitmentCards, {
 } from "main/components/Instructor/InstructorRecruitmentCards";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import type { DraftApplication } from "main/utils/draftApplications";
+import { SOFT_OFFERS_MINE_URL, type SoftOffer } from "main/utils/softOffers";
 
 /**
  * The home page, in a section per role (issue #107): Admin (the recruitments, whole, as issue #141
@@ -75,6 +76,19 @@ export default function HomePageLoggedIn(): React.JSX.Element {
     options,
   );
 
+  // Issue #486: the student's open soft offers, shown on their recruitment's card.
+  const { data: softOffers } = useRefreshingBackend<SoftOffer[]>(
+    // Stryker disable next-line all : the cache key is not observable from here
+    [SOFT_OFFERS_MINE_URL],
+    // Stryker disable next-line all : axios sends a GET whatever the method says
+    { method: "GET", url: SOFT_OFFERS_MINE_URL },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    // Stryker disable next-line all : whether a failure toasts is not tested for each request
+    false,
+    options,
+  );
+
   // The Student heading only earns its place when there is another section to tell it from
   // (issue #118); a plain student's page is the student section and nothing else.
   const otherSections = isAdmin || isInstructor;
@@ -115,6 +129,8 @@ export default function HomePageLoggedIn(): React.JSX.Element {
             applications={applications ?? []}
             // Stryker disable next-line all : don't test default value of empty list
             drafts={drafts ?? []}
+            // Stryker disable next-line all : don't test default value of empty list
+            softOffers={softOffers ?? []}
             testIdPrefix="HomePageLoggedIn-dashboard"
           />
         </section>

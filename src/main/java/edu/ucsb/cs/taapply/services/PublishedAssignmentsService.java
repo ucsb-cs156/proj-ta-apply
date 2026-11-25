@@ -190,8 +190,11 @@ public class PublishedAssignmentsService {
     return quarters == null || quarters == 0 ? "yes" : "no";
   }
 
-  /** Each catalog name that exactly one instructor goes by, with that instructor's email. */
-  private Map<String, String> emailsByCatalogName() {
+  /**
+   * Each catalog name that exactly one instructor goes by, with that instructor's email. Public
+   * since issue #486, for the applicant's soft offer, which names the lecture's instructor too.
+   */
+  public Map<String, String> emailsByCatalogName() {
     Map<String, List<String>> all =
         StreamSupport.stream(instructorRepository.findAll().spliterator(), false)
             .filter(instructor -> instructor.getCatalogName() != null)

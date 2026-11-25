@@ -38,6 +38,16 @@ const handlers = (user, backend = {}) => [
   http.get("/api/draftApplications/mine", () =>
     HttpResponse.json(backend.drafts ?? []),
   ),
+  // Issue #486: the student's soft offers.
+  http.get("/api/softOffers/mine", () =>
+    HttpResponse.json(backend.softOffers ?? []),
+  ),
+  http.post("/api/softOffers/respond", () =>
+    HttpResponse.json({ id: 1, decision: "PROCEED" }),
+  ),
+  http.get("/api/quarters/one", () =>
+    HttpResponse.json({ message: "not on file" }, { status: 404 }),
+  ),
   http.get("/api/instructor/recruitments", () =>
     HttpResponse.json(backend.instructorRecruitments ?? []),
   ),

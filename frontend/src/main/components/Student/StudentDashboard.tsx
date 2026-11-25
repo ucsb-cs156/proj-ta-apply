@@ -11,6 +11,13 @@ import { useCreateFromCancelled } from "main/utils/useCreateFromCancelled";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { classifyRecruitments } from "main/utils/studentRecruitments";
 import type { DraftApplication } from "main/utils/draftApplications";
+import {
+  RESPONSE_RECORDED_TOAST,
+  SOFT_OFFERS_MINE_URL,
+  SOFT_OFFERS_RESPOND_URL,
+  type SoftOffer,
+  type SoftOfferDecision,
+} from "main/utils/softOffers";
 
 type StudentDashboardProps = {
   /** Every recruitment, past or present. */
@@ -19,6 +26,8 @@ type StudentDashboardProps = {
   applications: Application[];
   /** The student's drafts: applications started and not yet submitted (issue #270). */
   drafts?: DraftApplication[];
+  /** The student's open soft offers (issue #486). */
+  softOffers?: SoftOffer[];
   testIdPrefix?: string;
 };
 
@@ -36,6 +45,8 @@ export default function StudentDashboard({
   applications,
   // Stryker disable next-line all : don't test default value of empty list
   drafts = [],
+  // Stryker disable next-line all : don't test default value of empty list
+  softOffers = [],
   testIdPrefix = "StudentDashboard",
 }: StudentDashboardProps): React.JSX.Element {
   const { upcoming, current, past } = classifyRecruitments(
@@ -69,6 +80,21 @@ export default function StudentDashboard({
   // Create a new application: the cancelled one becomes a draft, which opens (issue #420).
   const restartMutation = useCreateFromCancelled();
 
+  // Issue #486: answering a soft offer; the offers are re-read so the card turns read-only.
+  const respondMutation = useBackendMutation<
+    { applicationId: number; decision: SoftOfferDecision; comments: string },
+    unknown
+  >(
+    ({ applicationId, decision, comments }) => ({
+      url: SOFT_OFFERS_RESPOND_URL,
+      method: "POST",
+      params: { applicationId, decision },
+      data: { comments },
+    }),
+    { onSuccess: () => toast(RESPONSE_RECORDED_TOAST) },
+    [SOFT_OFFERS_MINE_URL],
+  );
+
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
 
   return (
@@ -100,6 +126,15 @@ export default function StudentDashboard({
             restartMutation.mutate(application.id)
           }
           restarting={restartMutation.isPending}
+          softOffers={softOffers}
+          onRespondToOffer={(offer, decision, comments) =>
+            respondMutation.mutate({
+              applicationId: offer.applicationId,
+              decision,
+              comments,
+            })
+          }
+          responding={respondMutation.isPending}
           testIdPrefix={id("current")}
         />
       )}
