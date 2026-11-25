@@ -3,10 +3,21 @@
     "ApplicationsDraftsWebIT",
     "CoursesWebIT",
     "AuditTrailWebIT",
-    "InstructorFeedbackWebIT"
+    "InstructorFeedbackWebIT",
+    "HiringStaffWebIT"
   ],
-  "2": ["ApplicationsApplyWebIT", "ApplicationsSubmittedWebIT", "AppSettingsWebIT", "OauthWebIT"],
-  "3": ["RecruitmentsWebIT", "AdminAssignmentsWebIT", "QuartersWebIT", "LegacyImportWebIT"],
+  "2": [
+    "ApplicationsApplyWebIT",
+    "ApplicationsSubmittedWebIT",
+    "AppSettingsWebIT",
+    "OauthWebIT"
+  ],
+  "3": [
+    "RecruitmentsWebIT",
+    "AdminAssignmentsWebIT",
+    "QuartersWebIT",
+    "LegacyImportWebIT"
+  ],
   "4": [
     "PriorCourseworkMatrixWebIT",
     "HomePageWebIT",

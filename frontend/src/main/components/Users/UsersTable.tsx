@@ -10,6 +10,8 @@ export type User = {
   email: string;
   admin: boolean;
   instructor: boolean;
+  /** Issue #504. Optional so rows from before the role existed still type-check. */
+  hiringStaff?: boolean;
   /** ISO instant of their last request; null for a row from before this was recorded. */
   lastOnline?: string | null;
 };
@@ -53,6 +55,15 @@ const columns: LegacyColumn[] = [
     cell: ({ cell }: { cell: Cell<User, unknown> }) => {
       return String(cell.getValue());
     }, // convert boolean to string for display
+  },
+  {
+    header: "Hiring Staff",
+    id: "hiringStaff",
+    accessorKey: "hiringStaff",
+    cell: ({ cell }: { cell: Cell<User, unknown> }) => {
+      // Stryker disable next-line all : the same false, however it is written
+      return String(cell.getValue() ?? false);
+    },
   },
 ];
 

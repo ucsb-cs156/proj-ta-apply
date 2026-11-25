@@ -90,6 +90,14 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
   },
   {
     menu: "Admin",
+    label: "Hiring Staff",
+    path: "/admin/hiringStaff",
+    section: "hiring-staff",
+    summary:
+      "Who gets the Hiring Staff section and the Soft Offer Results pages; add or remove by email.",
+  },
+  {
+    menu: "Admin",
     label: "Courses",
     path: "/admin/courses",
     section: "courses",

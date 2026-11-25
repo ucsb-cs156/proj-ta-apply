@@ -346,11 +346,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
         <p>
           <Link to="/admin/users">Users</Link> lists everyone who has ever
           signed in to the app: first and last name, email, when they were last
-          online, and whether they are an admin or an instructor. It is paged,
-          with the page size chosen above the table. The page is a roster, not
-          where roles are granted: make someone an admin on the Admins page or
-          an instructor on the Instructors page. A student needs no entry
-          anywhere; any signed-in user may apply.
+          online, and whether they are an admin, an instructor or hiring staff.
+          It is paged, with the page size chosen above the table. The page is a
+          roster, not where roles are granted: make someone an admin on the
+          Admins page, an instructor on the Instructors page, or hiring staff on
+          the Hiring Staff page. A student needs no entry anywhere; any
+          signed-in user may apply.
         </p>
 
         <h2 className="my-3 h4" id="admins">
@@ -382,6 +383,23 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Set it so the instructor&apos;s courses can be matched to them; until
           it is set, their Instructor section says no recruitment includes a
           course they teach.
+        </p>
+
+        <h2 className="my-3 h4" id="hiring-staff">
+          Hiring Staff
+        </h2>
+        <p data-testid="HelpAdminsPage-hiring-staff">
+          <Link to="/admin/hiringStaff">Hiring Staff</Link> lists who holds the
+          Hiring Staff role: the hiring and financial office staff who process
+          the ULA soft offers. Add one with <em>New Hiring Staff</em>; each row
+          has a Delete button, and the first and last name fill in when that
+          person first signs in. The role is independent of Admin and
+          Instructor, and an outside (non-UCSB) address on the list can sign in.
+          Hiring staff see a Hiring Staff section on their home page with a card
+          for each ULA recruitment whose soft offers have been released, and
+          that card&apos;s one button, <em>Soft Offer Results</em>, opens the
+          same results page as the admin&apos;s, Change Deadline and Download
+          CSV included. They have no Admin menu and no other admin page.
         </p>
 
         <h2 className="my-3 h4" id="courses">

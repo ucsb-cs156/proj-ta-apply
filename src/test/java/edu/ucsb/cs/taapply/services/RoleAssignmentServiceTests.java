@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.HiringStaffRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ public class RoleAssignmentServiceTests {
 
   @MockitoBean private AdminRepository adminRepository;
   @MockitoBean private InstructorRepository instructorRepository;
+  @MockitoBean private HiringStaffRepository hiringStaffRepository;
 
   private Set<String> rolesFor(String email) {
     return service.authoritiesFor(email).stream()
@@ -37,6 +39,7 @@ public class RoleAssignmentServiceTests {
   private void noRolesInDb() {
     when(adminRepository.existsByEmail(org.mockito.ArgumentMatchers.any())).thenReturn(false);
     when(instructorRepository.existsByEmail(org.mockito.ArgumentMatchers.any())).thenReturn(false);
+    when(hiringStaffRepository.existsByEmail(org.mockito.ArgumentMatchers.any())).thenReturn(false);
   }
 
   private static Set<GrantedAuthority> authorities(String... roles) {
@@ -104,6 +107,25 @@ public class RoleAssignmentServiceTests {
     assertEquals(Set.of("ROLE_USER", "ROLE_INSTRUCTOR"), rolesFor("prof@ucsb.edu"));
   }
 
+  /** Issue #504: the hiring staff table grants ROLE_HIRING_STAFF, and only that. */
+  @Test
+  public void hiring_staff_in_the_table_get_hiring_staff() {
+    noRolesInDb();
+    when(hiringStaffRepository.existsByEmail("finance@ucsb.edu")).thenReturn(true);
+    assertEquals(Set.of("ROLE_USER", "ROLE_HIRING_STAFF"), rolesFor("finance@ucsb.edu"));
+  }
+
+  @Test
+  public void hiring_staff_is_independent_of_the_other_roles() {
+    noRolesInDb();
+    when(adminRepository.existsByEmail("all@ucsb.edu")).thenReturn(true);
+    when(instructorRepository.existsByEmail("all@ucsb.edu")).thenReturn(true);
+    when(hiringStaffRepository.existsByEmail("all@ucsb.edu")).thenReturn(true);
+    assertEquals(
+        Set.of("ROLE_USER", "ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_HIRING_STAFF"),
+        rolesFor("all@ucsb.edu"));
+  }
+
   /** An email in app.admin.emails is an admin even with no row in the admins table. */
   @Test
   public void the_bootstrap_admin_email_gets_admin() {
@@ -125,12 +147,14 @@ public class RoleAssignmentServiceTests {
     noRolesInDb();
     when(adminRepository.existsByEmail("both@ucsb.edu")).thenReturn(true);
     when(instructorRepository.existsByEmail("both@ucsb.edu")).thenReturn(true);
+    when(hiringStaffRepository.existsByEmail("both@ucsb.edu")).thenReturn(true);
 
     // Whatever the service can grant, the interceptor must know to strip.
     assertTrue(RoleAssignmentService.MANAGED_ROLES.containsAll(rolesFor("both@ucsb.edu")));
     assertTrue(RoleAssignmentService.MANAGED_ROLES.containsAll(rolesFor("cgaucho@ucsb.edu")));
     assertEquals(
-        Set.of("ROLE_USER", "ROLE_ADMIN", "ROLE_INSTRUCTOR"), RoleAssignmentService.MANAGED_ROLES);
+        Set.of("ROLE_USER", "ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_HIRING_STAFF"),
+        RoleAssignmentService.MANAGED_ROLES);
   }
 
   // ---- who may use the app at all ----
@@ -170,11 +194,25 @@ public class RoleAssignmentServiceTests {
     assertTrue(RoleAssignmentService.grantsAccess("x@gmail.com", authorities("ROLE_INSTRUCTOR")));
   }
 
+  /** Issue #504: hiring staff may have an outside address too, and the role lets them in. */
+  @Test
+  public void an_outside_hiring_staff_member_is_granted_access() {
+    noRolesInDb();
+    when(hiringStaffRepository.existsByEmail("finance@gmail.com")).thenReturn(true);
+    assertEquals(Set.of("ROLE_USER", "ROLE_HIRING_STAFF"), rolesFor("finance@gmail.com"));
+    assertTrue(
+        RoleAssignmentService.grantsAccess(
+            "finance@gmail.com", service.authoritiesFor("finance@gmail.com")));
+    assertTrue(RoleAssignmentService.grantsAccess("x@gmail.com", authorities("ROLE_HIRING_STAFF")));
+  }
+
   @Test
   public void an_unknown_role_does_not_grant_access() {
     assertFalse(
         RoleAssignmentService.grantsAccess(
             "someone@gmail.com", authorities("ROLE_USER", "ROLE_CUSTOM")));
-    assertEquals(Set.of("ROLE_ADMIN", "ROLE_INSTRUCTOR"), RoleAssignmentService.ACCESS_ROLES);
+    assertEquals(
+        Set.of("ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_HIRING_STAFF"),
+        RoleAssignmentService.ACCESS_ROLES);
   }
 }
