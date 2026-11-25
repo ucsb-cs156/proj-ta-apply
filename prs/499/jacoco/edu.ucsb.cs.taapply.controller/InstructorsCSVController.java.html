@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InstructorsCSVController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">InstructorsCSVController.java</span></div><h1>InstructorsCSVController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvException;
+import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
+import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.RoleEmailCsvService;
+import edu.ucsb.cs.taapply.services.RoleEmailCsvService.UploadResult;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+/**
+ * Bulk upload and download of the instructor list as a CSV file (issue #172). The parsing and
+ * upsert behavior lives in {@link RoleEmailCsvService}, shared with the grad students upload.
+ */
+@Tag(name = &quot;Instructors&quot;)
+@RequestMapping(&quot;/api/admin/instructors&quot;)
+@RestController(&quot;InstructorsCSVController&quot;)
+<span class="fc" id="L38">@Slf4j</span>
+<span class="fc" id="L39">public class InstructorsCSVController extends ApiController {</span>
+
+  /** The optional upload column and download header carrying the instructor's catalog name. */
+  public static final String CATALOG_NAME_HEADER = &quot;catalogName&quot;;
+
+  @Autowired private InstructorRepository instructorRepository;
+  @Autowired private UserRepository userRepository;
+  @Autowired private CatalogNameRepository catalogNameRepository;
+  @Autowired private RoleEmailCsvService roleEmailCsvService;
+
+  @Operation(
+      summary = &quot;Upload a CSV of instructors&quot;,
+      description =
+          &quot;The file needs a header row with a column named email; a file of just emails is enough.&quot;
+              + &quot; A catalogName column, when present, sets each instructor's catalog name (new or&quot;
+              + &quot; already on the list) when the value is a name on record; other columns, such as&quot;
+              + &quot; the downloaded firstName and lastName, are ignored (names come from the users&quot;
+              + &quot; table when the instructor logs in).&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(
+      value = &quot;/upload/csv&quot;,
+      consumes = {&quot;multipart/form-data&quot;})
+  public UploadResult uploadInstructorsCSV(
+      @Parameter(name = &quot;file&quot;) @RequestParam(&quot;file&quot;) MultipartFile file)
+      throws IOException, CsvException {
+
+<span class="fc" id="L65">    return roleEmailCsvService.upload(</span>
+        file,
+        CATALOG_NAME_HEADER,
+<span class="fc" id="L68">        instructorRepository::existsByEmail,</span>
+        (email, catalogName) -&gt;
+<span class="fc" id="L70">            instructorRepository.save(</span>
+<span class="fc" id="L71">                Instructor.builder()</span>
+<span class="fc" id="L72">                    .email(email)</span>
+<span class="fc" id="L73">                    .catalogName(knownCatalogName(catalogName))</span>
+<span class="fc" id="L74">                    .build()),</span>
+        (email, catalogName) -&gt; {
+<span class="fc" id="L76">          String known = knownCatalogName(catalogName);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">          if (known != null) {</span>
+<span class="fc" id="L78">            instructorRepository</span>
+<span class="fc" id="L79">                .findById(email)</span>
+<span class="fc" id="L80">                .ifPresent(</span>
+                    instructor -&gt; {
+<span class="fc" id="L82">                      instructor.setCatalogName(known);</span>
+<span class="fc" id="L83">                      instructorRepository.save(instructor);</span>
+<span class="fc" id="L84">                    });</span>
+          }
+<span class="fc" id="L86">        });</span>
+  }
+
+  /**
+   * The catalog name when it is one on record, otherwise null: the instructors table's foreign key
+   * allows only known names, so an unrecognized one is left unset rather than failing the row.
+   */
+  private String knownCatalogName(String catalogName) {
+<span class="fc bfc" id="L94" title="All 4 branches covered.">    return catalogName != null &amp;&amp; catalogNameRepository.existsById(catalogName)</span>
+<span class="fc" id="L95">        ? catalogName</span>
+<span class="fc" id="L96">        : null;</span>
+  }
+
+  @Operation(
+      summary = &quot;Download the instructors as CSV&quot;,
+      description =
+          &quot;Columns email, firstName, lastName and catalogName, with a header row and every cell&quot;
+              + &quot; quoted. The upload accepts this shape, so the list can be moved from one&quot;
+              + &quot; deployment to another; names are blank for instructors who have not logged in.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(value = &quot;/download/csv&quot;, produces = &quot;text/csv&quot;)
+  public ResponseEntity&lt;String&gt; downloadInstructorsCSV() {
+<span class="fc" id="L108">    StringWriter out = new StringWriter();</span>
+    // Neither flushed nor closed: CSVWriter writes each row straight through to the StringWriter,
+    // and close() would only add a checked exception that a StringWriter can never throw.
+<span class="fc" id="L111">    CSVWriter writer = new CSVWriter(out);</span>
+<span class="fc" id="L112">    writer.writeNext(</span>
+        new String[] {
+          RoleEmailCsvService.EMAIL_HEADER, &quot;firstName&quot;, &quot;lastName&quot;, CATALOG_NAME_HEADER
+        });
+<span class="fc bfc" id="L116" title="All 2 branches covered.">    for (Instructor instructor : instructorRepository.findAll()) {</span>
+<span class="fc" id="L117">      Optional&lt;User&gt; user = userRepository.findByEmail(instructor.getEmail());</span>
+<span class="fc" id="L118">      writer.writeNext(</span>
+          new String[] {
+<span class="fc" id="L120">            instructor.getEmail(),</span>
+<span class="fc" id="L121">            user.map(User::getGivenName).orElse(&quot;&quot;),</span>
+<span class="fc" id="L122">            user.map(User::getFamilyName).orElse(&quot;&quot;),</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            instructor.getCatalogName() == null ? &quot;&quot; : instructor.getCatalogName()</span>
+          });
+<span class="fc" id="L125">    }</span>
+<span class="fc" id="L126">    return ResponseEntity.ok()</span>
+<span class="fc" id="L127">        .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;instructors.csv\&quot;&quot;)</span>
+<span class="fc" id="L128">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;))</span>
+<span class="fc" id="L129">        .body(out.toString());</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

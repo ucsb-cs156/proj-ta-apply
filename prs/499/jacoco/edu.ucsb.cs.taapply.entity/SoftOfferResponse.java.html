@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SoftOfferResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.entity</a> &gt; <span class="el_source">SoftOfferResponse.java</span></div><h1>SoftOfferResponse.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.entity;
+
+import edu.ucsb.cs.taapply.enums.SoftOfferDecision;
+import edu.ucsb.cs.taapply.time.AppTime;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import lombok.*;
+
+/**
+ * An assigned ULA applicant's answer to their soft offer (issue #486, part of #483): proceed to a
+ * formal offer, or decline, with an optional comment.
+ *
+ * &lt;p&gt;An answer belongs to one (application, course) pair, because assignments can change after soft
+ * offers are released: if the admin moves the applicant to another course, the old answer no longer
+ * applies and the applicant is asked again, while the old row is kept for the admin's results page.
+ * The pair is unique, so an offer can be answered once. {@code softOfferNoticeVersionId} is the
+ * Soft Offer Notices version the applicant read, or null if none had been saved.
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@Entity(name = &quot;soft_offer_responses&quot;)
+@Table(
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = &quot;uk_soft_offer_responses_application_course&quot;,
+            columnNames = {&quot;application_id&quot;, &quot;recruitment_course_id&quot;}))
+public class SoftOfferResponse {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(name = &quot;application_id&quot;, nullable = false)
+  private Long applicationId;
+
+  /** The lecture the applicant was assigned to when they answered. */
+  @Column(name = &quot;recruitment_course_id&quot;, nullable = false)
+  private Long recruitmentCourseId;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 16)
+  private SoftOfferDecision decision;
+
+  @Column(length = 4000)
+  private String comments;
+
+  /** When the applicant answered; stamped on insert, in Pacific time. */
+  @Column(name = &quot;responded_at&quot;, updatable = false)
+  private LocalDateTime respondedAt;
+
+  @Column(name = &quot;soft_offer_notice_version_id&quot;)
+  private Long softOfferNoticeVersionId;
+
+  @PrePersist
+  void stampResponded() {
+<span class="fc" id="L57">    respondedAt = AppTime.now();</span>
+<span class="fc" id="L58">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
