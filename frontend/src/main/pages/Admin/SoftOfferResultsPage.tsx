@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Button, Table } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
+import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
 import ChangeSoftOfferDeadlineModal from "main/components/Recruitments/ChangeSoftOfferDeadlineModal";
+import SoftOfferResultsTable from "main/components/SoftOffers/SoftOfferResultsTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { apiErrorMessage } from "main/utils/apiError";
 import { formatPacificDateTime } from "main/utils/pacificTime";
@@ -11,79 +13,37 @@ import {
   CHANGE_DEADLINE_LABEL,
   SOFT_OFFER_RESULTS_LABEL,
   SOFT_OFFER_RESULTS_URL,
-  STAMP_COLUMN,
-  STATUS_COLUMN,
-  UNASSIGNED_STAMP_COLUMN,
-  UNASSIGNED_STATUS_COLUMN,
   countsSentence,
-  formatStamp,
-  isStaleStatus,
   softOfferResultsCsvFileName,
   softOfferResultsCsvUrl,
   type SoftOfferResults,
 } from "main/utils/softOffers";
+import {
+  RESULTS_COLUMN_IDS,
+  SOFT_OFFER_COLUMNS_STORAGE_KEY,
+  UNASSIGNED_COLUMN_IDS,
+  columnChoices,
+} from "main/utils/softOfferResultsColumns";
 import { useBackend } from "main/utils/useBackend";
-
-type ResultsTableProps = {
-  headers: string[];
-  rows: string[][];
-  statusColumn: number;
-  stampColumn: number;
-  testIdPrefix: string;
-};
-
-/** A text table: the status cell muted when it answered for another lecture, the stamp in Pacific. */
-function ResultsTable({
-  headers,
-  rows,
-  statusColumn,
-  stampColumn,
-  testIdPrefix,
-}: ResultsTableProps): React.JSX.Element {
-  return (
-    <Table striped bordered size="sm" responsive data-testid={testIdPrefix}>
-      <thead>
-        <tr>
-          {headers.map((header, i) => (
-            <th key={i} data-testid={`${testIdPrefix}-header-${i}`}>
-              {header}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, r) => (
-          <tr key={r} data-testid={`${testIdPrefix}-row-${r}`}>
-            {row.map((cell, c) => (
-              <td
-                key={c}
-                className={
-                  c === statusColumn && isStaleStatus(cell)
-                    ? "text-muted fst-italic"
-                    : undefined
-                }
-                data-testid={`${testIdPrefix}-row-${r}-c${c}`}
-              >
-                {c === stampColumn ? formatStamp(cell) : cell}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </Table>
-  );
-}
+import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
 
 /**
  * The admin's Soft Offer Results (issue #487): /admin/recruitments/:recruitmentId/softOffers. When
  * the soft offers were released and their deadline (with Change Deadline), how many assigned ULAs
  * have answered each way, one row per assigned ULA with their answer, a second table of answers
  * from applicants no longer assigned, and the main table as a CSV. Admins only: the answers carry
- * the applicants' comments.
+ * the applicants' comments. Every column but First name and Last name can be hidden from the
+ * Columns menu (issue #494), a choice the browser remembers for every recruitment's results, and
+ * the second table follows the same choices for the columns it shares.
  */
 export default function SoftOfferResultsPage(): React.JSX.Element {
   const { recruitmentId } = useParams();
   const [changing, setChanging] = useState(false);
+  const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
+    SOFT_OFFER_COLUMNS_STORAGE_KEY,
+    [],
+  );
+  const hide = (columnId: string) => toggleColumn(columnId, true);
 
   // Stryker disable all : the query key and axios's default GET are not observable; what is done
   // with the answer is tested
@@ -110,6 +70,10 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
   const name = recruitment
     ? `${yyyyqToQyy(recruitment.quarter)} ${recruitment.type}`
     : "";
+  // The main table's columns, less First name and Last name: the second table follows the same
+  // choices for the columns it shares, and its own column stays.
+  // Stryker disable next-line ArrayDeclaration : the menu and the tables are only shown once data has arrived
+  const choices = columnChoices(RESULTS_COLUMN_IDS, data?.headers ?? []);
 
   return (
     <BasicLayout>
@@ -142,11 +106,34 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
               <p data-testid="SoftOfferResultsPage-counts">
                 {countsSentence(data.counts)}
               </p>
-              <ResultsTable
+              {/* The CSV is a plain link, so the browser saves the file itself under the backend's
+                  name; it holds every column, whatever is hidden here. */}
+              <div
+                className="d-flex flex-wrap gap-2 mb-2"
+                data-testid="SoftOfferResultsPage-toolbar"
+              >
+                <ColumnVisibilityControl
+                  choices={choices}
+                  hidden={hiddenColumns}
+                  onToggle={toggleColumn}
+                  testIdPrefix="SoftOfferResultsPage-columns"
+                />
+                <a
+                  className="btn btn-outline-secondary btn-sm"
+                  href={softOfferResultsCsvUrl(String(recruitmentId))}
+                  download={softOfferResultsCsvFileName(String(recruitmentId))}
+                  data-testid="SoftOfferResultsPage-csv"
+                >
+                  Download CSV
+                </a>
+              </div>
+              <SoftOfferResultsTable
                 headers={data.headers}
                 rows={data.rows}
-                statusColumn={STATUS_COLUMN}
-                stampColumn={STAMP_COLUMN}
+                columnIds={RESULTS_COLUMN_IDS}
+                hiddenColumns={hiddenColumns}
+                choices={choices}
+                onHide={hide}
                 testIdPrefix="SoftOfferResultsPage-table"
               />
               {data.unassigned.length > 0 && (
@@ -157,24 +144,17 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
                   >
                     Responses from applicants no longer assigned
                   </h2>
-                  <ResultsTable
+                  <SoftOfferResultsTable
                     headers={data.unassignedHeaders}
                     rows={data.unassigned}
-                    statusColumn={UNASSIGNED_STATUS_COLUMN}
-                    stampColumn={UNASSIGNED_STAMP_COLUMN}
+                    columnIds={UNASSIGNED_COLUMN_IDS}
+                    hiddenColumns={hiddenColumns}
+                    choices={choices}
+                    onHide={hide}
                     testIdPrefix="SoftOfferResultsPage-unassigned"
                   />
                 </>
               )}
-              {/* A plain link, so the browser saves the file itself under the backend's name. */}
-              <a
-                className="btn btn-outline-secondary mt-3"
-                href={softOfferResultsCsvUrl(String(recruitmentId))}
-                download={softOfferResultsCsvFileName(String(recruitmentId))}
-                data-testid="SoftOfferResultsPage-csv"
-              >
-                Download CSV
-              </a>
             </>
           )
         )}

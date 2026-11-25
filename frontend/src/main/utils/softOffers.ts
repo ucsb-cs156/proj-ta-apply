@@ -83,14 +83,6 @@ export type SoftOfferResults = {
   unassigned: string[][];
 };
 
-/** The column of the Offer Status cells in the main table. */
-export const STATUS_COLUMN = 7;
-/** The column of the Offer Response Date/Time cells in the main table. */
-export const STAMP_COLUMN = 8;
-/** The same two columns in the second table. */
-export const UNASSIGNED_STATUS_COLUMN = 4;
-export const UNASSIGNED_STAMP_COLUMN = 5;
-
 /** An answer given for a lecture other than the one now held: "Proceed (for CMPSC 8)". */
 export const isStaleStatus = (cell: string): boolean => cell.includes(" (for ");
 

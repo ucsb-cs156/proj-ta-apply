@@ -4,10 +4,6 @@ import {
   RELEASE_SOFT_OFFERS_LABEL,
   SOFT_OFFER_RESULTS_LABEL,
   SOFT_OFFER_RESULTS_URL,
-  STAMP_COLUMN,
-  STATUS_COLUMN,
-  UNASSIGNED_STAMP_COLUMN,
-  UNASSIGNED_STATUS_COLUMN,
   countsSentence,
   deadlineAsLocal,
   formatStamp,
@@ -64,8 +60,6 @@ describe("softOffers utilities (issue #485)", () => {
       "/api/admin/softOffers/csv?recruitmentId=5",
     );
     expect(softOfferResultsCsvFileName(5)).toBe("soft-offers-5.csv");
-    expect([STATUS_COLUMN, STAMP_COLUMN]).toEqual([7, 8]);
-    expect([UNASSIGNED_STATUS_COLUMN, UNASSIGNED_STAMP_COLUMN]).toEqual([4, 5]);
   });
 
   test("isStaleStatus: an answer for another lecture", () => {
