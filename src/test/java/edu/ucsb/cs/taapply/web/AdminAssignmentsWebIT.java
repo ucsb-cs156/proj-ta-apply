@@ -622,6 +622,78 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(heading).containsText("Assigned 0");
   }
 
+  /**
+   * Issue #481: Automatically Assign No-Conflict Slots. One lecture with one place; Ada (its first
+   * choice, ranked 1) is the clear choice, and Grace (Would Consider, ranked 2) does not come into
+   * it. The run assigns Ada, says so, and Undo this run clears it again; each is one move of the
+   * assignments version.
+   */
+  @Test
+  public void the_no_conflict_run_assigns_the_clear_choice_and_can_be_undone() throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    // The deadline has passed, so the confirmation has nothing to warn about.
+    recruitment.setFacultyRankingDeadline(LocalDate.of(2026, 1, 15));
+    recruitmentRepository.save(recruitment);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    course.setAllocation(1);
+    recruitmentCourseRepository.save(course);
+    Application ada = seedApplicant(recruitment);
+    ada.setFirstChoiceCourse("CMPSC   156");
+    ada = applicationRepository.save(ada);
+    Application grace =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(recruitment.getId())
+                .email("grace@ucsb.edu")
+                .firstName("Grace")
+                .lastName("Hopper")
+                .courseInterests(
+                    new java.util.HashMap<>(
+                        java.util.Map.of(
+                            "CMPSC   156",
+                            edu.ucsb.cs.taapply.enums.CourseInterest.WOULD_CONSIDER)))
+                .build());
+    rank(course, ada, 1);
+    rank(course, grace, 2);
+
+    setupAdminUser();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
+    String modal = "AdminAssignmentsPage-auto-assign-modal";
+    Locator button = page.getByTestId("AdminAssignmentsPage-auto-assign");
+    assertThat(button).hasText("Automatically Assign No-Conflict Slots");
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("0 assigned so far");
+
+    button.click();
+    assertThat(page.getByTestId(modal + "-modal")).isVisible();
+    assertEquals(0, page.getByTestId(modal + "-warnings").count());
+    page.getByTestId(modal + "-run").click();
+
+    assertThat(page.getByTestId(modal + "-result-modal")).isVisible();
+    assertThat(page.getByTestId(modal + "-made-count")).hasText("1 assignment made:");
+    assertThat(page.getByTestId(modal + "-made-0"))
+        .hasText("Ada Lovelace to 156, ranked 1 (pass 1)");
+    assertThat(page.getByTestId(modal + "-all-filled")).isVisible();
+    // The page behind the modal already shows the assignment, and it is saved.
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("1 assigned so far");
+    assertEquals(
+        course.getId(),
+        applicationRepository.findById(ada.getId()).orElseThrow().getTentativeAssignmentId());
+    assertNull(
+        applicationRepository.findById(grace.getId()).orElseThrow().getTentativeAssignmentId());
+
+    page.getByTestId(modal + "-undo").click();
+    assertThat(page.getByText("Undid 1 automatic assignment.")).isVisible();
+    assertThat(page.getByTestId(modal + "-result-modal")).isHidden();
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("0 assigned so far");
+    assertNull(
+        applicationRepository.findById(ada.getId()).orElseThrow().getTentativeAssignmentId());
+    // The run and the undo each moved the version on from the seeded 1.
+    assertEquals(
+        3,
+        recruitmentRepository.findById(recruitment.getId()).orElseThrow().getAssignmentsVersion());
+  }
+
   @Test
   public void the_admin_help_page_explains_simultaneous_editing() throws Exception {
     setupAdminUser();

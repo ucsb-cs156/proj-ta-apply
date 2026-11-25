@@ -14,6 +14,7 @@ import { vi } from "vitest";
 
 import AdminAssignmentsPage from "main/pages/Admin/AdminAssignmentsPage";
 import assignmentsFixtures from "fixtures/assignmentsFixtures";
+import autoAssignFixtures from "fixtures/autoAssignFixtures";
 import cancelledApplicationsFixtures from "fixtures/cancelledApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -192,6 +193,167 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
       screen.getByTestId("AdminAssignmentsPage-columns"),
     );
     expect(link.parentElement).toHaveClass("d-flex");
+  });
+
+  // ---- Automatically Assign No-Conflict Slots (issue #481) ----
+
+  const AUTO = "AdminAssignmentsPage-auto-assign";
+  const AUTO_MODAL = "AdminAssignmentsPage-auto-assign-modal";
+  const autoRuns = () =>
+    axiosMock.history.post.filter(
+      (r) => r.url === "/api/admin/assignments/auto",
+    );
+
+  test("the auto-assign button sits beside Download CSV and opens the confirmation, which Cancel closes", async () => {
+    renderPage();
+    const button = await screen.findByTestId(AUTO);
+    expect(button).toHaveTextContent("Automatically Assign No-Conflict Slots");
+    expect(button.parentElement).toContainElement(
+      screen.getByTestId("AdminAssignmentsPage-csv"),
+    );
+    expect(screen.queryByTestId(`${AUTO_MODAL}-modal`)).toBeNull();
+
+    await userEvent.click(button);
+    expect(
+      await screen.findByTestId(`${AUTO_MODAL}-modal`),
+    ).toBeInTheDocument();
+    // Recruitment 7's fixture has no ranking deadline, so the modal warns about it: the
+    // recruitment reached the modal.
+    expect(
+      screen.getByTestId(`${AUTO_MODAL}-warning-deadline`),
+    ).toHaveTextContent("No faculty ranking deadline is set");
+
+    await userEvent.click(screen.getByTestId(`${AUTO_MODAL}-cancel`));
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${AUTO_MODAL}-modal`)).toBeNull(),
+    );
+    expect(autoRuns()).toHaveLength(0);
+  });
+
+  test("a run carries the page's version and client id, and the table and counts follow its answer", async () => {
+    axiosMock
+      .onPost("/api/admin/assignments/auto")
+      .reply(200, autoAssignFixtures.twoMade);
+    renderPage();
+    await screen.findByTestId("AdminAssignmentsPage-table-course-10-assigned");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+    ).toHaveTextContent("Assigned 0");
+
+    await userEvent.click(screen.getByTestId(AUTO));
+    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+
+    await waitFor(() => expect(autoRuns()).toHaveLength(1));
+    expect(autoRuns()[0].params).toEqual({ recruitmentId: "7", version: 3 });
+    expect(autoRuns()[0].headers["X-Client-Id"]).toEqual(expect.any(String));
+    expect(
+      await screen.findByTestId(`${AUTO_MODAL}-result-modal`),
+    ).toBeInTheDocument();
+    // The answer's page (Ada moved to CMPSC 24) is shown without another read.
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+      ).toHaveTextContent("Assigned 1"),
+    );
+    expect(assignmentsGets()).toHaveLength(1);
+    expect(screen.getByTestId(`${AUTO_MODAL}-made-0`)).toHaveTextContent(
+      "Ada Lovelace to 8, ranked 1 (pass 1)",
+    );
+
+    await userEvent.click(screen.getByTestId(`${AUTO_MODAL}-close`));
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${AUTO_MODAL}-result-modal`)).toBeNull(),
+    );
+    // The next move carries the version the run came back with.
+    await userEvent.selectOptions(
+      screen.getByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+      "10",
+    );
+    await waitFor(() => expect(tentativePuts()).toHaveLength(1));
+    expect(tentativePuts()[0].params.version).toBe(4);
+  });
+
+  test("a stale run is refused: the page is refreshed from the answer, the message is shown and the modal closes", async () => {
+    axiosMock.onPost("/api/admin/assignments/auto").reply(409, {
+      message:
+        "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
+      assignments: assignmentsFixtures.taPageAfterMove,
+    });
+    renderPage();
+    await userEvent.click(await screen.findByTestId(AUTO));
+    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+      ).toHaveTextContent("Assigned 1"),
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${AUTO_MODAL}-modal`)).toBeNull(),
+    );
+    expect(screen.queryByTestId(`${AUTO_MODAL}-result-modal`)).toBeNull();
+    expect(assignmentsGets()).toHaveLength(1);
+  });
+
+  test("a run that fails for another reason is toasted and the page keeps its data", async () => {
+    axiosMock
+      .onPost("/api/admin/assignments/auto")
+      .reply(500, { message: "Boom" });
+    renderPage();
+    await userEvent.click(await screen.findByTestId(AUTO));
+    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.stringContaining("status code 500"),
+      ),
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+    ).toHaveTextContent("Assigned 0");
+  });
+
+  test("undoing a run shows the page it answers with", async () => {
+    axiosMock
+      .onPost("/api/admin/assignments/auto")
+      .reply(200, autoAssignFixtures.twoMade);
+    axiosMock
+      .onPost("/api/admin/assignments/auto/undo")
+      .reply(200, autoAssignFixtures.undone);
+    renderPage();
+    await userEvent.click(await screen.findByTestId(AUTO));
+    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+      ).toHaveTextContent("Assigned 1"),
+    );
+
+    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-undo`));
+
+    const undos = () =>
+      axiosMock.history.post.filter(
+        (r) => r.url === "/api/admin/assignments/auto/undo",
+      );
+    await waitFor(() => expect(undos()).toHaveLength(1));
+    // The undo carries the version of the page as the run left it.
+    expect(undos()[0].params).toEqual({ recruitmentId: "7", version: 4 });
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+      ).toHaveTextContent("Assigned 0"),
+    );
+    expect(mockToast).toHaveBeenCalledWith("Undid 2 automatic assignments.");
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${AUTO_MODAL}-result-modal`)).toBeNull(),
+    );
   });
 
   test("choosing a lecture saves at once and the heading counts follow the response", async () => {

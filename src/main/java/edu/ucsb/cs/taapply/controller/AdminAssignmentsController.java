@@ -13,6 +13,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsCsvService;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +52,7 @@ public class AdminAssignmentsController extends ApiController {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired AssignmentsService assignmentsService;
   @Autowired AssignmentsCsvService assignmentsCsvService;
+  @Autowired AutoAssignmentsService autoAssignmentsService;
   @Autowired ClientActivityDetector clientActivityDetector;
 
   @Operation(
@@ -153,6 +156,67 @@ public class AdminAssignmentsController extends ApiController {
       return conflict(recruitmentId);
     }
     return ResponseEntity.ok(assignmentsService.assignments(recruitmentOf(recruitmentId)));
+  }
+
+  @Operation(
+      summary = "Automatically assign the no-conflict slots",
+      description =
+          "Issue #481. Repeats until a pass makes no assignment: every lecture on offer with places"
+              + " still to fill gets its highest-ranked remaining candidate if that candidate is"
+              + " enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no"
+              + " other lecture with places to fill has ranked them at all. Candidates marked Not"
+              + " Hired take no part. Admins only. Carries the assignments version the page saw: if"
+              + " it has moved, nothing is changed and the answer is 409 Conflict with the"
+              + " assignments as they now stand, as a tentative assignment's is. Otherwise all the"
+              + " run's assignments are saved in one transaction (none if any one fails) and the"
+              + " answer is the assignments as the GET returns them, the list of assignments made"
+              + " (application, lecture, rank, pass) and, for each lecture still unfilled, why the"
+              + " final pass left it (NO_RANKINGS, ALL_RANKED_ASSIGNED, TIE, NOT_ENTHUSIASTIC or"
+              + " RANKED_ELSEWHERE with the lectures that rank the candidate).")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/auto")
+  public ResponseEntity<Object> autoAssign(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @Parameter(name = "version") @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    recruitmentOf(recruitmentId);
+    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());
+    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {
+      return conflict(recruitmentId);
+    }
+    try {
+      // Re-read after the bump, so the answer carries the new version.
+      return ResponseEntity.ok(autoAssignmentsService.run(recruitmentOf(recruitmentId)));
+    } catch (ObjectOptimisticLockingFailureException e) {
+      return conflict(recruitmentId);
+    }
+  }
+
+  @Operation(
+      summary = "Undo an automatic assignment run",
+      description =
+          "Issue #481. Takes the list of assignments a run made (as its answer listed them) and"
+              + " clears each one whose application is still pencilled into the lecture the run"
+              + " put it in; a placement changed by hand since is kept. Admins only; the same"
+              + " version check and 409 as the run; all in one transaction. Answers with the"
+              + " assignments as they now stand and how many were cleared.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/auto/undo")
+  public ResponseEntity<Object> undoAutoAssign(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @Parameter(name = "version") @RequestParam Integer version,
+      @RequestBody List<AutoAssignmentsService.Made> made,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    recruitmentOf(recruitmentId);
+    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());
+    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {
+      return conflict(recruitmentId);
+    }
+    try {
+      return ResponseEntity.ok(autoAssignmentsService.undo(recruitmentOf(recruitmentId), made));
+    } catch (ObjectOptimisticLockingFailureException e) {
+      return conflict(recruitmentId);
+    }
   }
 
   /** The 409 for a stale placement: why, and the assignments as they now stand. */
