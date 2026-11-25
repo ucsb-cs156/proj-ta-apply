@@ -772,4 +772,58 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("HelpDeveloperPage-simultaneous-row-assignments"))
         .containsText("assignments:<recruitmentId>");
   }
+
+  /**
+   * Issue #497: the copy button at the end of the toolbar copies the emails of the applicants still
+   * without an assignment, one per line, and is disabled once everyone is placed.
+   */
+  @Test
+  public void the_copy_button_copies_the_emails_of_the_unassigned_applicants() throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    RecruitmentCourse course =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
+    Application ada = seedApplicant(recruitment);
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email("grace@ucsb.edu")
+            .firstName("Grace")
+            .lastName("Hopper")
+            .build());
+
+    setupAdminUser();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
+    page.context().grantPermissions(List.of("clipboard-read", "clipboard-write"));
+    Locator button = page.getByTestId("AdminAssignmentsPage-copy-unassigned");
+    assertThat(button).hasText("Copy emails of applicants with no assignment");
+    assertThat(button).isEnabled();
+    page.getByTestId("AdminAssignmentsPage-copy-unassigned-wrapper").hover();
+    assertThat(page.getByTestId("AdminAssignmentsPage-copy-unassigned-tooltip"))
+        .containsText("each once, in the table's order");
+
+    button.click();
+    assertThat(page.getByText("2 emails copied to clipboard.")).isVisible();
+    assertEquals("grad@ucsb.edu\ngrace@ucsb.edu", page.evaluate("navigator.clipboard.readText()"));
+
+    // Once Ada is assigned only Grace is copied; once Grace is too, the button is disabled.
+    ada.setTentativeAssignmentId(course.getId());
+    applicationRepository.save(ada);
+    reloadPage(page);
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("1 assigned so far");
+    page.getByTestId("AdminAssignmentsPage-copy-unassigned").click();
+    assertThat(page.getByText("1 email copied to clipboard.")).isVisible();
+    assertEquals("grace@ucsb.edu", page.evaluate("navigator.clipboard.readText()"));
+
+    for (Application a :
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId())) {
+      a.setTentativeAssignmentId(course.getId());
+      applicationRepository.save(a);
+    }
+    reloadPage(page);
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("2 assigned so far");
+    assertThat(page.getByTestId("AdminAssignmentsPage-copy-unassigned")).isDisabled();
+    page.getByTestId("AdminAssignmentsPage-copy-unassigned-wrapper").hover();
+    assertThat(page.getByTestId("AdminAssignmentsPage-copy-unassigned-tooltip"))
+        .hasText("Every applicant has an assignment.");
+  }
 }

@@ -179,11 +179,8 @@ export const missingFeedbackEmails = (rows: MissingFeedbackRow[]): string[] => [
   ),
 ];
 
-/** The toast after the button has copied them. */
-export const emailsCopiedText = (count: number): string =>
-  count === 1
-    ? "1 email copied to clipboard."
-    : `${count} emails copied to clipboard.`;
+/** The toast after the button has copied them; shared with the Assignments page (issue #497). */
+export { emailsCopiedText } from "main/utils/clipboard";
 
 /** The heading of the second table, as the maintainer worded it (issue #427). */
 export const MISSING_HEADING = "No Feedback Yet From These Instructors";
