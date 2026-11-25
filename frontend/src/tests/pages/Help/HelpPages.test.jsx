@@ -2134,6 +2134,12 @@ describe("Help pages (issue #140)", () => {
       document.getElementById("ula-app-settings").nextElementSibling
         .textContent,
     ).toMatch(/its Majors, Topics and Interests lists \(the areas/);
+    // Issue #484: the Soft Offer Notices card.
+    expect(
+      screen.getByTestId("HelpAdminsPage-soft-offer-notices"),
+    ).toHaveTextContent(
+      "Its Soft Offer Notices card holds the text a ULA applicant who has been assigned to a course reads when soft offers have been released (an optional, ULA-only step after hiring decisions are released), above the question whether to proceed to a formal offer or to decline. It is edited like the notices, with the same fields and preview, and every save is a new version, so a response can always show the exact text its applicant read. Until a version is saved, a soft offer shows the course details and the question alone.",
+    );
     expect(
       document.getElementById("legacy-ta-application").nextElementSibling
         .textContent,
