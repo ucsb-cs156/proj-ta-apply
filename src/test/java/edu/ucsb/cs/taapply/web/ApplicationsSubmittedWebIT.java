@@ -585,7 +585,8 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
         .hasText("Soft Offer Results: F21 ULA");
     assertThat(admin.getByTestId("SoftOfferResultsPage-counts"))
         .hasText("1 assigned ULA: 1 proceed, 0 declined, 0 no response yet.");
-    assertThat(admin.getByTestId("SoftOfferResultsPage-table-cell-row-0-col-status")).hasText("Proceed");
+    assertThat(admin.getByTestId("SoftOfferResultsPage-table-cell-row-0-col-status"))
+        .hasText("Proceed");
     assertThat(admin.getByTestId("SoftOfferResultsPage-table-cell-row-0-col-comments"))
         .hasText("Looking forward to it.");
     assertThat(admin.getByTestId("SoftOfferResultsPage-unassigned")).hasCount(0);
