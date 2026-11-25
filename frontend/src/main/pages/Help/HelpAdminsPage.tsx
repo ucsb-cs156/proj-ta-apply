@@ -1004,10 +1004,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
             column but First name and Last name (each hideable heading has a
             small <em>hide</em> link too); the choice is kept in your browser
             for every recruitment&apos;s results, and the second table follows
-            it. The Comments column can be dragged, by the handle at the right
-            edge of its heading, between 200px and 80% of the window&apos;s
-            width. Admins only: the page holds the applicants&apos; comments.
-            Soft offers are optional and not a step of the diagram.
+            it. Five columns for the financial office staff (Perm number, Prev
+            LA Qtrs, Expected grad date, Other Campus Job? and Employee ID
+            number, between Email and Course assignment) start hidden until you
+            show them. The CSV is laid out for that staff: it always has those
+            five, a blank <em>Funding</em> column after Course assignment, the
+            comments headed <em>Student Comments</em>, and blank columns at the
+            end for them to fill in (Formal Offer Sent, Formal Offer Accepted,
+            New Hire form done, the Other Campus Job FLSA conflict, In UCPath,
+            I-9 Complete and Staff Comments). The Comments column can be
+            dragged, by the handle at the right edge of its heading, between
+            200px and 80% of the window&apos;s width. Admins only: the page
+            holds the applicants&apos; comments. Soft offers are optional and
+            not a step of the diagram.
           </li>
           <li id="change-history" data-testid="HelpAdminsPage-change-history">
             <strong>Change History.</strong> Every change to the recruitment

@@ -7,6 +7,7 @@ import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.SoftOfferNoticeVersion;
 import edu.ucsb.cs.taapply.entity.SoftOfferResponse;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.SoftOfferDecision;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
@@ -70,12 +71,21 @@ public class SoftOffersService {
   /** Appended to a response's date and time when it came after the deadline. */
   public static final String LATE = " (late)";
 
-  /** The results table's columns: the one-row-per-ULA layout's seven, then the answer's three. */
+  /**
+   * The results table's columns: the one-row-per-ULA layout's seven with, between Email and Course
+   * assignment, the five applicant fields the financial office staff need (issue #500), then the
+   * answer's three. The page hides the five until the admin shows them.
+   */
   public static final List<String> RESULTS_HEADERS =
       List.of(
           "First name",
           "Last name",
           "Email",
+          "Perm number",
+          "Prev LA Qtrs",
+          "Expected grad date",
+          "Other Campus Job?",
+          "Employee ID number",
           "Course assignment",
           "Course instructor",
           "Course instructor email",
@@ -83,6 +93,61 @@ public class SoftOffersService {
           "Offer Status",
           "Offer Response Date/Time",
           "Comments");
+
+  /** The CSV's heading for the applicant's comments, to tell them from the staff's (issue #500). */
+  public static final String STUDENT_COMMENTS = "Student Comments";
+
+  /** The CSV's blank column after Course assignment, for the staff to fill in (issue #500). */
+  public static final String FUNDING = "Funding";
+
+  /**
+   * The CSV's blank columns after everything else, for the staff to track the hire (issue #500).
+   */
+  public static final List<String> STAFF_HEADERS =
+      List.of(
+          "Formal Offer Sent",
+          "Formal Offer Accepted",
+          "New Hire form done (or not needed)",
+          "Other Campus Job FLSA conflict found",
+          "Other Campus Job FLSA conflict resolved",
+          "In UCPath",
+          "I-9 Complete",
+          "Staff Comments");
+
+  /** Where Course assignment is in a results row; Funding follows it in the CSV. */
+  static final int COURSE_COLUMN = RESULTS_HEADERS.indexOf("Course assignment");
+
+  /**
+   * The CSV's header row (issue #500): the page's columns with Funding after Course assignment,
+   * Comments headed Student Comments, and the staff's columns at the end.
+   */
+  public static final List<String> CSV_HEADERS = csvRow(RESULTS_HEADERS, STUDENT_COMMENTS);
+
+  /**
+   * A results row (or the header row) as the CSV lays it out; {@code comments} fills the last cell.
+   */
+  static List<String> csvRow(List<String> row, String comments) {
+    List<String> out = new ArrayList<>(row.subList(0, COURSE_COLUMN + 1));
+    out.add(row == RESULTS_HEADERS ? FUNDING : "");
+    out.addAll(row.subList(COURSE_COLUMN + 1, row.size() - 1));
+    out.add(comments);
+    for (int i = 0; i < STAFF_HEADERS.size(); i++) {
+      out.add(row == RESULTS_HEADERS ? STAFF_HEADERS.get(i) : "");
+    }
+    return out;
+  }
+
+  /** An applicant's answer about another campus job as the form offered it, or "" for no answer. */
+  static String otherCampusJob(OtherCampusJob answer) {
+    if (answer == null) {
+      return "";
+    }
+    return switch (answer) {
+      case YES -> "Yes";
+      case NO -> "No";
+      case NOT_SURE -> "Not sure yet";
+    };
+  }
 
   /** The second table: answers from applicants who no longer hold an assignment. */
   public static final List<String> UNASSIGNED_HEADERS =
@@ -272,6 +337,12 @@ public class SoftOffersService {
       row.add(ApplicationCsvService.text(person.getFirstName()));
       row.add(ApplicationCsvService.text(person.getLastName()));
       row.add(ApplicationCsvService.text(person.getEmail()));
+      // Issue #500: what the financial office staff need about the applicant.
+      row.add(ApplicationCsvService.text(person.getPermNumber()));
+      row.add(ApplicationCsvService.text(person.getPreviousServiceAsUla()));
+      row.add(ApplicationCsvService.text(person.getGraduationDate()));
+      row.add(otherCampusJob(person.getOtherCampusJob()));
+      row.add(ApplicationCsvService.text(person.getEmployeeId()));
       row.add(PublishedAssignmentsService.courseNumber(course));
       row.add(ApplicationCsvService.text(course.getInstructor()));
       row.add(instructorEmail(course, emails));
@@ -320,14 +391,17 @@ public class SoftOffersService {
         unassigned);
   }
 
-  /** The main results table as CSV: the header row, then a row per assigned ULA. */
+  /**
+   * The main results table as CSV for the financial office staff (issue #500): the CSV header row,
+   * then a row per assigned ULA with a blank Funding cell and blank staff cells to fill in.
+   */
   public String resultsCsv(Recruitment recruitment) {
     Results results = results(recruitment);
     StringWriter out = new StringWriter();
     CSVWriter writer = new CSVWriter(out);
-    writer.writeNext(results.headers().toArray(String[]::new));
+    writer.writeNext(CSV_HEADERS.toArray(String[]::new));
     for (List<String> row : results.rows()) {
-      writer.writeNext(row.toArray(String[]::new));
+      writer.writeNext(csvRow(row, row.get(row.size() - 1)).toArray(String[]::new));
     }
     return out.toString();
   }

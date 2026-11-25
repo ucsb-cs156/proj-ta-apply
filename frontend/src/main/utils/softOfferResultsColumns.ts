@@ -13,6 +13,11 @@ export const RESULTS_COLUMN_IDS: readonly string[] = [
   "firstName",
   "lastName",
   "email",
+  "permNumber",
+  "previousServiceAsUla",
+  "graduationDate",
+  "otherCampusJob",
+  "employeeId",
   "course",
   "instructor",
   "instructorEmail",
@@ -31,6 +36,19 @@ export const UNASSIGNED_COLUMN_IDS: readonly string[] = [
   "status",
   "respondedAt",
   "comments",
+];
+
+/**
+ * The columns hidden until the admin shows them (issue #500): the applicant fields the financial
+ * office staff need, which the CSV always carries. Opt-in in the sense of useStoredHiddenColumns,
+ * so they start hidden even for an admin whose choices were stored before they existed.
+ */
+export const OPT_IN_COLUMN_IDS: readonly string[] = [
+  "permNumber",
+  "previousServiceAsUla",
+  "graduationDate",
+  "otherCampusJob",
+  "employeeId",
 ];
 
 /** The columns that are always shown: not in the Columns menu, and with no "hide" link. */

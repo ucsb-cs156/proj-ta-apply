@@ -4,6 +4,7 @@ import {
   COMMENTS_DEFAULT_WIDTH,
   COMMENTS_MAX_SHARE,
   COMMENTS_MIN_WIDTH,
+  OPT_IN_COLUMN_IDS,
   RESULTS_COLUMN_IDS,
   SOFT_OFFER_COLUMNS_STORAGE_KEY,
   STAMP_COLUMN_ID,
@@ -20,6 +21,11 @@ describe("softOfferResultsColumns tests (issue #494)", () => {
       "firstName",
       "lastName",
       "email",
+      "permNumber",
+      "previousServiceAsUla",
+      "graduationDate",
+      "otherCampusJob",
+      "employeeId",
       "course",
       "instructor",
       "instructorEmail",
@@ -43,9 +49,18 @@ describe("softOfferResultsColumns tests (issue #494)", () => {
     expect(UNASSIGNED_COLUMN_IDS).toHaveLength(
       softOfferResultsFixtures.three.unassignedHeaders.length,
     );
-    expect(RESULTS_COLUMN_IDS[7]).toBe(STATUS_COLUMN_ID);
-    expect(RESULTS_COLUMN_IDS[8]).toBe(STAMP_COLUMN_ID);
-    expect(RESULTS_COLUMN_IDS[9]).toBe(COMMENTS_COLUMN_ID);
+    expect(RESULTS_COLUMN_IDS[12]).toBe(STATUS_COLUMN_ID);
+    expect(RESULTS_COLUMN_IDS[13]).toBe(STAMP_COLUMN_ID);
+    expect(RESULTS_COLUMN_IDS[14]).toBe(COMMENTS_COLUMN_ID);
+    // Issue #500: the five columns for the financial office staff start hidden.
+    expect(OPT_IN_COLUMN_IDS).toEqual([
+      "permNumber",
+      "previousServiceAsUla",
+      "graduationDate",
+      "otherCampusJob",
+      "employeeId",
+    ]);
+    expect(RESULTS_COLUMN_IDS.slice(3, 8)).toEqual(OPT_IN_COLUMN_IDS);
     expect(ALWAYS_SHOWN_COLUMN_IDS).toEqual(["firstName", "lastName"]);
     expect(SOFT_OFFER_COLUMNS_STORAGE_KEY).toBe(
       "softOfferResults.hiddenColumns",
@@ -71,6 +86,11 @@ describe("softOfferResultsColumns tests (issue #494)", () => {
       columnChoices(RESULTS_COLUMN_IDS, softOfferResultsFixtures.three.headers),
     ).toEqual([
       { id: "email", label: "Email" },
+      { id: "permNumber", label: "Perm number" },
+      { id: "previousServiceAsUla", label: "Prev LA Qtrs" },
+      { id: "graduationDate", label: "Expected grad date" },
+      { id: "otherCampusJob", label: "Other Campus Job?" },
+      { id: "employeeId", label: "Employee ID number" },
       { id: "course", label: "Course assignment" },
       { id: "instructor", label: "Course instructor" },
       { id: "instructorEmail", label: "Course instructor email" },
