@@ -2,8 +2,10 @@ package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.PublishedAssignmentsService;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,7 +15,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -67,16 +68,15 @@ public class AssignmentsController extends ApiController {
         .body(body);
   }
 
-  /** Whether the signed-in user holds the admin role. */
-  private boolean isAdmin() {
-    return getCurrentUser().getRoles().stream()
-        .map(GrantedAuthority::getAuthority)
-        .anyMatch("ROLE_ADMIN"::equals);
-  }
-
+  /** The recruitment; refused to an instructor while the admin has hidden it (issue #496). */
   private Recruitment recruitmentOf(Long recruitmentId) {
-    return recruitmentRepository
-        .findById(recruitmentId)
-        .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    if (!RecruitmentVisibility.visibleTo(recruitment, isAdmin())) {
+      throw new ForbiddenException(RecruitmentVisibility.HIDDEN);
+    }
+    return recruitment;
   }
 }

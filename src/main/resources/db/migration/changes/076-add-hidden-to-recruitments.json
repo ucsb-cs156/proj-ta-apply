@@ -1,0 +1,39 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "076-add-hidden-to-recruitments",
+        "author": "pc",
+        "comment": "Hidden recruitments (issue #496): whether an admin has hidden the recruitment from students and instructors. False for every existing recruitment. Roll back with liquibase rollback-count 1: the column is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "recruitments", "columnName": "hidden" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "hidden",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "rollback": [
+          { "dropColumn": { "tableName": "recruitments", "columnName": "hidden" } }
+        ]
+      }
+    }
+  ]
+}

@@ -83,4 +83,10 @@ recruitmentsFixtures.releasedUla = {
   softOfferDeadline: "2025-10-25T17:00:00",
 };
 
+/** The W26 TA recruitment (id 1) once the admin has hidden it from students and instructors (issue #496). */
+recruitmentsFixtures.hiddenTa = {
+  ...recruitmentsFixtures.threeRecruitments[2],
+  hidden: true,
+};
+
 export default recruitmentsFixtures;

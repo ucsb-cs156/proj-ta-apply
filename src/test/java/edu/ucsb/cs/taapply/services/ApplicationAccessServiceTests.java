@@ -88,4 +88,21 @@ public class ApplicationAccessServiceTests {
     assertFalse(service.commentable(closedOn(closed), LocalDate.of(2026, 8, 2)));
     assertFalse(service.commentable(closedOn(null), LocalDate.of(2026, 2, 2)));
   }
+
+  // ---- hidden recruitments (issue #496) ----
+
+  /** An open recruitment the admin has hidden accepts no applications and allows no edits. */
+  @Test
+  public void a_hidden_recruitment_accepts_no_applications_even_while_open() {
+    Recruitment hidden = recruitment(ApplicationStatus.OPEN, LocalDate.of(2026, 1, 20));
+    hidden.setHidden(true);
+
+    assertFalse(service.acceptingApplications(hidden));
+    assertFalse(service.editable(hidden));
+    // Hidden and open is neither accepting nor recently closed, so no comments either.
+    assertFalse(service.commentable(hidden, LocalDate.of(2026, 1, 10)));
+
+    hidden.setHidden(false);
+    assertTrue(service.acceptingApplications(hidden));
+  }
 }

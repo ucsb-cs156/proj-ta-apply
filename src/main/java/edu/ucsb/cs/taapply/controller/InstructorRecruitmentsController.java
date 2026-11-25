@@ -30,6 +30,7 @@ import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.RankingVersionService;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
 import edu.ucsb.cs.taapply.utilities.CourseMatching;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -317,8 +318,11 @@ public class InstructorRecruitmentsController extends ApiController {
       return List.of();
     }
 
+    // A recruitment the admin has hidden (issue #496) is not on an instructor's home page.
+    boolean admin = isAdmin();
     return StreamSupport.stream(
             recruitmentRepository.findAllById(byRecruitment.keySet()).spliterator(), false)
+        .filter(r -> RecruitmentVisibility.visibleTo(r, admin))
         .sorted(NEWEST_FIRST)
         .map(
             r -> {
@@ -424,8 +428,12 @@ public class InstructorRecruitmentsController extends ApiController {
         recruitmentRepository
             .findById(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    boolean admin = isAdmin();
+    if (!RecruitmentVisibility.visibleTo(recruitment, admin)) {
+      throw new ForbiddenException(RecruitmentVisibility.HIDDEN);
+    }
     boolean withAllocations =
-        isAdmin() || recruitment.getAllocationVisibility() == AllocationVisibility.ALL_COURSES;
+        admin || recruitment.getAllocationVisibility() == AllocationVisibility.ALL_COURSES;
     List<RecruitmentCourse> courses =
         recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
             .filter(course -> !course.isRemoved())
@@ -438,16 +446,6 @@ public class InstructorRecruitmentsController extends ApiController {
         recruitment.getType(),
         withAllocations,
         courses.stream().map(course -> CourseRow.of(course, withAllocations)).toList());
-  }
-
-  /** Whether the signed-in user holds the admin role. */
-  private boolean isAdmin() {
-    CurrentUser currentUser = getCurrentUser();
-    return currentUser != null
-        && currentUser.getRoles() != null
-        && currentUser.getRoles().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch("ROLE_ADMIN"::equals);
   }
 
   /**
@@ -557,6 +555,10 @@ public class InstructorRecruitmentsController extends ApiController {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals);
 
+    // A hidden recruitment (issue #496) is the admin's alone until it is shown again.
+    if (!RecruitmentVisibility.visibleTo(recruitment, isAdmin)) {
+      throw new ForbiddenException(RecruitmentVisibility.HIDDEN);
+    }
     // Admins may inspect historical rankings for stale, cancelled, or removed rows, but those
     // rows remain unavailable to instructors and this read exception never grants edit access:
     // an admin edits only the rankings of a course still on offer (issue #439).

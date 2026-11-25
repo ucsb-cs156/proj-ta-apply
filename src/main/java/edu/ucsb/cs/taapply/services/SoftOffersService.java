@@ -152,9 +152,11 @@ public class SoftOffersService {
     }
     Optional<Recruitment> recruitment =
         recruitmentRepository.findById(application.getRecruitmentId());
+    // A hidden recruitment (issue #496) shows the applicant nothing, its soft offer included.
     if (recruitment.isEmpty()
         || recruitment.get().getType() != RecruitmentType.ULA
-        || !SoftOffers.isReleased(recruitment.get())) {
+        || !SoftOffers.isReleased(recruitment.get())
+        || RecruitmentVisibility.isHidden(recruitment.get())) {
       return null;
     }
     Optional<RecruitmentCourse> course =

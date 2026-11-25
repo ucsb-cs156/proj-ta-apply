@@ -2,7 +2,7 @@ import { Badge, Button, Card, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link } from "react-router";
 import RecruitmentStepsPanel from "main/components/Recruitments/RecruitmentStepsPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
-import { TrashIcon } from "main/components/Common/Icons";
+import { EyeIcon, EyeSlashIcon, TrashIcon } from "main/components/Common/Icons";
 import ProgressThermometer from "main/components/Common/ProgressThermometer";
 import { applicationsText } from "main/utils/adminApplications";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
@@ -21,6 +21,11 @@ import {
   softOfferResultsPath,
   softOffersReleased,
 } from "main/utils/softOffers";
+import {
+  HIDDEN_BADGE,
+  HIDE_TOOLTIP,
+  isHidden,
+} from "main/utils/recruitmentVisibility";
 
 export const DELETE_TOOLTIP = "Delete this Recruitment";
 
@@ -48,6 +53,11 @@ type RecruitmentCardLayoutProps = {
   onNavigate?: (href: string) => void;
   /** Issue #485: the Release Soft Offers button, on a ULA card once hiring decisions are released. */
   onReleaseSoftOffers?: (recruitment: Recruitment) => void;
+  /**
+   * Issue #496: the show/hide button beside the trash can. Called with the recruitment; the caller
+   * moves it to the other state (hidden from students and instructors, or shown again).
+   */
+  onToggleHidden?: (recruitment: Recruitment) => void;
   testIdPrefix?: string;
 };
 
@@ -55,8 +65,9 @@ type RecruitmentCardLayoutProps = {
  * The admin recruitment card as docs/design/AdminUserInterfaceDesign.md lays it out, nested since
  * issue #379 inside its quarter's card (AdminQuarterCard), so its header names only the type: the
  * top row is one button that opens and closes the card (a caret, "TA" or "ULA" in the large font,
- * the status badges and the application count; aria-expanded for keyboard users) with the trash
- * icon beside it, outside the toggle. Open, the card shows the dates panel with its Change button
+ * the status badges and the application count; aria-expanded for keyboard users) with the
+ * show/hide eye (issue #496) and the trash icon beside it, outside the toggle; a hidden
+ * recruitment carries a Hidden badge. Open, the card shows the dates panel with its Change button
  * beside the Faculty Ranking Deadline; the live Recruitment Steps diagram in its collapsible
  * panel; once faculty ranking has been opened, thermometers of the courses with the minimum and
  * with the requested rankings (issue #453);
@@ -80,10 +91,12 @@ export default function RecruitmentCardLayout({
   onAction,
   onNavigate,
   onReleaseSoftOffers = () => {},
+  onToggleHidden = () => {},
   testIdPrefix = "RecruitmentCardLayout",
 }: RecruitmentCardLayoutProps): React.JSX.Element {
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
   const applicationsOpen = recruitment.applicationStatus === "OPEN";
+  const hidden = isHidden(recruitment);
   const reviewsOpen = recruitment.reviewStatus === "Open";
   const [open, toggle] = useRememberedOpen(
     `${RECRUITMENT_CARD_STORAGE_PREFIX}${recruitment.quarter}.${recruitment.type}`,
@@ -122,10 +135,33 @@ export default function RecruitmentCardLayout({
               Assignments Published
             </Badge>
           )}
+          {hidden && (
+            <Badge bg="dark" data-testid={id("hidden")}>
+              {HIDDEN_BADGE}
+            </Badge>
+          )}
           <span data-testid={id("applications")}>
             {applicationsText(applicationCount)}
           </span>
         </button>
+        {/* Issue #496: one click hides the recruitment from students and instructors, or shows it
+            again; the icon says which state it is in and the Hidden badge spells it out. */}
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id={id("hidden-tooltip")}>{HIDE_TOOLTIP}</Tooltip>}
+        >
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            className="me-2"
+            aria-label={HIDE_TOOLTIP}
+            aria-pressed={hidden}
+            onClick={() => onToggleHidden(recruitment)}
+            data-testid={id("hidden-button")}
+          >
+            {hidden ? <EyeSlashIcon /> : <EyeIcon />}
+          </Button>
+        </OverlayTrigger>
         <OverlayTrigger
           placement="top"
           overlay={

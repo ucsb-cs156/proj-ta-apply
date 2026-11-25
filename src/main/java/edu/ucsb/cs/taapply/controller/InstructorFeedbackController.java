@@ -15,6 +15,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.BudgetCreationService;
 import edu.ucsb.cs.taapply.services.BudgetService;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
 import edu.ucsb.cs.taapply.time.AppTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -269,7 +270,10 @@ public class InstructorFeedbackController extends ApiController {
         .orElse(List.of());
   }
 
-  /** The recruitments those courses are in, by id. */
+  /**
+   * The recruitments those courses are in, by id, less any the admin has hidden (issue #496): a
+   * hidden recruitment's courses are not on the instructor's home page, so they take no feedback.
+   */
   private Map<Long, Recruitment> recruitmentsOf(List<RecruitmentCourse> taught) {
     return StreamSupport.stream(
             recruitmentRepository
@@ -279,6 +283,7 @@ public class InstructorFeedbackController extends ApiController {
                         .collect(Collectors.toSet()))
                 .spliterator(),
             false)
+        .filter(r -> !RecruitmentVisibility.isHidden(r))
         .collect(Collectors.toMap(Recruitment::getId, Function.identity()));
   }
 

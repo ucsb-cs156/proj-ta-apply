@@ -43,7 +43,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -446,13 +445,6 @@ public class ApplicationsController extends ApiController {
             ? user.getEmail()
             : user.getEmail() + " (" + name.trim() + ")";
     return new ClientIdentity(user.getEmail(), label, admin);
-  }
-
-  /** Whether the signed-in user holds the admin role. */
-  private boolean isAdmin() {
-    return getCurrentUser().getRoles().stream()
-        .map(GrantedAuthority::getAuthority)
-        .anyMatch("ROLE_ADMIN"::equals);
   }
 
   private ClientIdentity identity() {

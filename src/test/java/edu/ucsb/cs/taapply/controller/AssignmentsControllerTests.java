@@ -263,4 +263,50 @@ public class AssignmentsControllerTests extends ControllerTestCase {
 
     assertEquals("layout must be course or student", responseToJson(response).get("message"));
   }
+
+  // ---- hidden recruitments (issue #496) ----
+
+  private static Recruitment hidden() {
+    Recruitment r =
+        Recruitment.builder()
+            .id(7L)
+            .quarter("20264")
+            .type(RecruitmentType.TA)
+            .assignmentsPublished(true)
+            .build();
+    r.setHidden(true);
+    return r;
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_hidden_recruitments_assignments_are_refused_to_an_instructor() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(hidden()));
+
+    MvcResult table =
+        mockMvc
+            .perform(get("/api/assignments?recruitmentId=7&layout=course"))
+            .andExpect(status().is(403))
+            .andReturn();
+    assertEquals(
+        "This recruitment is not currently available.", responseToJson(table).get("message"));
+    mockMvc
+        .perform(get("/api/assignments/csv?recruitmentId=7&layout=course"))
+        .andExpect(status().is(403));
+    verify(publishedAssignmentsService, never()).table(any(), any(), anyBoolean());
+    verify(publishedAssignmentsService, never()).csv(any(), any(), anyBoolean());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_gets_a_hidden_recruitments_assignments() throws Exception {
+    Recruitment hidden = hidden();
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(hidden));
+    when(publishedAssignmentsService.table(hidden, "course", true)).thenReturn(TABLE);
+
+    mockMvc
+        .perform(get("/api/assignments?recruitmentId=7&layout=course"))
+        .andExpect(status().isOk());
+    verify(publishedAssignmentsService).table(hidden, "course", true);
+  }
 }

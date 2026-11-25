@@ -717,4 +717,25 @@ public class InstructorFeedbackControllerTests extends ControllerTestCase {
     assertEquals(2, row.getNumTAsPreferred());
     assertNull(row.getNumULAsPreferred());
   }
+
+  // ---- hidden recruitments (issue #496) ----
+
+  /** A hidden recruitment's courses are not on the instructor's home page, so take no feedback. */
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_hidden_recruitments_quarter_is_one_the_caller_does_not_teach_in() throws Exception {
+    s26Ta.setHidden(true);
+    teaches(List.of(row(6, 12, false)), s26Ta);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/feedback/costs?quarter=20262"))
+            .andExpect(status().is(403))
+            .andReturn();
+
+    assertEquals(
+        "The authenticated instructor teaches no course in 20262",
+        responseToJson(response).get("message"));
+    verify(budgetRepository, never()).findById(any());
+  }
 }

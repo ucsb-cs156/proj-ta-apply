@@ -793,9 +793,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the oldest quarter first. Inside a quarter&apos;s card is a nested
           card for each of its recruitments, headed <strong>TA</strong> or{" "}
           <strong>ULA</strong> with its status badges and how many applications
-          it has; clicking that row closes or opens just that card, and the
-          trash icon at its right deletes the recruitment. Open, the card shows
-          the recruitment&apos;s dates, and under the dates the live{" "}
+          it has; clicking that row closes or opens just that card. At its right
+          are two buttons: an eye that hides the recruitment from students and
+          instructors or shows it again (while hidden, it is left off their home
+          pages, its pages are refused to them and it takes no new applications;
+          admins see it as before, with a <strong>Hidden</strong> badge, and the
+          change is in its Change History), and the trash icon that deletes the
+          recruitment. Open, the card shows the recruitment&apos;s dates, and
+          under the dates the live{" "}
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
           (collapsed to a one-line summary on older recruitments, expanded on
           the latest TA and ULA recruitments). Its boxes carry the lifecycle
