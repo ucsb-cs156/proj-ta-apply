@@ -195,6 +195,117 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(link.parentElement).toHaveClass("d-flex");
   });
 
+  // ---- Copy emails of applicants with no assignment (issue #497) ----
+
+  const COPY = "AdminAssignmentsPage-copy-unassigned";
+  const EMAIL_CELL = "AdminAssignmentsPage-table-cell-row-0-col-email";
+
+  /**
+   * The page the tests see, with the given tentative assignments: a fresh copy each time, since the
+   * page writes moves into the rows it was handed and the shared fixture may carry an earlier
+   * test's.
+   */
+  const pageWithAssignments = (tentativeAssignments) => ({
+    ...structuredClone(assignmentsFixtures.taPage),
+    rows: assignmentsFixtures.taPage.rows.map((row, i) => ({
+      ...structuredClone(row),
+      tentativeAssignment: tentativeAssignments[i],
+    })),
+  });
+
+  test("the copy button sits at the end of the toolbar and copies the unassigned applicants' emails, one per line", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, pageWithAssignments([10, 20, 20, null]));
+    renderPage();
+    // The button is on the page before the rows arrive, disabled; wait for the table.
+    await screen.findByTestId(EMAIL_CELL);
+    const button = screen.getByTestId(COPY);
+
+    expect(button).toHaveTextContent(
+      "Copy emails of applicants with no assignment",
+    );
+    expect(button).toHaveClass("btn-outline-primary", "btn-sm");
+    expect(button).not.toBeDisabled();
+    const wrapper = screen.getByTestId(`${COPY}-wrapper`);
+    expect(wrapper).toContainElement(button);
+    expect(wrapper).toHaveClass("d-inline-block");
+    expect(wrapper).toHaveAttribute("tabindex", "0");
+    const toolbar = screen.getByTestId(
+      "AdminAssignmentsPage-csv",
+    ).parentElement;
+    expect(toolbar).toContainElement(wrapper);
+    expect(toolbar.lastElementChild).toBe(wrapper);
+
+    await userEvent.hover(wrapper);
+    expect(await screen.findByTestId(`${COPY}-tooltip`)).toHaveTextContent(
+      "Copies the email of every applicant whose Tentative Assignment is blank, each once, in the table's order. Cancelled applications are not included.",
+    );
+
+    await userEvent.click(button);
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith("blank@ucsb.edu"),
+    );
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("1 email copied to clipboard."),
+    );
+  });
+
+  test("with several unassigned applicants the emails are joined with newlines and the toast counts them", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, pageWithAssignments([null, 20, null, null]));
+    renderPage();
+    await screen.findByTestId(EMAIL_CELL);
+
+    await userEvent.click(screen.getByTestId(COPY));
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        "ada@ucsb.edu\nalan@ucsb.edu\nblank@ucsb.edu",
+      ),
+    );
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("3 emails copied to clipboard."),
+    );
+  });
+
+  test("when every applicant is assigned the button is disabled and its tooltip says why", async () => {
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, pageWithAssignments([10, 20, 20, 30]));
+    renderPage();
+    await screen.findByTestId(EMAIL_CELL);
+    const button = screen.getByTestId(COPY);
+
+    expect(button).toBeDisabled();
+    await userEvent.hover(screen.getByTestId(`${COPY}-wrapper`));
+    expect(await screen.findByTestId(`${COPY}-tooltip`)).toHaveTextContent(
+      "Every applicant has an assignment.",
+    );
+  });
+
+  test("a browser that refuses the clipboard gets the failure toast", async () => {
+    Object.assign(navigator, {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error("no")) },
+    });
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, pageWithAssignments([10, 20, 20, null]));
+    renderPage();
+    await screen.findByTestId(EMAIL_CELL);
+
+    await userEvent.click(screen.getByTestId(COPY));
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Unable to copy to clipboard. Check your browser clipboard permissions.",
+      ),
+    );
+  });
+
   // ---- Automatically Assign No-Conflict Slots (issue #481) ----
 
   const AUTO = "AdminAssignmentsPage-auto-assign";

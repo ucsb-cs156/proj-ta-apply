@@ -3,6 +3,12 @@ import { toast } from "react-toastify";
 /** The toast after an email has been copied. */
 export const EMAIL_COPIED = "Email copied to clipboard.";
 
+/** The toast after a "copy all" button has copied several emails (issue #427, issue #497). */
+export const emailsCopiedText = (count: number): string =>
+  count === 1
+    ? "1 email copied to clipboard."
+    : `${count} emails copied to clipboard.`;
+
 /** The toast when the browser refuses to copy. */
 export const CLIPBOARD_FAILED =
   "Unable to copy to clipboard. Check your browser clipboard permissions.";

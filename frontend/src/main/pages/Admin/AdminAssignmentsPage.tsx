@@ -11,6 +11,13 @@ import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignm
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
 import AutoAssignModal from "main/components/Assignments/AutoAssignModal";
 import { AUTO_ASSIGN_LABEL, autoAssignTooltip } from "main/utils/autoAssign";
+import { copyToClipboard, emailsCopiedText } from "main/utils/clipboard";
+import {
+  COPY_UNASSIGNED_LABEL,
+  COPY_UNASSIGNED_TOOLTIP,
+  EVERY_ASSIGNED_TOOLTIP,
+  unassignedEmails,
+} from "main/utils/unassignedEmails";
 import {
   NO_APPLICANTS_NOTE,
   canCreateFakeRankings,
@@ -235,6 +242,8 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
   const columnChoices = assignmentColumnChoices(page);
   const positions = `${page.type}s`;
   const assigned = totalAssigned(page);
+  // Issue #497: the applicants with no tentative assignment, for the copy button.
+  const unassigned = unassignedEmails(page.rows);
   return (
     <BasicLayout>
       <DeveloperFooterControls controls={developerButtons} />
@@ -341,6 +350,43 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
             >
               {AUTO_ASSIGN_LABEL}
             </Button>
+          </OverlayTrigger>
+          {/* Issue #497: the emails of the applicants still without an assignment, each once, the
+              way the Instructor Feedback page copies the instructors still to answer. A disabled
+              button gets no hover events, so the tooltip hangs on a span around it and says why. */}
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip
+                id="AdminAssignmentsPage-copy-unassigned-tooltip"
+                data-testid="AdminAssignmentsPage-copy-unassigned-tooltip"
+              >
+                {unassigned.length === 0
+                  ? EVERY_ASSIGNED_TOOLTIP
+                  : COPY_UNASSIGNED_TOOLTIP}
+              </Tooltip>
+            }
+          >
+            <span
+              className="d-inline-block"
+              tabIndex={0}
+              data-testid="AdminAssignmentsPage-copy-unassigned-wrapper"
+            >
+              <Button
+                variant="outline-primary"
+                size="sm"
+                disabled={unassigned.length === 0}
+                onClick={() =>
+                  copyToClipboard(
+                    unassigned.join("\n"),
+                    emailsCopiedText(unassigned.length),
+                  )
+                }
+                data-testid="AdminAssignmentsPage-copy-unassigned"
+              >
+                {COPY_UNASSIGNED_LABEL}
+              </Button>
+            </span>
           </OverlayTrigger>
         </div>
         <AssignmentsTable

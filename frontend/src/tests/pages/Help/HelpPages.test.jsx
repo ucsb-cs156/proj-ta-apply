@@ -1816,6 +1816,15 @@ describe("Help pages (issue #140)", () => {
     expect(assignments).toHaveTextContent(
       "Allocation, how many applicants are Assigned to it so far, and how many places are still To Assign, in red when more have been assigned than allocated; those numbers stay put when you sort. To Assign is shown only when it is not zero: then its number is larger than the other two and the lecture's heading is bright yellow, so the columns that still need attention stand out, while a lecture with nothing to assign has a blank line there and no yellow. In each row, the cell of the lecture chosen in the Tentative Assignment dropdown has a thick black outline.",
     );
+    // Issue #497: the copy button for the unassigned applicants' emails.
+    expect(
+      screen.getByTestId("HelpAdminsPage-copy-unassigned-emails"),
+    ).toHaveTextContent(
+      "Copy emails of applicants with no assignment, at the end of that row, copies to the clipboard the email of every applicant whose Tentative Assignment is blank, each once and in the table's order, one per line, ready to paste into a message to them. Cancelled applications are not in the table and so are not copied. When every applicant has an assignment the button is disabled, and its tooltip says so.",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-assignments-csv").nextElementSibling,
+    ).toBe(screen.getByTestId("HelpAdminsPage-copy-unassigned-emails"));
     // Issue #475: the table's own CSV download.
     expect(
       screen.getByTestId("HelpAdminsPage-assignments-csv"),

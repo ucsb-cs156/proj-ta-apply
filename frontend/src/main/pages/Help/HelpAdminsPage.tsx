@@ -154,6 +154,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           recruitment card, which keeps every section ever offered and the three
           planning rows.
         </p>
+        <p data-testid="HelpAdminsPage-copy-unassigned-emails">
+          <strong>Copy emails of applicants with no assignment</strong>, at the
+          end of that row, copies to the clipboard the email of every applicant
+          whose Tentative Assignment is blank, each once and in the table&apos;s
+          order, one per line, ready to paste into a message to them. Cancelled
+          applications are not in the table and so are not copied. When every
+          applicant has an assignment the button is disabled, and its tooltip
+          says so.
+        </p>
         <p data-testid="HelpAdminsPage-auto-assign-slots">
           <strong>Automatically Assign No-Conflict Slots</strong>, beside
           Download CSV, fills every place where there is one clear choice. A
