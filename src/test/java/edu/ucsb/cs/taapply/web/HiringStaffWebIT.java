@@ -9,8 +9,13 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.HiringStaff;
+import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -83,16 +88,84 @@ public class HiringStaffWebIT extends WebTestCase {
     assertThat(page.getByTestId("UsersTable-cell-row-1-col-admin")).hasText("true");
   }
 
-  /** The role itself grants nothing yet (issue #505 adds its section): no Admin menu, no pages. */
+  /** The role grants only its own section (issue #505): no Admin menu, no admin pages. */
   @Test
   public void hiring_staff_have_no_admin_menu_and_are_denied_the_admin_pages() throws Exception {
     setupHiringStaffUser();
     openPage(page, "/");
 
+    assertThat(page.getByTestId("HomePageLoggedIn-hiring-staff-recruitments-none"))
+        .hasText("No ULA recruitment has released soft offers yet.");
     assertThat(page.getByTestId("HomePageLoggedIn-student")).isVisible();
     assertThat(page.getByTestId("appnavbar-admin-dropdown")).hasCount(0);
+    assertThat(page.getByTestId("HomePageLoggedIn-admin")).hasCount(0);
 
     openPage(page, "/admin/hiringStaff");
     assertThat(page.getByText("You do not have access to this page.")).isVisible();
+    openPage(page, "/admin/recruitments/1/applications");
+    assertThat(page.getByText("You do not have access to this page.")).isVisible();
+  }
+
+  /** A closed recruitment with hiring decisions released, of the given type, for F26. */
+  private Recruitment.RecruitmentBuilder published(RecruitmentType type) {
+    return Recruitment.builder()
+        .quarter("20264")
+        .type(type)
+        .applicationStatus(ApplicationStatus.CLOSED)
+        .reviewStatus("Closed")
+        .tentativeOpeningDate(LocalDate.of(2026, 9, 1))
+        .primaryConsiderationDate(LocalDate.of(2026, 9, 20))
+        .assignmentsPublished(true)
+        .assignmentsPublishedAt(LocalDateTime.of(2026, 10, 1, 9, 0));
+  }
+
+  /**
+   * Issue #505: the Hiring Staff section has a card only for the ULA recruitment whose soft offers
+   * are released, with one button, Soft Offer Results; the page opens for them, Change Deadline
+   * included, and the change is written to the recruitment's history.
+   */
+  @Test
+  public void hiring_staff_see_released_ula_recruitments_and_can_change_the_deadline()
+      throws Exception {
+    Recruitment released =
+        recruitmentRepository.save(
+            published(RecruitmentType.ULA)
+                .softOffersReleasedAt(LocalDateTime.of(2026, 10, 20, 9, 30))
+                .softOfferDeadline(LocalDateTime.of(2999, 12, 1, 17, 0))
+                .build());
+    // Neither of these has soft offer results: a TA recruitment, and a ULA one not yet released.
+    recruitmentRepository.save(published(RecruitmentType.TA).build());
+    recruitmentRepository.save(published(RecruitmentType.ULA).quarter("20271").build());
+    setupHiringStaffUser();
+    openPage(page, "/");
+
+    String section = "HomePageLoggedIn-hiring-staff-recruitments";
+    String card = section + "-card-" + released.getId() + "-";
+    assertThat(page.getByTestId(card + "name")).hasText("F26 ULA");
+    assertThat(page.getByTestId(card + "release"))
+        .hasText("Soft offers released 10/20/2026, 9:30:00 AM. Deadline: 12/1/2999, 5:00:00 PM.");
+    assertEquals(1, page.getByTestId(section).locator("[data-testid$='-card']").count());
+    assertEquals(
+        1, page.getByTestId(card + "card").locator("a, button").count(), "one button only");
+    assertThat(page.getByTestId(section + "-none")).hasCount(0);
+
+    page.getByTestId(card + "soft-offer-results-button").click();
+    assertThat(page.getByTestId("SoftOfferResultsPage-title"))
+        .hasText("Soft Offer Results: F26 ULA");
+    assertThat(page.getByTestId("SoftOfferResultsPage-counts"))
+        .hasText("0 assigned ULAs: 0 proceed, 0 declined, 0 no response yet.");
+    assertThat(page.getByTestId("SoftOfferResultsPage-csv")).isVisible();
+
+    String modal = "SoftOfferResultsPage-deadline";
+    page.getByTestId("SoftOfferResultsPage-change-deadline").click();
+    assertThat(page.getByTestId(modal + "-deadline-input")).hasValue("2999-12-01T17:00");
+    page.getByTestId(modal + "-deadline-input").fill("2999-12-15T12:00");
+    page.getByTestId(modal + "-confirm").click();
+    assertThat(page.getByText("Soft offer deadline changed.")).isVisible();
+    assertThat(page.getByTestId("SoftOfferResultsPage-release"))
+        .containsText("Deadline: 12/15/2999, 12:00:00 PM.");
+    Recruitment after = recruitmentRepository.findById(released.getId()).orElseThrow();
+    assertEquals(LocalDateTime.of(2999, 12, 15, 12, 0), after.getSoftOfferDeadline());
+    assertEquals(LocalDateTime.of(2026, 10, 20, 9, 30), after.getSoftOffersReleasedAt());
   }
 }

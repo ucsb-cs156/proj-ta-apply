@@ -11,6 +11,7 @@ import {
   SOFT_OFFER_RESULTS_URL,
   deadlineAsLocal,
 } from "main/utils/softOffers";
+import { HIRING_STAFF_RECRUITMENTS_URL } from "main/utils/hiringStaff";
 import { isFutureWallClock } from "main/utils/pacificTime";
 import { useBackendMutation } from "main/utils/useBackend";
 
@@ -54,7 +55,12 @@ export default function ChangeSoftOfferDeadlineModal({
       },
       onError: (error) => setRefusal(apiErrorMessage(error)),
     },
-    ["/api/admin/recruitments/all", SOFT_OFFER_RESULTS_URL],
+    // The admin's cards, the hiring staff's cards and the results page's own lookup (issue #505).
+    [
+      "/api/admin/recruitments/all",
+      HIRING_STAFF_RECRUITMENTS_URL,
+      SOFT_OFFER_RESULTS_URL,
+    ],
   );
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {

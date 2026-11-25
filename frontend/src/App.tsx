@@ -415,7 +415,7 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<SoftOfferResultsPage />}
-                enforceRole={"ROLE_ADMIN"}
+                enforceRole={["ROLE_ADMIN", "ROLE_HIRING_STAFF"]}
                 currentUser={currentUser}
               />
             }

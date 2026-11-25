@@ -699,13 +699,14 @@ describe("RecruitmentCards tests", () => {
     expect(mockToast).toHaveBeenCalledTimes(1);
     // No confirmation dialog on the way.
     expect(screen.queryByRole("dialog")).toBeNull();
-    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(5));
+    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(6));
     for (const key of [
       "/api/admin/recruitments/all",
       "/api/admin/recruitments/steps",
       "/api/instructor/recruitments",
       "/api/recruitments/applicable",
       "/api/applications/mine",
+      "/api/hiringStaff/recruitments",
     ]) {
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: [key] });
     }
@@ -796,7 +797,7 @@ describe("RecruitmentCards tests", () => {
     expect(axiosMock.history.put[0].url).toBe("/api/admin/recruitments/status");
     expect(axiosMock.history.put[0].params).toEqual({ id: 3, status: "OPEN" });
     // The list is refreshed from the backend afterwards, and the modal closes.
-    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(5));
+    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(6));
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ["/api/admin/recruitments/all"],
     });
@@ -809,6 +810,7 @@ describe("RecruitmentCards tests", () => {
       "/api/instructor/recruitments",
       "/api/recruitments/applicable",
       "/api/applications/mine",
+      "/api/hiringStaff/recruitments",
     ]) {
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: [key] });
     }

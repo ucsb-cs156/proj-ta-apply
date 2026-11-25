@@ -122,6 +122,7 @@ describe("ChangeSoftOfferDeadlineModal tests (issue #487)", () => {
     expect(onHide).toHaveBeenCalledTimes(1);
     for (const key of [
       "/api/admin/recruitments/all",
+      "/api/hiringStaff/recruitments",
       "/api/admin/softOffers",
     ]) {
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: [key] });

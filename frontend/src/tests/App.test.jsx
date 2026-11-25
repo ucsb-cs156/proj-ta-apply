@@ -33,6 +33,10 @@ describe("App", () => {
     axiosMock
       .onGet("/api/admin/recruitments/all")
       .reply(200, recruitmentsFixtures.threeRecruitments);
+    // Issue #505: the Soft Offer Results page names its recruitment from this list.
+    axiosMock
+      .onGet("/api/hiringStaff/recruitments")
+      .reply(200, recruitmentsFixtures.threeRecruitments);
     axiosMock.onGet("/api/admin/applications/all").reply(200, []);
     axiosMock
       .onGet("/api/admin/recruitmentaudittrail/all")
@@ -182,7 +186,7 @@ describe("App", () => {
     expect(screen.queryByText(/changes recorded/)).toBeNull();
   });
 
-  test("/admin/recruitments/:id/softOffers is the soft offer results page, for admins only (issue #487)", async () => {
+  test("/admin/recruitments/:id/softOffers is the soft offer results page, for admins and hiring staff (issues #487, #505)", async () => {
     axiosMock
       .onGet("/api/admin/softOffers")
       .reply(200, softOfferResultsFixtures.empty);
@@ -199,6 +203,19 @@ describe("App", () => {
     ).toHaveTextContent(
       "0 assigned ULAs: 0 proceed, 0 declined, 0 no response yet.",
     );
+    cleanup();
+
+    // Issue #505: hiring staff reach it too.
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.hiringStaffUser);
+    renderApp();
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Soft Offer Results: W26 TA",
+      }),
+    ).toBeInTheDocument();
     cleanup();
 
     axiosMock

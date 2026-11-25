@@ -82,6 +82,18 @@ public class AdminSoftOffersControllerTests extends ControllerTestCase {
     verify(softOffersService, never()).results(any());
   }
 
+  /** Issue #505: hiring staff get the results and the CSV, the same as an admin. */
+  @WithMockUser(roles = {"USER", "HIRING_STAFF"})
+  @Test
+  public void hiring_staff_get_the_results_and_the_csv() throws Exception {
+    when(recruitmentRepository.findById(5L)).thenReturn(Optional.of(ULA));
+    when(softOffersService.results(ULA)).thenReturn(results());
+    when(softOffersService.resultsCsv(ULA)).thenReturn("\"a\"\n");
+
+    mockMvc.perform(get("/api/admin/softOffers?recruitmentId=5")).andExpect(status().isOk());
+    mockMvc.perform(get("/api/admin/softOffers/csv?recruitmentId=5")).andExpect(status().isOk());
+  }
+
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void an_admin_gets_the_results() throws Exception {

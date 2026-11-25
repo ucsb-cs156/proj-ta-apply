@@ -952,6 +952,24 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
 
+  /** Issue #505: hiring staff reach this through Change Deadline on the Soft Offer Results page. */
+  @WithMockUser(roles = {"USER", "HIRING_STAFF"})
+  @Test
+  public void hiring_staff_can_change_the_deadline() throws Exception {
+    Recruitment r = releasedUla();
+    r.setSoftOffersReleasedAt(LocalDateTime.of(2026, 11, 20, 9, 30));
+    r.setSoftOfferDeadline(LocalDateTime.of(2026, 11, 25, 17, 0));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("softOfferDeadline", "2026-11-25T17:00"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc.perform(put(SOFT_OFFERS_URL).with(csrf())).andExpect(status().isOk());
+
+    assertEquals(LocalDateTime.of(2999, 12, 1, 17, 0), r.getSoftOfferDeadline());
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
+  }
+
   /** Once released, the same call only moves the deadline; the release moment is kept. */
   @WithMockUser(roles = {"ADMIN"})
   @Test
