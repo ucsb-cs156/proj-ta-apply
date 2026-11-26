@@ -14,8 +14,11 @@ export const HIDDEN_BADGE = "Hidden";
 /** PUT here with id and hidden=true|false. */
 export const HIDDEN_URL = "/api/admin/recruitments/hidden";
 
-/** Whether the admin has hidden the recruitment; one with no value (older data) is shown. */
-export const isHidden = (recruitment: Recruitment): boolean =>
+/**
+ * Whether the admin has hidden the recruitment; one with no value (older data) is shown. Takes the
+ * student's view of a recruitment too (issue #503), which has the flag and not the review fields.
+ */
+export const isHidden = (recruitment: Pick<Recruitment, "hidden">): boolean =>
   recruitment.hidden === true;
 
 /** The toast after the button has moved the recruitment to the other state. */

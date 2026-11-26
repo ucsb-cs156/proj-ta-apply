@@ -28,6 +28,7 @@ function renderDashboard(
   recruitments = three,
   applications = [],
   drafts = undefined,
+  showHidden = undefined,
 ) {
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -36,6 +37,7 @@ function renderDashboard(
           recruitments={recruitments}
           applications={applications}
           drafts={drafts}
+          showHidden={showHidden}
           testIdPrefix="D"
         />
       </MemoryRouter>
@@ -98,6 +100,48 @@ describe("StudentDashboard tests", () => {
       "Applications are not currently being accepted.",
     );
     expect(screen.queryByTestId("D-upcoming")).toBeNull();
+  });
+
+  test("a hidden upcoming recruitment is left out, so with nothing else upcoming there is no section (issue #503)", () => {
+    renderDashboard([{ ...upcomingTa, hidden: true }, openUla]);
+
+    expect(
+      screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent),
+    ).toEqual(["Current and Recent Recruitments"]);
+    expect(screen.queryByTestId("D-upcoming")).toBeNull();
+    expect(screen.getByTestId("D-current-card-2-card")).toBeInTheDocument();
+  });
+
+  test("a hidden open recruitment is left out of the cards too", () => {
+    renderDashboard(
+      [upcomingTa, { ...openUla, hidden: true }],
+      [],
+      undefined,
+      false,
+    );
+
+    expect(screen.getByTestId("D-upcoming")).toBeInTheDocument();
+    expect(screen.queryByTestId("D-current-card-2-card")).toBeNull();
+    expect(screen.getByTestId("D-none-open")).toHaveTextContent(
+      "Applications are not currently being accepted.",
+    );
+  });
+
+  test("with showHidden an admin sees the hidden upcoming recruitment, marked Hidden", () => {
+    renderDashboard(
+      [{ ...upcomingTa, hidden: true }, openUla],
+      [],
+      undefined,
+      true,
+    );
+
+    expect(
+      screen.getByTestId("D-upcoming-cell-row-0-col-quarter"),
+    ).toHaveTextContent("S26");
+    expect(screen.getByTestId("D-upcoming-hidden-3")).toHaveTextContent(
+      "Hidden",
+    );
+    expect(screen.getByTestId("D-current-card-2-card")).toBeInTheDocument();
   });
 
   test("past recruitments appear only when the student applied to them", () => {

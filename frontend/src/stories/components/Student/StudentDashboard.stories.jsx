@@ -45,6 +45,23 @@ NothingOpen.args = { recruitments: [], applications: [] };
 export const NotYetApplied = Template.bind({});
 NotYetApplied.args = { recruitments: three, applications: [] };
 
+/**
+ * An admin's own student section (issue #503): the hidden S26 TA recruitment stays under Upcoming
+ * Recruitments with a Hidden badge. Without showHidden, as a student sees it, the row is gone.
+ */
+export const AdminSeesHiddenUpcoming = Template.bind({});
+AdminSeesHiddenUpcoming.args = {
+  recruitments: [{ ...three[0], hidden: true }, openUla, closedTa],
+  applications: [],
+  showHidden: true,
+};
+
+export const StudentWithHiddenUpcoming = Template.bind({});
+StudentWithHiddenUpcoming.args = {
+  recruitments: [{ ...three[0], hidden: true }, openUla, closedTa],
+  applications: [],
+};
+
 /** Begun and not submitted: Continue editing draft application, with the red warning. */
 export const WithADraft = Template.bind({});
 WithADraft.args = {

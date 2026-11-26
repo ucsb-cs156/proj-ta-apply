@@ -165,6 +165,8 @@ export default function HomePageLoggedIn(): React.JSX.Element {
             drafts={drafts ?? []}
             // Stryker disable next-line all : don't test default value of empty list
             softOffers={softOffers ?? []}
+            // Issue #503: an admin sees a hidden recruitment here too, marked Hidden.
+            showHidden={isAdmin}
             testIdPrefix="HomePageLoggedIn-dashboard"
           />
         </section>

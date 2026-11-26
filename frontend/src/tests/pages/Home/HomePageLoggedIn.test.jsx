@@ -324,6 +324,41 @@ describe("HomePageLoggedIn tests", () => {
     ).toHaveLength(0);
   });
 
+  // ---- hidden recruitments in the student section (issue #503) ----
+
+  test("a hidden upcoming recruitment fed to a student's page is not listed", async () => {
+    // The backend leaves it out already; this is the client-side guard.
+    renderHome(apiCurrentUserFixtures.userOnly, {
+      recruitments: [{ ...upcomingTa, hidden: true }, closedTa],
+    });
+
+    expect(
+      await screen.findByTestId(
+        "HomePageLoggedIn-dashboard-current-card-1-card",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("HomePageLoggedIn-dashboard-upcoming"),
+    ).toBeNull();
+    expect(screen.queryByText("Upcoming Recruitments")).toBeNull();
+  });
+
+  test("an admin's own student section lists the hidden upcoming recruitment, marked Hidden", async () => {
+    renderHome(apiCurrentUserFixtures.adminUser, {
+      adminRecruitments: [{ ...upcomingTa, hidden: true }],
+      recruitments: [{ ...upcomingTa, hidden: true }],
+    });
+
+    expect(
+      await screen.findByTestId(
+        "HomePageLoggedIn-dashboard-upcoming-cell-row-0-col-quarter",
+      ),
+    ).toHaveTextContent("S26");
+    expect(
+      screen.getByTestId("HomePageLoggedIn-dashboard-upcoming-hidden-3"),
+    ).toHaveTextContent("Hidden");
+  });
+
   // ---- the student section is fed from the backend ----
 
   test("the recruitments and applications feed the student section", async () => {

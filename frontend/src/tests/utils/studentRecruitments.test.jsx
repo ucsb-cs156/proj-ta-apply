@@ -153,6 +153,56 @@ describe("studentRecruitments", () => {
     expect(result.past.map((r) => r.id)).toEqual([12, 13]);
   });
 
+  test("a hidden recruitment goes nowhere, upcoming included, unless hidden ones are asked for", () => {
+    // Issue #503: one hidden recruitment of each kind, beside its shown twin.
+    const hiddenUpcoming = { ...upcomingTa, id: 21, hidden: true };
+    const hiddenOpen = { ...openUla, id: 22, hidden: true };
+    const hiddenPast = {
+      ...closedTa,
+      id: 23,
+      actualClosingDate: "2025-01-15",
+      hidden: true,
+    };
+    const shownPast = { ...closedTa, id: 24, actualClosingDate: "2025-01-15" };
+    const applications = [
+      { ...applicationsFixtures.oneTaApplication, id: 31, recruitmentId: 23 },
+      { ...applicationsFixtures.oneTaApplication, id: 32, recruitmentId: 24 },
+    ];
+    const list = [
+      hiddenUpcoming,
+      upcomingTa,
+      hiddenOpen,
+      openUla,
+      hiddenPast,
+      shownPast,
+    ];
+
+    const student = classifyRecruitments(list, applications, "2026-03-01");
+    expect(student.upcoming).toEqual([upcomingTa]);
+    expect(student.current).toEqual([openUla]);
+    expect(student.past).toEqual([shownPast]);
+    // The default is the same as saying so.
+    expect(
+      classifyRecruitments(list, applications, "2026-03-01", false),
+    ).toEqual(student);
+
+    // An admin's own student section keeps them (issue #503).
+    const admin = classifyRecruitments(list, applications, "2026-03-01", true);
+    expect(admin.upcoming.map((r) => r.id)).toEqual([21, 3]);
+    expect(admin.current.map((r) => r.id)).toEqual([22, 2]);
+    expect(admin.past.map((r) => r.id)).toEqual([23, 24]);
+
+    // A recruitment with no hidden value, as older data has, is shown.
+    const { hidden: _unused, ...noValue } = hiddenUpcoming;
+    expect(
+      classifyRecruitments(
+        [noValue, { ...noValue, hidden: false }],
+        [],
+        "2026-03-01",
+      ).upcoming,
+    ).toHaveLength(2);
+  });
+
   test("classifyRecruitments tolerates non-array inputs and defaults to today", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 2, 1, 12, 0, 0));

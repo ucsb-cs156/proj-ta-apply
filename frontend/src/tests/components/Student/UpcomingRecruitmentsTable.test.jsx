@@ -92,6 +92,25 @@ describe("UpcomingRecruitmentsTable tests", () => {
     expect(shown()).toEqual(["any day now", "1 day", "30 days"]);
   });
 
+  test("a hidden recruitment carries a Hidden badge after its type (issue #503)", () => {
+    renderTable([
+      upcomingTa,
+      { ...upcomingTa, id: 9, type: "ULA", hidden: true },
+    ]);
+
+    expect(screen.getByTestId("U-cell-row-0-col-type")).toHaveTextContent(
+      /^TA$/,
+    );
+    expect(screen.queryByTestId("U-hidden-3")).toBeNull();
+    expect(screen.getByTestId("U-cell-row-1-col-type")).toHaveTextContent(
+      "ULA Hidden",
+    );
+    const badge = screen.getByTestId("U-hidden-9");
+    expect(badge).toHaveTextContent("Hidden");
+    expect(badge).toHaveClass("badge", "bg-dark");
+    expect(screen.getByTestId("U-cell-row-1-col-type")).toContainElement(badge);
+  });
+
   test("renders an empty table and tolerates a non-array prop", () => {
     renderTable(null, "UpcomingRecruitmentsTable");
     expect(screen.getByText("Opens in")).toBeInTheDocument();

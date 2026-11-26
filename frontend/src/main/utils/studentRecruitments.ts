@@ -1,6 +1,7 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { isRecentlyClosed, todayIso } from "main/utils/applicationAccess";
+import { isHidden } from "main/utils/recruitmentVisibility";
 import { sortRecruitments } from "main/utils/recruitmentSort";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -51,13 +52,21 @@ export type StudentRecruitments = {
  * Sorts every recruitment into the three parts of the student's home page (issue #107). An open
  * recruitment that has never been opened cannot exist (opening stamps the date), so the three are
  * disjoint; a past recruitment the student never applied to is left out altogether.
+ *
+ * A recruitment the admin has hidden (issue #496) goes nowhere, upcoming included (issue #503),
+ * unless includeHidden says this is an admin, whose own student section shows everything. The
+ * backend already leaves hidden recruitments out of a student's list; this guard is for a list
+ * that was not filtered there.
  */
 export function classifyRecruitments(
   recruitments: StudentRecruitment[],
   applications: Application[],
   today: string = todayIso(),
+  includeHidden: boolean = false,
 ): StudentRecruitments {
-  const list = Array.isArray(recruitments) ? recruitments : [];
+  const list = (Array.isArray(recruitments) ? recruitments : []).filter(
+    (r) => includeHidden || !isHidden(r),
+  );
   const applicationList = Array.isArray(applications) ? applications : [];
 
   const upcoming = list.filter(

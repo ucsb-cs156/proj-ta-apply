@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -33,6 +34,7 @@ import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import java.time.LocalDate;
 import java.util.List;
@@ -128,7 +130,8 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
                         r.getPrimaryConsiderationDate(),
                         r.getActualOpeningDate(),
                         r.getActualClosingDate(),
-                        r.getCourseDataLastUpdated()))
+                        r.getCourseDataLastUpdated(),
+                        RecruitmentVisibility.isHidden(r)))
             .toList());
   }
 
@@ -725,6 +728,9 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
         .thenReturn(List.of(hidden, OPEN_TA));
 
     assertEquals(applicantJson(List.of(hidden, OPEN_TA)), getJson("/api/recruitments/applicable"));
+    // Issue #503: the flag is in the DTO, so the admin's Upcoming Recruitments table can mark it.
+    assertTrue(getJson("/api/recruitments/applicable").contains("\"hidden\":true"));
+    assertTrue(getJson("/api/recruitments/applicable").contains("\"hidden\":false"));
     assertEquals(applicantJson(List.of(OPEN_TA)), getJson("/api/recruitments/open"));
   }
 
