@@ -3,11 +3,17 @@
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** The recruitment fields applicants need, without faculty-only review lifecycle details. */
-<span class="fc" id="L10">public record ApplicantRecruitmentDto(</span>
+/**
+ * The recruitment fields applicants need, without faculty-only review lifecycle details. The hidden
+ * flag (issue #496) is false for everything a student or instructor gets, since a hidden
+ * recruitment is filtered out for them; an admin's own student section uses it to mark the
+ * recruitment Hidden (issue #503).
+ */
+<span class="fc" id="L16">public record ApplicantRecruitmentDto(</span>
     Long id,
     String quarter,
     RecruitmentType type,
@@ -16,19 +22,21 @@ import java.time.LocalDateTime;
     LocalDate primaryConsiderationDate,
     LocalDate actualOpeningDate,
     LocalDate actualClosingDate,
-    LocalDateTime courseDataLastUpdated) {
+    LocalDateTime courseDataLastUpdated,
+    boolean hidden) {
 
   public static ApplicantRecruitmentDto from(Recruitment recruitment) {
-<span class="fc" id="L22">    return new ApplicantRecruitmentDto(</span>
-<span class="fc" id="L23">        recruitment.getId(),</span>
-<span class="fc" id="L24">        recruitment.getQuarter(),</span>
-<span class="fc" id="L25">        recruitment.getType(),</span>
-<span class="fc" id="L26">        recruitment.getApplicationStatus(),</span>
-<span class="fc" id="L27">        recruitment.getTentativeOpeningDate(),</span>
-<span class="fc" id="L28">        recruitment.getPrimaryConsiderationDate(),</span>
-<span class="fc" id="L29">        recruitment.getActualOpeningDate(),</span>
-<span class="fc" id="L30">        recruitment.getActualClosingDate(),</span>
-<span class="fc" id="L31">        recruitment.getCourseDataLastUpdated());</span>
+<span class="fc" id="L29">    return new ApplicantRecruitmentDto(</span>
+<span class="fc" id="L30">        recruitment.getId(),</span>
+<span class="fc" id="L31">        recruitment.getQuarter(),</span>
+<span class="fc" id="L32">        recruitment.getType(),</span>
+<span class="fc" id="L33">        recruitment.getApplicationStatus(),</span>
+<span class="fc" id="L34">        recruitment.getTentativeOpeningDate(),</span>
+<span class="fc" id="L35">        recruitment.getPrimaryConsiderationDate(),</span>
+<span class="fc" id="L36">        recruitment.getActualOpeningDate(),</span>
+<span class="fc" id="L37">        recruitment.getActualClosingDate(),</span>
+<span class="fc" id="L38">        recruitment.getCourseDataLastUpdated(),</span>
+<span class="fc" id="L39">        RecruitmentVisibility.isHidden(recruitment));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

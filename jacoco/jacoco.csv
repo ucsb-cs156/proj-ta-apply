@@ -228,7 +228,7 @@ taapply,edu.ucsb.cs.taapply.models,DraftConflict,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.models,SoftOfferDto.Meeting,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.models,CourseSections,0,157,0,14,0,38,0,16,0,9
 taapply,edu.ucsb.cs.taapply.models,Quarter,0,169,0,18,0,37,0,19,0,10
-taapply,edu.ucsb.cs.taapply.models,ApplicantRecruitmentDto,0,52,0,0,0,11,0,2,0,2
+taapply,edu.ucsb.cs.taapply.models,ApplicantRecruitmentDto,0,57,0,0,0,12,0,2,0,2
 taapply,edu.ucsb.cs.taapply.models,CourseSections.Meeting,0,27,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.utilities,CourseMatching,0,57,0,10,0,5,0,11,0,6
 taapply,edu.ucsb.cs.taapply.utilities,CanonicalFormConverter,0,15,0,0,0,3,0,3,0,3
