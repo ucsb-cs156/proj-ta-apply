@@ -322,8 +322,9 @@ public class RecruitmentsController extends ApiController {
               + " to answer by the deadline. Once released, calling again changes only the deadline."
               + " Refused with a 400 unless the recruitment is a ULA one with hiring decisions"
               + " released, and unless the deadline (Pacific wall-clock time, yyyy-MM-ddTHH:mm) is"
-              + " in the future. Both fields are recorded in the audit trail.")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
+              + " in the future. Both fields are recorded in the audit trail. Hiring staff may"
+              + " call it too (issue #505), for Change Deadline on the Soft Offer Results page.")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_HIRING_STAFF')")
   @Transactional
   @PutMapping("/softOffers")
   public Recruitment releaseSoftOffers(

@@ -1032,9 +1032,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
             New Hire form done, the Other Campus Job FLSA conflict, In UCPath,
             I-9 Complete and Staff Comments). The Comments column can be
             dragged, by the handle at the right edge of its heading, between
-            200px and 80% of the window&apos;s width. Admins only: the page
-            holds the applicants&apos; comments. Soft offers are optional and
-            not a step of the diagram.
+            200px and 80% of the window&apos;s width. Admins and{" "}
+            <a href="#hiring-staff">hiring staff</a> only: the page holds the
+            applicants&apos; comments. Soft offers are optional and not a step
+            of the diagram.
           </li>
           <li id="change-history" data-testid="HelpAdminsPage-change-history">
             <strong>Change History.</strong> Every change to the recruitment

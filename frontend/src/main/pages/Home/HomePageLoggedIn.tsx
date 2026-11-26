@@ -10,11 +10,19 @@ import InstructorRecruitmentCards, {
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import type { DraftApplication } from "main/utils/draftApplications";
 import { SOFT_OFFERS_MINE_URL, type SoftOffer } from "main/utils/softOffers";
+import HiringStaffDashboard from "main/components/HiringStaff/HiringStaffDashboard";
+import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import {
+  HIRING_STAFF_RECRUITMENTS_URL,
+  HIRING_STAFF_ROLE,
+} from "main/utils/hiringStaff";
 
 /**
  * The home page, in a section per role (issue #107): Admin (the recruitments, whole, as issue #141
  * asks: the former Admin > Recruitments page, with its create button and cards) for an admin,
- * Instructor for an instructor, and Student for everyone, since any signed-in user may apply. No
+ * Instructor for an instructor, Hiring Staff (issue #505: the ULA recruitments with soft offers
+ * released, each with its Soft Offer Results button) for hiring staff, and Student for everyone,
+ * since any signed-in user may apply. No
  * page title or greeting (issue #118): the navbar already says where you are and who you are.
  */
 export default function HomePageLoggedIn(): React.JSX.Element {
@@ -22,6 +30,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
 
   const isAdmin = hasRole(currentUser, "ROLE_ADMIN");
   const isInstructor = hasRole(currentUser, "ROLE_INSTRUCTOR");
+  const isHiringStaff = hasRole(currentUser, HIRING_STAFF_ROLE);
 
   // The instructor's recruitments are looked up by email (issue #127); only an instructor asks.
   // Stryker disable next-line all : a logged-out user is never an instructor, so the fallback is dead
@@ -40,6 +49,20 @@ export default function HomePageLoggedIn(): React.JSX.Element {
     false,
     // Stryker disable next-line all : the guard only avoids a request the backend would refuse
     { enabled: isInstructor },
+  );
+
+  // Issue #505: the ULA recruitments with soft offers released, for the Hiring Staff section.
+  const { data: hiringStaffRecruitments } = useRefreshingBackend<Recruitment[]>(
+    // Stryker disable next-line all : the cache key is not observable from here
+    [HIRING_STAFF_RECRUITMENTS_URL],
+    // Stryker disable next-line all : axios sends a GET whatever the method says
+    { method: "GET", url: HIRING_STAFF_RECRUITMENTS_URL },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    // Stryker disable next-line all : whether a failure toasts is not tested for each request
+    false,
+    // Stryker disable next-line all : the guard only avoids a request the backend would refuse
+    { enabled: isHiringStaff },
   );
 
   // Everyone signed in is a student as far as applying goes; nothing is asked until the user has
@@ -91,7 +114,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
 
   // The Student heading only earns its place when there is another section to tell it from
   // (issue #118); a plain student's page is the student section and nothing else.
-  const otherSections = isAdmin || isInstructor;
+  const otherSections = isAdmin || isInstructor || isHiringStaff;
 
   return (
     <BasicLayout>
@@ -119,6 +142,17 @@ export default function HomePageLoggedIn(): React.JSX.Element {
                 testIdPrefix="HomePageLoggedIn-instructor-recruitments"
               />
             )}
+          </section>
+        )}
+
+        {isHiringStaff && (
+          <section className="mb-4" data-testid="HomePageLoggedIn-hiring-staff">
+            <h2>Hiring Staff</h2>
+            <HiringStaffDashboard
+              // Stryker disable next-line all : don't test default value of empty list
+              recruitments={hiringStaffRecruitments ?? []}
+              testIdPrefix="HomePageLoggedIn-hiring-staff-recruitments"
+            />
           </section>
         )}
 

@@ -25,6 +25,7 @@ import {
   UNASSIGNED_COLUMN_IDS,
   columnChoices,
 } from "main/utils/softOfferResultsColumns";
+import { HIRING_STAFF_RECRUITMENTS_URL } from "main/utils/hiringStaff";
 import { useBackend } from "main/utils/useBackend";
 import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
 
@@ -32,8 +33,9 @@ import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
  * The admin's Soft Offer Results (issue #487): /admin/recruitments/:recruitmentId/softOffers. When
  * the soft offers were released and their deadline (with Change Deadline), how many assigned ULAs
  * have answered each way, one row per assigned ULA with their answer, a second table of answers
- * from applicants no longer assigned, and the main table as a CSV. Admins only: the answers carry
- * the applicants' comments. Every column but First name and Last name can be hidden from the
+ * from applicants no longer assigned, and the main table as a CSV. For admins and hiring staff
+ * (issue #505), who look the recruitment up in the list of those with soft offer results, since
+ * only admins may read the list of every recruitment; the answers carry the applicants' comments. Every column but First name and Last name can be hidden from the
  * Columns menu (issue #494), a choice the browser remembers for every recruitment's results, and
  * the second table follows the same choices for the columns it shares.
  */
@@ -50,8 +52,8 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
   // Stryker disable all : the query key and axios's default GET are not observable; what is done
   // with the answer is tested
   const { data: recruitments } = useBackend<Recruitment[]>(
-    ["/api/admin/recruitments/all"],
-    { method: "GET", url: "/api/admin/recruitments/all" },
+    [HIRING_STAFF_RECRUITMENTS_URL],
+    { method: "GET", url: HIRING_STAFF_RECRUITMENTS_URL },
     [],
   );
   // Stryker restore all

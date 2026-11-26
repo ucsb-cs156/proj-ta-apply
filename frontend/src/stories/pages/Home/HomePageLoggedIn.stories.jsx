@@ -51,6 +51,10 @@ const handlers = (user, backend = {}) => [
   http.get("/api/instructor/recruitments", () =>
     HttpResponse.json(backend.instructorRecruitments ?? []),
   ),
+  // Issue #505: the hiring staff's recruitments.
+  http.get("/api/hiringStaff/recruitments", () =>
+    HttpResponse.json(backend.hiringStaffRecruitments ?? []),
+  ),
   http.put("/api/applications/cancel", () =>
     HttpResponse.json(applicationsFixtures.oneCancelledApplication),
   ),
@@ -126,4 +130,20 @@ InstructorWithCourses.parameters = {
       instructorRecruitments: instructorRecruitmentsFixtures.twoRecruitments,
     }),
   },
+};
+
+/** Issue #505: the Hiring Staff section, a card per released ULA recruitment, then Student. */
+export const HiringStaff = Template.bind({});
+HiringStaff.parameters = {
+  msw: {
+    handlers: handlers(apiCurrentUserFixtures.hiringStaffUser, {
+      hiringStaffRecruitments: [recruitmentsFixtures.releasedUla],
+    }),
+  },
+};
+
+/** Hiring staff before any ULA recruitment has released soft offers. */
+export const HiringStaffNothingReleased = Template.bind({});
+HiringStaffNothingReleased.parameters = {
+  msw: { handlers: handlers(apiCurrentUserFixtures.hiringStaffUser) },
 };

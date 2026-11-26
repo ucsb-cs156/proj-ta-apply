@@ -21,7 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * The admin's Soft Offer Results (issue #487): the assigned ULAs with their answers, and the same
- * table as a CSV. Admins only: the answers carry the applicants' comments.
+ * table as a CSV. For admins and hiring staff (issue #505), never instructors or students: the
+ * answers carry the applicants' comments.
  */
 @Tag(name = "Soft Offers (admin)")
 @RequestMapping("/api/admin/softOffers")
@@ -39,7 +40,7 @@ public class AdminSoftOffersController extends ApiController {
               + " Offer Response Date/Time and Comments), the counts, and a second table of answers"
               + " from applicants no longer assigned. 404 for an unknown recruitment; 400 unless it"
               + " is a ULA one with soft offers released.")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_HIRING_STAFF')")
   @GetMapping("")
   public SoftOffersService.Results results(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
@@ -47,7 +48,7 @@ public class AdminSoftOffersController extends ApiController {
   }
 
   @Operation(summary = "The main soft offer results table as CSV")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_HIRING_STAFF')")
   @GetMapping(value = "/csv", produces = "text/csv")
   public ResponseEntity<String> csv(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {

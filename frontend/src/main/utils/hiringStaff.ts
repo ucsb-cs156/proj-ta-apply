@@ -20,3 +20,11 @@ export const HIRING_STAFF_NOTE =
 /** The toast after adding one. */
 export const hiringStaffAddedToast = (email: string): string =>
   `New hiring staff added - email: ${email}`;
+
+// ---- what the role sees (issue #505) ----
+
+/** GET: the ULA recruitments with soft offers released, newest quarter first; admins may read it too. */
+export const HIRING_STAFF_RECRUITMENTS_URL = "/api/hiringStaff/recruitments";
+
+export const NO_RELEASED_SOFT_OFFERS_TEXT =
+  "No ULA recruitment has released soft offers yet.";

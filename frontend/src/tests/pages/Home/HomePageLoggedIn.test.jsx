@@ -52,6 +52,10 @@ function renderHome(currentUserFixture, backend = {}) {
   axiosMock
     .onGet("/api/instructor/recruitments")
     .reply(200, backend.instructorRecruitments ?? []);
+  // Issue #505: the hiring staff's recruitments.
+  axiosMock
+    .onGet("/api/hiringStaff/recruitments")
+    .reply(200, backend.hiringStaffRecruitments ?? []);
 
   return render(
     <QueryClientProvider client={queryClient}>
@@ -233,6 +237,80 @@ describe("HomePageLoggedIn tests", () => {
       ),
     ).toHaveAttribute("href", "/recruitments/1/courses/2/ranking");
     expect(screen.queryByTestId("HomePageLoggedIn-instructor-none")).toBeNull();
+  });
+
+  // ---- the Hiring Staff section (issue #505) ----
+
+  test("hiring staff get the Hiring Staff section with a card per released ULA recruitment, then Student", async () => {
+    renderHome(apiCurrentUserFixtures.hiringStaffUser, {
+      hiringStaffRecruitments: [recruitmentsFixtures.releasedUla],
+    });
+
+    const card = "HomePageLoggedIn-hiring-staff-recruitments-card-5";
+    expect(await screen.findByTestId(`${card}-name`)).toHaveTextContent(
+      "F25 ULA",
+    );
+    expect(screen.getByTestId(`${card}-release`)).toHaveTextContent(
+      "Soft offers released 10/20/2025, 9:30:00 AM. Deadline: 10/25/2025, 5:00:00 PM.",
+    );
+    const button = screen.getByTestId(`${card}-soft-offer-results-button`);
+    expect(button).toHaveTextContent("Soft Offer Results");
+    expect(button).toHaveAttribute("href", "/admin/recruitments/5/softOffers");
+    // The one button: none of the admin card's.
+    expect(
+      screen.getByTestId(`${card}-card`).querySelectorAll("a, button"),
+    ).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: "ULA Recruitments with Soft Offers Released",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
+    ).toEqual(["Hiring Staff", "Student"]);
+    expect(screen.queryByTestId("HomePageLoggedIn-admin")).toBeNull();
+    expect(screen.queryByTestId("HomePageLoggedIn-instructor")).toBeNull();
+    expect(
+      screen.queryByTestId("HomePageLoggedIn-hiring-staff-recruitments-none"),
+    ).toBeNull();
+  });
+
+  test("hiring staff with no released ULA recruitment are told so", async () => {
+    renderHome(apiCurrentUserFixtures.hiringStaffUser);
+
+    expect(
+      await screen.findByTestId(
+        "HomePageLoggedIn-hiring-staff-recruitments-none",
+      ),
+    ).toHaveTextContent("No ULA recruitment has released soft offers yet.");
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/hiringStaff/recruitments",
+      ),
+    ).toHaveLength(1);
+  });
+
+  test("an admin who is also hiring staff gets Admin, Hiring Staff, then Student", async () => {
+    renderHome(apiCurrentUserFixtures.adminAndHiringStaffUser);
+
+    await screen.findByTestId("HomePageLoggedIn-admin");
+    await screen.findByTestId("HomePageLoggedIn-hiring-staff");
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
+    ).toEqual(["Admin", "Hiring Staff", "Student"]);
+  });
+
+  test("a plain user's page never asks for the hiring staff's recruitments", async () => {
+    renderHome(apiCurrentUserFixtures.userOnly);
+
+    await screen.findByTestId("HomePageLoggedIn-dashboard-none-open");
+    expect(screen.queryByTestId("HomePageLoggedIn-hiring-staff")).toBeNull();
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/hiringStaff/recruitments",
+      ),
+    ).toHaveLength(0);
   });
 
   test("a plain user's page never asks for instructor recruitments", async () => {

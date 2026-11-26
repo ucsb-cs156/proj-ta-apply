@@ -74,7 +74,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
     axiosMock
-      .onGet("/api/admin/recruitments/all")
+      .onGet("/api/hiringStaff/recruitments")
       .reply(200, [recruitmentsFixtures.releasedUla]);
     axiosMock
       .onGet("/api/admin/softOffers")
@@ -386,7 +386,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
   });
 
   test("while the recruitment is not known the title is bare and there is no Change Deadline", async () => {
-    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    axiosMock.onGet("/api/hiringStaff/recruitments").reply(200, []);
     renderPage();
 
     expect(await screen.findByTestId(`${P}-release`)).toBeInTheDocument();

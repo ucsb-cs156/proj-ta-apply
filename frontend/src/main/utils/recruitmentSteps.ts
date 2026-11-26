@@ -102,6 +102,8 @@ export const HOME_PAGE_QUERY_KEYS = [
   "/api/instructor/recruitments",
   "/api/recruitments/applicable",
   "/api/applications/mine",
+  // Issue #505: an admin who is also hiring staff sees a released ULA appear in that section too.
+  "/api/hiringStaff/recruitments",
 ];
 
 export const STEP_COUNT = 9;
