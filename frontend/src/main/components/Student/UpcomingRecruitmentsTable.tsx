@@ -1,8 +1,10 @@
 import type { Cell } from "@tanstack/react-table";
+import Badge from "react-bootstrap/Badge";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
+import { HIDDEN_BADGE, isHidden } from "main/utils/recruitmentVisibility";
 import { daysUntil, opensInText } from "main/utils/studentRecruitments";
 
 type UpcomingRecruitmentsTableProps = {
@@ -10,7 +12,11 @@ type UpcomingRecruitmentsTableProps = {
   testIdPrefix?: string;
 };
 
-/** The recruitments that have not opened yet, with how long until each is expected to (issue #107). */
+/**
+ * The recruitments that have not opened yet, with how long until each is expected to (issue #107).
+ * A hidden recruitment (issue #496), which only an admin's own home page feeds in (issue #503),
+ * carries a Hidden badge after its type so the admin knows students do not see the row.
+ */
 export default function UpcomingRecruitmentsTable({
   recruitments,
   testIdPrefix = "UpcomingRecruitmentsTable",
@@ -25,7 +31,30 @@ export default function UpcomingRecruitmentsTable({
       cell: ({ cell }: { cell: Cell<StudentRecruitment, unknown> }) =>
         yyyyqToQyy(cell.row.original.quarter),
     },
-    { header: "Type", accessorKey: "type", meta: shrink },
+    {
+      header: "Type",
+      accessorKey: "type",
+      meta: shrink,
+      cell: ({ cell }: { cell: Cell<StudentRecruitment, unknown> }) => {
+        const recruitment = cell.row.original;
+        return (
+          <>
+            {recruitment.type}
+            {isHidden(recruitment) && (
+              <>
+                {" "}
+                <Badge
+                  bg="dark"
+                  data-testid={`${testIdPrefix}-hidden-${recruitment.id}`}
+                >
+                  {HIDDEN_BADGE}
+                </Badge>
+              </>
+            )}
+          </>
+        );
+      },
+    },
     {
       header: "Tentative Opening Date",
       accessorKey: "tentativeOpeningDate",

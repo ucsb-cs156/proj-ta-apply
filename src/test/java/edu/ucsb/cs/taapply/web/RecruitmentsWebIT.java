@@ -948,4 +948,61 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("HomePageLoggedIn-dashboard")).not().containsText("W26");
     assertThat(page.getByTestId("HomePageLoggedIn-student")).not().containsText("Apply");
   }
+
+  /**
+   * Issue #503: a W26 ULA recruitment that has never been opened, as the admin leaves one while
+   * still setting it up. The student home page lists it under Upcoming Recruitments.
+   */
+  private Recruitment upcomingUla() {
+    return recruitmentRepository.save(
+        Recruitment.builder()
+            .quarter("20261")
+            .type(RecruitmentType.ULA)
+            .applicationStatus(ApplicationStatus.CLOSED)
+            .reviewStatus("NotStarted")
+            .tentativeOpeningDate(LocalDate.of(2027, 1, 5))
+            .primaryConsiderationDate(LocalDate.of(2027, 1, 20))
+            .hidden(false)
+            .build());
+  }
+
+  @Test
+  public void a_hidden_upcoming_recruitment_is_off_the_students_list_until_shown_again()
+      throws Exception {
+    Recruitment ula = upcomingUla();
+    String upcoming = "HomePageLoggedIn-dashboard-upcoming";
+
+    // The admin hides it from the card; their own Upcoming Recruitments row then says Hidden.
+    setupAdminUser();
+    goToRecruitments();
+    String card = "HomePageLoggedIn-admin-card-0-";
+    waitFor(page.getByTestId(card + "hidden-button"));
+    assertThat(page.getByTestId(upcoming + "-cell-row-0-col-quarter")).hasText("W26");
+    assertThat(page.getByTestId(upcoming + "-hidden-" + ula.getId())).hasCount(0);
+    page.getByTestId(card + "hidden-button").click();
+    assertThat(page.getByText("Recruitment hidden from students and instructors.")).isVisible();
+    assertThat(page.getByTestId(upcoming + "-hidden-" + ula.getId())).hasText("Hidden");
+    assertThat(page.getByTestId(upcoming + "-cell-row-0-col-type")).containsText("ULA");
+    assertEquals(true, recruitmentRepository.findById(ula.getId()).orElseThrow().getHidden());
+
+    // The student has no Upcoming Recruitments section at all: it was the only upcoming one.
+    setupRegularUser();
+    goToRecruitments();
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
+        .containsText("Applications are not currently being accepted.");
+    assertThat(page.getByTestId(upcoming)).hasCount(0);
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard")).not().containsText("Upcoming");
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard")).not().containsText("W26");
+
+    // Shown again, it is back under Upcoming Recruitments with its tentative opening date.
+    ula.setHidden(false);
+    recruitmentRepository.save(ula);
+    reloadPage(page);
+    waitFor(page.getByTestId(upcoming + "-cell-row-0-col-quarter"));
+    assertThat(page.getByTestId(upcoming + "-cell-row-0-col-quarter")).hasText("W26");
+    assertThat(page.getByTestId(upcoming + "-cell-row-0-col-type")).hasText("ULA");
+    assertThat(page.getByTestId(upcoming + "-cell-row-0-col-tentativeOpeningDate"))
+        .hasText("2027-01-05");
+    assertThat(page.getByTestId(upcoming + "-hidden-" + ula.getId())).hasCount(0);
+  }
 }

@@ -9,6 +9,7 @@ import UpcomingRecruitmentsTable from "main/components/Student/UpcomingRecruitme
 import { useBackendMutation } from "main/utils/useBackend";
 import { useCreateFromCancelled } from "main/utils/useCreateFromCancelled";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
+import { todayIso } from "main/utils/applicationAccess";
 import { classifyRecruitments } from "main/utils/studentRecruitments";
 import type { DraftApplication } from "main/utils/draftApplications";
 import {
@@ -28,6 +29,11 @@ type StudentDashboardProps = {
   drafts?: DraftApplication[];
   /** The student's open soft offers (issue #486). */
   softOffers?: SoftOffer[];
+  /**
+   * Whether hidden recruitments (issue #496) are shown, marked Hidden: true on an admin's own home
+   * page, false for students and instructors, who never see them (issue #503).
+   */
+  showHidden?: boolean;
   testIdPrefix?: string;
 };
 
@@ -47,11 +53,14 @@ export default function StudentDashboard({
   drafts = [],
   // Stryker disable next-line all : don't test default value of empty list
   softOffers = [],
+  showHidden = false,
   testIdPrefix = "StudentDashboard",
 }: StudentDashboardProps): React.JSX.Element {
   const { upcoming, current, past } = classifyRecruitments(
     recruitments,
     applications,
+    todayIso(),
+    showHidden,
   );
   const applicationList = Array.isArray(applications) ? applications : [];
 
