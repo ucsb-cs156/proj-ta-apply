@@ -21,13 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * The admin's Soft Offer Results (issue #487): the assigned ULAs with their answers, and the same
- * table as a CSV. Admins only: the answers carry the applicants' comments.
+ * table as a CSV. For admins and hiring staff (issue #505), never instructors or students: the
+ * answers carry the applicants' comments.
  */
 @Tag(name = &quot;Soft Offers (admin)&quot;)
 @RequestMapping(&quot;/api/admin/softOffers&quot;)
 @RestController
-<span class="fc" id="L29">@Slf4j</span>
-<span class="fc" id="L30">public class AdminSoftOffersController extends ApiController {</span>
+<span class="fc" id="L30">@Slf4j</span>
+<span class="fc" id="L31">public class AdminSoftOffersController extends ApiController {</span>
 
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired SoftOffersService softOffersService;
@@ -39,31 +40,31 @@ import org.springframework.web.bind.annotation.RestController;
               + &quot; Offer Response Date/Time and Comments), the counts, and a second table of answers&quot;
               + &quot; from applicants no longer assigned. 404 for an unknown recruitment; 400 unless it&quot;
               + &quot; is a ULA one with soft offers released.&quot;)
-  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_ADMIN', 'ROLE_HIRING_STAFF')&quot;)
   @GetMapping(&quot;&quot;)
   public SoftOffersService.Results results(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L46">    return softOffersService.results(recruitmentOf(recruitmentId));</span>
+<span class="fc" id="L47">    return softOffersService.results(recruitmentOf(recruitmentId));</span>
   }
 
   @Operation(summary = &quot;The main soft offer results table as CSV&quot;)
-  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_ADMIN', 'ROLE_HIRING_STAFF')&quot;)
   @GetMapping(value = &quot;/csv&quot;, produces = &quot;text/csv&quot;)
   public ResponseEntity&lt;String&gt; csv(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L54">    String body = softOffersService.resultsCsv(recruitmentOf(recruitmentId));</span>
-<span class="fc" id="L55">    return ResponseEntity.ok()</span>
-<span class="fc" id="L56">        .header(</span>
+<span class="fc" id="L55">    String body = softOffersService.resultsCsv(recruitmentOf(recruitmentId));</span>
+<span class="fc" id="L56">    return ResponseEntity.ok()</span>
+<span class="fc" id="L57">        .header(</span>
             HttpHeaders.CONTENT_DISPOSITION,
-<span class="fc" id="L58">            &quot;attachment; filename=\&quot;soft-offers-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
-<span class="fc" id="L59">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
-<span class="fc" id="L60">        .body(body);</span>
+<span class="fc" id="L59">            &quot;attachment; filename=\&quot;soft-offers-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
+<span class="fc" id="L60">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
+<span class="fc" id="L61">        .body(body);</span>
   }
 
   private Recruitment recruitmentOf(Long recruitmentId) {
-<span class="fc" id="L64">    return recruitmentRepository</span>
-<span class="fc" id="L65">        .findById(recruitmentId)</span>
-<span class="fc" id="L66">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L65">    return recruitmentRepository</span>
+<span class="fc" id="L66">        .findById(recruitmentId)</span>
+<span class="fc" id="L67">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
