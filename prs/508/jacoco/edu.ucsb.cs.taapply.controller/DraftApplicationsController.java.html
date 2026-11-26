@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DraftApplicationsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">DraftApplicationsController.java</span></div><h1>DraftApplicationsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
+import edu.ucsb.cs.taapply.concurrency.Presence;
+import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
+import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
+import edu.ucsb.cs.taapply.entity.DraftApplication;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.DraftApplicationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * An applicant's drafts: applications as they are being filled in (issue #270).
+ *
+ * &lt;p&gt;A draft is saved without being checked. Nothing is required of it and no rule about the form
+ * is applied, because the point is never to lose what the applicant has typed, and what they have
+ * typed so far may be anything. All the rules apply, unchanged, when the application is submitted.
+ *
+ * &lt;p&gt;Like the applications controller, every read and write confirms the draft is the current
+ * user's.
+ */
+@Tag(name = &quot;Draft applications&quot;)
+@RequestMapping(&quot;/api/draftApplications&quot;)
+@RestController
+<span class="fc" id="L56">public class DraftApplicationsController extends ApiController {</span>
+
+  @Autowired DraftApplicationRepository draftApplicationRepository;
+  @Autowired DraftApplicationService draftApplicationService;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired ApplicationAccessService applicationAccessService;
+  @Autowired ClientActivityDetector clientActivityDetector;
+
+  private String currentEmail() {
+<span class="fc" id="L65">    return getCurrentUser().getUser().getEmail();</span>
+  }
+
+  /** Loads a draft, refusing anyone else's rather than merely not finding it. */
+  private DraftApplication mine(Long id) {
+<span class="fc" id="L70">    DraftApplication draft =</span>
+        draftApplicationRepository
+<span class="fc" id="L72">            .findById(id)</span>
+<span class="fc" id="L73">            .orElseThrow(() -&gt; new EntityNotFoundException(DraftApplication.class, id));</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (!currentEmail().equals(draft.getEmail())) {</span>
+<span class="fc" id="L75">      throw new ForbiddenException(&quot;That draft belongs to someone else&quot;);</span>
+    }
+<span class="fc" id="L77">    return draft;</span>
+  }
+
+  private Recruitment recruitment(Long recruitmentId) {
+<span class="fc" id="L81">    return recruitmentRepository</span>
+<span class="fc" id="L82">        .findById(recruitmentId)</span>
+<span class="fc" id="L83">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+  }
+
+  @Operation(summary = &quot;The current user's own drafts, newest first&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/mine&quot;)
+  public List&lt;DraftApplication&gt; myDrafts() {
+<span class="fc" id="L90">    return draftApplicationRepository.findByEmailOrderByIdDesc(currentEmail());</span>
+  }
+
+  @Operation(
+      summary = &quot;Start, or resume, the draft for a recruitment&quot;,
+      description =
+          &quot;Returns the current user's draft for the recruitment, creating an empty one if there is&quot;
+              + &quot; none. Refused if the recruitment is not open or they already have an application&quot;
+              + &quot; for it that is not cancelled, since a draft is only for an application not yet submitted.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @PostMapping(&quot;/open&quot;)
+  public DraftApplication openDraft(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc" id="L103">    Recruitment recruitment = recruitment(recruitmentId);</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
+<span class="fc" id="L105">      throw new IllegalArgumentException(</span>
+          &quot;Applications are not currently open for this recruitment&quot;);
+    }
+<span class="fc" id="L108">    String email = currentEmail();</span>
+    // The check that they have no application yet and the insert are one transaction (issue #417).
+    // A cancelled application does not stop them starting a new one (issue #318).
+    try {
+<span class="fc" id="L112">      return draftApplicationService.open(email, recruitmentId);</span>
+<span class="fc" id="L113">    } catch (DataIntegrityViolationException e) {</span>
+      // The same person's form opened twice at once, and the second insert broke the unique
+      // constraint: the draft the first one made is the answer.
+<span class="fc" id="L116">      return draftApplicationRepository</span>
+<span class="fc" id="L117">          .findByEmailAndRecruitmentId(email, recruitmentId)</span>
+<span class="fc" id="L118">          .orElseThrow(() -&gt; e);</span>
+    }
+  }
+
+  @Operation(
+      summary = &quot;Turn a cancelled application back into a draft (Create a new application)&quot;,
+      description =
+          &quot;Issue #420. In one transaction: creates the current user's draft for the application's&quot;
+              + &quot; recruitment holding the application's answers (not the reason for cancelling),&quot;
+              + &quot; moves the admin's comments on it to the draft, deletes the faculty's rankings of&quot;
+              + &quot; it, and deletes the application. Returns the draft. 404 for an unknown&quot;
+              + &quot; application, 403 for someone else's; 400 unless it is cancelled, the recruitment&quot;
+              + &quot; is open, and the user has neither an application that is not cancelled nor a&quot;
+              + &quot; draft for that recruitment.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @PostMapping(&quot;/fromCancelled&quot;)
+  public DraftApplication fromCancelled(
+      @Parameter(name = &quot;applicationId&quot;) @RequestParam Long applicationId) {
+    // The checks, the new draft and the deletes are one transaction. Two requests at the same
+    // instant (the button is disabled while one is under way, so two tabs at most) cannot both
+    // succeed: the second breaks the draft's unique constraint and is rolled back.
+<span class="fc" id="L139">    return draftApplicationService.resumeCancelled(currentEmail(), applicationId);</span>
+  }
+
+  /**
+   * Who the current user is to the detector (issue #273): the email address is the person, and the
+   * label other people see is the email address followed by the full name in parentheses, or the
+   * email address alone if there is no name.
+   */
+  private ClientIdentity identity() {
+<span class="fc" id="L148">    User user = getCurrentUser().getUser();</span>
+<span class="fc" id="L149">    String name = user.getFullName();</span>
+    String label =
+<span class="fc bfc" id="L151" title="All 4 branches covered.">        name == null || name.isBlank()</span>
+<span class="fc" id="L152">            ? user.getEmail()</span>
+<span class="fc" id="L153">            : user.getEmail() + &quot; (&quot; + name.trim() + &quot;)&quot;;</span>
+<span class="fc" id="L154">    return new ClientIdentity(user.getEmail(), label);</span>
+  }
+
+  /** The detector's name for a draft. */
+  private static String resourceKey(Long id) {
+<span class="fc" id="L159">    return &quot;draft:&quot; + id;</span>
+  }
+
+  /** What a refused save tells the form: why, and the draft as it now stands. */
+  private ResponseEntity&lt;Object&gt; conflict(DraftApplication current) {
+<span class="fc" id="L164">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L165">    body.put(</span>
+        &quot;message&quot;,
+        &quot;This draft was changed in another tab or window. Reload to see the latest version.&quot;);
+<span class="fc" id="L168">    body.put(&quot;version&quot;, current.getVersion());</span>
+<span class="fc" id="L169">    body.put(&quot;draft&quot;, current);</span>
+<span class="fc" id="L170">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+  }
+
+  @Operation(
+      summary = &quot;Save a draft&quot;,
+      description =
+          &quot;Replaces what the draft holds with what the form has now. Nothing is validated except that a&quot;
+              + &quot; prior course's grade, term and text fields fit their columns (400 if not). Allowed&quot;
+              + &quot; for as long as the recruitment is open. The version is the one the form last&quot;
+              + &quot; saw (from opening the draft or from its last save); if the draft has been saved&quot;
+              + &quot; since, by another tab or window, nothing is changed and the answer is 409&quot;
+              + &quot; Conflict with the draft as it now stands. Refused (400) once they have an&quot;
+              + &quot; application to the recruitment that is not cancelled (issue #417). A successful save returns the draft&quot;
+              + &quot; with its new version. A save that names its client (X-Client-Id) also tells the server this tab or&quot;
+              + &quot; window is working on the draft, for the multi-tab warning; see the heartbeat.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @PutMapping(&quot;&quot;)
+  public ResponseEntity&lt;Object&gt; saveDraft(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
+      @RequestBody ApplicationFields fields) {
+<span class="fc" id="L192">    DraftApplication draft = mine(id);</span>
+<span class="fc" id="L193">    clientActivityDetector.note(resourceKey(id), clientId, identity());</span>
+<span class="fc bfc" id="L194" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitment(draft.getRecruitmentId()))) {</span>
+<span class="fc" id="L195">      throw new ForbiddenException(&quot;Applications are closed, so this draft can no longer be saved&quot;);</span>
+    }
+<span class="fc bfc" id="L197" title="All 2 branches covered.">    if (!version.equals(draft.getVersion())) {</span>
+<span class="fc" id="L198">      return conflict(draft);</span>
+    }
+<span class="fc" id="L200">    ApplicationsController.requireCourseworkLengths(fields);</span>
+<span class="fc" id="L201">    apply(fields, draft);</span>
+    try {
+      // Refused (400) if they have submitted an application since, checked in the save's own
+      // transaction (issue #417).
+<span class="fc" id="L205">      return ResponseEntity.ok(draftApplicationService.save(draft));</span>
+<span class="fc" id="L206">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+      // Another save got in between reading the draft and writing it.
+<span class="fc" id="L208">      return conflict(draftApplicationRepository.findById(id).orElseThrow(() -&gt; e));</span>
+    }
+  }
+
+  @Operation(
+      summary = &quot;Say that this tab or window still has the draft open, and learn who else does&quot;,
+      description =
+          &quot;Changes nothing about the draft, not even its version. Tells the server this client&quot;
+              + &quot; (X-Client-Id) is still here, and answers with the other people who have the draft&quot;
+              + &quot; open (a label for each, and whether it is the same person in another tab or&quot;
+              + &quot; window) and how often to send this. Only the draft's owner may ask, and nothing&quot;
+              + &quot; is recorded or told to anyone else.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @PostMapping(&quot;/heartbeat&quot;)
+  public Presence heartbeat(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The owner check comes first and throws, so that nothing below runs for anyone else: they are
+    // neither recorded nor told who is working here.
+<span class="fc" id="L227">    mine(id);</span>
+<span class="fc" id="L228">    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());</span>
+  }
+
+  @Operation(
+      summary = &quot;Say that this tab or window has left the draft&quot;,
+      description =
+          &quot;Sent when a tab or window is closed or moves away from the draft, so that the others&quot;
+              + &quot; stop being warned about it at once instead of when its heartbeats stop. It is&quot;
+              + &quot; allowed to someone exactly when a heartbeat is: only the draft's owner, and for&quot;
+              + &quot; anyone else nothing is recorded. The answer is 204 whether or not the client was&quot;
+              + &quot; known.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @PostMapping(&quot;/leave&quot;)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void leave(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The owner check comes first, as for the heartbeat.
+<span class="fc" id="L246">    mine(id);</span>
+<span class="fc" id="L247">    clientActivityDetector.leave(resourceKey(id), clientId);</span>
+<span class="fc" id="L248">  }</span>
+
+  /** Name-to-level answers as sent, without the null entries and in a stable order. */
+  private static Map&lt;String, Integer&gt; levels(Map&lt;String, Integer&gt; sent) {
+<span class="fc" id="L252">    Map&lt;String, Integer&gt; levels = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L253" title="All 2 branches covered.">    if (sent != null) {</span>
+<span class="fc" id="L254">      sent.forEach(</span>
+          (name, level) -&gt; {
+<span class="fc bfc" id="L256" title="All 2 branches covered.">            if (level != null) {</span>
+<span class="fc" id="L257">              levels.put(name, level);</span>
+            }
+<span class="fc" id="L259">          });</span>
+    }
+<span class="fc" id="L261">    return levels;</span>
+  }
+
+  /**
+   * The rows as the form has them, kept as typed: a half-filled row is still worth keeping. Rows
+   * for the same course are collapsed to one (issue #334).
+   */
+  private static List&lt;PriorCoursework&gt; coursework(List&lt;PriorCourseworkFields&gt; sent) {
+<span class="fc" id="L269">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L270" title="All 2 branches covered.">    if (sent != null) {</span>
+<span class="fc bfc" id="L271" title="All 2 branches covered.">      for (PriorCourseworkFields row : sent) {</span>
+<span class="fc" id="L272">        rows.add(</span>
+<span class="fc" id="L273">            PriorCoursework.builder()</span>
+<span class="fc" id="L274">                .ucsbCourse(row.ucsbCourse())</span>
+<span class="fc" id="L275">                .otherSchool(row.otherSchool())</span>
+<span class="fc" id="L276">                .courseNumber(row.courseNumber())</span>
+<span class="fc" id="L277">                .courseTitle(row.courseTitle())</span>
+<span class="fc" id="L278">                .term(row.term())</span>
+<span class="fc" id="L279">                .grade(row.grade())</span>
+<span class="fc" id="L280">                .build());</span>
+<span class="fc" id="L281">      }</span>
+    }
+<span class="fc" id="L283">    return PriorCoursework.collapse(rows);</span>
+  }
+
+  /** Copies the form's fields as they are; never the person or the recruitment. */
+  static void apply(ApplicationFields fields, DraftApplication draft) {
+<span class="fc" id="L288">    draft.setFirstName(fields.firstName());</span>
+<span class="fc" id="L289">    draft.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L290">    draft.setLastName(fields.lastName());</span>
+<span class="fc" id="L291">    draft.setMajor(fields.major());</span>
+<span class="fc" id="L292">    draft.setGpaMajor(fields.gpaMajor());</span>
+<span class="fc" id="L293">    draft.setGpaOverall(fields.gpaOverall());</span>
+<span class="fc" id="L294">    draft.setFirstQuarter(fields.firstQuarter());</span>
+<span class="fc" id="L295">    draft.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L296">    draft.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L297">    draft.setPriorCoursework(coursework(fields.priorCoursework()));</span>
+<span class="fc" id="L298">    draft.setTopicProficiencies(levels(fields.topicProficiencies()));</span>
+<span class="fc" id="L299">    draft.setInterests(levels(fields.interests()));</span>
+<span class="fc" id="L300">    draft.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L301">    draft.setComments(fields.comments());</span>
+<span class="fc" id="L302">    draft.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L303">    draft.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L304">    draft.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
+<span class="fc" id="L305">    draft.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
+<span class="fc" id="L306">    draft.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
+<span class="fc" id="L307">    draft.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L308">    draft.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
+<span class="fc" id="L309">    draft.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
+<span class="fc" id="L310">    draft.setCourseInterests(ApplicationsController.courseInterestsFrom(fields));</span>
+<span class="fc" id="L311">    draft.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L312">    draft.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L313">    draft.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L314">    draft.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L315">    draft.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L316">    draft.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L317">    draft.setPermNumber(fields.permNumber());</span>
+<span class="fc" id="L318">    draft.setBsMsStudent(fields.bsMsStudent());</span>
+<span class="fc" id="L319">    draft.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
+<span class="fc" id="L320">    draft.setWantsTaEligibility(fields.wantsTaEligibility());</span>
+<span class="fc" id="L321">    draft.setOtherCampusJob(fields.otherCampusJob());</span>
+<span class="fc" id="L322">    draft.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
+<span class="fc" id="L323">    draft.setEmployeeId(fields.employeeId());</span>
+<span class="fc" id="L324">    draft.setI9Appointment(fields.i9Appointment());</span>
+<span class="fc" id="L325">    draft.setTrainingCommitment(fields.trainingCommitment());</span>
+<span class="fc" id="L326">    draft.setTrainingCommitmentExplanation(fields.trainingCommitmentExplanation());</span>
+<span class="fc" id="L327">    draft.setChangingMajor(fields.changingMajor());</span>
+<span class="fc" id="L328">    draft.setNoticeVersionId(fields.noticeVersionId());</span>
+<span class="fc" id="L329">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
