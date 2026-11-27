@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentVisibility.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">RecruitmentVisibility.java</span></div><h1>RecruitmentVisibility.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+
+/**
+ * Whether a recruitment is hidden from students and instructors (issue #496). An admin hides a
+ * recruitment with the show/hide button on its card; while hidden it is left out of the lists that
+ * feed the student and instructor home pages, its application form and its instructor pages are
+ * refused to them, and new applications are not accepted. Admins see it everywhere as before.
+ */
+public final class RecruitmentVisibility {
+
+  /** The refusal a student or instructor gets for a hidden recruitment's pages. */
+  public static final String HIDDEN = &quot;This recruitment is not currently available.&quot;;
+
+  private RecruitmentVisibility() {}
+
+  /** Whether the admin has hidden the recruitment; a recruitment with no value is shown. */
+  public static boolean isHidden(Recruitment recruitment) {
+<span class="fc" id="L20">    return Boolean.TRUE.equals(recruitment.getHidden());</span>
+  }
+
+  /**
+   * Whether this user may see the recruitment: everyone may, unless it is hidden and they are not
+   * an admin.
+   */
+  public static boolean visibleTo(Recruitment recruitment, boolean admin) {
+<span class="fc bfc" id="L28" title="All 4 branches covered.">    return admin || !isHidden(recruitment);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
