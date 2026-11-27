@@ -82,6 +82,62 @@ PlaceholderExample.args = {
   data: ourTableFixtures.placeholderExample.data,
 };
 
+/**
+ * Issue #510: the first two columns are frozen at the left while the table scrolls sideways in
+ * its wrapper. Narrow the window, or the Storybook canvas, until the table scrolls, then scroll
+ * it: First and Last stay put, the other columns pass under them, and the right edge of Last
+ * marks the frozen part.
+ */
+export const PinnedColumns = (args) => (
+  <div className="table-responsive">
+    <OurTable {...args} />
+  </div>
+);
+
+PinnedColumns.args = {
+  data: [
+    {
+      first: "Grace",
+      last: "Hopper",
+      email: "grace@ucsb.edu",
+      course: "CMPSC 156",
+      instructor: "Phill Conrad",
+      status: "Proceed",
+      notes: "A long comment that makes the table wider than the page. ".repeat(
+        3,
+      ),
+    },
+    {
+      first: "Alan",
+      last: "Turing",
+      email: "alan@ucsb.edu",
+      course: "CMPSC 8",
+      instructor: "Ziad Matni",
+      status: "Decline",
+      notes: "Another long comment, so there is something to scroll. ".repeat(
+        3,
+      ),
+    },
+  ],
+  columns: [
+    { header: "First", accessorKey: "first", size: 120 },
+    { header: "Last", accessorKey: "last", size: 120 },
+    { header: "Email", accessorKey: "email" },
+    { header: "Course", accessorKey: "course" },
+    { header: "Instructor", accessorKey: "instructor" },
+    { header: "Status", accessorKey: "status" },
+    {
+      header: "Notes",
+      accessorKey: "notes",
+      size: 600,
+      minSize: 200,
+      enableResizing: true,
+    },
+  ],
+  fitContent: true,
+  pinnedColumns: ["first", "last"],
+};
+
 /** A small "hide" link in the top right of each listed column's heading (issue #314). */
 export const WithHideLinks = Template.bind({});
 

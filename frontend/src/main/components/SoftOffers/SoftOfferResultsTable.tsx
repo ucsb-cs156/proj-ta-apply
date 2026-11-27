@@ -32,6 +32,12 @@ type Props = {
   testIdPrefix: string;
 };
 
+/**
+ * The columns frozen at the left while the table scrolls sideways (issue #510): the two name
+ * columns, which both tables have first and never hide, so a wide row is read against its name.
+ */
+const PINNED_COLUMN_IDS = ["firstName", "lastName"];
+
 /** The presentation of one of the backend's text columns: plain text, unless the id says otherwise. */
 const presentation = (
   id: string,
@@ -77,7 +83,8 @@ const presentation = (
  * One of the two tables of the Soft Offer Results page (issue #487), built on OurTable (issue
  * #494): every column sortable, the columns in the page's Columns menu hideable from it or from
  * the "hide" link over their headings, and Comments resizable. The table scrolls sideways when
- * Comments is dragged wider than the page.
+ * Comments is dragged wider than the page, with First name and Last name frozen at the left
+ * (issue #510).
  */
 export default function SoftOfferResultsTable({
   headers,
@@ -105,6 +112,7 @@ export default function SoftOfferResultsTable({
           hiddenColumns.map((id) => [id, false]),
         )}
         hideLinks={{ choices, onHide }}
+        pinnedColumns={PINNED_COLUMN_IDS}
       />
     </div>
   );

@@ -207,6 +207,68 @@ describe("SoftOfferResultsTable tests (issue #494)", () => {
     );
   });
 
+  // ---- Issue #510 ----
+
+  const EDGE =
+    "inset -2px 0 0 var(--bs-table-border-color), inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)))";
+
+  /** First name sits at the left edge and Last name after it, with the frozen part's edge. */
+  const expectNamesFrozen = () => {
+    for (const el of [
+      screen.getByTestId(`${T}-header-firstName`),
+      cell(0, "firstName"),
+    ]) {
+      expect(el.style.position).toBe("sticky");
+      expect(el.style.left).toBe("0px");
+      expect(el.style.width).toBe("150px");
+      expect(el.style.backgroundColor).toBe("var(--bs-table-bg)");
+      expect(el.style.boxShadow).toBe("");
+    }
+    for (const el of [
+      screen.getByTestId(`${T}-header-lastName`),
+      cell(0, "lastName"),
+    ]) {
+      expect(el.style.position).toBe("sticky");
+      expect(el.style.left).toBe("150px");
+      expect(el.style.width).toBe("150px");
+      expect(el.style.boxShadow).toBe(EDGE);
+    }
+    expect(screen.getByTestId(`${T}-header-firstName`).style.zIndex).toBe("2");
+    expect(cell(0, "lastName").style.zIndex).toBe("1");
+    // The column after them scrolls under them (its heading is relative, for its hide link).
+    expect(screen.getByTestId(`${T}-header-email`).style.position).toBe(
+      "relative",
+    );
+    expect(screen.getByTestId(`${T}-header-email`).style.left).toBe("");
+    expect(cell(0, "email").style.position).toBe("");
+  };
+
+  test("First name and Last name are frozen at the left of the main table, with the rest scrolling under them", () => {
+    renderTable({ hiddenColumns: ["instructor", "comments"] });
+    expectNamesFrozen();
+    expect(cell(0, "status").style.position).toBe("");
+    // The headings still sort, and the names still sit first.
+    expect(
+      [...screen.getByTestId(`${T}-header-group-0`).querySelectorAll("th")]
+        .slice(0, 3)
+        .map((th) => th.getAttribute("data-testid")),
+    ).toEqual([
+      `${T}-header-firstName`,
+      `${T}-header-lastName`,
+      `${T}-header-email`,
+    ]);
+  });
+
+  test("the second table freezes the same two columns", () => {
+    renderTable({
+      headers: three.unassignedHeaders,
+      rows: three.unassigned,
+      columnIds: UNASSIGNED_COLUMN_IDS,
+    });
+    expectNamesFrozen();
+    expect(cell(0, "courseAnswered").style.position).toBe("");
+  });
+
   test("on a window narrower than 250px Comments is pinned at 200px", () => {
     renderAtWidth(100);
     expect(screen.getByTestId(`${T}-header-comments`).style.width).toBe(

@@ -715,4 +715,205 @@ describe("OurTable tests", () => {
       );
     });
   });
+
+  describe("column pinning (issue #510)", () => {
+    const EDGE =
+      "inset -2px 0 0 var(--bs-table-border-color), inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)))";
+    const columns = [
+      { Header: "First", accessor: "first", footer: "F" },
+      { Header: "Last", accessor: "last", footer: "L" },
+      { Header: "Email", accessor: "email", footer: "E" },
+    ];
+    const rows = [
+      { first: "Ann", last: "Ash", email: "ann@ucsb.edu" },
+      { first: "Bob", last: "Birch", email: "bob@ucsb.edu" },
+    ];
+    const renderPinned = (props = {}) =>
+      render(
+        <OurTable
+          data={rows}
+          columns={columns}
+          testid="p"
+          pinnedColumns={["first", "last"]}
+          {...props}
+        />,
+      );
+    const header = (id) => screen.getByTestId(`p-header-${id}`);
+    const cell = (row, id) => screen.getByTestId(`p-cell-row-${row}-col-${id}`);
+    const footer = (id) => screen.getByTestId(`p-footer-${id}`);
+
+    test("without pinnedColumns nothing is sticky, as before", () => {
+      render(<OurTable data={rows} columns={columns} testid="p" />);
+      for (const el of [header("first"), cell(0, "first"), footer("first")]) {
+        expect(el.style.position).toBe("");
+        expect(el.style.left).toBe("");
+        expect(el.style.width).toBe("");
+        expect(el.style.zIndex).toBe("");
+        expect(el.style.backgroundColor).toBe("");
+        expect(el.style.boxShadow).toBe("");
+      }
+      expect(header("first")).not.toHaveAttribute("style");
+      expect(cell(0, "first")).not.toHaveAttribute("style");
+      expect(footer("first")).not.toHaveAttribute("style");
+    });
+
+    test("a pinned column's heading, cells and footer are sticky at the sum of the sizes before it, at the default size, over the table's background", () => {
+      renderPinned();
+
+      // The first pinned column sits at the left edge.
+      for (const el of [header("first"), cell(0, "first"), cell(1, "first")]) {
+        expect(el.style.position).toBe("sticky");
+        expect(el.style.left).toBe("0px");
+        expect(el.style.width).toBe("150px");
+        expect(el.style.minWidth).toBe("150px");
+        expect(el.style.overflowWrap).toBe("anywhere");
+        expect(el.style.backgroundColor).toBe("var(--bs-table-bg)");
+        // Only the last pinned column has the edge.
+        expect(el.style.boxShadow).toBe("");
+      }
+      // The second sits after the first's 150px.
+      for (const el of [header("last"), cell(0, "last"), footer("last")]) {
+        expect(el.style.position).toBe("sticky");
+        expect(el.style.left).toBe("150px");
+        expect(el.style.width).toBe("150px");
+        expect(el.style.boxShadow).toBe(EDGE);
+      }
+      // Headings sit over body cells, which sit over the scrolled cells.
+      expect(header("first").style.zIndex).toBe("2");
+      expect(header("last").style.zIndex).toBe("2");
+      expect(cell(0, "first").style.zIndex).toBe("1");
+      expect(cell(1, "last").style.zIndex).toBe("1");
+      expect(footer("first").style.zIndex).toBe("1");
+      expect(footer("first").style.position).toBe("sticky");
+      expect(footer("first").style.left).toBe("0px");
+      // The other column is left alone.
+      for (const el of [header("email"), cell(0, "email"), footer("email")]) {
+        expect(el.style.position).toBe("");
+        expect(el.style.left).toBe("");
+        expect(el.style.width).toBe("");
+        expect(el.style.boxShadow).toBe("");
+        expect(el.style.backgroundColor).toBe("");
+      }
+      expect(header("email")).not.toHaveAttribute("style");
+    });
+
+    test("a pinned column with a size is that wide, and the next one's offset follows it", () => {
+      renderPinned({
+        columns: [
+          { Header: "First", accessor: "first", size: 120 },
+          { Header: "Last", accessor: "last", size: 90 },
+          { Header: "Email", accessor: "email" },
+        ],
+      });
+      expect(header("first").style.width).toBe("120px");
+      expect(cell(0, "first").style.minWidth).toBe("120px");
+      expect(header("last").style.left).toBe("120px");
+      expect(cell(1, "last").style.left).toBe("120px");
+      expect(header("last").style.width).toBe("90px");
+      // A size alone does not make a column resizable.
+      expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+    });
+
+    test("a hidden pinned column is left out of the offsets and the edge moves to the last one shown", () => {
+      renderPinned({ columnVisibility: { first: false } });
+      expect(screen.queryByTestId("p-header-first")).not.toBeInTheDocument();
+      expect(header("last").style.left).toBe("0px");
+      expect(header("last").style.boxShadow).toBe(EDGE);
+      expect(cell(0, "last").style.left).toBe("0px");
+      expect(cell(0, "last").style.boxShadow).toBe(EDGE);
+      expect(footer("last").style.boxShadow).toBe(EDGE);
+    });
+
+    test("pinned columns come first, in the given order, whatever their place in columns", () => {
+      renderPinned({ pinnedColumns: ["email", "first"] });
+      const ids = (row) =>
+        [...row.querySelectorAll("th, td")].map((el) =>
+          el.getAttribute("data-testid"),
+        );
+      expect(ids(screen.getByTestId("p-header-group-0"))).toEqual([
+        "p-header-email",
+        "p-header-first",
+        "p-header-last",
+      ]);
+      expect(ids(screen.getByTestId("p-row-0"))).toEqual([
+        "p-cell-row-0-col-email",
+        "p-cell-row-0-col-first",
+        "p-cell-row-0-col-last",
+      ]);
+      expect(ids(screen.getByTestId("p-footer-group-0"))).toEqual([
+        "p-footer-email",
+        "p-footer-first",
+        "p-footer-last",
+      ]);
+      expect(header("email").style.left).toBe("0px");
+      expect(header("email").style.boxShadow).toBe("");
+      expect(header("first").style.left).toBe("150px");
+      expect(header("first").style.boxShadow).toBe(EDGE);
+      expect(header("last").style.position).toBe("");
+      // The cells still hold their own column's value.
+      expect(cell(0, "email")).toHaveTextContent("ann@ucsb.edu");
+      expect(cell(0, "first")).toHaveTextContent("Ann");
+    });
+
+    test("an id that is not a column is ignored", () => {
+      renderPinned({ pinnedColumns: ["nope", "first"] });
+      expect(header("first").style.left).toBe("0px");
+      expect(header("first").style.boxShadow).toBe(EDGE);
+      expect(header("last").style.position).toBe("");
+      expect(
+        screen.getByTestId("p-header-group-0").querySelectorAll("th"),
+      ).toHaveLength(3);
+    });
+
+    test("a pinned heading with a hide link stays sticky and the link still hides; a centred heading stays centred", async () => {
+      const onHide = vi.fn();
+      renderPinned({
+        centerHeaders: true,
+        hideLinks: { choices: [{ id: "last", label: "Last" }], onHide },
+      });
+      const last = header("last");
+      expect(last.style.position).toBe("sticky");
+      expect(last.style.textAlign).toBe("center");
+      expect(last.style.left).toBe("150px");
+      const link = screen.getByTestId("p-header-last-hide");
+      expect(link.style.position).toBe("absolute");
+      await userEvent.click(link);
+      expect(onHide).toHaveBeenCalledWith("last");
+      // The heading still sorts (the test ids keep the row's position in the data).
+      const firstRow = () =>
+        screen.getByTestId("p").querySelector("tbody tr").textContent;
+      await userEvent.click(screen.getByTestId("p-header-first-sort-header"));
+      expect(firstRow()).toBe("AnnAshann@ucsb.edu");
+      await userEvent.click(screen.getByTestId("p-header-first-sort-header"));
+      expect(firstRow()).toBe("BobBirchbob@ucsb.edu");
+    });
+
+    test("resizing a pinned column moves the offset of the one after it", () => {
+      renderPinned({
+        columns: [
+          {
+            Header: "First",
+            accessor: "first",
+            size: 200,
+            minSize: 100,
+            enableResizing: true,
+          },
+          { Header: "Last", accessor: "last" },
+          { Header: "Email", accessor: "email" },
+        ],
+      });
+      const first = header("first");
+      expect(first.style.position).toBe("sticky");
+      expect(first.style.width).toBe("200px");
+      expect(header("last").style.left).toBe("200px");
+      const handle = screen.getByTestId("p-header-first-resize");
+      expect(handle.style.position).toBe("absolute");
+      fireEvent.mouseDown(handle, { clientX: 300 });
+      fireEvent.mouseMove(document, { clientX: 350 });
+      expect(first.style.width).toBe("250px");
+      expect(header("last").style.left).toBe("250px");
+      expect(cell(0, "last").style.left).toBe("250px");
+      fireEvent.mouseUp(document, { clientX: 350 });
+    });
+  });
 });
