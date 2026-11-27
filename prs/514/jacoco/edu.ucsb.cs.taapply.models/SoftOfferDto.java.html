@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SoftOfferDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.models</a> &gt; <span class="el_source">SoftOfferDto.java</span></div><h1>SoftOfferDto.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.models;
+
+import edu.ucsb.cs.taapply.enums.SoftOfferDecision;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * One soft offer as its applicant sees it (issue #486): the recruitment it belongs to, the lecture
+ * they have been assigned to with its instructor and times, the lecture's sections (null when the
+ * UCSB API could not be reached), the Soft Offer Notices text (null when none is saved), the
+ * deadline, and their answer so far (null until they answer for this lecture).
+ *
+ * &lt;p&gt;This is the one applicant-facing place a tentative assignment is revealed, and only while the
+ * recruitment's soft offers are released; {@code Application}'s own JSON still never carries it.
+ */
+<span class="fc" id="L16">public record SoftOfferDto(</span>
+    Long recruitmentId,
+    String quarter,
+    Long applicationId,
+    LocalDateTime releasedAt,
+    LocalDateTime deadline,
+    Notice notice,
+    Course course,
+    List&lt;Meeting&gt; sections,
+    Response response) {
+
+  /** The newest Soft Offer Notices version. */
+<span class="fc" id="L28">  public record Notice(Long id, String content) {}</span>
+
+  /** The lecture: &quot;CMPSC 8&quot; style number, section, title, instructor and meeting time. */
+<span class="fc" id="L31">  public record Course(</span>
+      Long recruitmentCourseId,
+      String courseNumber,
+      String section,
+      String title,
+      String instructor,
+      String instructorEmail,
+      String days,
+      String beginTime,
+      String endTime) {}
+
+  /** One meeting of one discussion section of the lecture; a section with no time has nulls. */
+<span class="fc" id="L43">  public record Meeting(String section, String days, String beginTime, String endTime) {}</span>
+
+  /** The applicant's answer for this lecture. */
+<span class="fc" id="L46">  public record Response(SoftOfferDecision decision, String comments, LocalDateTime respondedAt) {}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
