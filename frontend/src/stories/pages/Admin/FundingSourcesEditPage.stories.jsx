@@ -17,7 +17,10 @@ const common = [
     HttpResponse.json(fundingSourcesFixtures.threeSources),
   ),
   http.put("/api/admin/fundingSources/put", () =>
-    HttpResponse.json({ abbreviation: "NSF", explanation: "NSF grant" }),
+    HttpResponse.json({
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero funds",
+    }),
   ),
 ];
 
@@ -40,16 +43,16 @@ const routeTo = (abbreviation) => ({
   initialEntries: [`/admin/fundingSources/edit/${abbreviation}`],
 });
 
-/** NSF from the list: the abbreviation is read-only, only the explanation can change. */
+/** sub0 from the list: the abbreviation is read-only, only the explanation can change. */
 export const Default = Template.bind({});
 Default.parameters = {
-  reactRouter: routeTo("NSF"),
+  reactRouter: routeTo("sub0"),
   msw: { handlers: common },
 };
 
 /** An abbreviation that is not in the list. */
 export const NoSuchSource = Template.bind({});
 NoSuchSource.parameters = {
-  reactRouter: routeTo("NIH"),
+  reactRouter: routeTo("startup"),
   msw: { handlers: common },
 };

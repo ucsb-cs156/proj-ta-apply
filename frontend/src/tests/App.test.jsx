@@ -167,14 +167,14 @@ describe("App", () => {
     axiosMock
       .onGet("/api/admin/fundingSources/all")
       .reply(200, [
-        { abbreviation: "NSF", explanation: "National Science Foundation" },
+        { abbreviation: "sub0", explanation: "Temporary Sub Zero" },
       ]);
     renderApp();
     expect(
       await screen.findByTestId(
         "FundingSourcesIndexPage-cell-row-0-col-abbreviation",
       ),
-    ).toHaveTextContent("NSF");
+    ).toHaveTextContent("sub0");
     cleanup();
 
     window.history.pushState({}, "", "/admin/fundingSources/create");
@@ -184,12 +184,12 @@ describe("App", () => {
     ).toBeInTheDocument();
     cleanup();
 
-    window.history.pushState({}, "", "/admin/fundingSources/edit/NSF");
+    window.history.pushState({}, "", "/admin/fundingSources/edit/sub0");
     renderApp();
     expect(
       await screen.findByRole("heading", { name: "Edit Funding Source" }),
     ).toBeInTheDocument();
-    expect(await screen.findByLabelText(/^Abbreviation/)).toHaveValue("NSF");
+    expect(await screen.findByLabelText(/^Abbreviation/)).toHaveValue("sub0");
     cleanup();
 
     // Hiring staff may read the list through the API, but the admin pages are not theirs.

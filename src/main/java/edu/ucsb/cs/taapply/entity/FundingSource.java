@@ -8,9 +8,9 @@ import lombok.*;
  * abbreviation, which is the key and what the Soft Offer Results page and its CSV show, and the
  * explanation of what it means. Admins maintain the list on Admin → Funding Sources.
  *
- * <p>The abbreviation is stored as typed, after trimming, and is case-sensitive: {@code NSF} and
- * {@code nsf} are two rows. It is not editable once created, since hiring records will refer to it;
- * to change one, delete it and create another.
+ * <p>The abbreviation is stored as typed, after trimming, and is case-sensitive: {@code Sub0} and
+ * {@code sub0} are two rows. It is not editable once created, since hiring records will refer to
+ * it; to change one, delete it and create another.
  */
 @Data
 @AllArgsConstructor

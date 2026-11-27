@@ -67,16 +67,16 @@ describe("FundingSourcesEditPage tests", () => {
     axiosMock
       .onGet(getEndpoint)
       .reply(200, fundingSourcesFixtures.threeSources);
-    renderPage("NSF");
+    renderPage("sub0");
 
     expect(
       await screen.findByRole("heading", { name: "Edit Funding Source" }),
     ).toBeInTheDocument();
     const abbreviation = await screen.findByLabelText(/^Abbreviation/);
-    expect(abbreviation).toHaveValue("NSF");
+    expect(abbreviation).toHaveValue("sub0");
     expect(abbreviation).toHaveAttribute("readonly");
     expect(screen.getByLabelText(/^Explanation/)).toHaveValue(
-      "National Science Foundation",
+      "Temporary Sub Zero",
     );
     expect(
       screen.getByTestId("FundingSourceForm-abbreviation-note"),
@@ -113,23 +113,26 @@ describe("FundingSourcesEditPage tests", () => {
       .reply(200, fundingSourcesFixtures.threeSources);
     axiosMock
       .onPut(putEndpoint)
-      .reply(200, { abbreviation: "NSF", explanation: "NSF grant" });
-    renderPage("NSF");
+      .reply(200, {
+        abbreviation: "sub0",
+        explanation: "Temporary Sub Zero funds",
+      });
+    renderPage("sub0");
 
     fireEvent.change(await screen.findByLabelText(/^Explanation/), {
-      target: { value: " NSF grant " },
+      target: { value: " Temporary Sub Zero funds " },
     });
     fireEvent.click(screen.getByTestId("FundingSourceForm-submit"));
 
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
     expect(axiosMock.history.put[0].url).toBe(putEndpoint);
-    expect(axiosMock.history.put[0].params).toEqual({ abbreviation: "NSF" });
+    expect(axiosMock.history.put[0].params).toEqual({ abbreviation: "sub0" });
     expect(JSON.parse(axiosMock.history.put[0].data)).toEqual({
-      explanation: "NSF grant",
+      explanation: "Temporary Sub Zero funds",
     });
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
-        "Funding source updated - abbreviation: NSF",
+        "Funding source updated - abbreviation: sub0",
       ),
     );
     expect(mockNavigate).toHaveBeenCalledWith({ to: "/admin/fundingSources" });
@@ -141,11 +144,14 @@ describe("FundingSourcesEditPage tests", () => {
       .reply(200, fundingSourcesFixtures.threeSources);
     axiosMock
       .onPut(putEndpoint)
-      .reply(200, { abbreviation: "NSF", explanation: "NSF grant" });
-    renderPage("NSF", { storybook: true });
+      .reply(200, {
+        abbreviation: "sub0",
+        explanation: "Temporary Sub Zero funds",
+      });
+    renderPage("sub0", { storybook: true });
 
     fireEvent.change(await screen.findByLabelText(/^Explanation/), {
-      target: { value: "NSF grant" },
+      target: { value: "Temporary Sub Zero funds" },
     });
     fireEvent.click(screen.getByTestId("FundingSourceForm-submit"));
 
@@ -162,12 +168,12 @@ describe("FundingSourcesEditPage tests", () => {
       .reply(200, fundingSourcesFixtures.threeSources);
     axiosMock.onPut(putEndpoint).reply(404, {
       type: "EntityNotFoundException",
-      message: "FundingSource with id NSF not found",
+      message: "FundingSource with id sub0 not found",
     });
-    renderPage("NSF");
+    renderPage("sub0");
 
     fireEvent.change(await screen.findByLabelText(/^Explanation/), {
-      target: { value: "NSF grant" },
+      target: { value: "Temporary Sub Zero funds" },
     });
     fireEvent.click(screen.getByTestId("FundingSourceForm-submit"));
 
@@ -181,7 +187,7 @@ describe("FundingSourcesEditPage tests", () => {
     axiosMock
       .onGet(getEndpoint)
       .reply(200, fundingSourcesFixtures.threeSources);
-    renderPage("NIH");
+    renderPage("startup");
 
     expect(
       await screen.findByTestId("FundingSourcesEditPage-missing"),
@@ -190,7 +196,7 @@ describe("FundingSourcesEditPage tests", () => {
       expect(
         screen.getByTestId("FundingSourcesEditPage-missing"),
       ).toHaveTextContent(
-        "There is no funding source with the abbreviation NIH.",
+        "There is no funding source with the abbreviation startup.",
       ),
     );
     expect(screen.queryByLabelText(/^Abbreviation/)).toBeNull();

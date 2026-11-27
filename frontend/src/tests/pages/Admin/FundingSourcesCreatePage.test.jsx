@@ -76,28 +76,28 @@ describe("FundingSourcesCreatePage tests", () => {
 
   test("on submit, posts the trimmed values, toasts and goes back to the list", async () => {
     axiosMock.onPost(postEndpoint).reply(200, {
-      abbreviation: "NSF",
-      explanation: "National Science Foundation",
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero",
     });
     renderPage();
 
     fireEvent.change(await screen.findByLabelText(/^Abbreviation/), {
-      target: { value: " NSF " },
+      target: { value: " sub0 " },
     });
     fireEvent.change(screen.getByLabelText(/^Explanation/), {
-      target: { value: "National Science Foundation " },
+      target: { value: "Temporary Sub Zero " },
     });
     fireEvent.click(screen.getByTestId("FundingSourceForm-submit"));
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
     expect(axiosMock.history.post[0].url).toBe(postEndpoint);
     expect(axiosMock.history.post[0].params).toEqual({
-      abbreviation: "NSF",
-      explanation: "National Science Foundation",
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero",
     });
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
-        "New funding source created - abbreviation: NSF",
+        "New funding source created - abbreviation: sub0",
       ),
     );
     expect(mockNavigate).toHaveBeenCalledWith({ to: "/admin/fundingSources" });
@@ -106,12 +106,12 @@ describe("FundingSourcesCreatePage tests", () => {
   test("a 400 from the backend is toasted and the page stays", async () => {
     axiosMock.onPost(postEndpoint).reply(400, {
       type: "IllegalArgumentException",
-      message: "Funding source NSF already exists",
+      message: "Funding source sub0 already exists",
     });
     renderPage();
 
     fireEvent.change(await screen.findByLabelText(/^Abbreviation/), {
-      target: { value: "NSF" },
+      target: { value: "sub0" },
     });
     fireEvent.change(screen.getByLabelText(/^Explanation/), {
       target: { value: "Again" },
@@ -129,16 +129,16 @@ describe("FundingSourcesCreatePage tests", () => {
 
   test("in storybook a successful submit does not navigate away", async () => {
     axiosMock.onPost(postEndpoint).reply(200, {
-      abbreviation: "NSF",
-      explanation: "National Science Foundation",
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero",
     });
     renderPage({ storybook: true });
 
     fireEvent.change(await screen.findByLabelText(/^Abbreviation/), {
-      target: { value: "NSF" },
+      target: { value: "sub0" },
     });
     fireEvent.change(screen.getByLabelText(/^Explanation/), {
-      target: { value: "National Science Foundation" },
+      target: { value: "Temporary Sub Zero" },
     });
     fireEvent.click(screen.getByTestId("FundingSourceForm-submit"));
 

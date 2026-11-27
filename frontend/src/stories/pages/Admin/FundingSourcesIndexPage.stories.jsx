@@ -21,7 +21,7 @@ export default {
           HttpResponse.json(fundingSourcesFixtures.threeSources),
         ),
         http.delete("/api/admin/fundingSources/delete", () =>
-          HttpResponse.json({ message: "FundingSource with id NSF deleted" }),
+          HttpResponse.json({ message: "FundingSource with id sub0 deleted" }),
         ),
       ],
     },

@@ -43,7 +43,7 @@ public class FundingSourcesWebIT extends WebTestCase {
         .containsText("An abbreviation cannot be changed once created");
     assertEquals(0, page.getByTestId(TABLE + "-cell-row-0-col-abbreviation").count());
 
-    // Create: the form refuses a too-long abbreviation, then accepts NSF with the spaces trimmed.
+    // Create: the form refuses a too-long abbreviation, then accepts sub0 with the spaces trimmed.
     page.getByTestId(TABLE + "-create").click();
     assertThat(page.getByRole(AriaRole.HEADING).first()).hasText("Create Funding Source");
     page.getByTestId(FORM + "-abbreviation").fill("abcdefghijk");
@@ -52,35 +52,37 @@ public class FundingSourcesWebIT extends WebTestCase {
     assertThat(page.getByText("Abbreviation is at most 10 characters.")).isVisible();
     assertEquals(0, fundingSourceRepository.count());
 
-    page.getByTestId(FORM + "-abbreviation").fill("  NSF ");
-    page.getByTestId(FORM + "-explanation").fill("National Science Foundation");
+    page.getByTestId(FORM + "-abbreviation").fill("  sub0 ");
+    page.getByTestId(FORM + "-explanation").fill("Temporary Sub Zero");
     page.getByTestId(FORM + "-submit").click();
-    assertThat(page.getByText("New funding source created - abbreviation: NSF")).isVisible();
-    assertThat(page.getByTestId(TABLE + "-cell-row-0-col-abbreviation")).hasText("NSF");
+    assertThat(page.getByText("New funding source created - abbreviation: sub0")).isVisible();
+    assertThat(page.getByTestId(TABLE + "-cell-row-0-col-abbreviation")).hasText("sub0");
     assertThat(page.getByTestId(TABLE + "-cell-row-0-col-explanation"))
-        .hasText("National Science Foundation");
-    FundingSource stored = fundingSourceRepository.findById("NSF").orElseThrow();
-    assertEquals("National Science Foundation", stored.getExplanation());
+        .hasText("Temporary Sub Zero");
+    FundingSource stored = fundingSourceRepository.findById("sub0").orElseThrow();
+    assertEquals("Temporary Sub Zero", stored.getExplanation());
 
     // Edit: the abbreviation is shown but cannot be typed into; the explanation changes.
     page.getByTestId(TABLE + "-cell-row-0-col-edit-button").click();
     assertThat(page.getByRole(AriaRole.HEADING).first()).hasText("Edit Funding Source");
-    assertThat(page.getByTestId(FORM + "-abbreviation")).hasValue("NSF");
+    assertThat(page.getByTestId(FORM + "-abbreviation")).hasValue("sub0");
     assertThat(page.getByTestId(FORM + "-abbreviation")).hasAttribute("readonly", "");
     assertThat(page.getByTestId(FORM + "-abbreviation-note"))
         .containsText("The abbreviation cannot be changed.");
-    page.getByTestId(FORM + "-explanation").fill("NSF grant");
+    page.getByTestId(FORM + "-explanation").fill("Temporary Sub Zero funds");
     page.getByTestId(FORM + "-submit").click();
-    assertThat(page.getByText("Funding source updated - abbreviation: NSF")).isVisible();
-    assertThat(page.getByTestId(TABLE + "-cell-row-0-col-explanation")).hasText("NSF grant");
+    assertThat(page.getByText("Funding source updated - abbreviation: sub0")).isVisible();
+    assertThat(page.getByTestId(TABLE + "-cell-row-0-col-explanation"))
+        .hasText("Temporary Sub Zero funds");
     assertEquals(
-        "NSF grant", fundingSourceRepository.findById("NSF").orElseThrow().getExplanation());
+        "Temporary Sub Zero funds",
+        fundingSourceRepository.findById("sub0").orElseThrow().getExplanation());
 
     // Delete: no confirmation, a toast, and the row is gone.
     page.getByTestId(TABLE + "-cell-row-0-col-delete-button").click();
-    assertThat(page.getByText("FundingSource with id NSF deleted")).isVisible();
+    assertThat(page.getByText("FundingSource with id sub0 deleted")).isVisible();
     assertThat(page.getByTestId(TABLE + "-cell-row-0-col-abbreviation")).hasCount(0);
-    assertFalse(fundingSourceRepository.existsById("NSF"));
+    assertFalse(fundingSourceRepository.existsById("sub0"));
   }
 
   /** Hiring staff may read the list through the API, but the admin pages are not theirs. */
@@ -88,10 +90,7 @@ public class FundingSourcesWebIT extends WebTestCase {
   public void hiring_staff_have_no_admin_menu_and_are_denied_the_funding_sources_page()
       throws Exception {
     fundingSourceRepository.save(
-        FundingSource.builder()
-            .abbreviation("NSF")
-            .explanation("National Science Foundation")
-            .build());
+        FundingSource.builder().abbreviation("sub0").explanation("Temporary Sub Zero").build());
     setupHiringStaffUser();
     openPage(page, "/");
 

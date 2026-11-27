@@ -39,11 +39,8 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   private static final String PUT = "/api/admin/fundingSources/put";
   private static final String DELETE = "/api/admin/fundingSources/delete";
 
-  private static FundingSource nsf() {
-    return FundingSource.builder()
-        .abbreviation("NSF")
-        .explanation("National Science Foundation")
-        .build();
+  private static FundingSource sub0() {
+    return FundingSource.builder().abbreviation("sub0").explanation("Temporary Sub Zero").build();
   }
 
   private String explanationBody(String explanation) throws Exception {
@@ -66,18 +63,18 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"USER", "HIRING_STAFF"})
   @Test
   public void hiring_staff_can_get_all() throws Exception {
-    when(fundingSourceRepository.findAll()).thenReturn(List.of(nsf()));
+    when(fundingSourceRepository.findAll()).thenReturn(List.of(sub0()));
 
     MvcResult response = mockMvc.perform(get(ALL)).andExpect(status().isOk()).andReturn();
 
     assertEquals(
-        mapper.writeValueAsString(List.of(nsf())), response.getResponse().getContentAsString());
+        mapper.writeValueAsString(List.of(sub0())), response.getResponse().getContentAsString());
   }
 
   @Test
   public void logged_out_users_cannot_post() throws Exception {
     mockMvc
-        .perform(post(POST + "?abbreviation=NSF&explanation=x").with(csrf()))
+        .perform(post(POST + "?abbreviation=sub0&explanation=x").with(csrf()))
         .andExpect(status().is(403));
   }
 
@@ -85,7 +82,7 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @Test
   public void hiring_staff_cannot_post() throws Exception {
     mockMvc
-        .perform(post(POST + "?abbreviation=NSF&explanation=x").with(csrf()))
+        .perform(post(POST + "?abbreviation=sub0&explanation=x").with(csrf()))
         .andExpect(status().is(403));
     verify(fundingSourceRepository, never()).save(any());
   }
@@ -94,7 +91,7 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   public void logged_out_users_cannot_put() throws Exception {
     mockMvc
         .perform(
-            put(PUT + "?abbreviation=NSF")
+            put(PUT + "?abbreviation=sub0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(explanationBody("x"))
                 .with(csrf()))
@@ -106,7 +103,7 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   public void hiring_staff_cannot_put() throws Exception {
     mockMvc
         .perform(
-            put(PUT + "?abbreviation=NSF")
+            put(PUT + "?abbreviation=sub0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(explanationBody("x"))
                 .with(csrf()))
@@ -116,13 +113,13 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
 
   @Test
   public void logged_out_users_cannot_delete() throws Exception {
-    mockMvc.perform(delete(DELETE + "?abbreviation=NSF").with(csrf())).andExpect(status().is(403));
+    mockMvc.perform(delete(DELETE + "?abbreviation=sub0").with(csrf())).andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"USER", "HIRING_STAFF"})
   @Test
   public void hiring_staff_cannot_delete() throws Exception {
-    mockMvc.perform(delete(DELETE + "?abbreviation=NSF").with(csrf())).andExpect(status().is(403));
+    mockMvc.perform(delete(DELETE + "?abbreviation=sub0").with(csrf())).andExpect(status().is(403));
     verify(fundingSourceRepository, never()).delete(any());
   }
 
@@ -131,16 +128,20 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void an_admin_sees_the_list_sorted_by_abbreviation() throws Exception {
-    FundingSource ta = FundingSource.builder().abbreviation("TA").explanation("TA funds").build();
+    FundingSource ta =
+        FundingSource.builder()
+            .abbreviation("ula-gift")
+            .explanation("Gift funding for ULAs")
+            .build();
     FundingSource dept =
-        FundingSource.builder().abbreviation("DEPT").explanation("Department funds").build();
-    when(fundingSourceRepository.findAll()).thenReturn(List.of(ta, nsf(), dept));
+        FundingSource.builder().abbreviation("ds-gift").explanation("Data Science Gift").build();
+    when(fundingSourceRepository.findAll()).thenReturn(List.of(ta, sub0(), dept));
 
     MvcResult response = mockMvc.perform(get(ALL)).andExpect(status().isOk()).andReturn();
 
     verify(fundingSourceRepository, times(1)).findAll();
     assertEquals(
-        mapper.writeValueAsString(List.of(dept, nsf(), ta)),
+        mapper.writeValueAsString(List.of(dept, sub0(), ta)),
         response.getResponse().getContentAsString());
   }
 
@@ -149,22 +150,22 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void an_admin_can_add_a_funding_source_and_both_values_are_trimmed() throws Exception {
-    when(fundingSourceRepository.existsById("NSF")).thenReturn(false);
-    when(fundingSourceRepository.save(nsf())).thenReturn(nsf());
+    when(fundingSourceRepository.existsById("sub0")).thenReturn(false);
+    when(fundingSourceRepository.save(sub0())).thenReturn(sub0());
 
     MvcResult response =
         mockMvc
             .perform(
                 post(POST)
-                    .param("abbreviation", "  NSF ")
-                    .param("explanation", " National Science Foundation  ")
+                    .param("abbreviation", "  sub0 ")
+                    .param("explanation", " Temporary Sub Zero  ")
                     .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
-    verify(fundingSourceRepository, times(1)).existsById("NSF");
-    verify(fundingSourceRepository, times(1)).save(nsf());
-    assertEquals(mapper.writeValueAsString(nsf()), response.getResponse().getContentAsString());
+    verify(fundingSourceRepository, times(1)).existsById("sub0");
+    verify(fundingSourceRepository, times(1)).save(sub0());
+    assertEquals(mapper.writeValueAsString(sub0()), response.getResponse().getContentAsString());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -229,7 +230,8 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   public void a_blank_explanation_is_a_400() throws Exception {
     MvcResult response =
         mockMvc
-            .perform(post(POST).param("abbreviation", "NSF").param("explanation", " ").with(csrf()))
+            .perform(
+                post(POST).param("abbreviation", "sub0").param("explanation", " ").with(csrf()))
             .andExpect(status().isBadRequest())
             .andReturn();
 
@@ -241,18 +243,18 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void an_abbreviation_that_already_exists_is_a_400() throws Exception {
-    when(fundingSourceRepository.existsById("NSF")).thenReturn(true);
+    when(fundingSourceRepository.existsById("sub0")).thenReturn(true);
 
     MvcResult response =
         mockMvc
             .perform(
-                post(POST).param("abbreviation", "NSF").param("explanation", "Again").with(csrf()))
+                post(POST).param("abbreviation", "sub0").param("explanation", "Again").with(csrf()))
             .andExpect(status().isBadRequest())
             .andReturn();
 
     verify(fundingSourceRepository, never()).save(any());
     Map<String, Object> json = responseToJson(response);
-    assertEquals("Funding source NSF already exists", json.get("message"));
+    assertEquals("Funding source sub0 already exists", json.get("message"));
   }
 
   // ---- PUT /put ----
@@ -261,21 +263,24 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @Test
   public void an_admin_can_change_the_explanation_which_is_trimmed() throws Exception {
     FundingSource changed =
-        FundingSource.builder().abbreviation("NSF").explanation("NSF grant").build();
-    when(fundingSourceRepository.findById("NSF")).thenReturn(Optional.of(nsf()));
+        FundingSource.builder()
+            .abbreviation("sub0")
+            .explanation("Temporary Sub Zero funds")
+            .build();
+    when(fundingSourceRepository.findById("sub0")).thenReturn(Optional.of(sub0()));
     when(fundingSourceRepository.save(changed)).thenReturn(changed);
 
     MvcResult response =
         mockMvc
             .perform(
-                put(PUT + "?abbreviation=NSF")
+                put(PUT + "?abbreviation=sub0")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(explanationBody("  NSF grant "))
+                    .content(explanationBody("  Temporary Sub Zero funds "))
                     .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
-    verify(fundingSourceRepository, times(1)).findById("NSF");
+    verify(fundingSourceRepository, times(1)).findById("sub0");
     verify(fundingSourceRepository, times(1)).save(changed);
     assertEquals(mapper.writeValueAsString(changed), response.getResponse().getContentAsString());
   }
@@ -283,32 +288,32 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void putting_an_unknown_abbreviation_is_a_404() throws Exception {
-    when(fundingSourceRepository.findById("NIH")).thenReturn(Optional.empty());
+    when(fundingSourceRepository.findById("startup")).thenReturn(Optional.empty());
 
     MvcResult response =
         mockMvc
             .perform(
-                put(PUT + "?abbreviation=NIH")
+                put(PUT + "?abbreviation=startup")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(explanationBody("National Institutes of Health"))
+                    .content(explanationBody("Startup funds"))
                     .with(csrf()))
             .andExpect(status().isNotFound())
             .andReturn();
 
     verify(fundingSourceRepository, never()).save(any());
     Map<String, Object> json = responseToJson(response);
-    assertEquals("FundingSource with id NIH not found", json.get("message"));
+    assertEquals("FundingSource with id startup not found", json.get("message"));
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void putting_a_blank_explanation_is_a_400() throws Exception {
-    when(fundingSourceRepository.findById("NSF")).thenReturn(Optional.of(nsf()));
+    when(fundingSourceRepository.findById("sub0")).thenReturn(Optional.of(sub0()));
 
     MvcResult response =
         mockMvc
             .perform(
-                put(PUT + "?abbreviation=NSF")
+                put(PUT + "?abbreviation=sub0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(explanationBody("   "))
                     .with(csrf()))
@@ -323,12 +328,12 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void putting_a_body_without_an_explanation_is_a_400() throws Exception {
-    when(fundingSourceRepository.findById("NSF")).thenReturn(Optional.of(nsf()));
+    when(fundingSourceRepository.findById("sub0")).thenReturn(Optional.of(sub0()));
 
     MvcResult response =
         mockMvc
             .perform(
-                put(PUT + "?abbreviation=NSF")
+                put(PUT + "?abbreviation=sub0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{}")
                     .with(csrf()))
@@ -345,33 +350,33 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void an_admin_can_delete_a_funding_source() throws Exception {
-    when(fundingSourceRepository.findById("NSF")).thenReturn(Optional.of(nsf()));
+    when(fundingSourceRepository.findById("sub0")).thenReturn(Optional.of(sub0()));
 
     MvcResult response =
         mockMvc
-            .perform(delete(DELETE + "?abbreviation=NSF").with(csrf()))
+            .perform(delete(DELETE + "?abbreviation=sub0").with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
-    verify(fundingSourceRepository, times(1)).findById("NSF");
-    verify(fundingSourceRepository, times(1)).delete(nsf());
+    verify(fundingSourceRepository, times(1)).findById("sub0");
+    verify(fundingSourceRepository, times(1)).delete(sub0());
     Map<String, Object> json = responseToJson(response);
-    assertEquals("FundingSource with id NSF deleted", json.get("message"));
+    assertEquals("FundingSource with id sub0 deleted", json.get("message"));
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void deleting_an_unknown_abbreviation_is_a_404() throws Exception {
-    when(fundingSourceRepository.findById("NIH")).thenReturn(Optional.empty());
+    when(fundingSourceRepository.findById("startup")).thenReturn(Optional.empty());
 
     MvcResult response =
         mockMvc
-            .perform(delete(DELETE + "?abbreviation=NIH").with(csrf()))
+            .perform(delete(DELETE + "?abbreviation=startup").with(csrf()))
             .andExpect(status().isNotFound())
             .andReturn();
 
     verify(fundingSourceRepository, never()).delete(any());
     Map<String, Object> json = responseToJson(response);
-    assertEquals("FundingSource with id NIH not found", json.get("message"));
+    assertEquals("FundingSource with id startup not found", json.get("message"));
   }
 }

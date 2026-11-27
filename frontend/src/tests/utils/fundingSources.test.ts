@@ -44,18 +44,20 @@ describe("fundingSources constants (issue #512)", () => {
   });
 
   test("the edit path encodes the abbreviation", () => {
-    expect(fundingSourceEditPath("NSF")).toBe("/admin/fundingSources/edit/NSF");
+    expect(fundingSourceEditPath("sub0")).toBe(
+      "/admin/fundingSources/edit/sub0",
+    );
     expect(fundingSourceEditPath("A/B C")).toBe(
       "/admin/fundingSources/edit/A%2FB%20C",
     );
   });
 
   test("the toasts name the abbreviation", () => {
-    expect(fundingSourceCreatedToast("NSF")).toBe(
-      "New funding source created - abbreviation: NSF",
+    expect(fundingSourceCreatedToast("sub0")).toBe(
+      "New funding source created - abbreviation: sub0",
     );
-    expect(fundingSourceUpdatedToast("NSF")).toBe(
-      "Funding source updated - abbreviation: NSF",
+    expect(fundingSourceUpdatedToast("sub0")).toBe(
+      "Funding source updated - abbreviation: sub0",
     );
   });
 
@@ -66,20 +68,20 @@ describe("fundingSources constants (issue #512)", () => {
     );
     expect(input).toEqual(fundingSourcesFixtures.threeSourcesUnsorted);
     // Equal keys keep their order; upper case sorts before lower case, as the key compares.
-    const a = { abbreviation: "nsf", explanation: "lower" };
-    const b = { abbreviation: "NSF", explanation: "upper" };
-    const c = { abbreviation: "NSF", explanation: "upper again" };
+    const a = { abbreviation: "sub0", explanation: "lower" };
+    const b = { abbreviation: "SUB0", explanation: "upper" };
+    const c = { abbreviation: "SUB0", explanation: "upper again" };
     expect(sortFundingSources([a, b, c])).toEqual([b, c, a]);
     expect(sortFundingSources([c, b])).toEqual([c, b]);
   });
 
   test("compareFundingSources is -1, 0 or 1 by code-point order of the abbreviation", () => {
-    const nsf = { abbreviation: "NSF", explanation: "x" };
-    const ta = { abbreviation: "TA", explanation: "y" };
-    const nsfAgain = { abbreviation: "NSF", explanation: "z" };
-    expect(compareFundingSources(nsf, ta)).toBe(-1);
-    expect(compareFundingSources(ta, nsf)).toBe(1);
-    expect(compareFundingSources(nsf, nsfAgain)).toBe(0);
+    const sub0 = { abbreviation: "sub0", explanation: "x" };
+    const ulaGift = { abbreviation: "ula-gift", explanation: "y" };
+    const sub0Again = { abbreviation: "sub0", explanation: "z" };
+    expect(compareFundingSources(sub0, ulaGift)).toBe(-1);
+    expect(compareFundingSources(ulaGift, sub0)).toBe(1);
+    expect(compareFundingSources(sub0, sub0Again)).toBe(0);
   });
 
   test("sortFundingSources treats a list that is not here yet as empty", () => {
@@ -89,19 +91,19 @@ describe("fundingSources constants (issue #512)", () => {
 
   test("findFundingSource picks the source with that abbreviation, case-sensitively", () => {
     expect(
-      findFundingSource(fundingSourcesFixtures.threeSources, "NSF"),
+      findFundingSource(fundingSourcesFixtures.threeSources, "sub0"),
     ).toEqual(fundingSourcesFixtures.oneSource);
     expect(
-      findFundingSource(fundingSourcesFixtures.threeSources, "nsf"),
+      findFundingSource(fundingSourcesFixtures.threeSources, "SUB0"),
     ).toBeUndefined();
     expect(
-      findFundingSource(fundingSourcesFixtures.threeSources, "NIH"),
+      findFundingSource(fundingSourcesFixtures.threeSources, "startup"),
     ).toBeUndefined();
     expect(
       findFundingSource(fundingSourcesFixtures.threeSources, undefined),
     ).toBeUndefined();
-    expect(findFundingSource(undefined, "NSF")).toBeUndefined();
+    expect(findFundingSource(undefined, "sub0")).toBeUndefined();
     expect(findFundingSource(undefined, undefined)).toBeUndefined();
-    expect(findFundingSource([], "NSF")).toBeUndefined();
+    expect(findFundingSource([], "sub0")).toBeUndefined();
   });
 });

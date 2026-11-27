@@ -95,22 +95,22 @@ describe("FundingSourcesIndexPage tests", () => {
 
     expect(
       await screen.findByTestId(`${testId}-cell-row-0-col-abbreviation`),
-    ).toHaveTextContent("DEPT");
+    ).toHaveTextContent("ds-gift");
     expect(
       screen.getByTestId(`${testId}-cell-row-0-col-explanation`),
-    ).toHaveTextContent("Department funds");
+    ).toHaveTextContent("Data Science Gift");
     expect(
       screen.getByTestId(`${testId}-cell-row-1-col-abbreviation`),
-    ).toHaveTextContent("NSF");
+    ).toHaveTextContent("sub0");
     expect(
       screen.getByTestId(`${testId}-cell-row-1-col-explanation`),
-    ).toHaveTextContent("National Science Foundation");
+    ).toHaveTextContent("Temporary Sub Zero");
     expect(
       screen.getByTestId(`${testId}-cell-row-2-col-abbreviation`),
-    ).toHaveTextContent("TA");
+    ).toHaveTextContent("ula-gift");
     expect(
       screen.getByTestId(`${testId}-cell-row-2-col-explanation`),
-    ).toHaveTextContent("TA budget, reallocated to ULAs");
+    ).toHaveTextContent("Gift funding for ULAs");
 
     const edit = screen.getByTestId(`${testId}-cell-row-1-col-edit-button`);
     expect(edit).toHaveTextContent("Edit");
@@ -133,7 +133,7 @@ describe("FundingSourcesIndexPage tests", () => {
     );
 
     expect(mockedNavigate).toHaveBeenCalledWith(
-      "/admin/fundingSources/edit/NSF",
+      "/admin/fundingSources/edit/sub0",
     );
     expect(mockedNavigate).toHaveBeenCalledTimes(1);
   });
@@ -153,7 +153,9 @@ describe("FundingSourcesIndexPage tests", () => {
 
     await waitFor(() => expect(axiosMock.history.delete.length).toBe(1));
     expect(axiosMock.history.delete[0].url).toBe(deleteEndpoint);
-    expect(axiosMock.history.delete[0].params).toEqual({ abbreviation: "TA" });
+    expect(axiosMock.history.delete[0].params).toEqual({
+      abbreviation: "ula-gift",
+    });
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
         "FundingSource with id TA deleted",

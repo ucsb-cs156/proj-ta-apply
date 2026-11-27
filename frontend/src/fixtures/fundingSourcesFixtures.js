@@ -1,37 +1,37 @@
 /** Funding sources (issue #512), as GET /api/admin/fundingSources/all returns them. */
 const fundingSourcesFixtures = {
   oneSource: {
-    abbreviation: "NSF",
-    explanation: "National Science Foundation",
+    abbreviation: "sub0",
+    explanation: "Temporary Sub Zero",
   },
   /** Already in the backend's order, by abbreviation. */
   threeSources: [
     {
-      abbreviation: "DEPT",
-      explanation: "Department funds",
+      abbreviation: "ds-gift",
+      explanation: "Data Science Gift",
     },
     {
-      abbreviation: "NSF",
-      explanation: "National Science Foundation",
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero",
     },
     {
-      abbreviation: "TA",
-      explanation: "TA budget, reallocated to ULAs",
+      abbreviation: "ula-gift",
+      explanation: "Gift funding for ULAs",
     },
   ],
   /** The same three, out of order, for the pages that sort. */
   threeSourcesUnsorted: [
     {
-      abbreviation: "TA",
-      explanation: "TA budget, reallocated to ULAs",
+      abbreviation: "ula-gift",
+      explanation: "Gift funding for ULAs",
     },
     {
-      abbreviation: "DEPT",
-      explanation: "Department funds",
+      abbreviation: "ds-gift",
+      explanation: "Data Science Gift",
     },
     {
-      abbreviation: "NSF",
-      explanation: "National Science Foundation",
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero",
     },
   ],
 };

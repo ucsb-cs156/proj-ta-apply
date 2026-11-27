@@ -131,17 +131,17 @@ describe("FundingSourceForm tests", () => {
     );
 
     fireEvent.change(await screen.findByTestId(`${testId}-abbreviation`), {
-      target: { value: "  nsf " },
+      target: { value: "  sub0 " },
     });
     fireEvent.change(screen.getByTestId(`${testId}-explanation`), {
-      target: { value: " National Science Foundation  " },
+      target: { value: " Temporary Sub Zero  " },
     });
     fireEvent.click(screen.getByTestId(`${testId}-submit`));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
     expect(submitAction).toHaveBeenCalledWith({
-      abbreviation: "nsf",
-      explanation: "National Science Foundation",
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero",
     });
     expect(screen.getByTestId(`${testId}-abbreviation`)).not.toHaveClass(
       "is-invalid",
@@ -162,10 +162,10 @@ describe("FundingSourceForm tests", () => {
     );
 
     const abbreviation = await screen.findByTestId(`${testId}-abbreviation`);
-    expect(abbreviation).toHaveValue("NSF");
+    expect(abbreviation).toHaveValue("sub0");
     expect(abbreviation).toHaveAttribute("readonly");
     expect(screen.getByTestId(`${testId}-explanation`)).toHaveValue(
-      "National Science Foundation",
+      "Temporary Sub Zero",
     );
     expect(screen.getByTestId(`${testId}-abbreviation-note`)).toHaveTextContent(
       ABBREVIATION_FIXED_NOTE,
@@ -176,14 +176,14 @@ describe("FundingSourceForm tests", () => {
     expect(screen.getByTestId(`${testId}-submit`)).toHaveTextContent("Update");
 
     fireEvent.change(screen.getByTestId(`${testId}-explanation`), {
-      target: { value: "NSF grant " },
+      target: { value: "Temporary Sub Zero funds " },
     });
     fireEvent.click(screen.getByTestId(`${testId}-submit`));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
     expect(submitAction).toHaveBeenCalledWith({
-      abbreviation: "NSF",
-      explanation: "NSF grant",
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero funds",
     });
   });
 });
