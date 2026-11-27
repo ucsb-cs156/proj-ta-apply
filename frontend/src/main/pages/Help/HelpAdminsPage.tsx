@@ -402,6 +402,23 @@ export default function HelpAdminsPage(): React.JSX.Element {
           CSV included. They have no Admin menu and no other admin page.
         </p>
 
+        <h2 className="my-3 h4" id="funding-sources">
+          Funding Sources
+        </h2>
+        <p data-testid="HelpAdminsPage-funding-sources">
+          <Link to="/admin/fundingSources">Funding Sources</Link> is the list of
+          abbreviations the financial office staff can put on a ULA hiring
+          record to say where the money comes from, each with an explanation of
+          what it means. The abbreviation is at most 10 characters and is what
+          the Funding dropdown on Soft Offer Results and its CSV show. Add one
+          with <em>Create Funding Source</em>; each row has an{" "}
+          <strong>Edit</strong> button, which changes only the explanation, and
+          a <strong>Delete</strong> button. An abbreviation cannot be changed
+          once created, since hiring records refer to it: to change one, delete
+          it and create another. Hiring staff can see the list but not change
+          it.
+        </p>
+
         <h2 className="my-3 h4" id="courses">
           Courses
         </h2>

@@ -19,6 +19,7 @@ import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
+import edu.ucsb.cs.taapply.repository.FundingSourceRepository;
 import edu.ucsb.cs.taapply.repository.HiringStaffRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
@@ -54,6 +55,7 @@ public abstract class WebTestCase {
   @Autowired AdminRepository adminRepository;
   @Autowired InstructorRepository instructorRepository;
   @Autowired protected HiringStaffRepository hiringStaffRepository;
+  @Autowired protected FundingSourceRepository fundingSourceRepository;
   @Autowired protected CourseRepository courseRepository;
   @Autowired protected RecruitmentRepository recruitmentRepository;
   @Autowired protected RecruitmentCourseRepository recruitmentCourseRepository;

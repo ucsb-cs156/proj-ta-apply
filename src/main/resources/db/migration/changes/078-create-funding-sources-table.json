@@ -1,0 +1,39 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "078-create-funding-sources-table",
+        "author": "pc",
+        "comment": "The admin-maintained funding sources (issue #512): an abbreviation of at most 10 characters, which is the key and what the Soft Offer Results page and its CSV show, and the explanation of what it means. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "funding_sources" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "funding_sources",
+              "columns": [
+                {
+                  "column": {
+                    "name": "abbreviation",
+                    "type": "VARCHAR(10)",
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "explanation",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "rollback": [{ "dropTable": { "tableName": "funding_sources" } }]
+      }
+    }
+  ]
+}
