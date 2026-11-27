@@ -111,12 +111,10 @@ describe("FundingSourcesEditPage tests", () => {
     axiosMock
       .onGet(getEndpoint)
       .reply(200, fundingSourcesFixtures.threeSources);
-    axiosMock
-      .onPut(putEndpoint)
-      .reply(200, {
-        abbreviation: "sub0",
-        explanation: "Temporary Sub Zero funds",
-      });
+    axiosMock.onPut(putEndpoint).reply(200, {
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero funds",
+    });
     renderPage("sub0");
 
     fireEvent.change(await screen.findByLabelText(/^Explanation/), {
@@ -142,12 +140,10 @@ describe("FundingSourcesEditPage tests", () => {
     axiosMock
       .onGet(getEndpoint)
       .reply(200, fundingSourcesFixtures.threeSources);
-    axiosMock
-      .onPut(putEndpoint)
-      .reply(200, {
-        abbreviation: "sub0",
-        explanation: "Temporary Sub Zero funds",
-      });
+    axiosMock.onPut(putEndpoint).reply(200, {
+      abbreviation: "sub0",
+      explanation: "Temporary Sub Zero funds",
+    });
     renderPage("sub0", { storybook: true });
 
     fireEvent.change(await screen.findByLabelText(/^Explanation/), {
