@@ -2580,3 +2580,35 @@ describe("Hiring Staff on the admins help page (issue #504)", () => {
     );
   });
 });
+
+describe("Funding Sources on the admins help page (issue #512)", () => {
+  test("the admins page has a Funding Sources section after Hiring Staff, and the menu table lists it", async () => {
+    renderPage(<HelpAdminsPage />);
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: "Funding Sources",
+    });
+    expect(heading).toHaveAttribute("id", "funding-sources");
+    const headings = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((h) => h.textContent);
+    expect(headings.indexOf("Funding Sources")).toBe(
+      headings.indexOf("Hiring Staff") + 1,
+    );
+    const section = screen.getByTestId("HelpAdminsPage-funding-sources");
+    expect(section).toHaveTextContent(
+      "Funding Sources is the list of abbreviations the financial office staff can put on a ULA hiring record to say where the money comes from, each with an explanation of what it means. The abbreviation is at most 10 characters and is what the Funding dropdown on Soft Offer Results and its CSV show. Add one with Create Funding Source; each row has an Edit button, which changes only the explanation, and a Delete button. An abbreviation cannot be changed once created, since hiring records refer to it: to change one, delete it and create another. Hiring staff can see the list but not change it.",
+    );
+    expect(
+      within(section).getByRole("link", { name: "Funding Sources" }),
+    ).toHaveAttribute("href", "/admin/fundingSources");
+    // The menu table lists the new page with its summary and links to the section.
+    const row = screen.getByTestId("HelpAdminsPage-menu-funding-sources");
+    expect(row).toHaveTextContent(
+      "The abbreviations the financial office staff put on ULA hiring records, each with an explanation.",
+    );
+    expect(
+      within(row).getByRole("link", { name: "Funding Sources" }),
+    ).toHaveAttribute("href", "#funding-sources");
+  });
+});

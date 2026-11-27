@@ -98,6 +98,14 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
   },
   {
     menu: "Admin",
+    label: "Funding Sources",
+    path: "/admin/fundingSources",
+    section: "funding-sources",
+    summary:
+      "The abbreviations the financial office staff put on ULA hiring records, each with an explanation.",
+  },
+  {
+    menu: "Admin",
     label: "Courses",
     path: "/admin/courses",
     section: "courses",

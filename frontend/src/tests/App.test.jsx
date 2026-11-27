@@ -162,6 +162,52 @@ describe("App", () => {
     expect(screen.queryByText("1 Draft Application")).toBeNull();
   });
 
+  test("/admin/fundingSources and its create and edit pages are for admins only (issue #512)", async () => {
+    window.history.pushState({}, "", "/admin/fundingSources");
+    axiosMock
+      .onGet("/api/admin/fundingSources/all")
+      .reply(200, [
+        { abbreviation: "sub0", explanation: "Temporary Sub Zero" },
+      ]);
+    renderApp();
+    expect(
+      await screen.findByTestId(
+        "FundingSourcesIndexPage-cell-row-0-col-abbreviation",
+      ),
+    ).toHaveTextContent("sub0");
+    cleanup();
+
+    window.history.pushState({}, "", "/admin/fundingSources/create");
+    renderApp();
+    expect(
+      await screen.findByRole("heading", { name: "Create Funding Source" }),
+    ).toBeInTheDocument();
+    cleanup();
+
+    window.history.pushState({}, "", "/admin/fundingSources/edit/sub0");
+    renderApp();
+    expect(
+      await screen.findByRole("heading", { name: "Edit Funding Source" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByLabelText(/^Abbreviation/)).toHaveValue("sub0");
+    cleanup();
+
+    // Hiring staff may read the list through the API, but the admin pages are not theirs.
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.hiringStaffUser);
+    window.history.pushState({}, "", "/admin/fundingSources");
+    renderApp();
+    expect(
+      await screen.findByText("You do not have access to this page."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(
+        "FundingSourcesIndexPage-cell-row-0-col-abbreviation",
+      ),
+    ).toBeNull();
+  });
+
   test("/admin/recruitments/:id/history is the recruitment's change history, for admins only (issue #390)", async () => {
     window.history.pushState({}, "", "/admin/recruitments/1/history");
     renderApp();
