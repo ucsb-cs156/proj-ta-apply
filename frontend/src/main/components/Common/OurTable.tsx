@@ -8,6 +8,7 @@ import {
   type Cell,
   type Column,
   type ColumnDef,
+  type Table,
   type VisibilityState,
 } from "@tanstack/react-table";
 import { Button } from "react-bootstrap";
@@ -65,6 +66,47 @@ const sizedStyle = <T,>(column: Column<T, unknown>): CSSProperties => ({
   minWidth: column.getSize(),
 });
 
+/** A heading cell sits over the body cells of the pinned columns, which sit over the rest. */
+const PINNED_HEADER_Z_INDEX = 2;
+const PINNED_CELL_Z_INDEX = 1;
+
+/**
+ * The right edge of the frozen part, drawn on the last pinned column. Bootstrap 5.3 paints a
+ * striped or hovered row as an inset shadow over the cell's own background, and an inline shadow
+ * would replace it, so the edge is listed first (on top) and Bootstrap's shadow is repeated after.
+ */
+const PINNED_EDGE_SHADOW =
+  "inset -2px 0 0 var(--bs-table-border-color), inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)))";
+
+/**
+ * Where a left-pinned column's heading, cells and footer sit while the table scrolls sideways
+ * (issue #510): fixed at the sum of the sizes of the pinned columns before it. TanStack adds
+ * those sizes up, so the column is shown at its size (its `size`, or TanStack's default of 150px)
+ * for the offset and the rendered width to agree, with long words broken rather than widening it.
+ * The background is the table's, opaque, since the scrolled cells pass under it.
+ */
+const pinnedStyle = <T,>(
+  table: Table<T>,
+  column: Column<T, unknown>,
+  zIndex: number,
+): CSSProperties => {
+  const pinned = table.getLeftVisibleLeafColumns();
+  const last = pinned[pinned.length - 1] === column;
+  return {
+    ...sizedStyle(column),
+    overflowWrap: "anywhere",
+    position: "sticky",
+    left: column.getStart("left"),
+    zIndex,
+    backgroundColor: "var(--bs-table-bg)",
+    ...(last && { boxShadow: PINNED_EDGE_SHADOW }),
+  };
+};
+
+/** Only left pinning is offered, so a pinned column is a left-pinned one. */
+const isPinned = <T,>(column: Column<T, unknown>): boolean =>
+  column.getIsPinned() === "left";
+
 /**
  * Small "hide" links over the headings of the columns that can be hidden (issue #314): `choices`
  * are the columns in the Columns menu, so a column outside it (an id, View or Edit column) gets no
@@ -101,6 +143,13 @@ type OurTableProps<T extends object> = {
    * table whose rows never change while someone types in one. The test ids keep the position.
    */
   getRowId?: (row: T, index: number) => string;
+  /**
+   * Columns frozen at the left edge while the table scrolls sideways (issue #510), by id, in the
+   * order they are to be shown: they come first whatever their place in `columns`, and the rest
+   * scroll under them. Each is shown at its `size` (TanStack's default of 150px without one). The
+   * table's wrapper is the scroll container, such as a `div.table-responsive`.
+   */
+  pinnedColumns?: string[];
 };
 
 export default function OurTable<T extends object>({
@@ -113,6 +162,7 @@ export default function OurTable<T extends object>({
   centerHeaders = false,
   hideLinks,
   getRowId,
+  pinnedColumns,
 }: OurTableProps<T>): React.JSX.Element {
   const newColumns = convertOldStyleColumnsToNewStyle(columns);
   const memoizedData = useMemo(() => data, [data]);
@@ -131,7 +181,8 @@ export default function OurTable<T extends object>({
     // Only columns marked enableResizing get a handle (issue #342); the rest keep their width.
     enableColumnResizing: true,
     columnResizeMode: "onChange",
-    state: { columnVisibility },
+    // A column pinned left is frozen there (issue #510); TanStack ignores an id it does not know.
+    state: { columnVisibility, columnPinning: { left: pinnedColumns } },
     // Without it TanStack's row id is the row's position in `data`.
     getRowId,
   });
@@ -187,6 +238,9 @@ export default function OurTable<T extends object>({
                     ...thStyle,
                     ...(isSized(header.column) && sizedStyle(header.column)),
                     ...((hideChoice || resizable) && { position: "relative" }),
+                    // A sticky cell places its hide link and handle as a relative one does.
+                    ...(isPinned(header.column) &&
+                      pinnedStyle(table, header.column, PINNED_HEADER_Z_INDEX)),
                   }}
                 >
                   {hideChoice && hideLinks && (
@@ -287,6 +341,8 @@ export default function OurTable<T extends object>({
                     style={{
                       ...styleOf(cell.column.columnDef.meta),
                       ...(isSized(cell.column) && sizedStyle(cell.column)),
+                      ...(isPinned(cell.column) &&
+                        pinnedStyle(table, cell.column, PINNED_CELL_Z_INDEX)),
                     }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -313,7 +369,11 @@ export default function OurTable<T extends object>({
                   key={`${testid}-footer-${header.column.id}`}
                   colSpan={header.colSpan}
                   className={classOf(header.column.columnDef.meta)}
-                  style={styleOf(header.column.columnDef.meta)}
+                  style={{
+                    ...styleOf(header.column.columnDef.meta),
+                    ...(isPinned(header.column) &&
+                      pinnedStyle(table, header.column, PINNED_CELL_Z_INDEX)),
+                  }}
                 >
                   {header.isPlaceholder
                     ? null

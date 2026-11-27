@@ -19,7 +19,9 @@ const Template = (args) => <SoftOfferResultsTable {...args} />;
 
 /**
  * The main table (issue #494): every column shown, a late answer, an answer for another lecture
- * (muted), and a row with no answer yet. Drag the handle at the right edge of Comments.
+ * (muted), and a row with no answer yet. Drag the handle at the right edge of Comments. When the
+ * table is wider than the canvas, scroll it sideways: First name and Last name stay put while the
+ * other columns pass under them (issue #510).
  */
 export const AssignedUlas = Template.bind({});
 AssignedUlas.args = {
