@@ -10,21 +10,25 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.HiringRecord;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.SoftOfferNoticeVersion;
 import edu.ucsb.cs.taapply.entity.SoftOfferResponse;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.NewHireForm;
 import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.SoftOfferDecision;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.models.HiringRecordDto;
 import edu.ucsb.cs.taapply.models.SoftOfferDto;
 import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.HiringRecordRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.SoftOfferNoticeVersionRepository;
@@ -48,6 +52,7 @@ class SoftOffersServiceTests {
   @Mock RecruitmentCourseRepository recruitmentCourseRepository;
   @Mock SoftOfferNoticeVersionRepository softOfferNoticeVersionRepository;
   @Mock SoftOfferResponseRepository softOfferResponseRepository;
+  @Mock HiringRecordRepository hiringRecordRepository;
   @Mock PublishedAssignmentsService publishedAssignmentsService;
   @Mock UCSBCurriculumService ucsbCurriculumService;
   @Mock AssignmentsService assignmentsService;
@@ -568,9 +573,23 @@ class SoftOffersServiceTests {
                     SoftOfferDecision.DECLINE,
                     "Moving",
                     LocalDateTime.of(2026, 11, 23, 10, 30))));
+    // Issue #509: the staff have saved something for Ada only, looked up for the rows in one go.
+    HiringRecord adas =
+        HiringRecord.builder()
+            .id(30L)
+            .applicationId(1L)
+            .inUcpathAt(LocalDateTime.of(2026, 11, 27, 10, 0))
+            .updatedAt(LocalDateTime.of(2026, 11, 27, 10, 0))
+            .updatedByEmail("staff@ucsb.edu")
+            .build();
+    when(hiringRecordRepository.findByApplicationIdIn(List.of(2L, 1L, 3L)))
+        .thenReturn(List.of(adas));
 
     SoftOffersService.Results results = service.results(ula);
 
+    // Issue #509: a row's identity is its application id, in row order.
+    assertEquals(List.of(2L, 1L, 3L), results.applicationIds());
+    assertEquals(Map.of(1L, HiringRecordDto.of(adas)), results.hiring());
     assertEquals(2L, results.recruitmentId());
     assertEquals("20264", results.quarter());
     assertEquals(RELEASED, results.releasedAt());
@@ -762,10 +781,11 @@ class SoftOffersServiceTests {
   void the_csv_is_the_header_row_then_a_row_per_assigned_ula_every_cell_quoted() {
     Recruitment ula = ula(true);
     when(recruitmentCourseRepository.findByRecruitmentId(2L)).thenReturn(List.of(lecture()));
+    // Ada has a hiring record with some of everything (issue #509); Bob has none.
     when(assignmentsService.realApplications(2L))
-        .thenReturn(List.of(person(1L, "Ada", "Lovelace", 10L)));
+        .thenReturn(List.of(person(1L, "Ada", "Lovelace", 10L), person(2L, "Bob", "Builder", 10L)));
     when(publishedAssignmentsService.emailsByCatalogName()).thenReturn(Map.of());
-    when(softOfferResponseRepository.findByApplicationIdIn(List.of(1L)))
+    when(softOfferResponseRepository.findByApplicationIdIn(List.of(1L, 2L)))
         .thenReturn(
             List.of(
                 answer(
@@ -774,30 +794,151 @@ class SoftOffersServiceTests {
                     SoftOfferDecision.PROCEED,
                     "Yes, \"please\"",
                     LocalDateTime.of(2026, 11, 21, 8, 5))));
+    when(hiringRecordRepository.findByApplicationIdIn(List.of(2L, 1L)))
+        .thenReturn(
+            List.of(
+                HiringRecord.builder()
+                    .id(30L)
+                    .applicationId(1L)
+                    .formalOfferSentAt(LocalDateTime.of(2026, 11, 21, 8, 5))
+                    .newHireForm(NewHireForm.NOT_NEEDED)
+                    .newHireFormAt(LocalDateTime.of(2026, 11, 22, 9, 0))
+                    .flsaConflictFoundAt(LocalDateTime.of(2026, 11, 22, 10, 0))
+                    .inUcpathAt(LocalDateTime.of(2026, 11, 23, 11, 0))
+                    .fundingSource("TA")
+                    .staffComments("Call \"HR\"")
+                    .updatedAt(LocalDateTime.of(2026, 11, 23, 11, 0))
+                    .updatedByEmail("staff@ucsb.edu")
+                    .build()));
 
     String csv = service.resultsCsv(ula);
 
     String[] lines = csv.split("\n");
-    assertEquals(2, lines.length);
-    // Issue #500: the five applicant columns, Funding, Student Comments and the staff's columns.
+    assertEquals(3, lines.length);
+    // Issue #500: the five applicant columns, Funding, Student Comments and the staff's columns;
+    // issue #509: each stamped staff column is two, the value and its date/time.
     assertEquals(
         "\"First name\",\"Last name\",\"Email\",\"Perm number\",\"Prev LA Qtrs\","
             + "\"Expected grad date\",\"Other Campus Job?\",\"Employee ID number\","
             + "\"Course assignment\",\"Funding\",\"Course instructor\","
             + "\"Course instructor email\",\"First time ULA\",\"Offer Status\","
             + "\"Offer Response Date/Time\",\"Student Comments\",\"Formal Offer Sent\","
-            + "\"Formal Offer Accepted\",\"New Hire form done (or not needed)\","
-            + "\"Other Campus Job FLSA conflict found\","
-            + "\"Other Campus Job FLSA conflict resolved\",\"In UCPath\",\"I-9 Complete\","
+            + "\"Formal Offer Sent Date/Time\",\"Formal Offer Accepted\","
+            + "\"Formal Offer Accepted Date/Time\",\"New Hire form done (or not needed)\","
+            + "\"New Hire form Date/Time\",\"Other Campus Job FLSA conflict found\","
+            + "\"Other Campus Job FLSA conflict found Date/Time\","
+            + "\"Other Campus Job FLSA conflict resolved\","
+            + "\"Other Campus Job FLSA conflict resolved Date/Time\",\"In UCPath\","
+            + "\"In UCPath Date/Time\",\"I-9 Complete\",\"I-9 Complete Date/Time\","
             + "\"Staff Comments\"",
         lines[0].trim());
+    // Bob: no answer and no hiring record, so blanks throughout.
+    assertEquals(
+        "\"Bob\",\"Builder\",\"bob@ucsb.edu\",\"\",\"2\",\"\",\"\",\"\",\"CMPSC 156\",\"\","
+            + "\"CONRAD P\",\"Not mapped\",\"no\",\"\",\"\",\"\","
+            + "\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"",
+        lines[1].trim());
+    // Ada: a checked box is Yes with its stamp, an unchecked one two blanks, the dropdown as the
+    // page words it, and the staff's comments quoted like the student's.
     assertEquals(
         "\"Ada\",\"Lovelace\",\"ada@ucsb.edu\",\"A123456\",\"0\",\"Spring 2027\",\"Not sure yet\","
-            + "\"12345678\",\"CMPSC 156\",\"\",\"CONRAD P\",\"Not mapped\",\"yes\","
-            + "\"Proceed\",\"2026-11-21T08:05\",\"Yes, \"\"please\"\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"",
-        lines[1].trim());
-    assertEquals(24, SoftOffersService.CSV_HEADERS.size());
-    assertEquals(24, lines[1].split("\",\"").length);
+            + "\"12345678\",\"CMPSC 156\",\"TA\",\"CONRAD P\",\"Not mapped\",\"yes\","
+            + "\"Proceed\",\"2026-11-21T08:05\",\"Yes, \"\"please\"\"\","
+            + "\"Yes\",\"2026-11-21T08:05\",\"\",\"\",\"Not needed\",\"2026-11-22T09:00\","
+            + "\"Yes\",\"2026-11-22T10:00\",\"\",\"\",\"Yes\",\"2026-11-23T11:00\",\"\",\"\","
+            + "\"Call \"\"HR\"\"\"",
+        lines[2].trim());
+    assertEquals(31, SoftOffersService.CSV_HEADERS.size());
+    assertEquals(31, lines[1].split("\",\"").length);
+    assertEquals(31, lines[2].split("\",\"").length);
+  }
+
+  // ---- issue #509: the staff's CSV cells ----
+
+  @Test
+  void the_staff_headers_are_two_per_stamped_field_then_staff_comments() {
+    assertEquals(
+        List.of(
+            "Formal Offer Sent",
+            "Formal Offer Sent Date/Time",
+            "Formal Offer Accepted",
+            "Formal Offer Accepted Date/Time",
+            "New Hire form done (or not needed)",
+            "New Hire form Date/Time",
+            "Other Campus Job FLSA conflict found",
+            "Other Campus Job FLSA conflict found Date/Time",
+            "Other Campus Job FLSA conflict resolved",
+            "Other Campus Job FLSA conflict resolved Date/Time",
+            "In UCPath",
+            "In UCPath Date/Time",
+            "I-9 Complete",
+            "I-9 Complete Date/Time",
+            "Staff Comments"),
+        SoftOffersService.STAFF_HEADERS);
+  }
+
+  @Test
+  void a_row_with_no_hiring_record_has_a_blank_funding_cell_and_blank_staff_cells() {
+    assertEquals("", SoftOffersService.funding(null));
+    List<String> cells = SoftOffersService.staffCells(null);
+    assertEquals(15, cells.size());
+    assertEquals(List.of("", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), cells);
+  }
+
+  @Test
+  void a_record_with_nothing_set_yet_also_exports_blanks() {
+    HiringRecordDto empty =
+        HiringRecordDto.of(HiringRecord.builder().id(1L).applicationId(2L).build());
+    assertEquals("", SoftOffersService.funding(empty));
+    assertEquals(SoftOffersService.staffCells(null), SoftOffersService.staffCells(empty));
+  }
+
+  @Test
+  void every_staff_cell_is_filled_from_its_field() {
+    HiringRecordDto all =
+        HiringRecordDto.of(
+            HiringRecord.builder()
+                .id(1L)
+                .applicationId(2L)
+                .formalOfferSentAt(LocalDateTime.of(2026, 1, 1, 1, 1))
+                .formalOfferAcceptedAt(LocalDateTime.of(2026, 1, 2, 2, 2))
+                .newHireForm(NewHireForm.DONE)
+                .newHireFormAt(LocalDateTime.of(2026, 1, 3, 3, 3))
+                .flsaConflictFoundAt(LocalDateTime.of(2026, 1, 4, 4, 4))
+                .flsaConflictResolvedAt(LocalDateTime.of(2026, 1, 5, 5, 5))
+                .inUcpathAt(LocalDateTime.of(2026, 1, 6, 6, 6))
+                .i9CompleteAt(LocalDateTime.of(2026, 1, 7, 7, 7))
+                .fundingSource("GSR")
+                .staffComments("All set")
+                .build());
+    assertEquals("GSR", SoftOffersService.funding(all));
+    assertEquals(
+        List.of(
+            "Yes",
+            "2026-01-01T01:01",
+            "Yes",
+            "2026-01-02T02:02",
+            "Done",
+            "2026-01-03T03:03",
+            "Yes",
+            "2026-01-04T04:04",
+            "Yes",
+            "2026-01-05T05:05",
+            "Yes",
+            "2026-01-06T06:06",
+            "Yes",
+            "2026-01-07T07:07",
+            "All set"),
+        SoftOffersService.staffCells(all));
+  }
+
+  @Test
+  void the_new_hire_form_choice_and_the_checkboxes_export_as_the_page_words_them() {
+    assertEquals("Done", SoftOffersService.newHireForm(NewHireForm.DONE));
+    assertEquals("Not needed", SoftOffersService.newHireForm(NewHireForm.NOT_NEEDED));
+    assertEquals("", SoftOffersService.newHireForm(null));
+    assertEquals("Yes", SoftOffersService.checked(LocalDateTime.of(2026, 1, 1, 1, 1)));
+    assertEquals("", SoftOffersService.checked(null));
   }
 
   // ---- issue #500: the page's headers against the CSV's ----
@@ -823,7 +964,7 @@ class SoftOffersServiceTests {
     assertEquals("Funding", csv.get(9));
     assertEquals(SoftOffersService.RESULTS_HEADERS.subList(9, 14), csv.subList(10, 15));
     assertEquals("Student Comments", csv.get(15));
-    assertEquals(SoftOffersService.STAFF_HEADERS, csv.subList(16, 24));
+    assertEquals(SoftOffersService.STAFF_HEADERS, csv.subList(16, 31));
   }
 
   @Test
