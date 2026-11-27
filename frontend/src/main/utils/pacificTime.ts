@@ -99,11 +99,52 @@ export const isFutureWallClock = (
 const HAS_ZONE = /(?:Z|[+-]\d{2}:?\d{2})$/;
 const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/;
 
+/** The hour on a 12-hour clock: 0 and 12 are both 12. */
+const hour12 = (hour: number): number => (hour % 12 === 0 ? 12 : hour % 12);
+
+/** "AM" before noon, "PM" from noon on. */
+const meridiem = (hour: number): string => (hour < 12 ? "AM" : "PM");
+
 /** "11/1/2026, 7:30:00 PM": the form the tables show a date and time in. */
-const render = (p: Parts): string => {
-  const hour12 = p.hour % 12 === 0 ? 12 : p.hour % 12;
-  const suffix = p.hour < 12 ? "AM" : "PM";
-  return `${p.month}/${p.day}/${p.year}, ${hour12}:${pad(p.minute)}:${pad(p.second)} ${suffix}`;
+const render = (p: Parts): string =>
+  `${p.month}/${p.day}/${p.year}, ${hour12(p.hour)}:${pad(p.minute)}:${pad(p.second)} ${meridiem(p.hour)}`;
+
+/**
+ * The Pacific wall-clock reading of a stamp from the API, of either kind (zone-less Pacific, or an
+ * instant with a zone, which is converted). Null when the text is not a stamp at all.
+ */
+const parseStamp = (stamp: string): Parts | null => {
+  if (HAS_ZONE.test(stamp)) {
+    const instant = new Date(stamp);
+    return Number.isNaN(instant.getTime()) ? null : pacificParts(instant);
+  }
+  const wall = WALL_CLOCK.exec(stamp);
+  if (!wall) {
+    return null;
+  }
+  return {
+    year: Number(wall[1]),
+    month: Number(wall[2]),
+    day: Number(wall[3]),
+    hour: Number(wall[4]),
+    minute: Number(wall[5]),
+    second: Number(wall[6] ?? 0),
+  };
+};
+
+/**
+ * A stamp from the API shown through `show`. Blank when there is none; a value that is not a stamp
+ * at all comes back as it is.
+ */
+const formatStamp = (
+  stamp: string | null | undefined,
+  show: (p: Parts) => string,
+): string => {
+  if (!stamp) {
+    return "";
+  }
+  const p = parseStamp(stamp);
+  return p ? show(p) : stamp;
 };
 
 /**
@@ -112,29 +153,34 @@ const render = (p: Parts): string => {
  */
 export const formatPacificDateTime = (
   stamp: string | null | undefined,
-): string => {
-  if (!stamp) {
-    return "";
-  }
-  if (HAS_ZONE.test(stamp)) {
-    const instant = new Date(stamp);
-    return Number.isNaN(instant.getTime())
-      ? stamp
-      : render(pacificParts(instant));
-  }
-  const wall = WALL_CLOCK.exec(stamp);
-  if (!wall) {
-    return stamp;
-  }
-  return render({
-    year: Number(wall[1]),
-    month: Number(wall[2]),
-    day: Number(wall[3]),
-    hour: Number(wall[4]),
-    minute: Number(wall[5]),
-    second: Number(wall[6] ?? 0),
-  });
-};
+): string => formatStamp(stamp, render);
+
+/**
+ * The Pacific date of a stamp from the API in the short form `mm/dd/yy`, like "11/21/26" (issue
+ * #509: the first line under a stamped checkbox). Blank when there is none; a value that is not a
+ * stamp at all comes back as it is.
+ */
+export const formatPacificShortDate = (
+  stamp: string | null | undefined,
+): string =>
+  formatStamp(
+    stamp,
+    (p) => `${pad(p.month)}/${pad(p.day)}/${pad(p.year % 100)}`,
+  );
+
+/**
+ * The Pacific time of day of a stamp from the API in the short form `h:mm AM/PM`, like "8:05 AM"
+ * (issue #509: the second line under a stamped checkbox). Twelve-hour clock, no leading zero on the
+ * hour, two-digit minutes, no seconds. Blank when there is none; a value that is not a stamp at all
+ * comes back as it is.
+ */
+export const formatPacificShortTime = (
+  stamp: string | null | undefined,
+): string =>
+  formatStamp(
+    stamp,
+    (p) => `${hour12(p.hour)}:${pad(p.minute)} ${meridiem(p.hour)}`,
+  );
 
 const MONTHS = [
   "January",
