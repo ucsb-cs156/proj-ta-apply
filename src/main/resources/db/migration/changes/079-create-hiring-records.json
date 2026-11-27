@@ -1,0 +1,59 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "079-create-hiring-records",
+        "author": "pc",
+        "comment": "The hiring and financial office staff's progress on each assigned ULA's hire (issue #509): one row per application, created on the first edit. Each checkbox is only a timestamp (checked when non-null), the New Hire form dropdown a value plus its timestamp, Funding the chosen funding source's abbreviation (issue #512; no foreign key yet, since the funding_sources table is created by another change and the value is checked in the service), Staff Comments free text, and who saved last and when. Timestamps are Pacific wall-clock time set by the server. Roll back with liquibase rollback-count 1: the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "hiring_records" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "hiring_records",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "application_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false,
+                      "unique": true,
+                      "uniqueConstraintName": "uk_hiring_records_application",
+                      "foreignKeyName": "fk_hiring_records_application",
+                      "references": "applications(id)",
+                      "deleteCascade": true
+                    }
+                  }
+                },
+                { "column": { "name": "formal_offer_sent_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "formal_offer_accepted_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "new_hire_form", "type": "VARCHAR(16)" } },
+                { "column": { "name": "new_hire_form_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "flsa_conflict_found_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "flsa_conflict_resolved_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "in_ucpath_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "i9_complete_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "funding_source", "type": "VARCHAR(10)" } },
+                { "column": { "name": "staff_comments", "type": "VARCHAR(4000)" } },
+                { "column": { "name": "updated_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "updated_by_email", "type": "VARCHAR(255)" } }
+              ]
+            }
+          }
+        ],
+        "rollback": [{ "dropTable": { "tableName": "hiring_records" } }]
+      }
+    }
+  ]
+}
