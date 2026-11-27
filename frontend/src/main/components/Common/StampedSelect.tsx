@@ -56,6 +56,8 @@ export default function StampedSelect({
       <Form.Select
         id={id}
         aria-label={label}
+        // Stryker disable next-line StringLiteral: React selects the first option, the blank one,
+        // whenever the value matches no option, so any other literal here renders the same DOM.
         value={value ?? ""}
         disabled={disabled}
         onChange={(e) =>

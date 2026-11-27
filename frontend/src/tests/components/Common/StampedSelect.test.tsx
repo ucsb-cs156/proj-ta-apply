@@ -48,7 +48,14 @@ describe("StampedSelect tests", () => {
 
   test("a null value is the blank choice, with nothing under it", () => {
     renderSelect();
-    expect(screen.getByTestId("StampedSelect-select")).toHaveValue("");
+    const select = screen.getByTestId("StampedSelect-select");
+    expect(select).toHaveValue("");
+    // The blank option is the one chosen, not "no option at all" (which also reads as "").
+    expect((select as HTMLSelectElement).selectedIndex).toBe(0);
+    expect(within(select).getAllByRole("option")[0]).toHaveProperty(
+      "selected",
+      true,
+    );
     expect(screen.queryByTestId("StampedSelect-stamp")).not.toBeInTheDocument();
   });
 
