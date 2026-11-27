@@ -590,6 +590,20 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
     assertThat(admin.getByTestId("SoftOfferResultsPage-table-cell-row-0-col-comments"))
         .hasText("Looking forward to it.");
     assertThat(admin.getByTestId("SoftOfferResultsPage-unassigned")).hasCount(0);
+
+    // Issue #511: the Copy Soft Offer Emails buttons. Chris proceeded; nobody declined or is
+    // without an answer, so those two buttons are disabled.
+    admin.context().grantPermissions(java.util.List.of("clipboard-read", "clipboard-write"));
+    assertThat(admin.getByTestId("SoftOfferResultsPage-copy-emails-label"))
+        .hasText("Copy Soft Offer Emails:");
+    assertThat(admin.getByTestId("SoftOfferResultsPage-copy-emails-declined")).isDisabled();
+    assertThat(admin.getByTestId("SoftOfferResultsPage-copy-emails-none")).isDisabled();
+    admin.getByTestId("SoftOfferResultsPage-copy-emails-all").click();
+    assertThat(admin.getByText("1 email copied to clipboard.")).isVisible();
+    assertEquals("cgaucho@ucsb.edu", admin.evaluate("navigator.clipboard.readText()"));
+    admin.getByTestId("SoftOfferResultsPage-copy-emails-proceed").click();
+    assertEquals("cgaucho@ucsb.edu", admin.evaluate("navigator.clipboard.readText()"));
+
     com.microsoft.playwright.Download download =
         admin.waitForDownload(() -> admin.getByTestId("SoftOfferResultsPage-csv").click());
     assertEquals("soft-offers-" + recruitment.getId() + ".csv", download.suggestedFilename());

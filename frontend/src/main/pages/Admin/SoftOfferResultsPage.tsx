@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
 import ChangeSoftOfferDeadlineModal from "main/components/Recruitments/ChangeSoftOfferDeadlineModal";
+import CopySoftOfferEmails from "main/components/SoftOffers/CopySoftOfferEmails";
 import SoftOfferResultsTable from "main/components/SoftOffers/SoftOfferResultsTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { apiErrorMessage } from "main/utils/apiError";
@@ -33,7 +34,8 @@ import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
  * The admin's Soft Offer Results (issue #487): /admin/recruitments/:recruitmentId/softOffers. When
  * the soft offers were released and their deadline (with Change Deadline), how many assigned ULAs
  * have answered each way, one row per assigned ULA with their answer, a second table of answers
- * from applicants no longer assigned, and the main table as a CSV. For admins and hiring staff
+ * from applicants no longer assigned, and the main table as a CSV. Above the toolbar, the Copy
+ * Soft Offer Emails buttons copy the assigned ULAs' emails by answer (issue #511). For admins and hiring staff
  * (issue #505), who look the recruitment up in the list of those with soft offer results, since
  * only admins may read the list of every recruitment; the answers carry the applicants' comments. Every column but First name and Last name can be hidden from the
  * Columns menu (issue #494), a choice the browser remembers for every recruitment's results, and
@@ -110,6 +112,11 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
               <p data-testid="SoftOfferResultsPage-counts">
                 {countsSentence(data.counts)}
               </p>
+              {/* Issue #511: copy the assigned ULAs' emails, by how they answered. */}
+              <CopySoftOfferEmails
+                rows={data.rows}
+                testIdPrefix="SoftOfferResultsPage-copy-emails"
+              />
               {/* The CSV is a plain link, so the browser saves the file itself under the backend's
                   name; it holds every column, whatever is hidden here. */}
               <div

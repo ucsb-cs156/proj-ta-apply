@@ -1,7 +1,13 @@
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import softOfferFixtures from "fixtures/softOfferFixtures";
+import softOfferResultsFixtures from "fixtures/softOfferResultsFixtures";
 import {
+  COPY_EMAILS_LABEL,
+  DECLINED_STATUS,
+  EMAIL_BUCKETS,
+  PROCEED_STATUS,
   RELEASE_SOFT_OFFERS_LABEL,
+  softOfferEmailBuckets,
   SOFT_OFFER_RESULTS_LABEL,
   SOFT_OFFER_RESULTS_URL,
   countsSentence,
@@ -146,5 +152,48 @@ describe("softOffers utilities (issue #485)", () => {
     expect(
       hiringDecisionsTentative({ ...ula, reviewStatus: "NotStarted" }),
     ).toBe(false);
+  });
+
+  // ---- issue #511: the Copy Soft Offer Emails buttons ----
+
+  test("the copy line's label, status words and four buttons", () => {
+    expect(COPY_EMAILS_LABEL).toBe("Copy Soft Offer Emails:");
+    expect(PROCEED_STATUS).toBe("Proceed");
+    expect(DECLINED_STATUS).toBe("Declined");
+    expect(EMAIL_BUCKETS).toEqual([
+      { id: "all", label: "All" },
+      { id: "proceed", label: 'Responded "Proceed"' },
+      { id: "declined", label: 'Responded "Declined"' },
+      { id: "none", label: "No Response" },
+    ]);
+  });
+
+  test("softOfferEmailBuckets splits the rows as the counts do, in table order", () => {
+    const { rows } = softOfferResultsFixtures.three;
+    const declinedRow = [
+      ...rows[2].slice(0, 12),
+      "Declined",
+      "2025-10-23T10:30",
+      "",
+    ];
+    declinedRow[2] = "linus@ucsb.edu";
+    expect(softOfferEmailBuckets([...rows, declinedRow])).toEqual({
+      all: [
+        "grace@ucsb.edu",
+        "ada@ucsb.edu",
+        "alan@ucsb.edu",
+        "linus@ucsb.edu",
+      ],
+      proceed: ["ada@ucsb.edu"],
+      declined: ["linus@ucsb.edu"],
+      // A stale answer ("Proceed (for CMPSC 8)") and a blank one are both no response.
+      none: ["grace@ucsb.edu", "alan@ucsb.edu"],
+    });
+    expect(softOfferEmailBuckets([])).toEqual({
+      all: [],
+      proceed: [],
+      declined: [],
+      none: [],
+    });
   });
 });
