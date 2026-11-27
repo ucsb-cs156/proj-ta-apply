@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BudgetCreationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">BudgetCreationService.java</span></div><h1>BudgetCreationService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Budget;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * The one place a quarter's {@link Budget} row is created (issue #384). Two paths need the row:
+ * {@link BudgetService#budgetFor} when the Budget page is first opened, and {@link
+ * BudgetCourseService} when a recruitment of the quarter first gets a course (Populate, add by
+ * enroll code, un-remove), which usually happens first, so both go through {@link #findOrCreate}.
+ *
+ * &lt;p&gt;A new row starts as a copy of the most recent earlier quarter's budget: the one with the
+ * largest YYYYQ smaller than the new quarter's. Copied are the three fund lines, the four cost and
+ * fund figures of issue #388 and the TA to ULA conversion factor; the two version counters are not,
+ * so the new row starts at zero like any other. With no earlier budget on file the row has the
+ * defaults, as it did before the issue. (The hiring targets live on the recruitments and are copied
+ * when a recruitment is created; see {@code RecruitmentsController}.)
+ *
+ * &lt;p&gt;Its own class, rather than a method of {@link BudgetService}, because {@link BudgetService}
+ * depends on {@link BudgetCourseService} and the two could not both depend on each other.
+ */
+@Service
+<span class="fc" id="L27">@Slf4j</span>
+<span class="fc" id="L28">public class BudgetCreationService {</span>
+
+  @Autowired BudgetRepository budgetRepository;
+
+  /**
+   * The quarter's budget row, created as described above if this is the first time it is asked for.
+   */
+  public Budget findOrCreate(String quarter) {
+<span class="fc" id="L36">    return budgetRepository</span>
+<span class="fc" id="L37">        .findById(quarter)</span>
+<span class="fc" id="L38">        .orElseGet(() -&gt; budgetRepository.save(startingBudget(quarter)));</span>
+  }
+
+  /**
+   * What a quarter's budget is before anyone edits it: a copy of the most recent earlier quarter's
+   * planning figures, or the defaults when there is none. Not saved.
+   */
+  Budget startingBudget(String quarter) {
+<span class="fc" id="L46">    Budget.BudgetBuilder budget = Budget.builder().quarter(quarter);</span>
+<span class="fc" id="L47">    Optional&lt;Budget&gt; previous =</span>
+<span class="fc" id="L48">        budgetRepository.findFirstByQuarterLessThanOrderByQuarterDesc(quarter);</span>
+<span class="fc" id="L49">    previous.ifPresent(</span>
+        from -&gt; {
+<span class="fc" id="L51">          log.info(</span>
+<span class="fc" id="L52">              &quot;The budget for {} starts as a copy of the one for {}&quot;, quarter, from.getQuarter());</span>
+<span class="fc" id="L53">          budget</span>
+<span class="fc" id="L54">              .unrestrictedBudget(from.getUnrestrictedBudget())</span>
+<span class="fc" id="L55">              .tasOnlyBudget(from.getTasOnlyBudget())</span>
+<span class="fc" id="L56">              .ulasOnlyBudget(from.getUlasOnlyBudget())</span>
+<span class="fc" id="L57">              .taCostPerQuarter(from.getTaCostPerQuarter())</span>
+<span class="fc" id="L58">              .ulaRateDollarsPerHour(from.getUlaRateDollarsPerHour())</span>
+<span class="fc" id="L59">              .estimatedHoursPerULAPerQuarter(from.getEstimatedHoursPerULAPerQuarter())</span>
+<span class="fc" id="L60">              .giftFundsForASEs(from.getGiftFundsForASEs())</span>
+<span class="fc" id="L61">              .conversionTAtoULA(from.getConversionTAtoULA());</span>
+<span class="fc" id="L62">        });</span>
+<span class="fc" id="L63">    return budget.build();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
