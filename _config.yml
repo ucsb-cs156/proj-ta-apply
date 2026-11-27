@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/511-copy-soft-offer-emails","number":514,"title":"Copy Soft Offer Emails buttons on the Soft Offer Results page (#511)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/514"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/510-pinned-columns","number":516,"title":"Freeze First name and Last name on the Soft Offer Results tables (OurTable column pinning)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/516"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/511-copy-soft-offer-emails","number":514,"title":"Copy Soft Offer Emails buttons on the Soft Offer Results page (#511)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/514"}]
