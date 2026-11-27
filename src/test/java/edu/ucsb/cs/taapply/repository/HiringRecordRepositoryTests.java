@@ -91,6 +91,9 @@ public class HiringRecordRepositoryTests {
     assertEquals(2, repository.findByApplicationIdIn(List.of(ada, grace, alan)).size());
     assertEquals(1, repository.findByApplicationIdIn(List.of(grace)).size());
     assertEquals(0, repository.findByApplicationIdIn(List.of()).size());
+    // Issue #512, part 2: how many records carry a funding source, for the delete rule.
+    assertEquals(2, repository.countByFundingSource("TA"));
+    assertEquals(0, repository.countByFundingSource("sub0"));
   }
 
   @Test

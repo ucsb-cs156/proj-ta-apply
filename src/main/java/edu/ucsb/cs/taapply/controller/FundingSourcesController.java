@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.controller;
 import edu.ucsb.cs.taapply.entity.FundingSource;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.FundingSourceRepository;
+import edu.ucsb.cs.taapply.repository.HiringRecordRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
  * it.
  *
  * <p>The abbreviation is the key, so it is not editable: only the explanation can change. It is
- * stored as typed, after trimming, and compared case-sensitively.
+ * stored as typed, after trimming, and compared case-sensitively. A source that hiring records
+ * (issue #509) still carry cannot be deleted: the staff clear those rows first (issue #512, part
+ * 2).
  */
 @Tag(name = "Funding Sources")
 @RequestMapping("/api/admin/fundingSources")
@@ -40,6 +43,7 @@ public class FundingSourcesController extends ApiController {
   public static final int ABBREVIATION_MAX = 10;
 
   @Autowired FundingSourceRepository fundingSourceRepository;
+  @Autowired HiringRecordRepository hiringRecordRepository;
 
   /** The body of a PUT: the new explanation. */
   public static record ExplanationBody(String explanation) {}
@@ -121,9 +125,17 @@ public class FundingSourcesController extends ApiController {
     return fundingSourceRepository.save(fundingSource);
   }
 
+  /** The refusal to delete a source that hiring records still carry, with their count. */
+  static String inUseMessage(String abbreviation, long count) {
+    return "Funding source %s is used by %d hiring record(s) and cannot be deleted."
+        .formatted(abbreviation, count);
+  }
+
   @Operation(
       summary = "Delete a funding source",
-      description = "404 if there is no such abbreviation.")
+      description =
+          "404 if there is no such abbreviation; 400, with the count, while any hiring record"
+              + " carries it.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @DeleteMapping("/delete")
   public Object deleteFundingSource(
@@ -132,9 +144,12 @@ public class FundingSourcesController extends ApiController {
         fundingSourceRepository
             .findById(abbreviation)
             .orElseThrow(() -> new EntityNotFoundException(FundingSource.class, abbreviation));
-    // Part 2 of issue #512: once the hiring_records table (issue #509) has its funding_source
-    // column, refuse here with a 400 that gives the count of hiring records still using this
-    // abbreviation, so the staff clear those rows first.
+    // Issue #512, part 2: a source still on a hiring record (issue #509) stays, so the dropdown and
+    // the CSV never show an abbreviation nobody can explain; the staff clear those rows first.
+    long used = hiringRecordRepository.countByFundingSource(abbreviation);
+    if (used > 0) {
+      throw new IllegalArgumentException(inUseMessage(abbreviation, used));
+    }
     fundingSourceRepository.delete(fundingSource);
     return genericMessage("FundingSource with id %s deleted".formatted(abbreviation));
   }

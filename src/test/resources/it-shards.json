@@ -17,7 +17,8 @@
     "RecruitmentsWebIT",
     "AdminAssignmentsWebIT",
     "QuartersWebIT",
-    "LegacyImportWebIT"
+    "LegacyImportWebIT",
+    "SoftOfferHiringWebIT"
   ],
   "4": [
     "PriorCourseworkMatrixWebIT",

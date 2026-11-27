@@ -5,6 +5,7 @@ import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import OurTable from "main/components/Common/OurTable";
+import { apiErrorMessage } from "main/utils/apiError";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import {
   FUNDING_SOURCES_ALL_URL,
@@ -70,7 +71,12 @@ export default function FundingSourcesIndexPage(): React.JSX.Element {
       method: "DELETE",
       params: { abbreviation: cell.row.original.abbreviation },
     }),
-    { onSuccess: (data) => toast(data.message) },
+    {
+      onSuccess: (data) => toast(data.message),
+      // Issue #512, part 2: a source that hiring records carry is refused with the count; the
+      // backend's message says so, where the default toast would only name the status code.
+      onError: (error) => toast(apiErrorMessage(error)),
+    },
     [FUNDING_SOURCES_ALL_URL],
   );
 

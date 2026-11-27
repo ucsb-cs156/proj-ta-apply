@@ -5,7 +5,11 @@ import {
   COPY_EMAILS_LABEL,
   DECLINED_STATUS,
   EMAIL_BUCKETS,
+  HIRING_URL,
+  NEW_HIRE_FORM_OPTIONS,
   PROCEED_STATUS,
+  pendingChange,
+  withHiringRecord,
   RELEASE_SOFT_OFFERS_LABEL,
   softOfferEmailBuckets,
   SOFT_OFFER_RESULTS_LABEL,
@@ -195,5 +199,46 @@ describe("softOffers utilities (issue #485)", () => {
       declined: [],
       none: [],
     });
+  });
+
+  // ---- issue #509: the hiring-tracking fields ----
+
+  test("the hiring constants", () => {
+    expect(HIRING_URL).toBe("/api/admin/softOffers/hiring");
+    expect(NEW_HIRE_FORM_OPTIONS).toEqual([
+      { value: "DONE", label: "Done" },
+      { value: "NOT_NEEDED", label: "Not needed" },
+    ]);
+  });
+
+  test("withHiringRecord puts a save's answer on its row, keeps the other rows' records, and leaves its input as it was", () => {
+    const { three, graceFormalOfferSent } = softOfferResultsFixtures;
+
+    const after = withHiringRecord(three, graceFormalOfferSent);
+
+    expect(after.hiring).toEqual({
+      ...three.hiring,
+      11: graceFormalOfferSent,
+    });
+    expect(after.rows).toBe(three.rows);
+    expect(after.applicationIds).toBe(three.applicationIds);
+    expect(three.hiring[11]).toBeUndefined();
+    // A record the row already has is replaced.
+    const changed = { ...three.hiring[12], staffComments: "Done." };
+    expect(withHiringRecord(three, changed).hiring).toEqual({
+      ...three.hiring,
+      12: changed,
+    });
+    // Results that are not here yet stay as they are.
+    expect(withHiringRecord(null, changed)).toBeNull();
+    expect(withHiringRecord(undefined, changed)).toBeUndefined();
+  });
+
+  test("pendingChange is the pending mutation's variables, else null", () => {
+    const change = { applicationId: 11, field: "IN_UCPATH", value: "true" };
+    expect(pendingChange(true, change)).toBe(change);
+    expect(pendingChange(false, change)).toBeNull();
+    expect(pendingChange(true, undefined)).toBeNull();
+    expect(pendingChange(false, undefined)).toBeNull();
   });
 });

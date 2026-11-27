@@ -15,4 +15,10 @@ public interface HiringRecordRepository extends CrudRepository<HiringRecord, Lon
 
   /** The records of any of the given applications, for the Soft Offer Results (issue #509). */
   List<HiringRecord> findByApplicationIdIn(Collection<Long> applicationIds);
+
+  /**
+   * How many records carry this funding source's abbreviation (issue #512, part 2): a source in use
+   * cannot be deleted.
+   */
+  long countByFundingSource(String fundingSource);
 }

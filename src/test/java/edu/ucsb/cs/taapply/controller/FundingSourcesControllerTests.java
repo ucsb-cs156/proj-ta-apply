@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.FundingSource;
 import edu.ucsb.cs.taapply.repository.FundingSourceRepository;
+import edu.ucsb.cs.taapply.repository.HiringRecordRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import org.springframework.test.web.servlet.MvcResult;
 public class FundingSourcesControllerTests extends ControllerTestCase {
 
   @MockitoBean FundingSourceRepository fundingSourceRepository;
+  @MockitoBean HiringRecordRepository hiringRecordRepository;
 
   private static final String ALL = "/api/admin/fundingSources/all";
   private static final String POST = "/api/admin/fundingSources/post";
@@ -41,6 +43,10 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
 
   private static FundingSource sub0() {
     return FundingSource.builder().abbreviation("sub0").explanation("Temporary Sub Zero").build();
+  }
+
+  private static FundingSource dsGift() {
+    return FundingSource.builder().abbreviation("ds-gift").explanation("Data Science Gift").build();
   }
 
   private String explanationBody(String explanation) throws Exception {
@@ -349,8 +355,9 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void an_admin_can_delete_a_funding_source() throws Exception {
+  public void an_admin_can_delete_a_funding_source_no_hiring_record_carries() throws Exception {
     when(fundingSourceRepository.findById("sub0")).thenReturn(Optional.of(sub0()));
+    when(hiringRecordRepository.countByFundingSource("sub0")).thenReturn(0L);
 
     MvcResult response =
         mockMvc
@@ -359,9 +366,50 @@ public class FundingSourcesControllerTests extends ControllerTestCase {
             .andReturn();
 
     verify(fundingSourceRepository, times(1)).findById("sub0");
+    verify(hiringRecordRepository, times(1)).countByFundingSource("sub0");
     verify(fundingSourceRepository, times(1)).delete(sub0());
     Map<String, Object> json = responseToJson(response);
     assertEquals("FundingSource with id sub0 deleted", json.get("message"));
+  }
+
+  /** Issue #512, part 2: a source that hiring records (issue #509) carry stays, with a 400. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void deleting_a_funding_source_in_use_is_refused_with_the_count() throws Exception {
+    when(fundingSourceRepository.findById("sub0")).thenReturn(Optional.of(sub0()));
+    when(hiringRecordRepository.countByFundingSource("sub0")).thenReturn(3L);
+
+    MvcResult response =
+        mockMvc
+            .perform(delete(DELETE + "?abbreviation=sub0").with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    verify(fundingSourceRepository, never()).delete(any());
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("IllegalArgumentException", json.get("type"));
+    assertEquals(
+        "Funding source sub0 is used by 3 hiring record(s) and cannot be deleted.",
+        json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_single_hiring_record_is_enough_to_refuse_the_delete() throws Exception {
+    when(fundingSourceRepository.findById("ds-gift")).thenReturn(Optional.of(dsGift()));
+    when(hiringRecordRepository.countByFundingSource("ds-gift")).thenReturn(1L);
+
+    MvcResult response =
+        mockMvc
+            .perform(delete(DELETE + "?abbreviation=ds-gift").with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    verify(fundingSourceRepository, never()).delete(any());
+    Map<String, Object> json = responseToJson(response);
+    assertEquals(
+        "Funding source ds-gift is used by 1 hiring record(s) and cannot be deleted.",
+        json.get("message"));
   }
 
   @WithMockUser(roles = {"ADMIN"})
