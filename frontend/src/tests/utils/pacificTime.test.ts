@@ -5,6 +5,8 @@ import {
   defaultSoftOfferDeadline,
   formatLongDate,
   formatPacificDateTime,
+  formatPacificShortDate,
+  formatPacificShortTime,
   isFutureWallClock,
   pacificNowLocalIso,
   pacificTodayIso,
@@ -172,6 +174,80 @@ describe("formatPacificDateTime without a usable stamp", () => {
     expect(formatPacificDateTime("2026-07-01T07:00:00Zulu")).toBe(
       "7/1/2026, 7:00:00 AM",
     );
+  });
+});
+
+// Issue #509: the two short lines under a stamped checkbox.
+describe.each(BROWSER_ZONES)(
+  "short date and time with the browser in %s",
+  (zone) => {
+    test.each([
+      // [what the server sends, mm/dd/yy, h:mm AM/PM]
+      // a date-time column holds Pacific wall-clock time and is shown as it reads
+      ["2026-11-21T08:05:00", "11/21/26", "8:05 AM"],
+      ["2026-11-21T08:05", "11/21/26", "8:05 AM"],
+      ["2026-11-21 08:05:00", "11/21/26", "8:05 AM"],
+      ["2026-11-21T08:05:59.123456", "11/21/26", "8:05 AM"],
+      // midnight and noon
+      ["2026-07-01T00:00:00", "07/01/26", "12:00 AM"],
+      ["2026-07-01T12:00:00", "07/01/26", "12:00 PM"],
+      ["2026-07-01T00:30:00", "07/01/26", "12:30 AM"],
+      ["2026-07-01T12:30:00", "07/01/26", "12:30 PM"],
+      // single-figure hours, each side of noon, and the last minute of each half
+      ["2026-07-01T01:00:00", "07/01/26", "1:00 AM"],
+      ["2026-07-01T13:07:00", "07/01/26", "1:07 PM"],
+      ["2026-07-01T11:59:59", "07/01/26", "11:59 AM"],
+      ["2026-07-01T23:59:59", "07/01/26", "11:59 PM"],
+      ["2026-07-01T09:01:00", "07/01/26", "9:01 AM"],
+      ["2026-07-01T21:10:00", "07/01/26", "9:10 PM"],
+      // month and day are always two figures; the year is its last two, padded
+      ["2026-12-31T22:15:00", "12/31/26", "10:15 PM"],
+      ["2005-01-02T03:04:05", "01/02/05", "3:04 AM"],
+      ["2100-10-10T10:10:00", "10/10/00", "10:10 AM"],
+      ["2030-02-03T04:05:00", "02/03/30", "4:05 AM"],
+      // an exact instant is converted: summer (UTC-7) and winter (UTC-8)
+      ["2026-07-01T07:00:00Z", "07/01/26", "12:00 AM"],
+      ["2026-07-01T06:59:59Z", "06/30/26", "11:59 PM"],
+      ["2026-04-01T17:30:00Z", "04/01/26", "10:30 AM"],
+      ["2026-11-02T03:30:00Z", "11/01/26", "7:30 PM"],
+      ["2027-01-01T08:00:00Z", "01/01/27", "12:00 AM"],
+      ["2027-01-01T07:59:59Z", "12/31/26", "11:59 PM"],
+      ["2026-07-01T09:00:00+09:00", "06/30/26", "5:00 PM"],
+      ["2026-07-01T00:00:00-07:00", "07/01/26", "12:00 AM"],
+    ])("%s is %s and %s", (stamp, date, time) => {
+      inBrowserZone(zone, () => {
+        expect(formatPacificShortDate(stamp)).toBe(date);
+        expect(formatPacificShortTime(stamp)).toBe(time);
+      });
+    });
+  },
+);
+
+describe("short date and time without a usable stamp", () => {
+  test.each([null, undefined, ""])("%j is blank", (nothing) => {
+    expect(formatPacificShortDate(nothing)).toBe("");
+    expect(formatPacificShortTime(nothing)).toBe("");
+  });
+
+  test.each([
+    "garbage",
+    "2026-13-45T99:99:99Z",
+    "2026-07-01",
+    "on 2026-07-01T07:00:00",
+  ])("%s comes back as it was", (text) => {
+    expect(formatPacificShortDate(text)).toBe(text);
+    expect(formatPacificShortTime(text)).toBe(text);
+  });
+
+  test("the three formatters agree on what a stamp is", () => {
+    for (const stamp of [
+      "2026-07-01T07:00:00 sharp",
+      "2026-07-01T07:00:00Zulu",
+    ]) {
+      expect(formatPacificDateTime(stamp)).toBe("7/1/2026, 7:00:00 AM");
+      expect(formatPacificShortDate(stamp)).toBe("07/01/26");
+      expect(formatPacificShortTime(stamp)).toBe("7:00 AM");
+    }
   });
 });
 
