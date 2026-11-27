@@ -1,6 +1,7 @@
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { formatPacificDateTime } from "main/utils/pacificTime";
 import { SOFT_OFFER_CHOICES } from "main/utils/softOfferNotices";
+import { RESULTS_COLUMN_IDS } from "main/utils/softOfferResultsColumns";
 
 // Soft offers (issue #483): the optional, ULA-only step after hiring decisions are released in
 // which each assigned applicant is asked whether to proceed to a formal offer. This file is the
@@ -97,6 +98,55 @@ export const formatStamp = (cell: string): string =>
 /** A stored deadline ("2025-10-25T17:00:00", or none) as the datetime-local box takes it. */
 export const deadlineAsLocal = (deadline: string | null | undefined): string =>
   (deadline ?? "").slice(0, 16);
+
+// ---- the Copy Soft Offer Emails buttons (issue #511) ----
+
+/** The line's label, before the four buttons. */
+export const COPY_EMAILS_LABEL = "Copy Soft Offer Emails:";
+
+/** The Offer Status words the results rows carry (SoftOffersService.PROCEED / DECLINED). */
+export const PROCEED_STATUS = "Proceed";
+export const DECLINED_STATUS = "Declined";
+
+export type EmailBucketId = "all" | "proceed" | "declined" | "none";
+
+/** The four buttons, in order, with their labels. */
+export const EMAIL_BUCKETS: readonly { id: EmailBucketId; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "proceed", label: `Responded "${PROCEED_STATUS}"` },
+  { id: "declined", label: `Responded "${DECLINED_STATUS}"` },
+  { id: "none", label: "No Response" },
+];
+
+/**
+ * The emails of the main table's rows (one per assigned ULA), in the table's order, split the way
+ * the counts sentence splits them: by the answer for the lecture each applicant now holds. A stale
+ * answer ("Proceed (for CMPSC 8)") and a blank one are both "none", as in the counts. The second
+ * table (applicants no longer assigned) is not part of this.
+ */
+export const softOfferEmailBuckets = (
+  rows: readonly (readonly string[])[],
+): Record<EmailBucketId, string[]> => {
+  const email = RESULTS_COLUMN_IDS.indexOf("email");
+  const status = RESULTS_COLUMN_IDS.indexOf("status");
+  const buckets: Record<EmailBucketId, string[]> = {
+    all: [],
+    proceed: [],
+    declined: [],
+    none: [],
+  };
+  for (const row of rows) {
+    buckets.all.push(row[email]);
+    if (row[status] === PROCEED_STATUS) {
+      buckets.proceed.push(row[email]);
+    } else if (row[status] === DECLINED_STATUS) {
+      buckets.declined.push(row[email]);
+    } else {
+      buckets.none.push(row[email]);
+    }
+  }
+  return buckets;
+};
 
 /** "3 assigned ULAs: 1 proceed, 0 declined, 2 no response yet." */
 export const countsSentence = (counts: SoftOfferResults["counts"]): string =>

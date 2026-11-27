@@ -183,6 +183,27 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     ).toBeNull();
   });
 
+  // ---- issue #511: the Copy Soft Offer Emails buttons ----
+
+  test("the Copy Soft Offer Emails buttons copy the main table's emails by answer", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    renderPage();
+
+    const line = await screen.findByTestId(`${P}-copy-emails`);
+    expect(line).toHaveTextContent(
+      'Copy Soft Offer Emails: All Responded "Proceed" Responded "Declined" No Response',
+    );
+    expect(screen.getByTestId(`${P}-copy-emails-declined`)).toBeDisabled();
+    await userEvent.click(screen.getByTestId(`${P}-copy-emails-none`));
+    // Grace's answer was for another lecture, so she has no response for this one; Linus, no
+    // longer assigned, is not copied.
+    expect(writeText).toHaveBeenCalledWith("grace@ucsb.edu\nalan@ucsb.edu");
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("2 emails copied to clipboard."),
+    );
+  });
+
   // ---- issue #494: the toolbar above the table, and the Columns menu ----
 
   test("Download CSV and the Columns menu sit in a toolbar just above the main table", async () => {
@@ -195,7 +216,10 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     expect(screen.getByTestId(`${P}-csv`)).toHaveClass("btn-sm");
     // The table comes right after the toolbar: nothing but the table's wrapper between them.
     expect(toolbar.nextElementSibling).toContainElement(screen.getByTestId(T));
-    expect(screen.getByTestId(`${P}-counts`).nextElementSibling).toBe(toolbar);
+    // Issue #511: the Copy Soft Offer Emails line sits between the counts and the toolbar.
+    const copyLine = screen.getByTestId(`${P}-copy-emails`);
+    expect(screen.getByTestId(`${P}-counts`).nextElementSibling).toBe(copyLine);
+    expect(copyLine.nextElementSibling).toBe(toolbar);
   });
 
   test("the Columns menu offers every column but First name and Last name, labelled by the headings", async () => {

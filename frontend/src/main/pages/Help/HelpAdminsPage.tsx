@@ -1018,7 +1018,13 @@ export default function HelpAdminsPage(): React.JSX.Element {
             Comments; an answer given for a lecture the applicant no longer
             holds reads &ldquo;Proceed (for CMPSC 8)&rdquo;, and answers from
             applicants no longer assigned at all are listed in a second table.
-            Above the table, <strong>Download CSV</strong> saves it with every
+            Above the table, <strong>Copy Soft Offer Emails</strong> has four
+            buttons that copy the assigned ULAs&apos; emails to the clipboard,
+            one per line: <em>All</em>, <em>Responded &ldquo;Proceed&rdquo;</em>
+            , <em>Responded &ldquo;Declined&rdquo;</em> and <em>No Response</em>{" "}
+            (an answer for a lecture the applicant no longer holds counts as no
+            response, as in the counts; a button with nobody to copy is greyed
+            out). <strong>Download CSV</strong> saves the table with every
             column, and the <strong>Columns</strong> menu hides and shows any
             column but First name and Last name (each hideable heading has a
             small <em>hide</em> link too); the choice is kept in your browser
