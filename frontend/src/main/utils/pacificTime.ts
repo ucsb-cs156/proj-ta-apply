@@ -1,15 +1,20 @@
 /**
- * Every date and time the app shows, and every "today" it works out, is in Pacific time (issue
- * #293), whatever zone the browser is in. This is the one place that knows how; the rest of the
- * front end calls these rather than `toLocaleString`, `new Date()` and the like. The backend's
+ * Every date and time the app shows, and every "today" it works out, is in the app's time zone
+ * (issue #293), whatever zone the browser is in. This is the one place that knows how; the rest of
+ * the front end calls these rather than `toLocaleString`, `new Date()` and the like. The backend's
  * counterpart is `AppTime`.
  *
- * <p>What the server sends comes in two kinds. A date-time column holds Pacific wall-clock time and
- * is sent with no zone ("2026-11-01T19:30:00"); it is shown as it reads. An exact instant (when a
- * user was last online) is sent with a zone ("2026-11-02T03:30:00Z"); it is converted to Pacific.
+ * <p>The zone is Pacific, UC Santa Barbara's, unless the server says otherwise (issue #513): the
+ * backend's `app.timeZone` property reaches the browser as `timeZone` in `/api/systemInfo`, and
+ * `useSystemInfo` hands it to `setAppTimeZone` as soon as it arrives. Until then, and on an instance
+ * that configures nothing, the zone is Pacific.
+ *
+ * <p>What the server sends comes in two kinds. A date-time column holds the app zone's wall-clock
+ * time and is sent with no zone ("2026-11-01T19:30:00"); it is shown as it reads. An exact instant
+ * (when a user was last online) is sent with a zone ("2026-11-02T03:30:00Z"); it is converted.
  */
 
-/** The app's time zone: UC Santa Barbara's. */
+/** The zone the app runs in unless the server names another: UC Santa Barbara's. */
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 
 type Parts = {
@@ -21,21 +26,46 @@ type Parts = {
   second: number;
 };
 
-const FORMAT = new Intl.DateTimeFormat("en-US", {
-  timeZone: PACIFIC_TIME_ZONE,
-  hourCycle: "h23",
-  year: "numeric",
-  month: "numeric",
-  day: "numeric",
-  hour: "numeric",
-  minute: "numeric",
-  second: "numeric",
-});
+/** A formatter that reads an instant on the wall clock of `timeZone`; throws on a bad zone. */
+const formatterFor = (timeZone: string): Intl.DateTimeFormat =>
+  new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  });
 
-/** The Pacific wall-clock reading of an instant. */
+let zone = PACIFIC_TIME_ZONE;
+let format = formatterFor(zone);
+
+/** The zone every reading below is in: Pacific until the server names another (issue #513). */
+export const appTimeZone = (): string => zone;
+
+/**
+ * Makes `timeZone` (an IANA id such as "America/Los_Angeles") the zone every reading below is in,
+ * from then on; the server's answer in `/api/systemInfo`. Nothing, or a value that is not a zone
+ * id, leaves the zone as it is: the app keeps working in the last good zone rather than failing.
+ */
+export const setAppTimeZone = (timeZone: string | null | undefined): void => {
+  if (!timeZone || timeZone === zone) {
+    return;
+  }
+  try {
+    format = formatterFor(timeZone);
+  } catch {
+    return;
+  }
+  zone = timeZone;
+};
+
+/** The app-zone wall-clock reading of an instant. */
 const pacificParts = (instant: Date): Parts => {
   const found: Record<string, number> = {};
-  for (const part of FORMAT.formatToParts(instant)) {
+  for (const part of format.formatToParts(instant)) {
     found[part.type] = Number(part.value);
   }
   return {

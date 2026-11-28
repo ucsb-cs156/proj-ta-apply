@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { setAppTimeZone } from "main/utils/pacificTime";
 
 export interface SystemInfo {
   springH2ConsoleEnabled: boolean;
@@ -12,6 +13,12 @@ export interface SystemInfo {
   commitMessage?: string;
   githubUrl?: string;
   subjectArea?: string;
+  /**
+   * The zone every date and time the app shows is in, an IANA id such as "America/Los_Angeles":
+   * the backend's app.timeZone (APP_TIME_ZONE), Pacific unless configured (issue #513). Handed to
+   * setAppTimeZone in utils/pacificTime as soon as it arrives.
+   */
+  timeZone?: string;
   startQtrYYYYQ?: string;
   endQtrYYYYQ?: string;
   /**
@@ -31,6 +38,8 @@ export function useSystemInfo() {
     queryFn: async () => {
       try {
         const response = await axios.get("/api/systemInfo");
+        // The one place the frontend learns the app's zone (issue #513); every formatter follows.
+        setAppTimeZone(response.data?.timeZone);
         return response.data;
       } catch (e) {
         console.error("Error fetching systemInfo:", e);

@@ -126,7 +126,7 @@ public class UtcToPacificTimestampsTests {
       expectedRows += CASES.length;
     }
 
-    assertEquals(expectedRows, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
+    assertEquals(expectedRows, UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone()));
 
     for (var entry : UtcToPacificTimestamps.COLUMNS.entrySet()) {
       for (String column : entry.getValue()) {
@@ -166,8 +166,8 @@ public class UtcToPacificTimestampsTests {
               + "')");
     }
 
-    UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE);
-    UtcToPacificTimestamps.convert(connection, AppTime.ZONE, UTC);
+    UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone());
+    UtcToPacificTimestamps.convert(connection, AppTime.zone(), UTC);
 
     for (int i = 0; i < CASES.length; i++) {
       LocalDateTime original = t(CASES[i][0]);
@@ -190,7 +190,7 @@ public class UtcToPacificTimestampsTests {
     sql("INSERT INTO applications VALUES (6, NULL, TIMESTAMP '2026-01-15 20:30:00')");
     sql("INSERT INTO applications VALUES (7, NULL, NULL)");
 
-    assertEquals(3, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
+    assertEquals(3, UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone()));
 
     assertEquals(t("2026-07-15T13:30:00"), read("applications", "submitted_at", 5));
     assertNull(read("applications", "cancelled_at", 5));
@@ -211,7 +211,7 @@ public class UtcToPacificTimestampsTests {
     sql("CREATE TABLE notice_versions (id BIGINT PRIMARY KEY, other TIMESTAMP)");
     sql("INSERT INTO notice_versions VALUES (1, TIMESTAMP '2026-07-15 20:30:00')");
 
-    assertEquals(1, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
+    assertEquals(1, UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone()));
 
     assertEquals(t("2026-07-15T13:30:00"), read("applications", "submitted_at", 1));
     try (Statement statement = connection.createStatement();
@@ -230,7 +230,7 @@ public class UtcToPacificTimestampsTests {
     sql("CREATE TABLE notice_versions (id BIGINT PRIMARY KEY, createdXat TIMESTAMP)");
     sql("INSERT INTO notice_versions VALUES (1, TIMESTAMP '2026-07-15 20:30:00')");
 
-    assertEquals(0, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
+    assertEquals(0, UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone()));
 
     assertEquals(t("2026-07-15T20:30:00"), read("jobXlogs", "created_at", 1));
     assertEquals(t("2026-07-15T20:30:00"), read("notice_versions", "createdXat", 1));
@@ -238,7 +238,7 @@ public class UtcToPacificTimestampsTests {
 
   @Test
   public void an_empty_database_converts_nothing() throws Exception {
-    assertEquals(0, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
+    assertEquals(0, UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone()));
   }
 
   @Test
@@ -246,7 +246,7 @@ public class UtcToPacificTimestampsTests {
     sql("CREATE TABLE \"jobs\" (\"id\" BIGINT PRIMARY KEY, \"created_at\" TIMESTAMP)");
     sql("INSERT INTO \"jobs\" VALUES (1, TIMESTAMP '2026-07-15 20:30:00')");
 
-    assertEquals(1, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
+    assertEquals(1, UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone()));
 
     try (Statement statement = connection.createStatement();
         ResultSet rs = statement.executeQuery("SELECT \"created_at\" FROM \"jobs\"")) {
@@ -269,7 +269,7 @@ public class UtcToPacificTimestampsTests {
               + "')");
     }
 
-    UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE);
+    UtcToPacificTimestamps.convert(connection, UTC, AppTime.zone());
 
     for (int i = 0; i < CASES.length; i++) {
       assertEquals(t(CASES[i][1]), read("recruitments", "created_at", i), CASES[i][0]);
@@ -280,14 +280,14 @@ public class UtcToPacificTimestampsTests {
   public void shift_keeps_the_instant_and_changes_the_clock_face() {
     assertEquals(
         t("2026-07-01T00:00:00"),
-        UtcToPacificTimestamps.shift(t("2026-07-01T07:00:00"), UTC, AppTime.ZONE));
+        UtcToPacificTimestamps.shift(t("2026-07-01T07:00:00"), UTC, AppTime.zone()));
     assertEquals(
         t("2026-07-01T07:00:00"),
-        UtcToPacificTimestamps.shift(t("2026-07-01T00:00:00"), AppTime.ZONE, UTC));
+        UtcToPacificTimestamps.shift(t("2026-07-01T00:00:00"), AppTime.zone(), UTC));
     // the repeated hour: the first pass wins going back
     assertEquals(
         t("2026-11-01T08:30:00"),
-        UtcToPacificTimestamps.shift(t("2026-11-01T01:30:00"), AppTime.ZONE, UTC));
+        UtcToPacificTimestamps.shift(t("2026-11-01T01:30:00"), AppTime.zone(), UTC));
   }
 
   // ---- through Liquibase, as the application runs it ---------------------------------------

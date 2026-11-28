@@ -168,20 +168,35 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           Dates and Times
         </h2>
         <p data-testid="HelpDeveloperPage-dates-and-times">
-          Every date and time the app shows or accepts is Pacific Time
-          (America/Los_Angeles), whatever zone the server or the browser is in
-          (issue #293). A <strong>calendar date</strong> (an opening date, a
-          deadline) has no zone and is shown as entered. A{" "}
-          <strong>date and time</strong> the app records (when an application
-          was submitted, when a change was made) is stored in the database as
-          Pacific wall-clock time, so it reads the same in the database as on
-          the screen; the one exact instant, when a user was last online, is
-          stored with its zone and converted for display. The backend takes
-          &quot;now&quot; and &quot;today&quot; from <code>AppTime</code> and
-          the frontend formats and works out &quot;today&quot; only in{" "}
-          <code>pacificTime.ts</code>; a test fails if anything else calls{" "}
-          <code>toLocaleString</code> or reads the browser's clock. The design
-          is in <code>docs/design/PacificTimeDesign.md</code>.
+          Every date and time the app shows or accepts is in the app&apos;s time
+          zone, whatever zone the server or the browser is in (issue #293). A{" "}
+          <strong>calendar date</strong> (an opening date, a deadline) has no
+          zone and is shown as entered. A <strong>date and time</strong> the app
+          records (when an application was submitted, when a change was made) is
+          stored in the database as that zone&apos;s wall-clock time, so it
+          reads the same in the database as on the screen; the one exact
+          instant, when a user was last online, is stored with its zone and
+          converted for display. The backend takes &quot;now&quot; and
+          &quot;today&quot; from <code>AppTime</code> and the frontend formats
+          and works out &quot;today&quot; only in <code>pacificTime.ts</code>; a
+          test fails if anything else calls <code>toLocaleString</code> or reads
+          the browser's clock. The design is in{" "}
+          <code>docs/design/PacificTimeDesign.md</code>.
+        </p>
+        <p data-testid="HelpDeveloperPage-time-zone-setting">
+          The zone is defined in one place (issue #513): the{" "}
+          <code>app.timeZone</code> property, set by the{" "}
+          <code>APP_TIME_ZONE</code> environment variable and Pacific Time
+          (America/Los_Angeles) when it is unset. <code>AppTime</code> reads it
+          as the server starts and makes it the JVM&apos;s default zone, the
+          nightly course refresh runs by it, and <code>/api/systemInfo</code>{" "}
+          carries it to the browser as <code>timeZone</code>, where{" "}
+          <code>pacificTime.ts</code> switches to it; until it arrives the
+          browser assumes Pacific. Changing it needs a restart of the server but
+          no rebuild. A value that is not a time zone id stops the server from
+          starting, with a message naming it. It does not convert what is
+          already stored: the date-time columns keep the wall-clock time of the
+          zone they were written in.
         </p>
 
         <h2 className="my-3 h4" id="simultaneous-editing">

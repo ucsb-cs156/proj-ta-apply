@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @ExtendWith(MockitoExtension.class)
 public class RecruitmentCoursesRefreshSchedulerTests {
@@ -37,5 +38,18 @@ public class RecruitmentCoursesRefreshSchedulerTests {
   @Test
   public void it_runs_at_midnight_by_default() {
     assertEquals("0 0 0 * * *", RecruitmentCoursesRefreshScheduler.DEFAULT_CRON);
+  }
+
+  /**
+   * Issue #513: midnight in the app's configured zone, Pacific unless app.timeZone says otherwise.
+   */
+  @Test
+  public void it_runs_in_the_apps_time_zone() throws Exception {
+    Scheduled scheduled =
+        RecruitmentCoursesRefreshScheduler.class
+            .getMethod("refresh")
+            .getAnnotation(Scheduled.class);
+    assertEquals("${app.timeZone:America/Los_Angeles}", scheduled.zone());
+    assertEquals("${app.recruitmentCourses.refreshCron:0 0 0 * * *}", scheduled.cron());
   }
 }

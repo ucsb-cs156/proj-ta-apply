@@ -22,5 +22,6 @@ export JDBC_DATABASE_URL=jdbc:postgresql://$(echo "$DATABASE_URL" | cut -d@ -f2)
 
 export JDBC_DATABASE_USERNAME=postgres
 
-# Pacific time is the app's time zone whatever the server's own is (issue #293)
-java -Duser.timezone=America/Los_Angeles -jar $1 -XX:-UseBASE64Intrinsics
+# The app's time zone, whatever the server's own is (issues #293, #513): Pacific unless APP_TIME_ZONE says
+# otherwise. AppTimeInitializer sets it again from the same variable once Spring starts.
+java -Duser.timezone=${APP_TIME_ZONE:-America/Los_Angeles} -jar $1 -XX:-UseBASE64Intrinsics

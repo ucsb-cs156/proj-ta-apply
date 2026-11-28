@@ -2400,6 +2400,22 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByTestId("HelpDeveloperPage-dates-and-times"),
     ).toHaveTextContent("Every date and time the app shows or accepts");
+    // Issue #513: the zone is one setting, and the help says which and where it reaches
+    const setting = screen.getByTestId("HelpDeveloperPage-time-zone-setting");
+    expect(setting).toHaveTextContent("defined in one place (issue #513)");
+    expect(setting).toHaveTextContent("app.timeZone");
+    expect(setting).toHaveTextContent("APP_TIME_ZONE");
+    expect(setting).toHaveTextContent(
+      "Pacific Time (America/Los_Angeles) when it is unset",
+    );
+    expect(setting).toHaveTextContent("/api/systemInfo");
+    expect(setting).toHaveTextContent(
+      "until it arrives the browser assumes Pacific",
+    );
+    expect(setting).toHaveTextContent("stops the server from starting");
+    expect(setting).toHaveTextContent(
+      "does not convert what is already stored",
+    );
     cleanup();
     renderPage(<HelpAdminsPage />);
     expect(

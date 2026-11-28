@@ -379,7 +379,7 @@ public class InstructorFeedbackControllerTests extends ControllerTestCase {
   public void a_first_save_creates_the_row_for_the_quarter_email_and_course() throws Exception {
     teachesTheUsualCourses();
     noRowYet();
-    LocalDateTime before = LocalDateTime.now(edu.ucsb.cs.taapply.time.AppTime.ZONE);
+    LocalDateTime before = LocalDateTime.now(edu.ucsb.cs.taapply.time.AppTime.zone());
 
     MvcResult response =
         save(2, "{\"allocReasonable\": true}").andExpect(status().isOk()).andReturn();

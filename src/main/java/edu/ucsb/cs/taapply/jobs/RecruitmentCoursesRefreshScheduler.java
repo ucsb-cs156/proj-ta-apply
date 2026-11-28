@@ -1,5 +1,7 @@
 package edu.ucsb.cs.taapply.jobs;
 
+import edu.ucsb.cs.taapply.time.AppTime;
+import edu.ucsb.cs.taapply.time.AppTimeInitializer;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,14 +18,15 @@ import org.springframework.stereotype.Component;
  * not, with its log.
  *
  * <p>Only present when {@code app.recruitmentCourses.refreshEnabled} is true; the cron expression
- * is {@code app.recruitmentCourses.refreshCron}, nightly at midnight Pacific by default.
+ * is {@code app.recruitmentCourses.refreshCron}, nightly at midnight by default, in the app's time
+ * zone ({@code app.timeZone}, Pacific unless configured; issue #513).
  */
 @Component
 @ConditionalOnProperty(name = "app.recruitmentCourses.refreshEnabled", havingValue = "true")
 @Slf4j
 public class RecruitmentCoursesRefreshScheduler {
 
-  /** The default schedule: every day at 00:00 Pacific. */
+  /** The default schedule: every day at 00:00 in the app's time zone. */
   public static final String DEFAULT_CRON = "0 0 0 * * *";
 
   @Autowired private RefreshRecruitmentCoursesJobFactory refreshRecruitmentCoursesJobFactory;
@@ -32,7 +35,7 @@ public class RecruitmentCoursesRefreshScheduler {
   /** The scheduled entry point: launches the refresh, judged as of today. */
   @Scheduled(
       cron = "${app.recruitmentCourses.refreshCron:" + DEFAULT_CRON + "}",
-      zone = "America/Los_Angeles")
+      zone = "${" + AppTimeInitializer.PROPERTY + ":" + AppTime.DEFAULT_ZONE_ID + "}")
   public Job refresh() {
     Job job = jobService.runAsJob(refreshRecruitmentCoursesJobFactory.create());
     log.info("Scheduled refresh: launched job {}", job.getId());

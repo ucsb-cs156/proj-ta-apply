@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   PACIFIC_TIME_ZONE,
   SOFT_OFFER_DEADLINE_DAYS,
+  appTimeZone,
   defaultSoftOfferDeadline,
   formatLongDate,
   formatPacificDateTime,
@@ -11,6 +12,7 @@ import {
   pacificNowLocalIso,
   pacificTodayIso,
   pacificWallClock,
+  setAppTimeZone,
 } from "main/utils/pacificTime";
 
 // None of these zones is Pacific except the last: what the browser's own zone is must not matter.
@@ -26,6 +28,7 @@ const originalZone = process.env.TZ;
 
 afterEach(() => {
   vi.useRealTimers();
+  setAppTimeZone(PACIFIC_TIME_ZONE);
   if (originalZone === undefined) {
     delete process.env.TZ;
   } else {
@@ -338,6 +341,90 @@ test("the test run itself is not in California", () => {
   expect(new Date(2026, 0, 1).getTimezoneOffset()).toBe(0);
 });
 
-test("the zone is Los Angeles", () => {
+test("the zone is Los Angeles until the server names another", () => {
   expect(PACIFIC_TIME_ZONE).toBe("America/Los_Angeles");
+  expect(appTimeZone()).toBe("America/Los_Angeles");
+});
+
+// Issue #513: the server's app.timeZone, from /api/systemInfo, is what every reading follows.
+describe.each(BROWSER_ZONES)(
+  "with the browser in %s, once the server names a zone",
+  (browserZone) => {
+    test("an instant is converted to the named zone, and converted back when the zone changes back", () => {
+      inBrowserZone(browserZone, () => {
+        setAppTimeZone("Asia/Tokyo");
+        expect(appTimeZone()).toBe("Asia/Tokyo");
+        // 7 a.m. UTC on July 1 is 4 p.m. in Tokyo (UTC+9), midnight in California
+        expect(formatPacificDateTime("2026-07-01T07:00:00Z")).toBe(
+          "7/1/2026, 4:00:00 PM",
+        );
+        expect(formatPacificShortDate("2026-12-31T20:30:00Z")).toBe("01/01/27");
+        expect(formatPacificShortTime("2026-12-31T20:30:00Z")).toBe("5:30 AM");
+        // a zone-less stamp is wall-clock time in whatever the app's zone is: shown as it reads
+        expect(formatPacificDateTime("2026-07-01T00:00:00")).toBe(
+          "7/1/2026, 12:00:00 AM",
+        );
+
+        setAppTimeZone("America/Los_Angeles");
+        expect(appTimeZone()).toBe("America/Los_Angeles");
+        expect(formatPacificDateTime("2026-07-01T07:00:00Z")).toBe(
+          "7/1/2026, 12:00:00 AM",
+        );
+      });
+    });
+
+    test("today, the wall clock and the default deadline follow the named zone", () => {
+      inBrowserZone(browserZone, () => {
+        vi.useFakeTimers();
+        // 5:39 p.m. on Nov 2 in California; 10:39 a.m. on Nov 3 in Tokyo
+        vi.setSystemTime(new Date("2026-11-03T01:39:00Z"));
+        expect(pacificTodayIso()).toBe("2026-11-02");
+
+        setAppTimeZone("Asia/Tokyo");
+        expect(pacificTodayIso()).toBe("2026-11-03");
+        expect(pacificNowLocalIso()).toBe("2026-11-03T10:39");
+        const wall = pacificWallClock();
+        expect([wall.getFullYear(), wall.getMonth(), wall.getDate()]).toEqual([
+          2026, 10, 3,
+        ]);
+        expect([wall.getHours(), wall.getMinutes()]).toEqual([10, 39]);
+        expect(defaultSoftOfferDeadline()).toBe("2026-11-08T17:00");
+        expect(isFutureWallClock("2026-11-03T10:40")).toBe(true);
+        expect(isFutureWallClock("2026-11-03T10:39")).toBe(false);
+      });
+    });
+  },
+);
+
+describe("setAppTimeZone keeps the last good zone", () => {
+  test.each([undefined, null, ""])("when told nothing (%s)", (nothing) => {
+    setAppTimeZone("Asia/Tokyo");
+    setAppTimeZone(nothing);
+    expect(appTimeZone()).toBe("Asia/Tokyo");
+    expect(formatPacificDateTime("2026-07-01T07:00:00Z")).toBe(
+      "7/1/2026, 4:00:00 PM",
+    );
+  });
+
+  test("when told something that is not a zone id", () => {
+    setAppTimeZone("Pacific Time");
+    expect(appTimeZone()).toBe("America/Los_Angeles");
+    expect(formatPacificDateTime("2026-07-01T07:00:00Z")).toBe(
+      "7/1/2026, 12:00:00 AM",
+    );
+    setAppTimeZone("Asia/Tokyo");
+    setAppTimeZone("Not/AZone");
+    expect(appTimeZone()).toBe("Asia/Tokyo");
+    expect(formatPacificDateTime("2026-07-01T07:00:00Z")).toBe(
+      "7/1/2026, 4:00:00 PM",
+    );
+  });
+
+  test("when told the zone it already has", () => {
+    setAppTimeZone("America/Los_Angeles");
+    expect(appTimeZone()).toBe("America/Los_Angeles");
+    expect(formatPacificDateTime("2026-07-01T07:00:00Z")).toBe(
+      "7/1/2026, 12:00:00 AM",
+    );
+  });
 });

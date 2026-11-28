@@ -18,9 +18,10 @@ import org.springframework.web.client.RestTemplate;
     excludeName = {"de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfiguration"})
 public class TaApplyApplication {
 
-  // Pacific time is the JVM's default zone, whatever TZ the server runs with (issue #293); done as
-  // soon
-  // as this class loads, so tests that load it get it too, and before anything reads the clock.
+  // The app's zone is the JVM's default zone, whatever TZ the server runs with (issue #293); done
+  // as soon as this class loads, so tests that load it get it too, and before anything reads the
+  // clock. This installs the default zone; AppTimeInitializer, registered in spring.factories,
+  // installs the configured one (app.timeZone, issue #513) once the environment has been read.
   static {
     AppTime.installAsDefaultTimeZone();
   }
