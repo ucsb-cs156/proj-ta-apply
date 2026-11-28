@@ -1,10 +1,14 @@
-# Pacific Time (issue #293)
+# Pacific Time (issues #293, #513)
 
-Every date and time the app shows, accepts or stores is in Pacific time
-(`America/Los_Angeles`), whatever zone the server or the browser is in. Before this change
-the deployed server ran in UTC, so every stamp it wrote (`LocalDateTime.now()`,
+Every date and time the app shows, accepts or stores is in the app's time zone, whatever zone the
+server or the browser is in. The zone is Pacific (`America/Los_Angeles`), UC Santa Barbara's, unless
+the one setting that names it says otherwise (see [The one setting](#the-one-setting-issue-513)).
+Before issue #293 the deployed server ran in UTC, so every stamp it wrote (`LocalDateTime.now()`,
 `@CreationTimestamp`) was UTC wall-clock time, the browser then read those zone-less strings as its
 own local time, and "today" on the server rolled over at 4 or 5 p.m. in Santa Barbara.
+
+This document says "Pacific" throughout for the default; read it as "the app's zone" wherever an
+instance configures another.
 
 ## The rule
 
@@ -74,13 +78,37 @@ Where else a date or time is made, read or shown:
   `pacificWallClock` / `pacificTodayIso`, so someone browsing from New York at 9 p.m. Pacific no
   longer sees tomorrow.
 
+## The one setting (issue #513)
+
+The zone is defined once, as the `app.timeZone` property in `application.properties`, set by the
+`APP_TIME_ZONE` environment variable (or `.env`) and `America/Los_Angeles` when that is unset. It is
+one IANA zone id. Everything that needs the zone takes it from there:
+
+| Who | How |
+| --- | --- |
+| `AppTime` (every "now" and "today" on the backend) | `AppTimeInitializer`, an `ApplicationContextInitializer` registered in `META-INF/spring.factories`, reads the property once the environment is prepared and before any bean exists, and calls `AppTime.configure`, which also makes it the JVM default zone. In the app and in every Spring test alike. A value that is not a zone id fails startup with a message naming it. |
+| The JVM default zone (Hibernate, JDBC drivers, lib-jobs, log lines) | `AppTime.configure` installs it; `TaApplyApplication` installs the default in a static initializer so it is Pacific even before Spring has read the environment. `startup.sh` passes `-Duser.timezone=${APP_TIME_ZONE:-America/Los_Angeles}` so the very first log lines agree too; the `Dockerfile` sets `TZ` to the default. |
+| JSON | `spring.jackson.time-zone=${app.timeZone}`. |
+| The nightly course refresh (`RecruitmentCoursesRefreshScheduler`) | `@Scheduled(zone = "${app.timeZone:America/Los_Angeles}")`. |
+| Changeset 050 (`UtcToPacificTimestamps`) | Converts to `AppTime.zone()`. On a fresh database it has nothing to convert. |
+| The frontend | `/api/systemInfo` carries `timeZone`, exactly `AppTime.zone()`, and `useSystemInfo` hands it to `setAppTimeZone` in `pacificTime.ts` as soon as it arrives, so every formatter and every "today" follows. Until it arrives, and when the server names nothing or something that is not a zone id, the frontend stays in Pacific. |
+
+Changing the setting needs a restart of the server, not a rebuild. It does **not** convert what is
+already stored: the date-time columns keep the wall-clock time of the zone they were written in, so
+it is a setting for a new deployment (another campus), not a switch to flip on a running one.
+
+The code fallback, `AppTime.DEFAULT_ZONE_ID`, is the only other place the default is spelled in
+code; the identifiers (`pacificTime.ts`, `formatPacificDateTime`, `PacificTimestampsTests`, this
+file's name) still say Pacific and are renamed in a follow-up.
+
 ## Configuration
 
-- `TaApplyApplication` makes Pacific the JVM default zone when the class loads, so anything that
-  asks the JVM (Hibernate, JDBC drivers, lib-jobs, log lines) agrees with `AppTime`. The
-  `Dockerfile` sets `TZ` and `startup.sh` passes `-Duser.timezone` as well, so the very first log
-  lines are Pacific too.
-- `spring.jackson.time-zone=America/Los_Angeles` in `application.properties` (and the test one).
+- `TaApplyApplication` makes the default zone the JVM default zone when the class loads, and
+  `AppTimeInitializer` makes the configured one the JVM default once the environment is read, so
+  anything that asks the JVM (Hibernate, JDBC drivers, lib-jobs, log lines) agrees with `AppTime`.
+  The `Dockerfile` sets `TZ` and `startup.sh` passes `-Duser.timezone` as well, so the very first
+  log lines are Pacific too.
+- `spring.jackson.time-zone=${app.timeZone}` in `application.properties` (and the test one).
 - `hibernate.jdbc.time_zone` is deliberately **not** set. It has to equal the JVM default zone to
   be harmless, and when it differs it shifts every stored `TIMESTAMP`.
 - The stamping annotations `@CreationTimestamp` / `@UpdateTimestamp` are replaced by `@PrePersist` /
@@ -119,12 +147,19 @@ all of them, and leaves room.
 ## Tests
 
 - `AppTimeTests`: `now` and `today` at midnight, both daylight saving changes and the repeated
-  hour, whatever zone the clock or JVM has.
+  hour, whatever zone the clock or JVM has; configuring another zone moves them and the JVM default.
+- `AppTimeInitializerTests`: the property, blank, missing, padded and malformed, the
+  `spring.factories` registration, and a Spring application started with `app.timeZone=Asia/Tokyo`
+  running in Tokyo. That last one has no database on purpose: H2 remembers the JVM zone it first
+  sees for the rest of the test run, so a context with a datasource started in another zone shifts
+  every timestamp the later test classes read back (seen in CI, where the test order differs).
+  `SystemInfoServiceImplTests` checks the zone reaches `/api/systemInfo`.
 - `UtcToPacificTimestampsTests`: every listed column, nulls, missing tables and columns, values near
   midnight and at the daylight saving boundaries, forward and back, under four JVM zones.
 - `PacificTimestampsChangelogTests`: the real changelog with rows in it: forward, rollback, forward
   again, and a fresh database.
 - `PacificTimestampsTests`: every stamped entity under four JVM zones.
 - `pacificTime.test.ts`, `pacificDefaults.test.ts`: the helpers across five browser zones, the
-  daylight saving boundaries, midnight, New Year and the "today" defaults.
+  daylight saving boundaries, midnight, New Year and the "today" defaults; and, once the server
+  names another zone, every reading in that zone. `systemInfo.test.jsx`: the hook hands the zone on.
 - `noScatteredTime.test.ts`: nothing but `pacificTime.ts` formats a time or reads the clock.

@@ -194,7 +194,7 @@ public class InstructorFeedbackSettingsControllerTests extends ControllerTestCas
               return row;
             });
 
-    LocalDateTime before = LocalDateTime.now(edu.ucsb.cs.taapply.time.AppTime.ZONE);
+    LocalDateTime before = LocalDateTime.now(edu.ucsb.cs.taapply.time.AppTime.zone());
     MvcResult response =
         save("{\"notesText\":\"  # New notes\\n\\n${quarter}  \"}")
             .andExpect(status().isOk())

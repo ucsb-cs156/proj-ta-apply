@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.time;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
@@ -17,7 +18,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/** Pacific time, whatever the zone the server (or the clock handed in) is in (issue #293). */
+/**
+ * Pacific time, whatever the zone the server (or the clock handed in) is in (issue #293), unless
+ * the app is configured for another zone (issue #513).
+ */
 public class AppTimeTests {
 
   private TimeZone original;
@@ -28,7 +32,8 @@ public class AppTimeTests {
   }
 
   @AfterEach
-  public void restore_the_default_zone() {
+  public void restore_the_default_zone_and_the_default_app_zone() {
+    AppTime.configure(AppTime.DEFAULT_ZONE);
     TimeZone.setDefault(original);
   }
 
@@ -37,8 +42,40 @@ public class AppTimeTests {
   }
 
   @Test
-  public void the_zone_is_los_angeles() {
-    assertEquals("America/Los_Angeles", AppTime.ZONE.getId());
+  public void the_zone_is_los_angeles_unless_configured() {
+    assertEquals("America/Los_Angeles", AppTime.DEFAULT_ZONE_ID);
+    assertEquals(ZoneId.of("America/Los_Angeles"), AppTime.DEFAULT_ZONE);
+    assertEquals(AppTime.DEFAULT_ZONE, AppTime.zone());
+  }
+
+  /** Issue #513: one call changes the zone every reading uses, and the JVM's default with it. */
+  @Test
+  public void configuring_another_zone_changes_now_today_and_the_jvm_default() {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    AppTime.configure(ZoneId.of("Asia/Tokyo"));
+
+    assertEquals(ZoneId.of("Asia/Tokyo"), AppTime.zone());
+    assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
+    // 2026-11-02T03:30Z is 12:30 p.m. the same day in Tokyo (UTC+9)
+    Clock clock = at("2026-11-02T03:30:00Z", ZoneOffset.UTC);
+    assertEquals(LocalDateTime.of(2026, 11, 2, 12, 30), AppTime.now(clock));
+    assertEquals(LocalDate.of(2026, 11, 2), AppTime.today(clock));
+
+    LocalDateTime before = LocalDateTime.now(ZoneId.of("Asia/Tokyo"));
+    LocalDateTime now = AppTime.now();
+    assertTrue(Duration.between(before, now).abs().getSeconds() < 5, now + " vs " + before);
+    assertTrue(
+        AppTime.today().equals(before.toLocalDate()) || AppTime.today().equals(now.toLocalDate()));
+
+    AppTime.configure(AppTime.DEFAULT_ZONE);
+    assertEquals(LocalDateTime.of(2026, 11, 1, 19, 30), AppTime.now(clock));
+    assertEquals("America/Los_Angeles", TimeZone.getDefault().getID());
+  }
+
+  @Test
+  public void the_zone_cannot_be_configured_to_nothing() {
+    assertThrows(NullPointerException.class, () -> AppTime.configure(null));
+    assertEquals(AppTime.DEFAULT_ZONE, AppTime.zone());
   }
 
   @Test
@@ -47,7 +84,7 @@ public class AppTimeTests {
     LocalDateTime expected = LocalDateTime.of(2026, 11, 1, 19, 30);
     assertEquals(expected, AppTime.now(at("2026-11-02T03:30:00Z", ZoneOffset.UTC)));
     assertEquals(expected, AppTime.now(at("2026-11-02T03:30:00Z", ZoneId.of("Asia/Tokyo"))));
-    assertEquals(expected, AppTime.now(at("2026-11-02T03:30:00Z", AppTime.ZONE)));
+    assertEquals(expected, AppTime.now(at("2026-11-02T03:30:00Z", AppTime.zone())));
   }
 
   @Test
@@ -98,10 +135,10 @@ public class AppTimeTests {
   @ValueSource(strings = {"UTC", "Asia/Tokyo", "America/New_York", "America/Los_Angeles"})
   public void the_clock_less_versions_ignore_the_jvm_zone(String zone) {
     TimeZone.setDefault(TimeZone.getTimeZone(zone));
-    LocalDateTime before = LocalDateTime.now(AppTime.ZONE);
+    LocalDateTime before = LocalDateTime.now(AppTime.zone());
     LocalDateTime now = AppTime.now();
     LocalDate today = AppTime.today();
-    LocalDateTime after = LocalDateTime.now(AppTime.ZONE);
+    LocalDateTime after = LocalDateTime.now(AppTime.zone());
 
     assertTrue(!now.isBefore(before) && !now.isAfter(after), now + " not in " + before);
     assertTrue(Duration.between(before, now).abs().getSeconds() < 5);
@@ -114,7 +151,7 @@ public class AppTimeTests {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     AppTime.installAsDefaultTimeZone();
     assertEquals("America/Los_Angeles", TimeZone.getDefault().getID());
-    assertEquals(AppTime.ZONE, ZoneId.systemDefault());
+    assertEquals(AppTime.zone(), ZoneId.systemDefault());
     // twice is harmless
     AppTime.installAsDefaultTimeZone();
     assertEquals("America/Los_Angeles", TimeZone.getDefault().getID());

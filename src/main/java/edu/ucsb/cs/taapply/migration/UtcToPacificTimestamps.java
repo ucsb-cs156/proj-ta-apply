@@ -75,13 +75,13 @@ public class UtcToPacificTimestamps implements CustomTaskChange, CustomTaskRollb
 
   @Override
   public void execute(Database database) throws CustomChangeException {
-    convert(database, ZoneOffset.UTC, AppTime.ZONE);
+    convert(database, ZoneOffset.UTC, AppTime.zone());
   }
 
   @Override
   public void rollback(Database database)
       throws CustomChangeException, RollbackImpossibleException {
-    convert(database, AppTime.ZONE, ZoneOffset.UTC);
+    convert(database, AppTime.zone(), ZoneOffset.UTC);
   }
 
   private void convert(Database database, ZoneId from, ZoneId to) throws CustomChangeException {

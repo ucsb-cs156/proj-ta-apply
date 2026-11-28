@@ -6,6 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.model.SystemInfo;
+import edu.ucsb.cs.taapply.time.AppTime;
+import java.time.ZoneId;
 import java.util.Properties;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +79,23 @@ public class SystemInfoServiceImplTests {
 
     ReflectionTestUtils.setField(service, "enableDeveloperMode", true);
     assertEquals(true, service.getSystemInfo().getEnableDeveloperMode());
+  }
+
+  /** Issue #513: the frontend is told the zone the backend is actually using. */
+  @Test
+  public void testGetSystemInfo_timeZoneIsAppTimesZone() {
+    SystemInfoServiceImpl service = new SystemInfoServiceImpl();
+    ReflectionTestUtils.setField(service, "gitProperties", null);
+    ReflectionTestUtils.setField(service, "ucsbQuarterService", stubQuarterService("20244"));
+
+    assertEquals("America/Los_Angeles", service.getSystemInfo().getTimeZone());
+
+    try {
+      AppTime.configure(ZoneId.of("Asia/Tokyo"));
+      assertEquals("Asia/Tokyo", service.getSystemInfo().getTimeZone());
+    } finally {
+      AppTime.configure(AppTime.DEFAULT_ZONE);
+    }
   }
 
   /** The end quarter is derived, not configured, so verify it reaches the SystemInfo payload. */

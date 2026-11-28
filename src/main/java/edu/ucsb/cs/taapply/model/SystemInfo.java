@@ -25,6 +25,13 @@ public class SystemInfo {
   private String commitId;
   private String githubUrl; // URL to the commit in the source repository
   private String subjectArea; // the single subject area this app manages, e.g. CMPSC
+
+  /**
+   * The zone every date and time the app shows is in, an IANA id such as America/Los_Angeles: the
+   * app.timeZone property as the backend's AppTime is using it (issue #513).
+   */
+  private String timeZone;
+
   private String startQtrYYYYQ; // inclusive bounds for the admin Courses page quarter dropdowns
   private String endQtrYYYYQ;
 

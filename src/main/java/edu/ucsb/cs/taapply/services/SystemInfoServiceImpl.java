@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.model.SystemInfo;
+import edu.ucsb.cs.taapply.time.AppTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,6 +76,8 @@ public class SystemInfoServiceImpl extends SystemInfoService {
             .commitId(commitId)
             .githubUrl(this.sourceRepo + "/commit/" + commitId)
             .subjectArea(this.subjectArea)
+            // taken from AppTime rather than the property again, so it is exactly the zone in use
+            .timeZone(AppTime.zone().getId())
             .startQtrYYYYQ(this.startQtrYYYYQ)
             .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())
             .adminRefreshSec(adminBase)
