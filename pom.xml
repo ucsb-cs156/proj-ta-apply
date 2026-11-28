@@ -130,6 +130,15 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- AppTimeTestSession, a LauncherSessionListener, puts the test JVM into the app's time zone
+         before the first test (issue #523). Surefire brings the launcher at run time; this is for
+         compiling the listener. -->
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-launcher</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <!-- WireMock for mocking OAuth in integration tests -->
     <dependency>
       <groupId>org.wiremock</groupId>
@@ -232,8 +241,9 @@
           <!-- Activate the use of TCP to transmit events to the plugin -->
           <forkNode
             implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
-          <!-- Tests run with a server that is NOT in Pacific time, as a deployed one is not (issue #293);
-               the app puts the JVM into Pacific time itself. Override with -Dtest.tz=Asia/Tokyo. -->
+          <!-- The test JVM starts in a zone that is NOT the app's, as a deployed server does (issue #293);
+               AppTimeTestSession then puts it into the app's zone before the first test, as the app does
+               for itself (issue #523). Override with -Dtest.tz=Asia/Tokyo. -->
           <environmentVariables>
             <TZ>${test.tz}</TZ>
           </environmentVariables>

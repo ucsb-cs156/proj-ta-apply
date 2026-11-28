@@ -113,8 +113,27 @@ file's name) still say Pacific and are renamed in a follow-up.
   be harmless, and when it differs it shifts every stored `TIMESTAMP`.
 - The stamping annotations `@CreationTimestamp` / `@UpdateTimestamp` are replaced by `@PrePersist` /
   `@PreUpdate` calling `AppTime.now()`, so a stamp does not depend on which zone the JVM has.
-- Tests: surefire runs the JVM with `TZ=UTC` (override with `-Dtest.tz=Asia/Tokyo`) and vitest sets
-  `TZ=UTC`, so a test that quietly depends on the developer's own California clock fails.
+- Tests: surefire starts the JVM with `TZ=UTC` (override with `-Dtest.tz=Asia/Tokyo`), as a
+  deployed server runs, and vitest sets `TZ=UTC`, so a test that quietly depends on the developer's
+  own California clock fails. Then `AppTimeTestSession` (`src/test/java/.../time/`), a JUnit
+  `LauncherSessionListener` registered in `src/test/resources/META-INF/services/`, puts the test JVM
+  into the app's zone before the first test class loads, as `TaApplyApplication` does for the app,
+  and has H2 read the zone right then (issue #523, below). A test that wants the JVM in another zone
+  sets it itself and puts it back, as `AppTimeTests` and `PacificTimestampsTests` do.
+
+### Why the test JVM's zone is set before the first test (issue #523)
+
+H2 reads the JVM's default zone the first time it needs one and keeps that value for the rest of the
+JVM (`org.h2.util.DateTimeUtils`). Loading `TaApplyApplication` installs the app's zone and every
+Spring test loads it, but a plain-JDBC test (the Liquibase changelog tests under `migration/`) does
+not; when one of those was the first to touch H2, H2 settled on UTC while the later Spring tests ran
+in Pacific, and a `TIMESTAMP` read back through `java.sql.Timestamp` (how Hibernate reads one) came
+out eight hours early. So `mvn test -Dsurefire.runOrder=alphabetical
+-Dtest='BudgetCoursesChangelogTests,PacificTimestampsTests'` failed while the full suite passed,
+only because of the order surefire happened to pick, which differs between macOS and Linux; a test
+context started in `Asia/Tokyo` that was the first H2 user did the same by 17 hours. With H2 settled
+on the app's zone at the start of the session, the order no longer matters, and a test that gives
+the JVM another zone (or starts a Spring context in one) does not move H2.
 
 ## The one-time conversion (changeset 050)
 
@@ -150,10 +169,12 @@ all of them, and leaves room.
   hour, whatever zone the clock or JVM has; configuring another zone moves them and the JVM default.
 - `AppTimeInitializerTests`: the property, blank, missing, padded and malformed, the
   `spring.factories` registration, and a Spring application started with `app.timeZone=Asia/Tokyo`
-  running in Tokyo. That last one has no database on purpose: H2 remembers the JVM zone it first
-  sees for the rest of the test run, so a context with a datasource started in another zone shifts
-  every timestamp the later test classes read back (seen in CI, where the test order differs).
-  `SystemInfoServiceImplTests` checks the zone reaches `/api/systemInfo`.
+  running in Tokyo (with no database; none is needed). `SystemInfoServiceImplTests` checks the zone
+  reaches `/api/systemInfo`.
+- `AppTimeTestSessionTests`: the listener is registered with JUnit; opening the session puts the
+  JVM and H2 in the app's zone after H2 had settled on UTC; the eight-hour shift that H2 in one zone
+  and the JVM in another produces, and that it is gone after `install()`; moving the JVM's zone
+  afterwards does not move H2.
 - `UtcToPacificTimestampsTests`: every listed column, nulls, missing tables and columns, values near
   midnight and at the daylight saving boundaries, forward and back, under four JVM zones.
 - `PacificTimestampsChangelogTests`: the real changelog with rows in it: forward, rollback, forward
