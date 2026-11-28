@@ -63,7 +63,7 @@ taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService,0,647,0,86,0,130,0,5
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService,0,143,0,8,0,29,0,15,0,11
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,596,0,32,0,123,0,31,0,15
-taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,102,0,4,0,25,0,5,0,3
+taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,105,0,4,0,26,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService,0,1460,0,180,0,305,0,122,0,32
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Columns,0,179,0,22,0,26,0,15,0,4
 taapply,edu.ucsb.cs.taapply.services,UCSBCurriculumService,0,355,0,24,0,72,0,23,0,11
@@ -83,7 +83,8 @@ taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Plan,0,9,0,0,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,SoftOffers,0,30,0,8,0,7,0,7,0,3
 taapply,edu.ucsb.cs.taapply.services,ApplicationAccessService,0,51,0,14,0,8,0,12,0,5
 taapply,edu.ucsb.cs.taapply.migration,UtcToPacificTimestamps,0,391,0,32,0,86,0,31,0,15
-taapply,edu.ucsb.cs.taapply.time,AppTime,0,26,0,0,0,8,0,6,0,6
+taapply,edu.ucsb.cs.taapply.time,AppTime,0,36,0,0,0,13,0,8,0,8
+taapply,edu.ucsb.cs.taapply.time,AppTimeInitializer,0,38,0,2,0,11,0,5,0,4
 taapply,edu.ucsb.cs.taapply.startup,ScaffoldApplicationRunner,0,14,0,0,0,5,0,3,0,3
 taapply,edu.ucsb.cs.taapply.startup,WiremockApplicationRunner,0,17,0,0,0,6,0,3,0,3
 taapply,edu.ucsb.cs.taapply.startup,ScaffoldStartup,0,34,0,0,0,11,0,4,0,4
