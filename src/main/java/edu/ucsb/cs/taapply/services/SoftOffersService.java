@@ -2,21 +2,25 @@ package edu.ucsb.cs.taapply.services;
 
 import com.opencsv.CSVWriter;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.HiringRecord;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.SoftOfferNoticeVersion;
 import edu.ucsb.cs.taapply.entity.SoftOfferResponse;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.NewHireForm;
 import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.SoftOfferDecision;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.models.HiringRecordDto;
 import edu.ucsb.cs.taapply.models.SoftOfferDto;
 import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.HiringRecordRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.SoftOfferNoticeVersionRepository;
@@ -24,6 +28,7 @@ import edu.ucsb.cs.taapply.repository.SoftOfferResponseRepository;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -51,6 +56,7 @@ public class SoftOffersService {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired SoftOfferNoticeVersionRepository softOfferNoticeVersionRepository;
   @Autowired SoftOfferResponseRepository softOfferResponseRepository;
+  @Autowired HiringRecordRepository hiringRecordRepository;
   @Autowired PublishedAssignmentsService publishedAssignmentsService;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired AssignmentsService assignmentsService;
@@ -97,21 +103,35 @@ public class SoftOffersService {
   /** The CSV's heading for the applicant's comments, to tell them from the staff's (issue #500). */
   public static final String STUDENT_COMMENTS = "Student Comments";
 
-  /** The CSV's blank column after Course assignment, for the staff to fill in (issue #500). */
+  /**
+   * The CSV's column after Course assignment (issue #500): the stored funding source's abbreviation
+   * (issue #512), blank until the staff choose one.
+   */
   public static final String FUNDING = "Funding";
 
+  /** What a checked checkbox exports as in the CSV; unchecked is blank (issue #509). */
+  public static final String YES = "Yes";
+
   /**
-   * The CSV's blank columns after everything else, for the staff to track the hire (issue #500).
+   * The CSV's columns after everything else, for the staff's hiring progress (issues #500 and
+   * #509): each stamped field as two columns, the value and its date/time, then Staff Comments.
    */
   public static final List<String> STAFF_HEADERS =
       List.of(
           "Formal Offer Sent",
+          "Formal Offer Sent Date/Time",
           "Formal Offer Accepted",
+          "Formal Offer Accepted Date/Time",
           "New Hire form done (or not needed)",
+          "New Hire form Date/Time",
           "Other Campus Job FLSA conflict found",
+          "Other Campus Job FLSA conflict found Date/Time",
           "Other Campus Job FLSA conflict resolved",
+          "Other Campus Job FLSA conflict resolved Date/Time",
           "In UCPath",
+          "In UCPath Date/Time",
           "I-9 Complete",
+          "I-9 Complete Date/Time",
           "Staff Comments");
 
   /** Where Course assignment is in a results row; Funding follows it in the CSV. */
@@ -121,20 +141,70 @@ public class SoftOffersService {
    * The CSV's header row (issue #500): the page's columns with Funding after Course assignment,
    * Comments headed Student Comments, and the staff's columns at the end.
    */
-  public static final List<String> CSV_HEADERS = csvRow(RESULTS_HEADERS, STUDENT_COMMENTS);
+  public static final List<String> CSV_HEADERS =
+      csvRow(RESULTS_HEADERS, STUDENT_COMMENTS, FUNDING, STAFF_HEADERS);
 
   /**
-   * A results row (or the header row) as the CSV lays it out; {@code comments} fills the last cell.
+   * A results row (or the header row) as the CSV lays it out: the row's cells with {@code funding}
+   * after Course assignment, {@code comments} in place of the last cell, then the {@code staff}
+   * cells.
    */
-  static List<String> csvRow(List<String> row, String comments) {
+  static List<String> csvRow(
+      List<String> row, String comments, String funding, List<String> staff) {
     List<String> out = new ArrayList<>(row.subList(0, COURSE_COLUMN + 1));
-    out.add(row == RESULTS_HEADERS ? FUNDING : "");
+    out.add(funding);
     out.addAll(row.subList(COURSE_COLUMN + 1, row.size() - 1));
     out.add(comments);
-    for (int i = 0; i < STAFF_HEADERS.size(); i++) {
-      out.add(row == RESULTS_HEADERS ? STAFF_HEADERS.get(i) : "");
-    }
+    out.addAll(staff);
     return out;
+  }
+
+  /** The CSV's Funding cell: the stored abbreviation, or blank with no record or none chosen. */
+  static String funding(HiringRecordDto hiring) {
+    return hiring == null ? "" : ApplicationCsvService.text(hiring.fundingSource());
+  }
+
+  /**
+   * The CSV's staff cells for one row, in {@link #STAFF_HEADERS} order (issue #509): Yes or blank
+   * and the stamp for each checkbox, the New Hire form choice and its stamp, and Staff Comments;
+   * all blank for a row the staff have not touched.
+   */
+  static List<String> staffCells(HiringRecordDto hiring) {
+    if (hiring == null) {
+      return Collections.nCopies(STAFF_HEADERS.size(), "");
+    }
+    return List.of(
+        checked(hiring.formalOfferSentAt()),
+        ApplicationCsvService.text(hiring.formalOfferSentAt()),
+        checked(hiring.formalOfferAcceptedAt()),
+        ApplicationCsvService.text(hiring.formalOfferAcceptedAt()),
+        newHireForm(hiring.newHireForm()),
+        ApplicationCsvService.text(hiring.newHireFormAt()),
+        checked(hiring.flsaConflictFoundAt()),
+        ApplicationCsvService.text(hiring.flsaConflictFoundAt()),
+        checked(hiring.flsaConflictResolvedAt()),
+        ApplicationCsvService.text(hiring.flsaConflictResolvedAt()),
+        checked(hiring.inUcpathAt()),
+        ApplicationCsvService.text(hiring.inUcpathAt()),
+        checked(hiring.i9CompleteAt()),
+        ApplicationCsvService.text(hiring.i9CompleteAt()),
+        ApplicationCsvService.text(hiring.staffComments()));
+  }
+
+  /** A checkbox in the CSV: checked (stamped) is Yes, unchecked blank. */
+  static String checked(LocalDateTime stamp) {
+    return stamp == null ? "" : YES;
+  }
+
+  /** The New Hire form dropdown's choice as the page shows it, or "" for blank. */
+  static String newHireForm(NewHireForm choice) {
+    if (choice == null) {
+      return "";
+    }
+    return switch (choice) {
+      case DONE -> "Done";
+      case NOT_NEEDED -> "Not needed";
+    };
   }
 
   /** An applicant's answer about another campus job as the form offered it, or "" for no answer. */
@@ -167,6 +237,10 @@ public class SoftOffersService {
    * The admin's Soft Offer Results (issue #487): one row per assigned ULA with their answer for the
    * lecture they now hold (an answer for another lecture is marked "(for ...)"), and a second table
    * of answers from applicants no longer assigned anywhere, so a decline is never lost.
+   *
+   * <p>Issue #509: {@code applicationIds} runs parallel to {@code rows} (the id of each row's
+   * application, in the same order), and {@code hiring} holds the staff's hiring record of each row
+   * that has one, by application id; a row the staff have not touched has no entry.
    */
   public record Results(
       Long recruitmentId,
@@ -176,6 +250,8 @@ public class SoftOffersService {
       Counts counts,
       List<String> headers,
       List<List<String>> rows,
+      List<Long> applicationIds,
+      Map<Long, HiringRecordDto> hiring,
       List<String> unassignedHeaders,
       List<List<String>> unassigned) {}
 
@@ -303,6 +379,7 @@ public class SoftOffersService {
     LocalDateTime deadline = recruitment.getSoftOfferDeadline();
 
     List<List<String>> rows = new ArrayList<>();
+    List<Long> applicationIds = new ArrayList<>();
     int proceed = 0;
     int declined = 0;
     List<Application> assigned =
@@ -310,7 +387,15 @@ public class SoftOffersService {
             .filter(a -> courses.containsKey(a.getTentativeAssignmentId()))
             .sorted(PublishedAssignmentsService.BY_NAME)
             .toList();
+    // Issue #509: the staff's hiring records of the rows, in one query.
+    Map<Long, HiringRecordDto> hiring = new HashMap<>();
+    for (HiringRecord record :
+        hiringRecordRepository.findByApplicationIdIn(
+            assigned.stream().map(Application::getId).toList())) {
+      hiring.put(record.getApplicationId(), HiringRecordDto.of(record));
+    }
     for (Application person : assigned) {
+      applicationIds.add(person.getId());
       RecruitmentCourse course = courses.get(person.getTentativeAssignmentId());
       List<SoftOfferResponse> mine = answers.getOrDefault(person.getId(), List.of());
       SoftOfferResponse current =
@@ -387,21 +472,28 @@ public class SoftOffersService {
         new Counts(assigned.size(), proceed, declined, assigned.size() - proceed - declined),
         RESULTS_HEADERS,
         rows,
+        applicationIds,
+        hiring,
         UNASSIGNED_HEADERS,
         unassigned);
   }
 
   /**
    * The main results table as CSV for the financial office staff (issue #500): the CSV header row,
-   * then a row per assigned ULA with a blank Funding cell and blank staff cells to fill in.
+   * then a row per assigned ULA with the stored Funding and the staff's hiring progress (issue
+   * #509), blank where nothing has been saved.
    */
   public String resultsCsv(Recruitment recruitment) {
     Results results = results(recruitment);
     StringWriter out = new StringWriter();
     CSVWriter writer = new CSVWriter(out);
     writer.writeNext(CSV_HEADERS.toArray(String[]::new));
-    for (List<String> row : results.rows()) {
-      writer.writeNext(csvRow(row, row.get(row.size() - 1)).toArray(String[]::new));
+    for (int i = 0; i < results.rows().size(); i++) {
+      List<String> row = results.rows().get(i);
+      HiringRecordDto hiring = results.hiring().get(results.applicationIds().get(i));
+      writer.writeNext(
+          csvRow(row, row.get(row.size() - 1), funding(hiring), staffCells(hiring))
+              .toArray(String[]::new));
     }
     return out.toString();
   }

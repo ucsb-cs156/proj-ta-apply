@@ -614,9 +614,13 @@ public class ApplicationsSubmittedWebIT extends ApplicationsWebTestCase {
             + "\"Course assignment\",\"Funding\",\"Course instructor\","
             + "\"Course instructor email\",\"First time ULA\",\"Offer Status\","
             + "\"Offer Response Date/Time\",\"Student Comments\",\"Formal Offer Sent\","
-            + "\"Formal Offer Accepted\",\"New Hire form done (or not needed)\","
-            + "\"Other Campus Job FLSA conflict found\","
-            + "\"Other Campus Job FLSA conflict resolved\",\"In UCPath\",\"I-9 Complete\","
+            + "\"Formal Offer Sent Date/Time\",\"Formal Offer Accepted\","
+            + "\"Formal Offer Accepted Date/Time\",\"New Hire form done (or not needed)\","
+            + "\"New Hire form Date/Time\",\"Other Campus Job FLSA conflict found\","
+            + "\"Other Campus Job FLSA conflict found Date/Time\","
+            + "\"Other Campus Job FLSA conflict resolved\","
+            + "\"Other Campus Job FLSA conflict resolved Date/Time\",\"In UCPath\","
+            + "\"In UCPath Date/Time\",\"I-9 Complete\",\"I-9 Complete Date/Time\","
             + "\"Staff Comments\"",
         lines.get(0));
     org.junit.jupiter.api.Assertions.assertTrue(
