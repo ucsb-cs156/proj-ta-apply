@@ -22,16 +22,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Automatically Assign No-Conflict Slots (issue #481): fills every place where there is one clear,
- * rational choice. A lecture that still needs assignments gets its highest-ranked remaining
- * candidate when that candidate is enthusiastic about the course and no other lecture that still
- * needs assignments has ranked them at all. Passes are repeated until one makes no assignment.
+ * Propose assignments (issues #481 and #515): finds every place where there is one clear, rational
+ * choice. A lecture that still needs assignments gets its highest-ranked remaining candidate when
+ * that candidate is enthusiastic about the course and no other lecture that still needs assignments
+ * has ranked them at all. Passes are repeated until one makes no assignment.
  *
- * &lt;p&gt;For a TA recruitment (issue #488) only PhD students in Computer Science are ever assigned
- * automatically. An MS student, or a PhD student in another major, is still a candidate, so a
- * lecture whose top remaining candidate is one gets nothing and is listed with the reason: passing
- * over them to the next PhD would override the instructor's ranking, which is a person's call. A
- * ULA recruitment has no class levels and the rule does not apply.
+ * &lt;p&gt;For a TA recruitment (issue #488) only PhD students in Computer Science are ever proposed. An
+ * MS student, or a PhD student in another major, is still a candidate, so a lecture whose top
+ * remaining candidate is one gets nothing and is listed with the reason: passing over them to the
+ * next PhD would override the instructor's ranking, which is a person's call. A ULA recruitment has
+ * no class levels and the rule does not apply.
+ *
+ * &lt;p&gt;Since issue #515 nothing is assigned unseen: {@link #preview} plans on the current state and
+ * changes nothing, the admin chooses which proposals to make, and {@link #apply} makes exactly
+ * those, re-checking each against the state as it then stands. {@link #undo} clears what an apply
+ * made.
  *
  * &lt;p&gt;The planning is pure ({@link #plan}) and works on the page's own data, so the controller tests
  * and this service's tests need no database. Within a pass, two assignments can never share a
@@ -40,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
  * the order lectures are visited, and repeating until nothing changes is safe.
  */
 @Service
-<span class="fc" id="L43">public class AutoAssignmentsService {</span>
+<span class="fc" id="L48">public class AutoAssignmentsService {</span>
   @Autowired AssignmentsService assignmentsService;
   @Autowired ApplicationRepository applicationRepository;
 
@@ -61,27 +66,37 @@ import org.springframework.transaction.annotation.Transactional;
   public static final String NOT_CS_MAJOR = &quot;NOT_CS_MAJOR&quot;;
 
   /**
-   * The majors that count as Computer Science for a TA auto-assignment (issue #488), as the TA
-   * majors list has spelt them; compared ignoring case and surrounding spaces.
+   * Why a selected proposal was not made by {@link #apply} (issue #515): the state had moved since
+   * the preview. The applicant has been assigned meanwhile; the lecture is no longer on offer; or
+   * the application is no longer a real, uncancelled one of this recruitment.
    */
-<span class="fc" id="L67">  static final Set&lt;String&gt; CS_MAJORS = Set.of(&quot;computer science&quot;, &quot;computer science (cs)&quot;);</span>
+  public static final String ALREADY_ASSIGNED = &quot;ALREADY_ASSIGNED&quot;;
+
+  public static final String LECTURE_GONE = &quot;LECTURE_GONE&quot;;
+  public static final String APPLICANT_GONE = &quot;APPLICANT_GONE&quot;;
+
+  /**
+   * The majors that count as Computer Science for a TA proposal (issue #488), as the TA majors list
+   * has spelt them; compared ignoring case and surrounding spaces.
+   */
+<span class="fc" id="L82">  static final Set&lt;String&gt; CS_MAJORS = Set.of(&quot;computer science&quot;, &quot;computer science (cs)&quot;);</span>
 
   /** The interests that count as enthusiastic: the preference scale's three strongest. */
-<span class="fc" id="L70">  static final Set&lt;String&gt; ENTHUSIASTIC =</span>
-<span class="fc" id="L71">      Set.of(</span>
+<span class="fc" id="L85">  static final Set&lt;String&gt; ENTHUSIASTIC =</span>
+<span class="fc" id="L86">      Set.of(</span>
           AssignmentsService.FIRST_CHOICE,
           AssignmentsService.SECOND_CHOICE,
           AssignmentsService.ENTHUSIASTIC);
 
-  /** One assignment the run made: who, to which lecture, at what rank, in which pass. */
-<span class="fc" id="L77">  public record Made(Long applicationId, Long recruitmentCourseId, Integer rank, int pass) {}</span>
+  /** One proposed (or made) assignment: who, to which lecture, at what rank, in which pass. */
+<span class="fc" id="L92">  public record Made(Long applicationId, Long recruitmentCourseId, Integer rank, int pass) {}</span>
 
   /**
    * One lecture still needing assignments after the final pass, and why it got none: the reason
    * code; the candidate it looked at and their rank, when there was one; and, for {@code
    * RANKED_ELSEWHERE}, the other needing lectures that ranked that candidate.
    */
-<span class="fc" id="L84">  public record Skipped(</span>
+<span class="fc" id="L99">  public record Skipped(</span>
       Long recruitmentCourseId,
       String reason,
       Long applicationId,
@@ -89,19 +104,26 @@ import org.springframework.transaction.annotation.Transactional;
       List&lt;Long&gt; blockedBy) {}
 
   /** What a run would do: the assignments to make, and the final pass's unfilled lectures. */
-<span class="fc" id="L92">  public record Plan(List&lt;Made&gt; made, List&lt;Skipped&gt; skipped) {}</span>
+<span class="fc" id="L107">  public record Plan(List&lt;Made&gt; made, List&lt;Skipped&gt; skipped) {}</span>
 
   /**
-   * The answer to a run: the assignments as they now stand, and what the run did and did not do.
+   * The answer to a preview (issue #515): the plan on the current state, and the assignments
+   * version it was computed from, which an apply sends back.
    */
-<span class="fc" id="L97">  public record Outcome(Assignments assignments, List&lt;Made&gt; made, List&lt;Skipped&gt; skipped) {}</span>
+<span class="fc" id="L113">  public record Preview(Integer version, List&lt;Made&gt; made, List&lt;Skipped&gt; skipped) {}</span>
+
+  /** A selected proposal an apply did not make, and why (one of the {@code *_GONE} codes). */
+<span class="fc" id="L116">  public record NotMade(Made assignment, String reason) {}</span>
+
+  /** The answer to an apply: the assignments as they now stand, what was made and what was not. */
+<span class="fc" id="L119">  public record Applied(Assignments assignments, List&lt;Made&gt; made, List&lt;NotMade&gt; notMade) {}</span>
 
   /** The answer to an undo: the assignments as they now stand, and how many were cleared. */
-<span class="fc" id="L100">  public record Undone(Assignments assignments, int cleared) {}</span>
+<span class="fc" id="L122">  public record Undone(Assignments assignments, int cleared) {}</span>
 
   /** {@link #plan(Assignments, Set, Map)} with nobody restricted to manual assignment. */
   public static Plan plan(Assignments page, Set&lt;Long&gt; ineligible) {
-<span class="fc" id="L104">    return plan(page, ineligible, Map.of());</span>
+<span class="fc" id="L126">    return plan(page, ineligible, Map.of());</span>
   }
 
   /**
@@ -113,54 +135,54 @@ import org.springframework.transaction.annotation.Transactional;
    * whose top remaining candidate is one of them gets nothing, with that reason.
    */
   public static Plan plan(Assignments page, Set&lt;Long&gt; ineligible, Map&lt;Long, String&gt; manualOnly) {
-<span class="fc" id="L116">    Map&lt;Long, Integer&gt; left = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L117" title="All 2 branches covered.">    for (CourseSummary course : page.courses()) {</span>
-<span class="fc bfc" id="L118" title="All 2 branches covered.">      if (!course.historical()) {</span>
-<span class="fc" id="L119">        left.put(course.id(), course.left());</span>
+<span class="fc" id="L138">    Map&lt;Long, Integer&gt; left = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">    for (CourseSummary course : page.courses()) {</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">      if (!course.historical()) {</span>
+<span class="fc" id="L141">        left.put(course.id(), course.left());</span>
       }
-<span class="fc" id="L121">    }</span>
-<span class="fc" id="L122">    List&lt;AssignmentRow&gt; pool = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L123" title="All 2 branches covered.">    for (AssignmentRow row : page.rows()) {</span>
-<span class="fc bfc" id="L124" title="All 4 branches covered.">      if (row.tentativeAssignment() == null &amp;&amp; !ineligible.contains(row.applicationId())) {</span>
-<span class="fc" id="L125">        pool.add(row);</span>
+<span class="fc" id="L143">    }</span>
+<span class="fc" id="L144">    List&lt;AssignmentRow&gt; pool = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">    for (AssignmentRow row : page.rows()) {</span>
+<span class="fc bfc" id="L146" title="All 4 branches covered.">      if (row.tentativeAssignment() == null &amp;&amp; !ineligible.contains(row.applicationId())) {</span>
+<span class="fc" id="L147">        pool.add(row);</span>
       }
-<span class="fc" id="L127">    }</span>
+<span class="fc" id="L149">    }</span>
 
-<span class="fc" id="L129">    List&lt;Made&gt; made = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L151">    List&lt;Made&gt; made = new ArrayList&lt;&gt;();</span>
     List&lt;Skipped&gt; skipped;
-<span class="fc" id="L131">    int pass = 0;</span>
+<span class="fc" id="L153">    int pass = 0;</span>
     while (true) {
-<span class="fc" id="L133">      pass++;</span>
-<span class="fc" id="L134">      List&lt;Made&gt; thisPass = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L135">      skipped = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L136" title="All 2 branches covered.">      for (Long courseId : needing(left)) {</span>
-<span class="fc" id="L137">        Skipped reason = consider(courseId, pool, left, page.rows(), manualOnly, pass, thisPass);</span>
-<span class="fc bfc" id="L138" title="All 2 branches covered.">        if (reason != null) {</span>
-<span class="fc" id="L139">          skipped.add(reason);</span>
+<span class="fc" id="L155">      pass++;</span>
+<span class="fc" id="L156">      List&lt;Made&gt; thisPass = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L157">      skipped = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L158" title="All 2 branches covered.">      for (Long courseId : needing(left)) {</span>
+<span class="fc" id="L159">        Skipped reason = consider(courseId, pool, left, page.rows(), manualOnly, pass, thisPass);</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        if (reason != null) {</span>
+<span class="fc" id="L161">          skipped.add(reason);</span>
         }
-<span class="fc" id="L141">      }</span>
-<span class="fc bfc" id="L142" title="All 2 branches covered.">      if (thisPass.isEmpty()) {</span>
-<span class="fc" id="L143">        break;</span>
+<span class="fc" id="L163">      }</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">      if (thisPass.isEmpty()) {</span>
+<span class="fc" id="L165">        break;</span>
       }
-<span class="fc bfc" id="L145" title="All 2 branches covered.">      for (Made assignment : thisPass) {</span>
-<span class="fc" id="L146">        pool.removeIf(row -&gt; row.applicationId().equals(assignment.applicationId()));</span>
-<span class="fc" id="L147">        left.merge(assignment.recruitmentCourseId(), -1, Integer::sum);</span>
-<span class="fc" id="L148">      }</span>
-<span class="fc" id="L149">      made.addAll(thisPass);</span>
-<span class="fc" id="L150">    }</span>
-<span class="fc" id="L151">    return new Plan(made, skipped);</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">      for (Made assignment : thisPass) {</span>
+<span class="fc" id="L168">        pool.removeIf(row -&gt; row.applicationId().equals(assignment.applicationId()));</span>
+<span class="fc" id="L169">        left.merge(assignment.recruitmentCourseId(), -1, Integer::sum);</span>
+<span class="fc" id="L170">      }</span>
+<span class="fc" id="L171">      made.addAll(thisPass);</span>
+<span class="fc" id="L172">    }</span>
+<span class="fc" id="L173">    return new Plan(made, skipped);</span>
   }
 
   /** The lectures on offer with places still to fill, in the page's order. */
   private static List&lt;Long&gt; needing(Map&lt;Long, Integer&gt; left) {
-<span class="fc" id="L156">    List&lt;Long&gt; ids = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L157">    left.forEach(</span>
+<span class="fc" id="L178">    List&lt;Long&gt; ids = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L179">    left.forEach(</span>
         (id, places) -&gt; {
-<span class="fc bfc" id="L159" title="All 2 branches covered.">          if (places &gt; 0) {</span>
-<span class="fc" id="L160">            ids.add(id);</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">          if (places &gt; 0) {</span>
+<span class="fc" id="L182">            ids.add(id);</span>
           }
-<span class="fc" id="L162">        });</span>
-<span class="fc" id="L163">    return ids;</span>
+<span class="fc" id="L184">        });</span>
+<span class="fc" id="L185">    return ids;</span>
   }
 
   /**
@@ -175,121 +197,154 @@ import org.springframework.transaction.annotation.Transactional;
       Map&lt;Long, String&gt; manualOnly,
       int pass,
       List&lt;Made&gt; thisPass) {
-<span class="fc" id="L178">    AssignmentRow top = null;</span>
-<span class="fc" id="L179">    int topRank = Integer.MAX_VALUE;</span>
-<span class="fc" id="L180">    int atTopRank = 0;</span>
-<span class="fc bfc" id="L181" title="All 2 branches covered.">    for (AssignmentRow row : pool) {</span>
-<span class="fc" id="L182">      Integer rank = row.rankings().get(courseId);</span>
-<span class="fc bfc" id="L183" title="All 2 branches covered.">      if (rank == null) {</span>
-<span class="fc" id="L184">        continue;</span>
+<span class="fc" id="L200">    AssignmentRow top = null;</span>
+<span class="fc" id="L201">    int topRank = Integer.MAX_VALUE;</span>
+<span class="fc" id="L202">    int atTopRank = 0;</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">    for (AssignmentRow row : pool) {</span>
+<span class="fc" id="L204">      Integer rank = row.rankings().get(courseId);</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">      if (rank == null) {</span>
+<span class="fc" id="L206">        continue;</span>
       }
-<span class="fc bfc" id="L186" title="All 2 branches covered.">      if (rank &lt; topRank) {</span>
-<span class="fc" id="L187">        top = row;</span>
-<span class="fc" id="L188">        topRank = rank;</span>
-<span class="fc" id="L189">        atTopRank = 1;</span>
-<span class="fc bfc" id="L190" title="All 2 branches covered.">      } else if (rank == topRank) {</span>
-<span class="fc" id="L191">        atTopRank++;</span>
-      }
-<span class="fc" id="L193">    }</span>
-<span class="fc bfc" id="L194" title="All 2 branches covered.">    if (top == null) {</span>
-<span class="fc bfc" id="L195" title="All 2 branches covered.">      boolean anyRanked = allRows.stream().anyMatch(row -&gt; row.rankings().get(courseId) != null);</span>
-<span class="fc" id="L196">      return new Skipped(</span>
-<span class="fc bfc" id="L197" title="All 2 branches covered.">          courseId, anyRanked ? ALL_RANKED_ASSIGNED : NO_RANKINGS, null, null, List.of());</span>
-    }
-<span class="fc bfc" id="L199" title="All 2 branches covered.">    if (atTopRank &gt; 1) {</span>
-<span class="fc" id="L200">      return new Skipped(courseId, TIE, null, topRank, List.of());</span>
-    }
-<span class="fc" id="L202">    String manual = manualOnly.get(top.applicationId());</span>
-<span class="fc bfc" id="L203" title="All 2 branches covered.">    if (manual != null) {</span>
-<span class="fc" id="L204">      return new Skipped(courseId, manual, top.applicationId(), topRank, List.of());</span>
-    }
-<span class="fc" id="L206">    String preference = top.preferences().get(courseId);</span>
-<span class="fc bfc" id="L207" title="All 4 branches covered.">    if (preference == null || !ENTHUSIASTIC.contains(preference)) {</span>
-<span class="fc" id="L208">      return new Skipped(courseId, NOT_ENTHUSIASTIC, top.applicationId(), topRank, List.of());</span>
-    }
-<span class="fc" id="L210">    List&lt;Long&gt; blockedBy = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L211" title="All 2 branches covered.">    for (Long other : needing(left)) {</span>
-<span class="fc bfc" id="L212" title="All 4 branches covered.">      if (!other.equals(courseId) &amp;&amp; top.rankings().get(other) != null) {</span>
-<span class="fc" id="L213">        blockedBy.add(other);</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">      if (rank &lt; topRank) {</span>
+<span class="fc" id="L209">        top = row;</span>
+<span class="fc" id="L210">        topRank = rank;</span>
+<span class="fc" id="L211">        atTopRank = 1;</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">      } else if (rank == topRank) {</span>
+<span class="fc" id="L213">        atTopRank++;</span>
       }
 <span class="fc" id="L215">    }</span>
-<span class="fc bfc" id="L216" title="All 2 branches covered.">    if (!blockedBy.isEmpty()) {</span>
-<span class="fc" id="L217">      return new Skipped(courseId, RANKED_ELSEWHERE, top.applicationId(), topRank, blockedBy);</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">    if (top == null) {</span>
+<span class="fc bfc" id="L217" title="All 2 branches covered.">      boolean anyRanked = allRows.stream().anyMatch(row -&gt; row.rankings().get(courseId) != null);</span>
+<span class="fc" id="L218">      return new Skipped(</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">          courseId, anyRanked ? ALL_RANKED_ASSIGNED : NO_RANKINGS, null, null, List.of());</span>
     }
-<span class="fc" id="L219">    thisPass.add(new Made(top.applicationId(), courseId, topRank, pass));</span>
-<span class="fc" id="L220">    return null;</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">    if (atTopRank &gt; 1) {</span>
+<span class="fc" id="L222">      return new Skipped(courseId, TIE, null, topRank, List.of());</span>
+    }
+<span class="fc" id="L224">    String manual = manualOnly.get(top.applicationId());</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">    if (manual != null) {</span>
+<span class="fc" id="L226">      return new Skipped(courseId, manual, top.applicationId(), topRank, List.of());</span>
+    }
+<span class="fc" id="L228">    String preference = top.preferences().get(courseId);</span>
+<span class="fc bfc" id="L229" title="All 4 branches covered.">    if (preference == null || !ENTHUSIASTIC.contains(preference)) {</span>
+<span class="fc" id="L230">      return new Skipped(courseId, NOT_ENTHUSIASTIC, top.applicationId(), topRank, List.of());</span>
+    }
+<span class="fc" id="L232">    List&lt;Long&gt; blockedBy = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L233" title="All 2 branches covered.">    for (Long other : needing(left)) {</span>
+<span class="fc bfc" id="L234" title="All 4 branches covered.">      if (!other.equals(courseId) &amp;&amp; top.rankings().get(other) != null) {</span>
+<span class="fc" id="L235">        blockedBy.add(other);</span>
+      }
+<span class="fc" id="L237">    }</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">    if (!blockedBy.isEmpty()) {</span>
+<span class="fc" id="L239">      return new Skipped(courseId, RANKED_ELSEWHERE, top.applicationId(), topRank, blockedBy);</span>
+    }
+<span class="fc" id="L241">    thisPass.add(new Made(top.applicationId(), courseId, topRank, pass));</span>
+<span class="fc" id="L242">    return null;</span>
   }
 
   /**
-   * Plans and makes the run's assignments, all in one transaction: if any application cannot be
-   * saved (its own version moved, issue #302), none of them is changed. The answer carries the
-   * assignments as they stand afterwards.
+   * Plans on the recruitment as it stands, changing nothing (issue #515): the proposals and the
+   * lectures left unfilled, with the assignments version they were computed from. Applicants marked
+   * Not Hired take no part; on a TA recruitment those who may only be assigned by hand (issue #488)
+   * stay in the rankings but are never proposed.
    */
-  @Transactional
-  public Outcome run(Recruitment recruitment) {
-<span class="fc" id="L230">    List&lt;Application&gt; applications = assignmentsService.realApplications(recruitment.getId());</span>
-<span class="fc" id="L231">    Set&lt;Long&gt; ineligible = new HashSet&lt;&gt;();</span>
-<span class="fc" id="L232">    Map&lt;Long, String&gt; manualOnly = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L233" title="All 2 branches covered.">    boolean ta = recruitment.getType() == RecruitmentType.TA;</span>
-<span class="fc bfc" id="L234" title="All 2 branches covered.">    for (Application application : applications) {</span>
-<span class="fc bfc" id="L235" title="All 2 branches covered.">      if (application.getStatus() == ApplicationReviewStatus.NOT_HIRED) {</span>
-<span class="fc" id="L236">        ineligible.add(application.getId());</span>
-<span class="fc bfc" id="L237" title="All 2 branches covered.">      } else if (ta) {</span>
-<span class="fc" id="L238">        String reason = manualOnlyReason(application);</span>
-<span class="fc bfc" id="L239" title="All 2 branches covered.">        if (reason != null) {</span>
-<span class="fc" id="L240">          manualOnly.put(application.getId(), reason);</span>
+  public Preview preview(Recruitment recruitment) {
+<span class="fc" id="L252">    List&lt;Application&gt; applications = assignmentsService.realApplications(recruitment.getId());</span>
+<span class="fc" id="L253">    Set&lt;Long&gt; ineligible = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L254">    Map&lt;Long, String&gt; manualOnly = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">    boolean ta = recruitment.getType() == RecruitmentType.TA;</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc bfc" id="L257" title="All 2 branches covered.">      if (application.getStatus() == ApplicationReviewStatus.NOT_HIRED) {</span>
+<span class="fc" id="L258">        ineligible.add(application.getId());</span>
+<span class="fc bfc" id="L259" title="All 2 branches covered.">      } else if (ta) {</span>
+<span class="fc" id="L260">        String reason = manualOnlyReason(application);</span>
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        if (reason != null) {</span>
+<span class="fc" id="L262">          manualOnly.put(application.getId(), reason);</span>
         }
       }
-<span class="fc" id="L243">    }</span>
-<span class="fc" id="L244">    Plan plan = plan(assignmentsService.assignments(recruitment), ineligible, manualOnly);</span>
-<span class="fc bfc" id="L245" title="All 2 branches covered.">    for (Made assignment : plan.made()) {</span>
-<span class="fc" id="L246">      Application application = byId(applications, assignment.applicationId());</span>
-<span class="fc" id="L247">      application.setTentativeAssignmentId(assignment.recruitmentCourseId());</span>
-<span class="fc" id="L248">      applicationRepository.save(application);</span>
-<span class="fc" id="L249">    }</span>
-<span class="fc" id="L250">    return new Outcome(assignmentsService.assignments(recruitment), plan.made(), plan.skipped());</span>
+<span class="fc" id="L265">    }</span>
+<span class="fc" id="L266">    Assignments page = assignmentsService.assignments(recruitment);</span>
+<span class="fc" id="L267">    Plan plan = plan(page, ineligible, manualOnly);</span>
+<span class="fc" id="L268">    return new Preview(page.version(), plan.made(), plan.skipped());</span>
   }
 
   /**
-   * Undoes a run: clears exactly the given assignments, and only where the application is still
-   * pencilled into the lecture the run put it in, so a placement changed by hand since is kept. All
-   * in one transaction.
+   * Makes exactly the selected proposals, all in one transaction: if any application cannot be
+   * saved (its own version moved, issue #302), none of them is changed. Each is re-checked against
+   * the state as it now stands, since another admin may have acted since the preview: the
+   * application must still be a real, uncancelled one of this recruitment with no tentative
+   * assignment, and the lecture must still be on offer in it. One that no longer holds is not made
+   * and is reported with the reason instead. The answer carries the assignments as they stand
+   * afterwards.
+   */
+  @Transactional
+  public Applied apply(Recruitment recruitment, List&lt;Made&gt; selected) {
+<span class="fc" id="L282">    List&lt;Application&gt; applications = assignmentsService.realApplications(recruitment.getId());</span>
+<span class="fc" id="L283">    Set&lt;Long&gt; onOffer = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L284" title="All 2 branches covered.">    for (CourseSummary course : assignmentsService.assignments(recruitment).courses()) {</span>
+<span class="fc bfc" id="L285" title="All 2 branches covered.">      if (!course.historical()) {</span>
+<span class="fc" id="L286">        onOffer.add(course.id());</span>
+      }
+<span class="fc" id="L288">    }</span>
+<span class="fc" id="L289">    List&lt;Made&gt; made = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L290">    List&lt;NotMade&gt; notMade = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">    for (Made assignment : selected) {</span>
+<span class="fc" id="L292">      Application application = byId(applications, assignment.applicationId());</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">      if (application == null) {</span>
+<span class="fc" id="L294">        notMade.add(new NotMade(assignment, APPLICANT_GONE));</span>
+<span class="fc bfc" id="L295" title="All 2 branches covered.">      } else if (application.getTentativeAssignmentId() != null) {</span>
+<span class="fc" id="L296">        notMade.add(new NotMade(assignment, ALREADY_ASSIGNED));</span>
+<span class="fc bfc" id="L297" title="All 2 branches covered.">      } else if (!onOffer.contains(assignment.recruitmentCourseId())) {</span>
+<span class="fc" id="L298">        notMade.add(new NotMade(assignment, LECTURE_GONE));</span>
+      } else {
+<span class="fc" id="L300">        application.setTentativeAssignmentId(assignment.recruitmentCourseId());</span>
+<span class="fc" id="L301">        applicationRepository.save(application);</span>
+<span class="fc" id="L302">        made.add(assignment);</span>
+      }
+<span class="fc" id="L304">    }</span>
+<span class="fc" id="L305">    return new Applied(assignmentsService.assignments(recruitment), made, notMade);</span>
+  }
+
+  /**
+   * Undoes an apply: clears exactly the given assignments, and only where the application is still
+   * pencilled into the lecture it was put in, so a placement changed by hand since is kept. All in
+   * one transaction.
    */
   @Transactional
   public Undone undo(Recruitment recruitment, List&lt;Made&gt; made) {
-<span class="fc" id="L260">    List&lt;Application&gt; applications = assignmentsService.realApplications(recruitment.getId());</span>
-<span class="fc" id="L261">    int cleared = 0;</span>
-<span class="fc bfc" id="L262" title="All 2 branches covered.">    for (Made assignment : made) {</span>
-<span class="fc" id="L263">      Application application = byId(applications, assignment.applicationId());</span>
-<span class="fc bfc" id="L264" title="All 2 branches covered.">      if (application != null</span>
-<span class="fc bfc" id="L265" title="All 2 branches covered.">          &amp;&amp; assignment.recruitmentCourseId() != null</span>
-<span class="fc bfc" id="L266" title="All 2 branches covered.">          &amp;&amp; assignment.recruitmentCourseId().equals(application.getTentativeAssignmentId())) {</span>
-<span class="fc" id="L267">        application.setTentativeAssignmentId(null);</span>
-<span class="fc" id="L268">        applicationRepository.save(application);</span>
-<span class="fc" id="L269">        cleared++;</span>
+<span class="fc" id="L315">    List&lt;Application&gt; applications = assignmentsService.realApplications(recruitment.getId());</span>
+<span class="fc" id="L316">    int cleared = 0;</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">    for (Made assignment : made) {</span>
+<span class="fc" id="L318">      Application application = byId(applications, assignment.applicationId());</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">      if (application != null</span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">          &amp;&amp; assignment.recruitmentCourseId() != null</span>
+<span class="fc bfc" id="L321" title="All 2 branches covered.">          &amp;&amp; assignment.recruitmentCourseId().equals(application.getTentativeAssignmentId())) {</span>
+<span class="fc" id="L322">        application.setTentativeAssignmentId(null);</span>
+<span class="fc" id="L323">        applicationRepository.save(application);</span>
+<span class="fc" id="L324">        cleared++;</span>
       }
-<span class="fc" id="L271">    }</span>
-<span class="fc" id="L272">    return new Undone(assignmentsService.assignments(recruitment), cleared);</span>
+<span class="fc" id="L326">    }</span>
+<span class="fc" id="L327">    return new Undone(assignmentsService.assignments(recruitment), cleared);</span>
   }
 
   /**
-   * Why a TA applicant may only be assigned by hand (issue #488), or null when they may be assigned
-   * automatically: not a PhD student, or a PhD student whose major is not Computer Science. An
-   * application with no class level or no major recorded is not auto-assigned either.
+   * Why a TA applicant may only be assigned by hand (issue #488), or null when they may be
+   * proposed: not a PhD student, or a PhD student whose major is not Computer Science. An
+   * application with no class level or no major recorded is not proposed either.
    */
   static String manualOnlyReason(Application application) {
-<span class="fc bfc" id="L281" title="All 2 branches covered.">    if (application.getClassLevel() != ClassLevel.PHD) {</span>
-<span class="fc" id="L282">      return NOT_PHD;</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">    if (application.getClassLevel() != ClassLevel.PHD) {</span>
+<span class="fc" id="L337">      return NOT_PHD;</span>
     }
-<span class="fc" id="L284">    String major = application.getMajor();</span>
-<span class="fc bfc" id="L285" title="All 4 branches covered.">    if (major == null || !CS_MAJORS.contains(major.strip().toLowerCase(Locale.ROOT))) {</span>
-<span class="fc" id="L286">      return NOT_CS_MAJOR;</span>
+<span class="fc" id="L339">    String major = application.getMajor();</span>
+<span class="fc bfc" id="L340" title="All 4 branches covered.">    if (major == null || !CS_MAJORS.contains(major.strip().toLowerCase(Locale.ROOT))) {</span>
+<span class="fc" id="L341">      return NOT_CS_MAJOR;</span>
     }
-<span class="fc" id="L288">    return null;</span>
+<span class="fc" id="L343">    return null;</span>
   }
 
   private static Application byId(List&lt;Application&gt; applications, Long id) {
-<span class="fc" id="L292">    return applications.stream().filter(a -&gt; a.getId().equals(id)).findFirst().orElse(null);</span>
+<span class="fc" id="L347">    return applications.stream().filter(a -&gt; a.getId().equals(id)).findFirst().orElse(null);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

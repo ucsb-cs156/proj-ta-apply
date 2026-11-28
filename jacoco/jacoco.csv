@@ -8,6 +8,7 @@ taapply,edu.ucsb.cs.taapply.services,SystemInfoService,0,3,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,CurrentUserService,0,10,0,2,0,2,0,3,0,2
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.AssignmentRow,0,18,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.MissingRow,0,18,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Applied,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,BudgetService.QuarterSummary,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RefreshSetting,0,58,0,14,0,11,0,10,0,3
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.CancelledApplication,0,18,0,0,0,1,0,1,0,1
@@ -27,7 +28,6 @@ taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService,0,418,0,28,
 taapply,edu.ucsb.cs.taapply.services,AssignmentsCsvService,0,242,0,10,0,49,0,12,0,7
 taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService.Snapshot,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.RankingProgress,0,15,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Outcome,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,HiringDecisions,0,37,0,12,0,8,0,8,0,2
 taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.Responder,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,HiringRecordsService,0,217,0,39,0,47,0,31,0,8
@@ -42,6 +42,7 @@ taapply,edu.ucsb.cs.taapply.services,SoftOffersService.Counts,0,15,0,0,0,1,0,1,0
 taapply,edu.ucsb.cs.taapply.services,TaSeedFromUla,0,91,0,0,0,28,0,5,0,5
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService.Offered,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService,0,222,0,20,0,47,0,14,0,4
+taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.NotMade,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.IdentityColumn,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,PublishedAssignmentsService,0,484,0,46,0,102,0,38,0,15
 taapply,edu.ucsb.cs.taapply.services,DraftApplicationService,0,388,0,12,0,103,0,20,0,14
@@ -51,13 +52,14 @@ taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService.new TypeReference() {...
 taapply,edu.ucsb.cs.taapply.services,ApplicationVisibility,0,90,0,14,0,15,0,17,0,10
 taapply,edu.ucsb.cs.taapply.services,ApplicationCsvService.Column,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentVisibility,0,14,0,4,0,2,0,4,0,2
+taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService.Preview,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,BudgetService.Side,0,27,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RankingsCsvService.Column,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Link,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,InstructorFeedbackReportService.SectionKey,0,17,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService.CourseTargets,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,SoftOffersService,0,1387,0,131,0,286,0,98,0,32
-taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService,0,556,0,76,0,113,0,52,0,14
+taapply,edu.ucsb.cs.taapply.services,AutoAssignmentsService,0,647,0,86,0,130,0,58,0,15
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService,0,143,0,8,0,29,0,15,0,11
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,596,0,32,0,123,0,31,0,15
@@ -154,7 +156,7 @@ taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.Recruitme
 taapply,edu.ucsb.cs.taapply.controller,SoftOfferNoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,DeveloperModeController,0,12,0,0,0,3,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,0,0,0,7,0,2,0,2
-taapply,edu.ucsb.cs.taapply.controller,AdminAssignmentsController,0,293,0,10,0,58,0,21,0,16
+taapply,edu.ucsb.cs.taapply.controller,AdminAssignmentsController,0,301,0,10,0,60,0,22,0,17
 taapply,edu.ucsb.cs.taapply.controller,AdminDraftApplicationsController.AdminDraftView,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,SoftOffersController.Answer,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.ApplicationFields,0,131,0,0,0,2,0,2,0,2

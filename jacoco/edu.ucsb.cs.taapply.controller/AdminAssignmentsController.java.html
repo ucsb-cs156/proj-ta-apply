@@ -159,47 +159,71 @@ import org.springframework.web.bind.annotation.RestController;
   }
 
   @Operation(
-      summary = &quot;Automatically assign the no-conflict slots&quot;,
+      summary = &quot;Preview the assignments that would be proposed&quot;,
       description =
-          &quot;Issue #481. Repeats until a pass makes no assignment: every lecture on offer with places&quot;
-              + &quot; still to fill gets its highest-ranked remaining candidate if that candidate is&quot;
-              + &quot; enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no&quot;
-              + &quot; other lecture with places to fill has ranked them at all. Candidates marked Not&quot;
-              + &quot; Hired take no part. Admins only. Carries the assignments version the page saw: if&quot;
-              + &quot; it has moved, nothing is changed and the answer is 409 Conflict with the&quot;
-              + &quot; assignments as they now stand, as a tentative assignment's is. Otherwise all the&quot;
-              + &quot; run's assignments are saved in one transaction (none if any one fails) and the&quot;
-              + &quot; answer is the assignments as the GET returns them, the list of assignments made&quot;
-              + &quot; (application, lecture, rank, pass) and, for each lecture still unfilled, why the&quot;
-              + &quot; final pass left it (NO_RANKINGS, ALL_RANKED_ASSIGNED, TIE, NOT_ENTHUSIASTIC or&quot;
-              + &quot; RANKED_ELSEWHERE with the lectures that rank the candidate).&quot;)
+          &quot;Issue #515 (the rule is issue #481's). Plans on the recruitment as it stands and changes&quot;
+              + &quot; nothing: no assignment is made and the assignments version is not moved. Repeats&quot;
+              + &quot; until a pass proposes nothing: every lecture on offer with places still to fill&quot;
+              + &quot; gets its highest-ranked remaining candidate if that candidate is enthusiastic&quot;
+              + &quot; about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture&quot;
+              + &quot; with places to fill has ranked them at all. Candidates marked Not Hired take no&quot;
+              + &quot; part; on a TA recruitment only PhD students in Computer Science are proposed&quot;
+              + &quot; (issue #488). Admins only. Answers with the assignments version the plan was&quot;
+              + &quot; computed from (which an apply sends back), the proposals (application, lecture,&quot;
+              + &quot; rank, pass) and, for each lecture still unfilled, why the final pass left it&quot;
+              + &quot; (NO_RANKINGS, ALL_RANKED_ASSIGNED, TIE, NOT_ENTHUSIASTIC, RANKED_ELSEWHERE with&quot;
+              + &quot; the lectures that rank the candidate, NOT_PHD or NOT_CS_MAJOR). 404 for a&quot;
+              + &quot; recruitment that does not exist.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
-  @PostMapping(&quot;/auto&quot;)
-  public ResponseEntity&lt;Object&gt; autoAssign(
+  @GetMapping(&quot;/auto/preview&quot;)
+  public AutoAssignmentsService.Preview previewAutoAssign(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc" id="L181">    return autoAssignmentsService.preview(recruitmentOf(recruitmentId));</span>
+  }
+
+  @Operation(
+      summary = &quot;Make the proposed assignments the admin selected&quot;,
+      description =
+          &quot;Issue #515. Takes the proposals the admin kept checked (as the preview listed them) and&quot;
+              + &quot; makes exactly those, with no re-planning. Admins only. Carries the assignments&quot;
+              + &quot; version the preview was computed from: if it has moved, nothing is changed and&quot;
+              + &quot; the answer is 409 Conflict with the assignments as they now stand, as a tentative&quot;
+              + &quot; assignment's is. Otherwise each selected assignment is re-checked against the&quot;
+              + &quot; state as it now stands: the application must still be a real, uncancelled one of&quot;
+              + &quot; this recruitment with no tentative assignment, and the lecture must still be on&quot;
+              + &quot; offer; those that hold are saved in one transaction (none if any one fails), and&quot;
+              + &quot; those that do not are answered in notMade with the reason (ALREADY_ASSIGNED,&quot;
+              + &quot; LECTURE_GONE or APPLICANT_GONE) rather than failing the request. The answer is&quot;
+              + &quot; the assignments as the GET returns them, the list made and the list not made.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/auto/apply&quot;)
+  public ResponseEntity&lt;Object&gt; applyAutoAssign(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
+      @RequestBody List&lt;AutoAssignmentsService.Made&gt; selected,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L182">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L183">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
-<span class="fc bfc" id="L184" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
-<span class="fc" id="L185">      return conflict(recruitmentId);</span>
+<span class="fc" id="L205">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L206">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
+<span class="fc" id="L208">      return conflict(recruitmentId);</span>
     }
     try {
       // Re-read after the bump, so the answer carries the new version.
-<span class="fc" id="L189">      return ResponseEntity.ok(autoAssignmentsService.run(recruitmentOf(recruitmentId)));</span>
-<span class="fc" id="L190">    } catch (ObjectOptimisticLockingFailureException e) {</span>
-<span class="fc" id="L191">      return conflict(recruitmentId);</span>
+<span class="fc" id="L212">      return ResponseEntity.ok(</span>
+<span class="fc" id="L213">          autoAssignmentsService.apply(recruitmentOf(recruitmentId), selected));</span>
+<span class="fc" id="L214">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L215">      return conflict(recruitmentId);</span>
     }
   }
 
   @Operation(
-      summary = &quot;Undo an automatic assignment run&quot;,
+      summary = &quot;Undo the assignments an apply made&quot;,
       description =
-          &quot;Issue #481. Takes the list of assignments a run made (as its answer listed them) and&quot;
-              + &quot; clears each one whose application is still pencilled into the lecture the run&quot;
-              + &quot; put it in; a placement changed by hand since is kept. Admins only; the same&quot;
-              + &quot; version check and 409 as the run; all in one transaction. Answers with the&quot;
-              + &quot; assignments as they now stand and how many were cleared.&quot;)
+          &quot;Issue #481. Takes the list of assignments an apply made (as its answer listed them) and&quot;
+              + &quot; clears each one whose application is still pencilled into the lecture it was put&quot;
+              + &quot; in; a placement changed by hand since is kept. Admins only; the same version&quot;
+              + &quot; check and 409 as the apply; all in one transaction. Answers with the assignments&quot;
+              + &quot; as they now stand and how many were cleared.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @PostMapping(&quot;/auto/undo&quot;)
   public ResponseEntity&lt;Object&gt; undoAutoAssign(
@@ -207,27 +231,27 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
       @RequestBody List&lt;AutoAssignmentsService.Made&gt; made,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L210">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L211">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
-<span class="fc bfc" id="L212" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
-<span class="fc" id="L213">      return conflict(recruitmentId);</span>
+<span class="fc" id="L234">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L235">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc bfc" id="L236" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
+<span class="fc" id="L237">      return conflict(recruitmentId);</span>
     }
     try {
-<span class="fc" id="L216">      return ResponseEntity.ok(autoAssignmentsService.undo(recruitmentOf(recruitmentId), made));</span>
-<span class="fc" id="L217">    } catch (ObjectOptimisticLockingFailureException e) {</span>
-<span class="fc" id="L218">      return conflict(recruitmentId);</span>
+<span class="fc" id="L240">      return ResponseEntity.ok(autoAssignmentsService.undo(recruitmentOf(recruitmentId), made));</span>
+<span class="fc" id="L241">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L242">      return conflict(recruitmentId);</span>
     }
   }
 
   /** The 409 for a stale placement: why, and the assignments as they now stand. */
   private ResponseEntity&lt;Object&gt; conflict(Long recruitmentId) {
-<span class="fc" id="L224">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L225">    body.put(</span>
+<span class="fc" id="L248">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L249">    body.put(</span>
         &quot;message&quot;,
         &quot;Assignments changed while you were working. The page has been refreshed; please check&quot;
             + &quot; the placement and try again.&quot;);
-<span class="fc" id="L229">    body.put(&quot;assignments&quot;, assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
-<span class="fc" id="L230">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc" id="L253">    body.put(&quot;assignments&quot;, assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
+<span class="fc" id="L254">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
   }
 
   @Operation(
@@ -245,8 +269,8 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // The role check (PreAuthorize) and the existence check come before the detector is touched.
-<span class="fc" id="L248">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L249">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc" id="L272">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L273">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
   }
 
   @Operation(
@@ -261,26 +285,26 @@ import org.springframework.web.bind.annotation.RestController;
   public void leave(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L264">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L265">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
-<span class="fc" id="L266">  }</span>
+<span class="fc" id="L288">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L289">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
+<span class="fc" id="L290">  }</span>
 
   /** The detector's name for a recruitment's whole assignments page. */
   private static String resourceKey(Long recruitmentId) {
-<span class="fc" id="L270">    return &quot;assignments:&quot; + recruitmentId;</span>
+<span class="fc" id="L294">    return &quot;assignments:&quot; + recruitmentId;</span>
   }
 
   /**
    * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
    */
   private ClientIdentity identity() {
-<span class="fc" id="L277">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
+<span class="fc" id="L301">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
   }
 
   private Recruitment recruitmentOf(Long recruitmentId) {
-<span class="fc" id="L281">    return recruitmentRepository</span>
-<span class="fc" id="L282">        .findById(recruitmentId)</span>
-<span class="fc" id="L283">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L305">    return recruitmentRepository</span>
+<span class="fc" id="L306">        .findById(recruitmentId)</span>
+<span class="fc" id="L307">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
