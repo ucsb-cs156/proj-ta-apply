@@ -623,24 +623,37 @@ public class AdminAssignmentsWebIT extends WebTestCase {
   }
 
   /**
-   * Issue #481: Automatically Assign No-Conflict Slots. One lecture with one place; Ada (its first
-   * choice, ranked 1) is the clear choice, and Grace (Would Consider, ranked 2) does not come into
-   * it. The run assigns Ada, says so, and Undo this run clears it again; each is one move of the
-   * assignments version.
+   * Issue #515: Propose assignments. Two lectures with one place each; Ada (first choice, ranked 1)
+   * is the clear choice for 156 and Alan for 130A, while Grace (Would Consider, ranked 2) does not
+   * come into it. Preview shows both proposals and changes nothing; unchecking Alan's and clicking
+   * Proceed makes Ada's alone; Undo this run clears it again. The apply and the undo each move the
+   * assignments version on; the preview does not.
    */
   @Test
-  public void the_no_conflict_run_assigns_the_clear_choice_and_can_be_undone() throws Exception {
+  public void the_preview_proposes_the_clear_choices_and_only_the_checked_ones_are_made()
+      throws Exception {
     Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
-    // The deadline has passed, so the confirmation has nothing to warn about.
+    // The deadline has passed, so the modal has nothing to warn about.
     recruitment.setFacultyRankingDeadline(LocalDate.of(2026, 1, 15));
     recruitmentRepository.save(recruitment);
-    RecruitmentCourse course =
+    RecruitmentCourse course156 =
         recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).get(0);
-    course.setAllocation(1);
-    recruitmentCourseRepository.save(course);
+    course156.setAllocation(1);
+    recruitmentCourseRepository.save(course156);
+    RecruitmentCourse course130A =
+        recruitmentCourseRepository.save(
+            RecruitmentCourse.builder()
+                .recruitmentId(recruitment.getId())
+                .courseId("CMPSC   130A")
+                .section("0100")
+                .enrollCode("07500")
+                .title("DATA STRUCT ALGOR")
+                .removed(false)
+                .allocation(1)
+                .build());
     Application ada = seedApplicant(recruitment);
     ada.setFirstChoiceCourse("CMPSC   156");
-    // Issue #488: a TA recruitment assigns only PhD students in Computer Science automatically.
+    // Issue #488: a TA recruitment proposes only PhD students in Computer Science.
     ada.setClassLevel(edu.ucsb.cs.taapply.enums.ClassLevel.PHD);
     ada.setMajor("Computer Science (CS)");
     ada = applicationRepository.save(ada);
@@ -659,47 +672,92 @@ public class AdminAssignmentsWebIT extends WebTestCase {
                             "CMPSC   156",
                             edu.ucsb.cs.taapply.enums.CourseInterest.WOULD_CONSIDER)))
                 .build());
-    rank(course, ada, 1);
-    rank(course, grace, 2);
+    Application alan =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(recruitment.getId())
+                .email("alan@ucsb.edu")
+                .firstName("Alan")
+                .lastName("Turing")
+                .firstChoiceCourse("CMPSC   130A")
+                .classLevel(edu.ucsb.cs.taapply.enums.ClassLevel.PHD)
+                .major("Computer Science")
+                .build());
+    rank(course156, ada, 1);
+    rank(course156, grace, 2);
+    rank(course130A, alan, 1);
 
     setupAdminUser();
     goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
-    String modal = "AdminAssignmentsPage-auto-assign-modal";
-    Locator button = page.getByTestId("AdminAssignmentsPage-auto-assign");
-    assertThat(button).hasText("Automatically Assign No-Conflict Slots");
+    String modal = "AdminAssignmentsPage-propose-modal";
+    assertThat(page.getByTestId("AdminAssignmentsPage-propose-label"))
+        .hasText("Propose assignments:");
+    Locator button = page.getByTestId("AdminAssignmentsPage-propose-preview");
+    assertThat(button).hasText("Preview");
+    assertEquals(0, page.getByTestId("AdminAssignmentsPage-auto-assign").count());
     assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("0 assigned so far");
-    // Issue #488: the tooltip, with the TA-only sentence.
+    // The tooltip, with the TA-only condition (issue #488).
     button.hover();
-    assertThat(page.getByTestId("AdminAssignmentsPage-auto-assign-tooltip"))
-        .containsText("Only PhD students in Computer Science are ever assigned automatically");
+    assertThat(page.getByTestId("AdminAssignmentsPage-propose-tooltip"))
+        .containsText(
+            "and is a PhD student in Computer Science (MS students and other majors are always"
+                + " assigned by hand). All proposed assignments are shown first");
 
     button.click();
     assertThat(page.getByTestId(modal + "-modal")).isVisible();
-    assertThat(page.getByTestId(modal + "-explanation"))
-        .containsText("Only PhD students whose major is Computer Science");
     assertEquals(0, page.getByTestId(modal + "-warnings").count());
-    page.getByTestId(modal + "-run").click();
+    assertThat(page.getByTestId(modal + "-proceed")).hasText("Proceed (2)");
+    // The lectures are visited in the page's order (130A before 156), each in pass 1.
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-0-col-applicant"))
+        .hasText("Alan Turing");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-0-col-lecture")).hasText("130A");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-1-col-applicant"))
+        .hasText("Ada Lovelace");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-1-col-lecture")).hasText("156");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-1-col-rank")).hasText("1");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-1-col-preference"))
+        .hasText("1st Choice");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-1-col-pass")).hasText("1");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-1-col-classLevel")).hasText("PHD");
+    assertThat(page.getByTestId(modal + "-proposed-cell-row-1-col-major"))
+        .hasText("Computer Science (CS)");
+    assertThat(page.getByTestId(modal + "-row-0-check")).isChecked();
+    assertThat(page.getByTestId(modal + "-row-1-check")).isChecked();
+    assertThat(page.getByTestId(modal + "-all-filled")).isVisible();
+    // The preview changed nothing: no assignment, and the version is as seeded.
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("0 assigned so far");
+    assertNull(
+        applicationRepository.findById(ada.getId()).orElseThrow().getTentativeAssignmentId());
+    assertEquals(
+        1,
+        recruitmentRepository.findById(recruitment.getId()).orElseThrow().getAssignmentsVersion());
+
+    // Uncheck Alan's proposal and make Ada's alone.
+    page.getByTestId(modal + "-row-0-check").uncheck();
+    assertThat(page.getByTestId(modal + "-proceed")).hasText("Proceed (1)");
+    page.getByTestId(modal + "-proceed").click();
 
     assertThat(page.getByTestId(modal + "-result-modal")).isVisible();
-    assertThat(page.getByTestId(modal + "-made-count")).hasText("1 assignment made:");
-    assertThat(page.getByTestId(modal + "-made-0"))
-        .hasText("Ada Lovelace to 156, ranked 1 (pass 1)");
-    assertThat(page.getByTestId(modal + "-all-filled")).isVisible();
-    // The page behind the modal already shows the assignment, and it is saved.
+    assertThat(page.getByTestId(modal + "-made-count")).hasText("1 assignment made.");
+    assertThat(page.locator(".Toastify").getByText("1 assignment made.")).isVisible();
+    assertEquals(0, page.getByTestId(modal + "-not-made").count());
+    // The page behind the modal already shows the assignment, and it is saved; Alan's is not.
     assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("1 assigned so far");
     assertEquals(
-        course.getId(),
+        course156.getId(),
         applicationRepository.findById(ada.getId()).orElseThrow().getTentativeAssignmentId());
+    assertNull(
+        applicationRepository.findById(alan.getId()).orElseThrow().getTentativeAssignmentId());
     assertNull(
         applicationRepository.findById(grace.getId()).orElseThrow().getTentativeAssignmentId());
 
     page.getByTestId(modal + "-undo").click();
-    assertThat(page.getByText("Undid 1 automatic assignment.")).isVisible();
+    assertThat(page.getByText("Undid 1 assignment.")).isVisible();
     assertThat(page.getByTestId(modal + "-result-modal")).isHidden();
     assertThat(page.getByTestId("AdminAssignmentsPage-count")).containsText("0 assigned so far");
     assertNull(
         applicationRepository.findById(ada.getId()).orElseThrow().getTentativeAssignmentId());
-    // The run and the undo each moved the version on from the seeded 1.
+    // The apply and the undo each moved the version on from the seeded 1; the preview did not.
     assertEquals(
         3,
         recruitmentRepository.findById(recruitment.getId()).orElseThrow().getAssignmentsVersion());
@@ -707,7 +765,8 @@ public class AdminAssignmentsWebIT extends WebTestCase {
 
   /**
    * Issue #488: on a TA recruitment an MS student at the top of a lecture's list leaves the lecture
-   * to a person, even though a PhD student in Computer Science is ranked right below.
+   * to a person, even though a PhD student in Computer Science is ranked right below. The preview
+   * says nothing can be proposed, with the reason, and Proceed is disabled.
    */
   @Test
   public void on_a_ta_recruitment_an_ms_student_at_the_top_leaves_the_lecture_to_a_person()
@@ -740,21 +799,30 @@ public class AdminAssignmentsWebIT extends WebTestCase {
 
     setupAdminUser();
     goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
-    String modal = "AdminAssignmentsPage-auto-assign-modal";
-    page.getByTestId("AdminAssignmentsPage-auto-assign").click();
-    page.getByTestId(modal + "-run").click();
+    String modal = "AdminAssignmentsPage-propose-modal";
+    page.getByTestId("AdminAssignmentsPage-propose-preview").click();
 
-    assertThat(page.getByTestId(modal + "-result-modal")).isVisible();
-    assertThat(page.getByTestId(modal + "-none")).isVisible();
-    assertThat(page.getByTestId(modal + "-skipped-0"))
-        .hasText(
-            "156: its top remaining candidate, Grace Hopper (ranked 1), is an MS student, so is"
-                + " assigned by hand only.");
-    assertEquals(0, page.getByTestId(modal + "-undo").count());
+    assertThat(page.getByTestId(modal + "-none"))
+        .hasText("No no-conflict assignments can be proposed.");
+    assertThat(page.getByTestId(modal + "-proceed")).hasText("Proceed (0)");
+    assertThat(page.getByTestId(modal + "-proceed")).isDisabled();
+    assertEquals(0, page.getByTestId(modal + "-proposed").count());
+    assertThat(page.getByTestId(modal + "-skipped-cell-row-0-col-lecture")).hasText("156");
+    assertThat(page.getByTestId(modal + "-skipped-cell-row-0-col-left")).hasText("1");
+    assertThat(page.getByTestId(modal + "-skipped-cell-row-0-col-reason"))
+        .hasText("Its top remaining candidate is an MS student, so is assigned by hand only.");
+    assertThat(page.getByTestId(modal + "-skipped-cell-row-0-col-candidate"))
+        .hasText("Grace Hopper (ranked 1)");
     assertNull(
         applicationRepository.findById(ada.getId()).orElseThrow().getTentativeAssignmentId());
     assertNull(
         applicationRepository.findById(grace.getId()).orElseThrow().getTentativeAssignmentId());
+
+    page.getByTestId(modal + "-cancel").click();
+    assertThat(page.getByTestId(modal + "-modal")).isHidden();
+    assertEquals(
+        1,
+        recruitmentRepository.findById(recruitment.getId()).orElseThrow().getAssignmentsVersion());
   }
 
   @Test

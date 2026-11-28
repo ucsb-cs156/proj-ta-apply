@@ -306,73 +306,149 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     );
   });
 
-  // ---- Automatically Assign No-Conflict Slots (issue #481) ----
+  // ---- Propose assignments: Preview (issue #515) ----
 
-  const AUTO = "AdminAssignmentsPage-auto-assign";
-  const AUTO_MODAL = "AdminAssignmentsPage-auto-assign-modal";
-  const autoRuns = () =>
-    axiosMock.history.post.filter(
-      (r) => r.url === "/api/admin/assignments/auto",
-    );
+  const PREVIEW = "AdminAssignmentsPage-propose-preview";
+  const PROPOSE_MODAL = "AdminAssignmentsPage-propose-modal";
+  const PREVIEW_URL = "/api/admin/assignments/auto/preview";
+  const APPLY_URL = "/api/admin/assignments/auto/apply";
+  const UNDO_URL = "/api/admin/assignments/auto/undo";
+  const previewGets = () =>
+    axiosMock.history.get.filter((r) => r.url === PREVIEW_URL);
+  const applies = () =>
+    axiosMock.history.post.filter((r) => r.url === APPLY_URL);
+  const undos = () => axiosMock.history.post.filter((r) => r.url === UNDO_URL);
 
-  test("hovering the auto-assign button shows the tooltip, with the PhD rule for a TA page (issue #488)", async () => {
+  test("the Propose assignments row, with Preview and its TA tooltip, sits above the Columns / Download CSV row; the old button is gone", async () => {
     renderPage();
-    const button = await screen.findByTestId(AUTO);
-    expect(screen.queryByTestId(`${AUTO}-tooltip`)).toBeNull();
+    const button = await screen.findByTestId(PREVIEW);
+    expect(button).toHaveTextContent("Preview");
+    expect(button).toHaveClass("btn-outline-primary", "btn-sm");
+    const row = screen.getByTestId("AdminAssignmentsPage-propose");
+    expect(row).toContainElement(button);
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-propose-label"),
+    ).toHaveTextContent("Propose assignments:");
+    // Its own row, before the one with Columns and Download CSV.
+    const csv = screen.getByTestId("AdminAssignmentsPage-csv");
+    expect(row).not.toContainElement(csv);
+    expect(
+      row.compareDocumentPosition(csv) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByTestId("AdminAssignmentsPage-legend")
+        .compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.queryByTestId("AdminAssignmentsPage-auto-assign")).toBeNull();
+    expect(
+      screen.queryByText("Automatically Assign No-Conflict Slots"),
+    ).toBeNull();
+
+    expect(screen.queryByTestId(`${PREVIEW}-tooltip`)).toBeNull();
+    await userEvent.hover(button);
+    // A TA page (issue #488): the PhD condition is in the sentence.
+    expect(
+      await screen.findByTestId("AdminAssignmentsPage-propose-tooltip"),
+    ).toHaveTextContent(
+      "Propose assignments to courses where there is one clear choice: the top-ranked unassigned candidate is enthusiastic about the course and is wanted by no other lecture that still has places, and is a PhD student in Computer Science (MS students and other majors are always assigned by hand). All proposed assignments are shown first and you can control which ones are made.",
+    );
+    expect(button).toHaveTextContent("Preview");
+  });
+
+  test("on a ULA page the tooltip leaves out the PhD condition (issue #488)", async () => {
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, assignmentsFixtures.ulaPage);
+    renderPage(2);
+    const button = await screen.findByTestId(PREVIEW);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: /ULA positions/ }),
+      ).toBeInTheDocument(),
+    );
 
     await userEvent.hover(button);
 
-    expect(await screen.findByTestId(`${AUTO}-tooltip`)).toHaveTextContent(
-      "Fills every place where there is one clear choice: the top-ranked unassigned candidate who is enthusiastic about the course and wanted by no other lecture that still has places. Only PhD students in Computer Science are ever assigned automatically; MS students are always assigned by hand. Can be undone.",
+    expect(
+      await screen.findByTestId("AdminAssignmentsPage-propose-tooltip"),
+    ).toHaveTextContent(
+      "Propose assignments to courses where there is one clear choice: the top-ranked unassigned candidate is enthusiastic about the course and is wanted by no other lecture that still has places. All proposed assignments are shown first and you can control which ones are made.",
     );
-    // The tooltip is the button's own description, so the button itself is unchanged.
-    expect(button).toHaveTextContent("Automatically Assign No-Conflict Slots");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-propose-tooltip"),
+    ).not.toHaveTextContent("PhD");
   });
 
-  test("the auto-assign button sits beside Download CSV and opens the confirmation, which Cancel closes", async () => {
+  test("Preview opens the modal, which fetches the preview and changes nothing; Cancel closes it", async () => {
+    axiosMock.onGet(PREVIEW_URL).reply(200, autoAssignFixtures.preview);
     renderPage();
-    const button = await screen.findByTestId(AUTO);
-    expect(button).toHaveTextContent("Automatically Assign No-Conflict Slots");
-    expect(button.parentElement).toContainElement(
-      screen.getByTestId("AdminAssignmentsPage-csv"),
-    );
-    expect(screen.queryByTestId(`${AUTO_MODAL}-modal`)).toBeNull();
+    const button = await screen.findByTestId(PREVIEW);
+    expect(screen.queryByTestId(`${PROPOSE_MODAL}-modal`)).toBeNull();
+    expect(previewGets()).toHaveLength(0);
 
     await userEvent.click(button);
     expect(
-      await screen.findByTestId(`${AUTO_MODAL}-modal`),
+      await screen.findByTestId(`${PROPOSE_MODAL}-modal`),
     ).toBeInTheDocument();
+    await waitFor(() => expect(previewGets()).toHaveLength(1));
+    expect(previewGets()[0].params).toEqual({ recruitmentId: "7" });
+    expect(previewGets()[0].headers["X-Client-Id"]).toEqual(expect.any(String));
     // Recruitment 7's fixture has no ranking deadline, so the modal warns about it: the
     // recruitment reached the modal.
     expect(
-      screen.getByTestId(`${AUTO_MODAL}-warning-deadline`),
+      screen.getByTestId(`${PROPOSE_MODAL}-warning-deadline`),
     ).toHaveTextContent("No faculty ranking deadline is set");
-
-    await userEvent.click(screen.getByTestId(`${AUTO_MODAL}-cancel`));
-    await waitFor(() =>
-      expect(screen.queryByTestId(`${AUTO_MODAL}-modal`)).toBeNull(),
+    expect(
+      await screen.findByTestId(
+        `${PROPOSE_MODAL}-proposed-cell-row-0-col-applicant`,
+      ),
+    ).toHaveTextContent("Ada Lovelace");
+    expect(screen.getByTestId(`${PROPOSE_MODAL}-proceed`)).toHaveTextContent(
+      "Proceed (2)",
     );
-    expect(autoRuns()).toHaveLength(0);
+
+    await userEvent.click(screen.getByTestId(`${PROPOSE_MODAL}-cancel`));
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${PROPOSE_MODAL}-modal`)).toBeNull(),
+    );
+    expect(applies()).toHaveLength(0);
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+    ).toHaveTextContent("Assigned 0");
+    expect(assignmentsGets()).toHaveLength(1);
+
+    // Opening it again fetches a fresh preview.
+    await userEvent.click(button);
+    await waitFor(() => expect(previewGets()).toHaveLength(2));
   });
 
-  test("a run carries the page's version and client id, and the table and counts follow its answer", async () => {
-    axiosMock
-      .onPost("/api/admin/assignments/auto")
-      .reply(200, autoAssignFixtures.twoMade);
+  test("Proceed carries the preview's version and client id and only the checked rows, and the table and counts follow its answer", async () => {
+    axiosMock.onGet(PREVIEW_URL).reply(200, autoAssignFixtures.preview);
+    axiosMock.onPost(APPLY_URL).reply(200, autoAssignFixtures.appliedOne);
     renderPage();
     await screen.findByTestId("AdminAssignmentsPage-table-course-10-assigned");
     expect(
       screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
     ).toHaveTextContent("Assigned 0");
 
-    await userEvent.click(screen.getByTestId(AUTO));
-    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+    await userEvent.click(screen.getByTestId(PREVIEW));
+    await userEvent.click(
+      await screen.findByTestId(`${PROPOSE_MODAL}-row-1-check`),
+    );
+    expect(screen.getByTestId(`${PROPOSE_MODAL}-proceed`)).toHaveTextContent(
+      "Proceed (1)",
+    );
+    await userEvent.click(screen.getByTestId(`${PROPOSE_MODAL}-proceed`));
 
-    await waitFor(() => expect(autoRuns()).toHaveLength(1));
-    expect(autoRuns()[0].params).toEqual({ recruitmentId: "7", version: 3 });
-    expect(autoRuns()[0].headers["X-Client-Id"]).toEqual(expect.any(String));
+    await waitFor(() => expect(applies()).toHaveLength(1));
+    expect(applies()[0].params).toEqual({ recruitmentId: "7", version: 3 });
+    expect(applies()[0].headers["X-Client-Id"]).toEqual(expect.any(String));
+    expect(JSON.parse(applies()[0].data)).toEqual([
+      { applicationId: 1, recruitmentCourseId: 10, rank: 1, pass: 1 },
+    ]);
     expect(
-      await screen.findByTestId(`${AUTO_MODAL}-result-modal`),
+      await screen.findByTestId(`${PROPOSE_MODAL}-result-modal`),
     ).toBeInTheDocument();
     // The answer's page (Ada moved to CMPSC 24) is shown without another read.
     await waitFor(() =>
@@ -381,15 +457,16 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
       ).toHaveTextContent("Assigned 1"),
     );
     expect(assignmentsGets()).toHaveLength(1);
-    expect(screen.getByTestId(`${AUTO_MODAL}-made-0`)).toHaveTextContent(
-      "Ada Lovelace to 8, ranked 1 (pass 1)",
+    expect(mockToast).toHaveBeenCalledWith("1 assignment made.");
+    expect(screen.getByTestId(`${PROPOSE_MODAL}-made-count`)).toHaveTextContent(
+      "1 assignment made.",
     );
 
-    await userEvent.click(screen.getByTestId(`${AUTO_MODAL}-close`));
+    await userEvent.click(screen.getByTestId(`${PROPOSE_MODAL}-close`));
     await waitFor(() =>
-      expect(screen.queryByTestId(`${AUTO_MODAL}-result-modal`)).toBeNull(),
+      expect(screen.queryByTestId(`${PROPOSE_MODAL}-result-modal`)).toBeNull(),
     );
-    // The next move carries the version the run came back with.
+    // The next move carries the version the apply came back with.
     await userEvent.selectOptions(
       screen.getByTestId(
         "AdminAssignmentsPage-table-cell-row-0-tentative-select",
@@ -400,15 +477,18 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(tentativePuts()[0].params.version).toBe(4);
   });
 
-  test("a stale run is refused: the page is refreshed from the answer, the message is shown and the modal closes", async () => {
-    axiosMock.onPost("/api/admin/assignments/auto").reply(409, {
+  test("a stale apply is refused: the page is refreshed from the answer, the message is shown and the modal closes", async () => {
+    axiosMock.onGet(PREVIEW_URL).reply(200, autoAssignFixtures.preview);
+    axiosMock.onPost(APPLY_URL).reply(409, {
       message:
         "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
       assignments: assignmentsFixtures.taPageAfterMove,
     });
     renderPage();
-    await userEvent.click(await screen.findByTestId(AUTO));
-    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+    await userEvent.click(await screen.findByTestId(PREVIEW));
+    await userEvent.click(
+      await screen.findByTestId(`${PROPOSE_MODAL}-proceed`),
+    );
 
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
@@ -421,19 +501,20 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
       ).toHaveTextContent("Assigned 1"),
     );
     await waitFor(() =>
-      expect(screen.queryByTestId(`${AUTO_MODAL}-modal`)).toBeNull(),
+      expect(screen.queryByTestId(`${PROPOSE_MODAL}-modal`)).toBeNull(),
     );
-    expect(screen.queryByTestId(`${AUTO_MODAL}-result-modal`)).toBeNull();
+    expect(screen.queryByTestId(`${PROPOSE_MODAL}-result-modal`)).toBeNull();
     expect(assignmentsGets()).toHaveLength(1);
   });
 
-  test("a run that fails for another reason is toasted and the page keeps its data", async () => {
-    axiosMock
-      .onPost("/api/admin/assignments/auto")
-      .reply(500, { message: "Boom" });
+  test("an apply that fails for another reason is toasted and the page keeps its data", async () => {
+    axiosMock.onGet(PREVIEW_URL).reply(200, autoAssignFixtures.preview);
+    axiosMock.onPost(APPLY_URL).reply(500, { message: "Boom" });
     renderPage();
-    await userEvent.click(await screen.findByTestId(AUTO));
-    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+    await userEvent.click(await screen.findByTestId(PREVIEW));
+    await userEvent.click(
+      await screen.findByTestId(`${PROPOSE_MODAL}-proceed`),
+    );
 
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
@@ -445,39 +526,53 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     ).toHaveTextContent("Assigned 0");
   });
 
-  test("undoing a run shows the page it answers with", async () => {
-    axiosMock
-      .onPost("/api/admin/assignments/auto")
-      .reply(200, autoAssignFixtures.twoMade);
-    axiosMock
-      .onPost("/api/admin/assignments/auto/undo")
-      .reply(200, autoAssignFixtures.undone);
+  test("a failed preview is toasted and the modal closes with nothing changed", async () => {
+    axiosMock.onGet(PREVIEW_URL).reply(500, { message: "Boom" });
     renderPage();
-    await userEvent.click(await screen.findByTestId(AUTO));
-    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-run`));
+    await userEvent.click(await screen.findByTestId(PREVIEW));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.stringContaining("status code 500"),
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId(`${PROPOSE_MODAL}-modal`)).toBeNull(),
+    );
+    expect(applies()).toHaveLength(0);
+  });
+
+  test("undoing the run shows the page it answers with", async () => {
+    axiosMock.onGet(PREVIEW_URL).reply(200, autoAssignFixtures.preview);
+    axiosMock.onPost(APPLY_URL).reply(200, autoAssignFixtures.applied);
+    axiosMock.onPost(UNDO_URL).reply(200, autoAssignFixtures.undone);
+    renderPage();
+    await userEvent.click(await screen.findByTestId(PREVIEW));
+    await userEvent.click(
+      await screen.findByTestId(`${PROPOSE_MODAL}-proceed`),
+    );
     await waitFor(() =>
       expect(
         screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
       ).toHaveTextContent("Assigned 1"),
     );
 
-    await userEvent.click(await screen.findByTestId(`${AUTO_MODAL}-undo`));
+    await userEvent.click(await screen.findByTestId(`${PROPOSE_MODAL}-undo`));
 
-    const undos = () =>
-      axiosMock.history.post.filter(
-        (r) => r.url === "/api/admin/assignments/auto/undo",
-      );
     await waitFor(() => expect(undos()).toHaveLength(1));
-    // The undo carries the version of the page as the run left it.
+    // The undo carries the version of the page as the apply left it.
     expect(undos()[0].params).toEqual({ recruitmentId: "7", version: 4 });
+    expect(JSON.parse(undos()[0].data)).toEqual(
+      autoAssignFixtures.applied.made,
+    );
     await waitFor(() =>
       expect(
         screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
       ).toHaveTextContent("Assigned 0"),
     );
-    expect(mockToast).toHaveBeenCalledWith("Undid 2 automatic assignments.");
+    expect(mockToast).toHaveBeenCalledWith("Undid 2 assignments.");
     await waitFor(() =>
-      expect(screen.queryByTestId(`${AUTO_MODAL}-result-modal`)).toBeNull(),
+      expect(screen.queryByTestId(`${PROPOSE_MODAL}-result-modal`)).toBeNull(),
     );
   });
 

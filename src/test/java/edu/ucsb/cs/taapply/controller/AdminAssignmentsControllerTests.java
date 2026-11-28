@@ -30,8 +30,10 @@ import edu.ucsb.cs.taapply.services.AssignmentsService.AssignmentRow;
 import edu.ucsb.cs.taapply.services.AssignmentsService.Assignments;
 import edu.ucsb.cs.taapply.services.AssignmentsService.CourseSummary;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Applied;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Made;
-import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Outcome;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService.NotMade;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Preview;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Skipped;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Undone;
 import java.util.List;
@@ -135,7 +137,14 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
                 .with(csrf()))
         .andExpect(status().isForbidden());
     mockMvc
-        .perform(post("/api/admin/assignments/auto?recruitmentId=7&version=3").with(csrf()))
+        .perform(get("/api/admin/assignments/auto/preview?recruitmentId=7"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            post("/api/admin/assignments/auto/apply?recruitmentId=7&version=3")
+                .contentType("application/json")
+                .content("[]")
+                .with(csrf()))
         .andExpect(status().isForbidden());
     mockMvc
         .perform(
@@ -144,7 +153,8 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
                 .content("[]")
                 .with(csrf()))
         .andExpect(status().isForbidden());
-    verify(autoAssignmentsService, never()).run(any());
+    verify(autoAssignmentsService, never()).preview(any());
+    verify(autoAssignmentsService, never()).apply(any(), any());
     verify(autoAssignmentsService, never()).undo(any(), any());
     mockMvc
         .perform(post("/api/admin/assignments/heartbeat?recruitmentId=7").with(csrf()))
@@ -453,26 +463,68 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
     return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
   }
 
-  // ---- automatic assignment (issue #481) ----
+  // ---- propose assignments: preview, apply and undo (issues #481 and #515) ----
 
-  private static final Outcome OUTCOME =
-      new Outcome(
-          PAGE,
-          List.of(new Made(1L, 10L, 1, 1)),
-          List.of(new Skipped(11L, "RANKED_ELSEWHERE", 2L, 1, List.of(10L))));
+  private static final List<Made> SELECTED = List.of(new Made(1L, 10L, 1, 1));
+
+  private static final Preview PREVIEW =
+      new Preview(
+          3,
+          List.of(new Made(1L, 10L, 1, 1), new Made(2L, 11L, 2, 2)),
+          List.of(new Skipped(12L, "RANKED_ELSEWHERE", 3L, 1, List.of(10L))));
+
+  private static final Applied APPLIED =
+      new Applied(
+          PAGE, SELECTED, List.of(new NotMade(new Made(2L, 11L, 2, 2), "ALREADY_ASSIGNED")));
+
+  private String json(Object value) throws Exception {
+    return mapper.writeValueAsString(value);
+  }
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
-  void admin_runs_the_automatic_assignment_after_the_version_check_and_gets_the_outcome()
+  void admin_previews_the_proposals_without_moving_the_version() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(autoAssignmentsService.preview(RECRUITMENT)).thenReturn(PREVIEW);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/assignments/auto/preview?recruitmentId=7"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(json(PREVIEW), response.getResponse().getContentAsString());
+    verify(autoAssignmentsService).preview(RECRUITMENT);
+    verify(recruitmentRepository, never()).bumpAssignmentsVersionIf(any(), any());
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void a_preview_for_an_unknown_recruitment_is_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(get("/api/admin/assignments/auto/preview?recruitmentId=99"))
+        .andExpect(status().isNotFound());
+
+    verify(autoAssignmentsService, never()).preview(any());
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void admin_applies_the_selection_after_the_version_check_and_gets_what_was_made()
       throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
     when(recruitmentRepository.bumpAssignmentsVersionIf(7L, 3)).thenReturn(1);
-    when(autoAssignmentsService.run(RECRUITMENT)).thenReturn(OUTCOME);
+    when(autoAssignmentsService.apply(RECRUITMENT, SELECTED)).thenReturn(APPLIED);
 
     MvcResult response =
         mockMvc
             .perform(
-                post("/api/admin/assignments/auto?recruitmentId=7&version=3")
+                post("/api/admin/assignments/auto/apply?recruitmentId=7&version=3")
+                    .contentType("application/json")
+                    .content(json(SELECTED))
                     .header(CLIENT_ID, "tab-1")
                     .with(csrf()))
             .andExpect(status().isOk())
@@ -480,65 +532,73 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
 
     InOrder inOrder = inOrder(recruitmentRepository, autoAssignmentsService);
     inOrder.verify(recruitmentRepository).bumpAssignmentsVersionIf(7L, 3);
-    inOrder.verify(autoAssignmentsService).run(RECRUITMENT);
-    assertEquals(mapper.writeValueAsString(OUTCOME), response.getResponse().getContentAsString());
-    // The run counts as being on the page.
+    inOrder.verify(autoAssignmentsService).apply(RECRUITMENT, SELECTED);
+    assertEquals(json(APPLIED), response.getResponse().getContentAsString());
+    // The apply counts as being on the page.
     assertEquals(1, detector.othersActive("assignments:7", "observer").size());
   }
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
-  void a_stale_automatic_assignment_is_409_with_the_current_page_and_runs_nothing()
-      throws Exception {
+  void a_stale_apply_is_409_with_the_current_page_and_makes_nothing() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
     when(recruitmentRepository.bumpAssignmentsVersionIf(7L, 2)).thenReturn(0);
     when(assignmentsService.assignments(RECRUITMENT)).thenReturn(PAGE);
 
     MvcResult response =
         mockMvc
-            .perform(post("/api/admin/assignments/auto?recruitmentId=7&version=2").with(csrf()))
+            .perform(
+                post("/api/admin/assignments/auto/apply?recruitmentId=7&version=2")
+                    .contentType("application/json")
+                    .content(json(SELECTED))
+                    .with(csrf()))
             .andExpect(status().isConflict())
             .andReturn();
 
-    verify(autoAssignmentsService, never()).run(any());
+    verify(autoAssignmentsService, never()).apply(any(), any());
     Map<String, Object> json = responseToJson(response);
     assertEquals(
         "Assignments changed while you were working. The page has been refreshed; please check"
             + " the placement and try again.",
         json.get("message"));
-    assertEquals(
-        mapper.readValue(mapper.writeValueAsString(PAGE), Map.class), json.get("assignments"));
+    assertEquals(mapper.readValue(json(PAGE), Map.class), json.get("assignments"));
   }
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
-  void an_automatic_assignment_that_loses_a_race_for_an_application_is_409_with_the_current_page()
+  void an_apply_that_loses_a_race_for_an_application_is_409_with_the_current_page()
       throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
     when(recruitmentRepository.bumpAssignmentsVersionIf(7L, 3)).thenReturn(1);
-    when(autoAssignmentsService.run(RECRUITMENT))
+    when(autoAssignmentsService.apply(any(), any()))
         .thenThrow(new ObjectOptimisticLockingFailureException(Application.class, 1L));
     when(assignmentsService.assignments(RECRUITMENT)).thenReturn(PAGE);
 
     MvcResult response =
         mockMvc
-            .perform(post("/api/admin/assignments/auto?recruitmentId=7&version=3").with(csrf()))
+            .perform(
+                post("/api/admin/assignments/auto/apply?recruitmentId=7&version=3")
+                    .contentType("application/json")
+                    .content(json(SELECTED))
+                    .with(csrf()))
             .andExpect(status().isConflict())
             .andReturn();
 
     assertEquals(
-        mapper.readValue(mapper.writeValueAsString(PAGE), Map.class),
-        responseToJson(response).get("assignments"));
+        mapper.readValue(json(PAGE), Map.class), responseToJson(response).get("assignments"));
   }
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
-  void an_automatic_assignment_for_an_unknown_recruitment_is_404_and_bumps_nothing()
-      throws Exception {
+  void an_apply_or_undo_for_an_unknown_recruitment_is_404_and_bumps_nothing() throws Exception {
     when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
 
     mockMvc
-        .perform(post("/api/admin/assignments/auto?recruitmentId=99&version=3").with(csrf()))
+        .perform(
+            post("/api/admin/assignments/auto/apply?recruitmentId=99&version=3")
+                .contentType("application/json")
+                .content("[]")
+                .with(csrf()))
         .andExpect(status().isNotFound());
     mockMvc
         .perform(
@@ -549,22 +609,29 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isNotFound());
 
     verify(recruitmentRepository, never()).bumpAssignmentsVersionIf(any(), any());
-    verify(autoAssignmentsService, never()).run(any());
+    verify(autoAssignmentsService, never()).apply(any(), any());
     verify(autoAssignmentsService, never()).undo(any(), any());
   }
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
-  void an_automatic_assignment_without_a_version_is_400() throws Exception {
+  void an_apply_without_a_version_or_without_a_body_is_400() throws Exception {
     mockMvc
-        .perform(post("/api/admin/assignments/auto?recruitmentId=7").with(csrf()))
+        .perform(
+            post("/api/admin/assignments/auto/apply?recruitmentId=7")
+                .contentType("application/json")
+                .content("[]")
+                .with(csrf()))
         .andExpect(status().isBadRequest());
-    verify(autoAssignmentsService, never()).run(any());
+    mockMvc
+        .perform(post("/api/admin/assignments/auto/apply?recruitmentId=7&version=3").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(autoAssignmentsService, never()).apply(any(), any());
   }
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
-  void admin_undoes_a_run_by_sending_back_what_it_made() throws Exception {
+  void admin_undoes_an_apply_by_sending_back_what_it_made() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
     when(recruitmentRepository.bumpAssignmentsVersionIf(7L, 4)).thenReturn(1);
     Undone undone = new Undone(PAGE, 2);

@@ -17,9 +17,11 @@ import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService.AssignmentRow;
 import edu.ucsb.cs.taapply.services.AssignmentsService.Assignments;
 import edu.ucsb.cs.taapply.services.AssignmentsService.CourseSummary;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Applied;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Made;
-import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Outcome;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService.NotMade;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Plan;
+import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Preview;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Skipped;
 import edu.ucsb.cs.taapply.services.AutoAssignmentsService.Undone;
 import java.util.HashMap;
@@ -33,7 +35,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-/** Issue #481: the no-conflict auto-assignment, planned on the page's data alone. */
+/**
+ * Issues #481 and #515: the no-conflict proposals, planned on the page's data alone; the preview
+ * that changes nothing, the apply that makes exactly the selection, and the undo.
+ */
 @ExtendWith(MockitoExtension.class)
 class AutoAssignmentsServiceTests {
   @Mock AssignmentsService assignmentsService;
@@ -392,7 +397,7 @@ class AutoAssignmentsServiceTests {
         Application.builder().id(1L).classLevel(level).major(major).build());
   }
 
-  // ---- run and undo ----
+  // ---- preview, apply and undo ----
 
   private static Application application(long id, Long tentative, ApplicationReviewStatus status) {
     return Application.builder()
@@ -405,7 +410,7 @@ class AutoAssignmentsServiceTests {
   }
 
   @Test
-  void run_saves_each_planned_assignment_and_answers_with_the_page_as_it_then_stands() {
+  void preview_plans_on_the_current_page_leaving_not_hired_out_and_saves_nothing() {
     // A TA recruitment: Ada and Alan are PhD students in Computer Science (issue #488).
     Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
     ada.setClassLevel(ClassLevel.PHD);
@@ -416,32 +421,27 @@ class AutoAssignmentsServiceTests {
     alan.setMajor("Computer Science (CS)");
     when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace, alan));
     // Grace tops A's list but is Not Hired, so Ada is A's candidate; Alan is B's.
-    Assignments before =
+    Assignments page =
         page(
             List.of(course(A, 1, 0), course(B, 1, 0)),
             List.of(
                 row(1L, null, Map.of(A, 2), Map.of(A, "1st Choice")),
                 row(2L, null, Map.of(A, 1), Map.of(A, "1st Choice")),
                 row(3L, null, Map.of(B, 1), Map.of(B, "Enthusiastic"))));
-    Assignments after = page(List.of(course(A, 1, 1), course(B, 1, 1)), List.of());
-    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(before, after);
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(page);
 
-    Outcome outcome = service.run(RECRUITMENT);
+    Preview preview = service.preview(RECRUITMENT);
 
-    ArgumentCaptor<Application> saved = ArgumentCaptor.forClass(Application.class);
-    verify(applicationRepository, org.mockito.Mockito.times(2)).save(saved.capture());
-    assertSame(ada, saved.getAllValues().get(0));
-    assertEquals(A, ada.getTentativeAssignmentId());
-    assertSame(alan, saved.getAllValues().get(1));
-    assertEquals(B, alan.getTentativeAssignmentId());
-    assertNull(grace.getTentativeAssignmentId());
-    assertSame(after, outcome.assignments());
-    assertEquals(List.of(new Made(1L, A, 2, 1), new Made(3L, B, 1, 1)), outcome.made());
-    assertEquals(List.of(), outcome.skipped());
+    verify(applicationRepository, never()).save(any());
+    assertNull(ada.getTentativeAssignmentId());
+    assertNull(alan.getTentativeAssignmentId());
+    assertEquals(4, preview.version());
+    assertEquals(List.of(new Made(1L, A, 2, 1), new Made(3L, B, 1, 1)), preview.made());
+    assertEquals(List.of(), preview.skipped());
   }
 
   @Test
-  void run_on_a_ta_recruitment_leaves_a_lecture_topped_by_an_ms_student_alone() {
+  void preview_on_a_ta_recruitment_leaves_a_lecture_topped_by_an_ms_student_alone() {
     // Grace (MS, CS) tops A and Ada (PhD, CS) is second: A gets nothing. Alan (PhD, CS) tops B.
     Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
     ada.setClassLevel(ClassLevel.PHD);
@@ -453,28 +453,23 @@ class AutoAssignmentsServiceTests {
     alan.setClassLevel(ClassLevel.PHD);
     alan.setMajor("computer science");
     when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace, alan));
-    Assignments before =
+    Assignments page =
         page(
             List.of(course(A, 1, 0), course(B, 1, 0)),
             List.of(
                 row(1L, null, Map.of(A, 2), Map.of(A, "1st Choice")),
                 row(2L, null, Map.of(A, 1), Map.of(A, "1st Choice")),
                 row(3L, null, Map.of(B, 1), Map.of(B, "Enthusiastic"))));
-    Assignments after = page(List.of(course(A, 1, 0), course(B, 1, 1)), List.of());
-    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(before, after);
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(page);
 
-    Outcome outcome = service.run(RECRUITMENT);
+    Preview preview = service.preview(RECRUITMENT);
 
-    verify(applicationRepository, org.mockito.Mockito.times(1)).save(alan);
-    assertEquals(B, alan.getTentativeAssignmentId());
-    assertNull(ada.getTentativeAssignmentId());
-    assertNull(grace.getTentativeAssignmentId());
-    assertEquals(List.of(new Made(3L, B, 1, 1)), outcome.made());
-    assertEquals(List.of(new Skipped(A, "NOT_PHD", 2L, 1, List.of())), outcome.skipped());
+    assertEquals(List.of(new Made(3L, B, 1, 1)), preview.made());
+    assertEquals(List.of(new Skipped(A, "NOT_PHD", 2L, 1, List.of())), preview.skipped());
   }
 
   @Test
-  void run_on_a_ta_recruitment_does_not_mark_a_not_hired_applicant_manual_only_too() {
+  void preview_on_a_ta_recruitment_does_not_mark_a_not_hired_applicant_manual_only_too() {
     // Grace is Not Hired (and MS): left out of the pool, so Ada, PhD in CS, is A's candidate.
     Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
     ada.setClassLevel(ClassLevel.PHD);
@@ -482,60 +477,166 @@ class AutoAssignmentsServiceTests {
     Application grace = application(2L, null, ApplicationReviewStatus.NOT_HIRED);
     grace.setClassLevel(ClassLevel.MS);
     when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace));
-    Assignments before =
+    Assignments page =
         page(
             List.of(course(A, 1, 0)),
             List.of(
                 row(1L, null, Map.of(A, 2), Map.of(A, "1st Choice")),
                 row(2L, null, Map.of(A, 1), Map.of(A, "1st Choice"))));
-    Assignments after = page(List.of(course(A, 1, 1)), List.of());
-    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(before, after);
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(page);
 
-    Outcome outcome = service.run(RECRUITMENT);
+    Preview preview = service.preview(RECRUITMENT);
 
-    assertEquals(List.of(new Made(1L, A, 2, 1)), outcome.made());
-    assertEquals(List.of(), outcome.skipped());
+    assertEquals(List.of(new Made(1L, A, 2, 1)), preview.made());
+    assertEquals(List.of(), preview.skipped());
   }
 
   @Test
-  void run_on_a_ula_recruitment_ignores_class_level_and_major() {
+  void preview_on_a_ula_recruitment_ignores_class_level_and_major() {
     Recruitment ula =
         Recruitment.builder().id(7L).type(RecruitmentType.ULA).assignmentsVersion(4).build();
-    // A ULA application has no class level and Ada's major is not CS; she is assigned all the same.
+    // A ULA application has no class level and Ada's major is not CS; she is proposed all the same.
     Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
     ada.setMajor("Mathematics");
     when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada));
-    Assignments before =
+    Assignments page =
         page(
             List.of(course(A, 1, 0)),
             List.of(row(1L, null, Map.of(A, 1), Map.of(A, "1st Choice"))));
-    Assignments after = page(List.of(course(A, 1, 1)), List.of());
-    when(assignmentsService.assignments(ula)).thenReturn(before, after);
+    when(assignmentsService.assignments(ula)).thenReturn(page);
 
-    Outcome outcome = service.run(ula);
+    Preview preview = service.preview(ula);
 
-    assertEquals(A, ada.getTentativeAssignmentId());
-    assertEquals(List.of(new Made(1L, A, 1, 1)), outcome.made());
-    assertEquals(List.of(), outcome.skipped());
+    assertEquals(List.of(new Made(1L, A, 1, 1)), preview.made());
+    assertEquals(List.of(), preview.skipped());
   }
 
   @Test
-  void run_with_nothing_to_do_saves_nothing_and_reports_the_unfilled_lectures() {
+  void preview_with_nothing_to_propose_reports_the_unfilled_lectures() {
     when(assignmentsService.realApplications(7L))
         .thenReturn(List.of(application(1L, null, ApplicationReviewStatus.PENDING)));
     Assignments page = page(List.of(course(A, 1, 0)), List.of(row(1L, null, Map.of(), Map.of())));
     when(assignmentsService.assignments(RECRUITMENT)).thenReturn(page);
 
-    Outcome outcome = service.run(RECRUITMENT);
+    Preview preview = service.preview(RECRUITMENT);
 
     verify(applicationRepository, never()).save(any());
-    assertEquals(List.of(), outcome.made());
-    assertEquals(List.of(new Skipped(A, "NO_RANKINGS", null, null, List.of())), outcome.skipped());
-    assertSame(page, outcome.assignments());
+    assertEquals(4, preview.version());
+    assertEquals(List.of(), preview.made());
+    assertEquals(List.of(new Skipped(A, "NO_RANKINGS", null, null, List.of())), preview.skipped());
   }
 
   @Test
-  void undo_clears_only_the_assignments_still_as_the_run_left_them() {
+  void apply_saves_each_selected_assignment_and_answers_with_the_page_as_it_then_stands() {
+    Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
+    Application grace = application(2L, null, ApplicationReviewStatus.PENDING);
+    Application alan = application(3L, null, ApplicationReviewStatus.PENDING);
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace, alan));
+    Assignments before = page(List.of(course(A, 1, 0), course(B, 1, 0)), List.of());
+    Assignments after = page(List.of(course(A, 1, 1), course(B, 1, 1)), List.of());
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(before, after);
+    // Grace was proposed too (pass 2), but the admin unchecked her: only the selection is made.
+    List<Made> selected = List.of(new Made(1L, A, 2, 1), new Made(3L, B, 1, 1));
+
+    Applied applied = service.apply(RECRUITMENT, selected);
+
+    ArgumentCaptor<Application> saved = ArgumentCaptor.forClass(Application.class);
+    verify(applicationRepository, org.mockito.Mockito.times(2)).save(saved.capture());
+    assertSame(ada, saved.getAllValues().get(0));
+    assertEquals(A, ada.getTentativeAssignmentId());
+    assertSame(alan, saved.getAllValues().get(1));
+    assertEquals(B, alan.getTentativeAssignmentId());
+    assertNull(grace.getTentativeAssignmentId());
+    assertSame(after, applied.assignments());
+    assertEquals(selected, applied.made());
+    assertEquals(List.of(), applied.notMade());
+  }
+
+  @Test
+  void apply_reports_a_selection_that_no_longer_holds_instead_of_making_it() {
+    Application ada = application(1L, C, ApplicationReviewStatus.PENDING); // assigned meanwhile
+    Application grace = application(2L, null, ApplicationReviewStatus.PENDING);
+    Application alan = application(3L, null, ApplicationReviewStatus.PENDING);
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada, grace, alan));
+    // A is on offer; 40 was removed since the preview (historical); 50 is not on the page at all.
+    Assignments before = page(List.of(course(A, 2, 0), historical(40L, 1, 0)), List.of());
+    Assignments after = page(List.of(course(A, 2, 1), historical(40L, 1, 0)), List.of());
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(before, after);
+    Made adaToA = new Made(1L, A, 1, 1);
+    Made adaToGone = new Made(1L, 50L, 1, 1); // the applicant check comes first
+    Made graceToRemoved = new Made(2L, 40L, 1, 1);
+    Made graceToUnknown = new Made(2L, 50L, 1, 2);
+    Made graceToNowhere = new Made(2L, null, 1, 2);
+    Made nobodyToA = new Made(99L, A, 1, 1); // cancelled, or never of this recruitment
+    Made nobodyToGone = new Made(99L, 50L, 1, 1); // the applicant check comes first
+    Made alanToA = new Made(3L, A, 2, 2);
+
+    Applied applied =
+        service.apply(
+            RECRUITMENT,
+            List.of(
+                adaToA,
+                adaToGone,
+                graceToRemoved,
+                graceToUnknown,
+                graceToNowhere,
+                nobodyToA,
+                nobodyToGone,
+                alanToA));
+
+    verify(applicationRepository).save(alan);
+    verify(applicationRepository, never()).save(ada);
+    verify(applicationRepository, never()).save(grace);
+    assertEquals(C, ada.getTentativeAssignmentId());
+    assertNull(grace.getTentativeAssignmentId());
+    assertEquals(A, alan.getTentativeAssignmentId());
+    assertEquals(List.of(alanToA), applied.made());
+    assertEquals(
+        List.of(
+            new NotMade(adaToA, "ALREADY_ASSIGNED"),
+            new NotMade(adaToGone, "ALREADY_ASSIGNED"),
+            new NotMade(graceToRemoved, "LECTURE_GONE"),
+            new NotMade(graceToUnknown, "LECTURE_GONE"),
+            new NotMade(graceToNowhere, "LECTURE_GONE"),
+            new NotMade(nobodyToA, "APPLICANT_GONE"),
+            new NotMade(nobodyToGone, "APPLICANT_GONE")),
+        applied.notMade());
+    assertSame(after, applied.assignments());
+  }
+
+  @Test
+  void apply_makes_an_applicant_selected_twice_only_once() {
+    Application ada = application(1L, null, ApplicationReviewStatus.PENDING);
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(ada));
+    Assignments page = page(List.of(course(A, 1, 0), course(B, 1, 0)), List.of());
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(page);
+    Made toA = new Made(1L, A, 1, 1);
+    Made toB = new Made(1L, B, 1, 1);
+
+    Applied applied = service.apply(RECRUITMENT, List.of(toA, toB));
+
+    verify(applicationRepository, org.mockito.Mockito.times(1)).save(ada);
+    assertEquals(A, ada.getTentativeAssignmentId());
+    assertEquals(List.of(toA), applied.made());
+    assertEquals(List.of(new NotMade(toB, "ALREADY_ASSIGNED")), applied.notMade());
+  }
+
+  @Test
+  void apply_with_nothing_selected_saves_nothing() {
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of());
+    Assignments page = page(List.of(course(A, 1, 0)), List.of());
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(page);
+
+    Applied applied = service.apply(RECRUITMENT, List.of());
+
+    verify(applicationRepository, never()).save(any());
+    assertEquals(List.of(), applied.made());
+    assertEquals(List.of(), applied.notMade());
+    assertSame(page, applied.assignments());
+  }
+
+  @Test
+  void undo_clears_only_the_assignments_still_as_the_apply_left_them() {
     Application ada = application(1L, A, ApplicationReviewStatus.PENDING);
     Application grace = application(2L, C, ApplicationReviewStatus.PENDING); // moved by hand
     Application alan = application(3L, null, ApplicationReviewStatus.PENDING); // cleared by hand

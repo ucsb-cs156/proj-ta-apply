@@ -164,31 +164,42 @@ export default function HelpAdminsPage(): React.JSX.Element {
           says so.
         </p>
         <p data-testid="HelpAdminsPage-auto-assign-slots">
-          <strong>Automatically Assign No-Conflict Slots</strong>, beside
-          Download CSV, fills every place where there is one clear choice. A
-          lecture that still has places to fill gets its highest-ranked
-          unassigned candidate when that candidate is enthusiastic about the
-          course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture
-          that still has places to fill has ranked them at all; a ranking by a
-          lecture that is already full does not count. This repeats until no
-          more such assignments can be made, since filling a lecture frees the
+          <strong>Propose assignments: Preview</strong>, in its own row above
+          Columns and Download CSV, finds every place where there is one clear
+          choice and shows the proposals before anything is made. A lecture that
+          still has places to fill is proposed its highest-ranked unassigned
+          candidate when that candidate is enthusiastic about the course (1st
+          Choice, 2nd Choice or Enthusiastic) and no other lecture that still
+          has places to fill has ranked them at all; a ranking by a lecture that
+          is already full does not count. The search repeats in passes until no
+          more such proposals can be found, since filling a lecture frees the
           other candidates it ranked. A lecture whose top remaining candidate is
           only Would Consider, is wanted by another lecture too, or ties with
-          someone for the top rank gets nothing: those are the judgement calls,
-          and the run lists them with the reason. Applicants marked Not Hired
-          take no part, and nothing already assigned is changed. On a TA
+          someone for the top rank gets no proposal: those are the judgement
+          calls, and the modal lists them with the reason. Applicants marked Not
+          Hired take no part, and nothing already assigned is changed. On a TA
           recruitment only PhD students whose major is Computer Science are ever
-          assigned automatically: a lecture whose top remaining candidate is an
-          MS student, or a PhD student in another major, is left for you and
-          listed with that reason, since passing them over would override the
-          instructor&apos;s ranking. The rule does not apply to ULA
-          recruitments. The button&apos;s tooltip says all this in a breath.
-          Before running it warns if the faculty ranking deadline has not
-          passed, if a lecture with places to fill has no rankings yet, or if
-          assignments are already published; afterwards it lists what it did,
-          and <strong>Undo this run</strong> clears exactly those assignments.
-          Make a judgement call by hand, then run it again: that often frees
-          more clear choices.
+          proposed: a lecture whose top remaining candidate is an MS student, or
+          a PhD student in another major, is left for you and listed with that
+          reason, since passing them over would override the instructor&apos;s
+          ranking. The rule does not apply to ULA recruitments. The
+          button&apos;s tooltip says all this in a breath. The modal warns if
+          the faculty ranking deadline has not passed, if a lecture with places
+          to fill has no rankings yet, or if assignments are already published.
+          Its <em>Proposed assignments</em> table has a checkbox per row, all
+          checked to begin with, with the applicant, lecture, rank, preference
+          and pass (and, on a TA recruitment, class level and major);{" "}
+          <em>Select All</em> and <em>Select None</em> sit beside the
+          instruction to uncheck any you do not want. Later passes may depend on
+          earlier ones: a proposal in pass 2 or later was found only after the
+          pass-1 proposals were assumed made, so unchecking a pass-1 row is your
+          call about the later ones too; exactly what is checked is made.{" "}
+          <em>Proceed</em> makes those, the page updates at once, and a final
+          step gives the count, anything that could not be made because the
+          assignments changed meanwhile, and <strong>Undo this run</strong>,
+          which clears exactly those assignments. <em>Cancel</em> changes
+          nothing. Make a judgement call by hand, then preview again: that often
+          frees more clear choices.
         </p>
         <p data-testid="HelpAdminsPage-interest-cells">
           Each lecture&apos;s ranking cell is right-aligned and coloured by the

@@ -1,23 +1,51 @@
 import assignmentsFixtures from "fixtures/assignmentsFixtures";
+import autoAssignFixtures from "fixtures/autoAssignFixtures";
 import {
-  AUTO_ASSIGN_LABEL,
+  PREVIEW_LABEL,
+  PROPOSE_LABEL,
   applicantNames,
   deadlinePending,
   lectureNames,
-  madeSentence,
+  madeCountText,
   needingWithoutRankings,
-  skippedSentence,
-  autoAssignExplanation,
-  autoAssignTooltip,
+  notMadeReason,
+  notMadeSentence,
+  notProposedRows,
+  proposeConditions,
+  proposeTooltip,
+  proposedRows,
+  skippedReason,
 } from "main/utils/autoAssign";
 
-describe("autoAssign utilities (issue #481)", () => {
+describe("autoAssign utilities (issues #481 and #515)", () => {
   const page = assignmentsFixtures.taPage;
   const lecture = lectureNames(page.courses);
   const applicant = applicantNames(page.rows);
 
-  test("the button's label", () => {
-    expect(AUTO_ASSIGN_LABEL).toBe("Automatically Assign No-Conflict Slots");
+  test("the row's label and the button's", () => {
+    expect(PROPOSE_LABEL).toBe("Propose assignments:");
+    expect(PREVIEW_LABEL).toBe("Preview");
+  });
+
+  test("proposeConditions: two for a ULA recruitment, and the PhD rule for a TA one (issue #488)", () => {
+    expect(proposeConditions("ULA")).toEqual([
+      "is enthusiastic about the course",
+      "is wanted by no other lecture that still has places",
+    ]);
+    expect(proposeConditions("TA")).toEqual([
+      "is enthusiastic about the course",
+      "is wanted by no other lecture that still has places",
+      "is a PhD student in Computer Science (MS students and other majors are always assigned by hand)",
+    ]);
+  });
+
+  test("proposeTooltip: the conditions in one sentence, built from the list so the two cannot drift", () => {
+    expect(proposeTooltip("ULA")).toBe(
+      "Propose assignments to courses where there is one clear choice: the top-ranked unassigned candidate is enthusiastic about the course and is wanted by no other lecture that still has places. All proposed assignments are shown first and you can control which ones are made.",
+    );
+    expect(proposeTooltip("TA")).toBe(
+      "Propose assignments to courses where there is one clear choice: the top-ranked unassigned candidate is enthusiastic about the course and is wanted by no other lecture that still has places, and is a PhD student in Computer Science (MS students and other majors are always assigned by hand). All proposed assignments are shown first and you can control which ones are made.",
+    );
   });
 
   test("needingWithoutRankings: lectures with places left that nobody has ranked anyone for", () => {
@@ -82,118 +110,165 @@ describe("autoAssign utilities (issue #481)", () => {
     expect(partial(7)).toBe("applicant 7");
   });
 
-  test("madeSentence names the applicant, the lecture, the rank and the pass", () => {
-    expect(
-      madeSentence(
-        { applicationId: 1, recruitmentCourseId: 10, rank: 1, pass: 2 },
-        lecture,
-        applicant,
-      ),
-    ).toBe("Ada Lovelace to 8, ranked 1 (pass 2)");
-  });
-
-  test("autoAssignTooltip: the rule in a breath, with the PhD sentence for a TA recruitment only (issue #488)", () => {
-    expect(autoAssignTooltip("ULA")).toBe(
-      "Fills every place where there is one clear choice: the top-ranked unassigned candidate who is enthusiastic about the course and wanted by no other lecture that still has places. Can be undone.",
-    );
-    expect(autoAssignTooltip("TA")).toBe(
-      "Fills every place where there is one clear choice: the top-ranked unassigned candidate who is enthusiastic about the course and wanted by no other lecture that still has places. Only PhD students in Computer Science are ever assigned automatically; MS students are always assigned by hand. Can be undone.",
-    );
-  });
-
-  test("autoAssignExplanation: the modal's text, with the PhD sentence for a TA recruitment only (issue #488)", () => {
-    expect(autoAssignExplanation("ULA")).toBe(
-      "Fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all. This repeats until no more such assignments can be made. Applicants marked Not Hired take no part. Nothing already assigned is changed, and the run can be undone afterwards.",
-    );
-    expect(autoAssignExplanation("TA")).toBe(
-      "Fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all. This repeats until no more such assignments can be made. Applicants marked Not Hired take no part. Only PhD students whose major is Computer Science are ever assigned automatically; a lecture whose top remaining candidate is an MS student or in another major is left for you, and listed with the reason. Nothing already assigned is changed, and the run can be undone afterwards.",
-    );
-  });
-
-  test("skippedSentence: one sentence per reason", () => {
-    const sentence = (skipped) => skippedSentence(skipped, lecture, applicant);
-    // Issue #488: the two manual-only reasons.
-    expect(
-      sentence({
+  test("proposedRows: the page's words for each proposal, reading preference, class level and major off its rows", () => {
+    expect(proposedRows(autoAssignFixtures.preview.made, page)).toEqual([
+      {
+        applicationId: 1,
         recruitmentCourseId: 10,
-        reason: "NOT_PHD",
-        applicationId: 2,
+        applicant: "Ada Lovelace",
+        lecture: "8",
         rank: 1,
-        blockedBy: [],
-      }),
-    ).toBe(
-      "8: its top remaining candidate, Grace Hopper (ranked 1), is an MS student, so is assigned by hand only.",
-    );
-    expect(
-      sentence({
-        recruitmentCourseId: 20,
-        reason: "NOT_CS_MAJOR",
-        applicationId: 3,
-        rank: 1,
-        blockedBy: [],
-      }),
-    ).toBe(
-      "16: its top remaining candidate, Alan Turing (ranked 1), is not a Computer Science major, so is assigned by hand only.",
-    );
-    expect(
-      sentence({
-        recruitmentCourseId: 10,
-        reason: "NO_RANKINGS",
-        applicationId: null,
-        rank: null,
-        blockedBy: [],
-      }),
-    ).toBe("8: no rankings yet.");
-    expect(
-      sentence({
-        recruitmentCourseId: 20,
-        reason: "ALL_RANKED_ASSIGNED",
-        applicationId: null,
-        rank: null,
-        blockedBy: [],
-      }),
-    ).toBe("16: every candidate it ranked is already assigned.");
-    expect(
-      sentence({
-        recruitmentCourseId: 20,
-        reason: "TIE",
-        applicationId: null,
+        preference: "1st Choice",
+        pass: 1,
+        classLevel: "PHD",
+        major: "Computer Science",
+      },
+      {
+        applicationId: 4,
+        recruitmentCourseId: 30,
+        applicant: "blank@ucsb.edu",
+        lecture: "24",
         rank: 2,
-        blockedBy: [],
-      }),
-    ).toBe("16: two or more remaining candidates share its top rank (2).");
+        // The nameless applicant marked no interest and gave no class level or major.
+        preference: "",
+        pass: 2,
+        classLevel: "",
+        major: "",
+      },
+    ]);
+    // An applicant no longer on the page, to a lecture no longer on it: nothing to read.
     expect(
-      sentence({
-        recruitmentCourseId: 10,
-        reason: "NOT_ENTHUSIASTIC",
-        applicationId: 2,
+      proposedRows(
+        [{ applicationId: 99, recruitmentCourseId: 98, rank: 3, pass: 1 }],
+        page,
+      ),
+    ).toEqual([
+      {
+        applicationId: 99,
+        recruitmentCourseId: 98,
+        applicant: "applicant 99",
+        lecture: "lecture 98",
         rank: 3,
+        preference: "",
+        pass: 1,
+        classLevel: "",
+        major: "",
+      },
+    ]);
+  });
+
+  test("skippedReason: one sentence per reason, without the lecture's name", () => {
+    const reason = (fields) =>
+      skippedReason({
+        recruitmentCourseId: 10,
+        applicationId: null,
+        rank: null,
         blockedBy: [],
-      }),
-    ).toBe(
-      "8: its top remaining candidate, Grace Hopper (ranked 3), is not enthusiastic about it.",
+        ...fields,
+      });
+    expect(reason({ reason: "NO_RANKINGS" })).toBe("No rankings yet.");
+    expect(reason({ reason: "ALL_RANKED_ASSIGNED" })).toBe(
+      "Every candidate it ranked is already assigned.",
+    );
+    expect(reason({ reason: "TIE", rank: 2 })).toBe(
+      "Two or more remaining candidates share its top rank (2).",
     );
     expect(
-      sentence({
-        recruitmentCourseId: 10,
+      reason({ reason: "NOT_ENTHUSIASTIC", applicationId: 2, rank: 3 }),
+    ).toBe("Its top remaining candidate is not enthusiastic about it.");
+    expect(
+      reason({
         reason: "RANKED_ELSEWHERE",
         applicationId: 3,
         rank: 1,
         blockedBy: [20],
       }),
     ).toBe(
-      "8: its top remaining candidate, Alan Turing (ranked 1), is also ranked by 16.",
+      "Its top remaining candidate is also ranked by another lecture that still has places.",
     );
+    // Issue #488: the two manual-only reasons.
+    expect(reason({ reason: "NOT_PHD", applicationId: 2, rank: 1 })).toBe(
+      "Its top remaining candidate is an MS student, so is assigned by hand only.",
+    );
+    expect(reason({ reason: "NOT_CS_MAJOR", applicationId: 3, rank: 1 })).toBe(
+      "Its top remaining candidate is not a Computer Science major, so is assigned by hand only.",
+    );
+  });
+
+  test("notProposedRows: lecture, places left, reason, the candidate with their rank, and who else ranks them", () => {
+    expect(notProposedRows(autoAssignFixtures.preview.skipped, page)).toEqual([
+      {
+        recruitmentCourseId: 20,
+        lecture: "16",
+        left: -1,
+        reason:
+          "Its top remaining candidate is also ranked by another lecture that still has places.",
+        candidate: "Alan Turing (ranked 1)",
+        alsoRankedBy: "8, 24",
+      },
+    ]);
     expect(
-      sentence({
+      notProposedRows(autoAssignFixtures.previewNothing.skipped, page),
+    ).toEqual([
+      {
         recruitmentCourseId: 10,
-        reason: "RANKED_ELSEWHERE",
-        applicationId: 3,
-        rank: 1,
-        blockedBy: [20, 30],
-      }),
-    ).toBe(
-      "8: its top remaining candidate, Alan Turing (ranked 1), is also ranked by 16 and 24.",
+        lecture: "8",
+        left: 1,
+        reason: "Its top remaining candidate is not enthusiastic about it.",
+        candidate: "Grace Hopper (ranked 2)",
+        alsoRankedBy: "",
+      },
+      {
+        recruitmentCourseId: 20,
+        lecture: "16",
+        left: -1,
+        reason: "Two or more remaining candidates share its top rank (1).",
+        candidate: "",
+        alsoRankedBy: "",
+      },
+      {
+        recruitmentCourseId: 30,
+        lecture: "24",
+        left: 0,
+        reason: "No rankings yet.",
+        candidate: "",
+        alsoRankedBy: "",
+      },
+      {
+        // A lecture no longer on the page: named by its id, with no places count.
+        recruitmentCourseId: 99,
+        lecture: "lecture 99",
+        left: null,
+        reason: "Every candidate it ranked is already assigned.",
+        candidate: "",
+        alsoRankedBy: "",
+      },
+    ]);
+  });
+
+  test("madeCountText: singular, plural, and none", () => {
+    expect(madeCountText(0)).toBe("No assignments were made.");
+    expect(madeCountText(1)).toBe("1 assignment made.");
+    expect(madeCountText(2)).toBe("2 assignments made.");
+  });
+
+  test("notMadeReason and notMadeSentence: why a checked proposal was not made", () => {
+    expect(notMadeReason("ALREADY_ASSIGNED")).toBe(
+      "already assigned meanwhile",
     );
+    expect(notMadeReason("LECTURE_GONE")).toBe(
+      "the lecture is no longer on offer",
+    );
+    expect(notMadeReason("APPLICANT_GONE")).toBe(
+      "the application is no longer in this recruitment",
+    );
+    const sentence = (notMade) => notMadeSentence(notMade, lecture, applicant);
+    expect(
+      autoAssignFixtures.appliedPartly.notMade.map((n) => sentence(n)),
+    ).toEqual([
+      "blank@ucsb.edu to 24: already assigned meanwhile.",
+      "Grace Hopper to 16: the lecture is no longer on offer.",
+      "applicant 99 to 8: the application is no longer in this recruitment.",
+    ]);
   });
 });
