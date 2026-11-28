@@ -1599,7 +1599,27 @@
 <a name='L1534'></a><a href='#L1534'>1534</a>
 <a name='L1535'></a><a href='#L1535'>1535</a>
 <a name='L1536'></a><a href='#L1536'>1536</a>
-<a name='L1537'></a><a href='#L1537'>1537</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1537'></a><a href='#L1537'>1537</a>
+<a name='L1538'></a><a href='#L1538'>1538</a>
+<a name='L1539'></a><a href='#L1539'>1539</a>
+<a name='L1540'></a><a href='#L1540'>1540</a>
+<a name='L1541'></a><a href='#L1541'>1541</a>
+<a name='L1542'></a><a href='#L1542'>1542</a>
+<a name='L1543'></a><a href='#L1543'>1543</a>
+<a name='L1544'></a><a href='#L1544'>1544</a>
+<a name='L1545'></a><a href='#L1545'>1545</a>
+<a name='L1546'></a><a href='#L1546'>1546</a>
+<a name='L1547'></a><a href='#L1547'>1547</a>
+<a name='L1548'></a><a href='#L1548'>1548</a>
+<a name='L1549'></a><a href='#L1549'>1549</a>
+<a name='L1550'></a><a href='#L1550'>1550</a>
+<a name='L1551'></a><a href='#L1551'>1551</a>
+<a name='L1552'></a><a href='#L1552'>1552</a>
+<a name='L1553'></a><a href='#L1553'>1553</a>
+<a name='L1554'></a><a href='#L1554'>1554</a>
+<a name='L1555'></a><a href='#L1555'>1555</a>
+<a name='L1556'></a><a href='#L1556'>1556</a>
+<a name='L1557'></a><a href='#L1557'>1557</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1928,6 +1948,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">434x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3552,8 +3592,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
           &lt;strong&gt;Edit&lt;/strong&gt; button, which changes only the explanation, and
           a &lt;strong&gt;Delete&lt;/strong&gt; button. An abbreviation cannot be changed
           once created, since hiring records refer to it: to change one, delete
-          it and create another. Hiring staff can see the list but not change
-          it.
+          it and create another. A source that a hiring record still carries
+          cannot be deleted: Delete is refused with a message giving how many
+          records use it, so clear the Funding of those rows on Soft Offer
+          Results first. Hiring staff can see the list but not change it.
         &lt;/p&gt;
 &nbsp;
         &lt;h2 className="my-3 h4" id="courses"&gt;
@@ -4186,14 +4228,32 @@ export default function HelpAdminsPage(): React.JSX.Element {
             it. Five columns for the financial office staff (Perm number, Prev
             LA Qtrs, Expected grad date, Other Campus Job? and Employee ID
             number, between Email and Course assignment) start hidden until you
-            show them. The CSV is laid out for that staff: it always has those
-            five, a blank &lt;em&gt;Funding&lt;/em&gt; column after Course assignment, the
-            comments headed &lt;em&gt;Student Comments&lt;/em&gt;, and blank columns at the
-            end for them to fill in (Formal Offer Sent, Formal Offer Accepted,
-            New Hire form done, the Other Campus Job FLSA conflict, In UCPath,
-            I-9 Complete and Staff Comments). The Comments column can be
-            dragged, by the handle at the right edge of its heading, between
-            200px and 80% of the window&amp;apos;s width. Admins and{" "}
+            show them. Nine more columns are that staff&amp;apos;s own
+            hiring-tracking fields, shown by default for admins and hiring staff
+            alike and hideable like the others: &lt;em&gt;Funding&lt;/em&gt;, right after
+            Course assignment, a dropdown of the abbreviations from{" "}
+            &lt;a href="#funding-sources"&gt;Funding Sources&lt;/a&gt; (the explanation is
+            the tooltip); and, after Comments, Formal Offer Sent, Formal Offer
+            Accepted, New Hire form done (or not needed), Other Campus Job FLSA
+            conflict found, Other Campus Job FLSA conflict resolved, In UCPath,
+            I-9 Complete and Staff Comments. Six of those are checkboxes that
+            remember when they were ticked: the date (&lt;em&gt;mm/dd/yy&lt;/em&gt;) and
+            time (&lt;em&gt;h:mm AM/PM&lt;/em&gt;), Pacific, appear under the box; unticking
+            clears them, and ticking again records a new time. New Hire form is
+            a dropdown (blank, Done or Not needed) with the same stamp under it,
+            and Staff Comments is a text box that saves when you leave it (or
+            press Ctrl+Enter or Cmd+Enter). Every change is saved at once, and
+            admins and hiring staff may both make them. Sorting a stamped column
+            puts the unticked (or blank) rows together and orders the rest by
+            their time; New Hire form sorts by its value, then its time. The CSV
+            is laid out for that staff: it always has those five, the{" "}
+            &lt;em&gt;Funding&lt;/em&gt; column after Course assignment with the chosen
+            abbreviation, the comments headed &lt;em&gt;Student Comments&lt;/em&gt;, and the
+            hiring-tracking columns at the end with their values: a checkbox as
+            Yes or blank, and each stamped field followed by its Date/Time
+            column. The Comments column can be dragged, by the handle at the
+            right edge of its heading, between 200px and 80% of the
+            window&amp;apos;s width. Admins and{" "}
             &lt;a href="#hiring-staff"&gt;hiring staff&lt;/a&gt; only: the page holds the
             applicants&amp;apos; comments. Soft offers are optional and not a step
             of the diagram.
@@ -4678,7 +4738,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-28T00:05:47.879Z
+                at 2026-11-28T00:45:51.726Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
