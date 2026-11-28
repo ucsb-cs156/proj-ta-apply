@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentCoursesRefreshScheduler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.jobs</a> &gt; <span class="el_source">RecruitmentCoursesRefreshScheduler.java</span></div><h1>RecruitmentCoursesRefreshScheduler.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.jobs;
+
+import edu.ucsb.cs.taapply.time.AppTime;
+import edu.ucsb.cs.taapply.time.AppTimeInitializer;
+import edu.ucsb.cs156.jobs.entities.Job;
+import edu.ucsb.cs156.jobs.services.JobService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+/**
+ * Refreshes the course lists of every recruitment that still matters from the UCSB API, nightly
+ * (issues #124 and #464), by launching one {@link RefreshRecruitmentCoursesJob}, the same job an
+ * admin can launch by hand from the Admin Jobs page. It does nothing else: all the work, finding
+ * the recruitments included, is in the job, so every nightly run is on the Jobs page, failed or
+ * not, with its log.
+ *
+ * &lt;p&gt;Only present when {@code app.recruitmentCourses.refreshEnabled} is true; the cron expression
+ * is {@code app.recruitmentCourses.refreshCron}, nightly at midnight by default, in the app's time
+ * zone ({@code app.timeZone}, Pacific unless configured; issue #513).
+ */
+@Component
+@ConditionalOnProperty(name = &quot;app.recruitmentCourses.refreshEnabled&quot;, havingValue = &quot;true&quot;)
+<span class="fc" id="L26">@Slf4j</span>
+<span class="fc" id="L27">public class RecruitmentCoursesRefreshScheduler {</span>
+
+  /** The default schedule: every day at 00:00 in the app's time zone. */
+  public static final String DEFAULT_CRON = &quot;0 0 0 * * *&quot;;
+
+  @Autowired private RefreshRecruitmentCoursesJobFactory refreshRecruitmentCoursesJobFactory;
+  @Autowired private JobService jobService;
+
+  /** The scheduled entry point: launches the refresh, judged as of today. */
+  @Scheduled(
+      cron = &quot;${app.recruitmentCourses.refreshCron:&quot; + DEFAULT_CRON + &quot;}&quot;,
+      zone = &quot;${&quot; + AppTimeInitializer.PROPERTY + &quot;:&quot; + AppTime.DEFAULT_ZONE_ID + &quot;}&quot;)
+  public Job refresh() {
+<span class="fc" id="L40">    Job job = jobService.runAsJob(refreshRecruitmentCoursesJobFactory.create());</span>
+<span class="fc" id="L41">    log.info(&quot;Scheduled refresh: launched job {}&quot;, job.getId());</span>
+<span class="fc" id="L42">    return job;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

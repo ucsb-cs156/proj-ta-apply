@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InstructorFeedbackSettings.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.entity</a> &gt; <span class="el_source">InstructorFeedbackSettings.java</span></div><h1>InstructorFeedbackSettings.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import lombok.*;
+
+/**
+ * One saved version of the Instructor Feedback Settings (issue #429): today the Markdown of the
+ * &quot;Notes on TA/ULA tradeoffs&quot; under each course's allocation feedback form on the instructor home
+ * page, and (issue #430) whether instructors are asked for that feedback at all.
+ *
+ * &lt;p&gt;Versions are never edited or deleted, as with the {@link NoticeVersion}s: every save by an
+ * admin is a new row, whose id is the version number, and instructors always see the newest. A
+ * later setting of the same page (issue #430's checkbox) is another column of this table, so each
+ * version records the whole page as it was saved; a save copies forward whatever it does not
+ * change.
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@Entity(name = &quot;instructor_feedback_settings&quot;)
+public class InstructorFeedbackSettings {
+  /**
+   * The longest the notes may be, in characters: the column's width. A VARCHAR rather than TEXT so
+   * that the schema is the same type on H2 (where TEXT is a CLOB) and Postgres, as the notices' is.
+   */
+  public static final int MAX_NOTES_LENGTH = 1_000_000;
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  /** When this version was saved: Pacific wall-clock time, set by the server. */
+  private LocalDateTime createdAt;
+
+  /** The admin who saved it; null for the version installed by changeset 069. */
+  private String editorEmail;
+
+  /** The notes, in Markdown, with ${field}s filled in for the instructor's quarter. */
+  @Column(length = MAX_NOTES_LENGTH)
+  private String notesText;
+
+  /**
+   * Whether instructors are asked for feedback on their TA/ULA allocations (issue #430): when
+   * false, their home page shows none of the feedback parts and the server refuses their saves.
+   * True by default, as changeset 070 makes it for the versions saved before it.
+   */
+  @Builder.Default private boolean askForFeedback = true;
+
+  /** Whether the settings ask for feedback: those of the newest version, and yes with none. */
+  public static boolean askingForFeedback(Optional&lt;InstructorFeedbackSettings&gt; newest) {
+<span class="fc" id="L54">    return newest.map(InstructorFeedbackSettings::isAskForFeedback).orElse(true);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

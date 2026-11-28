@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AppTimeInitializer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.time</a> &gt; <span class="el_source">AppTimeInitializer.java</span></div><h1>AppTimeInitializer.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.time;
+
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
+
+/**
+ * Reads the {@code app.timeZone} property as the application starts and hands it to {@link
+ * AppTime#configure} (issue #513). It is registered in {@code META-INF/spring.factories}, so it
+ * runs after the environment (properties, environment variables, {@code .env}) is read and before
+ * any bean exists, in the app and in every Spring test alike: Liquibase, Hibernate and the
+ * scheduler all find the zone already set.
+ *
+ * &lt;p&gt;A value that is not a zone id fails startup with a message naming it, rather than quietly
+ * running in the wrong zone.
+ */
+<span class="fc" id="L20">@Slf4j</span>
+<span class="fc" id="L21">public class AppTimeInitializer</span>
+    implements ApplicationContextInitializer&lt;ConfigurableApplicationContext&gt; {
+
+  /** The property that names the app's zone; an IANA id such as {@code America/Los_Angeles}. */
+  public static final String PROPERTY = &quot;app.timeZone&quot;;
+
+  @Override
+  public void initialize(ConfigurableApplicationContext applicationContext) {
+<span class="fc" id="L29">    AppTime.configure(zoneFrom(applicationContext.getEnvironment()));</span>
+<span class="fc" id="L30">    log.info(&quot;The app's time zone is {}&quot;, AppTime.zone());</span>
+<span class="fc" id="L31">  }</span>
+
+  /** The zone the environment names, or the default when it names none. */
+  static ZoneId zoneFrom(Environment environment) {
+<span class="fc" id="L35">    String id = environment.getProperty(PROPERTY, AppTime.DEFAULT_ZONE_ID).trim();</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    if (id.isEmpty()) {</span>
+<span class="fc" id="L37">      return AppTime.DEFAULT_ZONE;</span>
+    }
+    try {
+<span class="fc" id="L40">      return ZoneId.of(id);</span>
+<span class="fc" id="L41">    } catch (DateTimeException e) {</span>
+<span class="fc" id="L42">      throw new IllegalStateException(</span>
+          PROPERTY + &quot;=&quot; + id + &quot; is not a time zone id (expected one like America/Los_Angeles)&quot;,
+          e);
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

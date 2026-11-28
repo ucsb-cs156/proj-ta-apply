@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicantRecruitmentDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.models</a> &gt; <span class="el_source">ApplicantRecruitmentDto.java</span></div><h1>ApplicantRecruitmentDto.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.models;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.services.RecruitmentVisibility;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+/**
+ * The recruitment fields applicants need, without faculty-only review lifecycle details. The hidden
+ * flag (issue #496) is false for everything a student or instructor gets, since a hidden
+ * recruitment is filtered out for them; an admin's own student section uses it to mark the
+ * recruitment Hidden (issue #503).
+ */
+<span class="fc" id="L16">public record ApplicantRecruitmentDto(</span>
+    Long id,
+    String quarter,
+    RecruitmentType type,
+    ApplicationStatus applicationStatus,
+    LocalDate tentativeOpeningDate,
+    LocalDate primaryConsiderationDate,
+    LocalDate actualOpeningDate,
+    LocalDate actualClosingDate,
+    LocalDateTime courseDataLastUpdated,
+    boolean hidden) {
+
+  public static ApplicantRecruitmentDto from(Recruitment recruitment) {
+<span class="fc" id="L29">    return new ApplicantRecruitmentDto(</span>
+<span class="fc" id="L30">        recruitment.getId(),</span>
+<span class="fc" id="L31">        recruitment.getQuarter(),</span>
+<span class="fc" id="L32">        recruitment.getType(),</span>
+<span class="fc" id="L33">        recruitment.getApplicationStatus(),</span>
+<span class="fc" id="L34">        recruitment.getTentativeOpeningDate(),</span>
+<span class="fc" id="L35">        recruitment.getPrimaryConsiderationDate(),</span>
+<span class="fc" id="L36">        recruitment.getActualOpeningDate(),</span>
+<span class="fc" id="L37">        recruitment.getActualClosingDate(),</span>
+<span class="fc" id="L38">        recruitment.getCourseDataLastUpdated(),</span>
+<span class="fc" id="L39">        RecruitmentVisibility.isHidden(recruitment));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
