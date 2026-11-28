@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>AppTimeInitializer.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.time;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.time.DateTimeException;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.time.ZoneId;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import lombok.extern.slf4j.Slf4j;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.context.ApplicationContextInitializer;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.context.ConfigurableApplicationContext;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.core.env.Environment;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Reads the {@code app.timeZone} property as the application starts and hands it to {@link</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * AppTime#configure} (issue #513). It is registered in {@code META-INF/spring.factories}, so it</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * runs after the environment (properties, environment variables, {@code .env}) is read and before</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * any bean exists, in the app and in every Spring test alike: Liquibase, Hibernate and the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * scheduler all find the zone already set.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;A value that is not a zone id fails startup with a message naming it, rather than quietly</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * running in the wrong zone.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>@Slf4j</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public class AppTimeInitializer</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    implements ApplicationContextInitializer&#60;ConfigurableApplicationContext&#62; {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The property that names the app&#39;s zone; an IANA id such as {@code America/Los_Angeles}. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String PROPERTY = &#34;app.timeZone&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Override</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public void initialize(ConfigurableApplicationContext applicationContext) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_29'/>
+29
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_29'>1</a>
+<span>
+1. initialize : removed call to edu/ucsb/cs/taapply/time/AppTime::configure &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    AppTime.configure(zoneFrom(applicationContext.getEnvironment()));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    log.info(&#34;The app&#39;s time zone is {}&#34;, AppTime.zone());</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The zone the environment names, or the default when it names none. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  static ZoneId zoneFrom(Environment environment) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    String id = environment.getProperty(PROPERTY, AppTime.DEFAULT_ZONE_ID).trim();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_36'/>
+36
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_36'>1</a>
+<span>
+1. zoneFrom : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (id.isEmpty()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_37'/>
+37
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_37'>1</a>
+<span>
+1. zoneFrom : replaced return value with null for edu/ucsb/cs/taapply/time/AppTimeInitializer::zoneFrom &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return AppTime.DEFAULT_ZONE;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    try {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_40'/>
+40
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_40'>1</a>
+<span>
+1. zoneFrom : replaced return value with null for edu/ucsb/cs/taapply/time/AppTimeInitializer::zoneFrom &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return ZoneId.of(id);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    } catch (DateTimeException e) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalStateException(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>          PROPERTY + &#34;=&#34; + id + &#34; is not a time zone id (expected one like America/Los_Angeles)&#34;,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>          e);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@29b3014c_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@29b3014c_29'>29</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_29'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>initialize<br/><b>Killed by : </b>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[method:a_spring_application_started_with_the_property_runs_in_that_zone()]</span></span> removed call to edu/ucsb/cs/taapply/time/AppTime::configure &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@29b3014c_36'>36</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_36'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>zoneFrom<br/><b>Killed by : </b>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:the_property_names_the_zone(java.lang.String)]/[test-template-invocation:#4]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@29b3014c_37'>37</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_37'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>zoneFrom<br/><b>Killed by : </b>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:a_blank_property_means_the_default(java.lang.String)]/[test-template-invocation:#2]</span></span> replaced return value with null for edu/ucsb/cs/taapply/time/AppTimeInitializer::zoneFrom &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@29b3014c_40'>40</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@29b3014c_40'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>zoneFrom<br/><b>Killed by : </b>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:the_property_names_the_zone(java.lang.String)]/[test-template-invocation:#4]</span></span> replaced return value with null for edu/ucsb/cs/taapply/time/AppTimeInitializer::zoneFrom &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:a_blank_property_means_the_default(java.lang.String)]/[test-template-invocation:#2] (0 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:a_blank_property_means_the_default(java.lang.String)]/[test-template-invocation:#1] (0 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:the_property_names_the_zone(java.lang.String)]/[test-template-invocation:#4] (0 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:the_property_names_the_zone(java.lang.String)]/[test-template-invocation:#2] (0 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[method:a_value_that_is_not_a_zone_fails_startup_naming_it()] (0 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[method:with_no_property_the_zone_is_the_default()] (0 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:the_property_names_the_zone(java.lang.String)]/[test-template-invocation:#3] (0 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[test-template:the_property_names_the_zone(java.lang.String)]/[test-template-invocation:#1] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentAuditServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentAuditServiceTests]/[method:the_audited_fields_include_both_lifecycles_and_all_dates_in_order()] (1 ms)</li><li>edu.ucsb.cs.taapply.config.SchedulingConfigTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.config.SchedulingConfigTests]/[nested-class:SwitchedOn]/[method:the_scheduler_and_scheduling_config_are_present()] (3 ms)</li><li>edu.ucsb.cs.taapply.jobs.RefreshRecruitmentCoursesJobFactoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.RefreshRecruitmentCoursesJobFactoryTests]/[method:create_wires_in_the_day_and_collaborators()] (0 ms)</li><li>edu.ucsb.cs.taapply.config.SchedulingConfigTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.config.SchedulingConfigTests]/[nested-class:SwitchedOffByDefault]/[method:neither_bean_is_present()] (5 ms)</li><li>edu.ucsb.cs.taapply.jobs.CreateFakeApplicationsJobFactoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.CreateFakeApplicationsJobFactoryTests]/[method:without_a_random_source_one_is_made()] (0 ms)</li><li>edu.ucsb.cs.taapply.jobs.CreateFakeRankingsJobFactoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.CreateFakeRankingsJobFactoryTests]/[method:without_a_random_source_one_is_made()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.DeveloperModeServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DeveloperModeServiceTests]/[method:not_available_means_off_whatever_the_table_says()] (1 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactoryTests]/[method:create_wires_in_the_configured_subject_area_and_collaborators()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.AllocationVisibilityServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AllocationVisibilityServiceTests]/[method:withdrawing_does_not_stamp_a_release()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetCreationServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetCreationServiceTests]/[method:a_budget_on_file_is_returned_as_it_is_and_nothing_is_written()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.RoleAssignmentServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RoleAssignmentServiceTests]/[method:admin_and_instructor_are_independent()] (1 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactoryTests]/[method:create_wires_in_the_configured_subject_area_and_collaborators()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.LegacyUlaApplicationCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.LegacyUlaApplicationCsvServiceTests]/[method:the_major_is_matched_to_the_list_when_it_can_be()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.UCSBCurriculumServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UCSBCurriculumServiceTests]/[method:url_omits_objLevelCode_for_level_A()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetCourseServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetCourseServiceTests]/[method:ensure_returns_the_row_on_file_without_writing()] (3 ms)</li><li>edu.ucsb.cs.taapply.services.LegacyApplicationCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.LegacyApplicationCsvServiceTests]/[method:residency_language_exam_and_class_level_are_matched_by_their_words()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:a_response_with_no_quarter_field_is_an_error()] (3 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[method:a_spring_application_started_with_the_property_runs_in_that_zone()] (17 ms)</li><li>edu.ucsb.cs.taapply.services.fake.FakeAllocationsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.fake.FakeAllocationsServiceTests]/[method:it_can_keep_the_estimates_already_entered()] (2 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobTests]/[method:a_failed_fetch_does_not_stamp_the_recruitment()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.HiringStaffControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.HiringStaffControllerTests]/[method:logged_out_users_cannot_post()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApiControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApiControllerTests]/[method:upstream_api_exception_returns_502_with_type_and_message()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.DeveloperModeControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DeveloperModeControllerTests]/[method:logged_out_visitors_cannot_switch()] (5 ms)</li><li>edu.ucsb.cs.taapply.services.CourseTargetsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.CourseTargetsServiceTests]/[method:twice_the_allocation_when_enough_candidates_are_interested()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.HiringStaffRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.HiringStaffRecruitmentsControllerTests]/[method:admins_may_read_it_too()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminInstructorFeedbackControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminInstructorFeedbackControllerTests]/[method:logged_out_users_cannot_read_the_feedback()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorsControllerTests]/[method:logged_in_users_cannot_list_catalog_names()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.SystemInfoControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.SystemInfoControllerTests]/[method:systemInfo__admin_logged_in()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.SoftOffersControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.SoftOffersControllerTests]/[method:a_missing_or_unknown_decision_is_a_400()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.AllocationServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AllocationServiceTests]/[method:auto_allocate_gives_every_section_at_least_one()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.JobsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.JobsControllerTests]/[method:relaunching_for_an_unknown_recruitment_is_a_404()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:unpublished_assignments_are_refused_to_non_admins()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.QuarterCalendarControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.QuarterCalendarControllerTests]/[method:logged_out_users_cannot_read_a_quarter()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentStepsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentStepsControllerTests]/[method:the_steps_of_an_unknown_recruitment_are_a_404()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentAuditTrailControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentAuditTrailControllerTests]/[method:instructors_cannot_read_the_hiring_target_changes()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.UCSBAPIQuarterControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.UCSBAPIQuarterControllerTests]/[method:logged_out_users_cannot_list_or_refresh()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.BudgetServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.BudgetServiceTests]/[method:summary_with_only_a_ula_recruitment_and_no_rate_or_hours_yet_has_zero_expenses()] (3 ms)</li><li>edu.ucsb.cs.taapply.interceptors.RoleUpdateInterceptorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.interceptors.RoleUpdateInterceptorTests]/[method:hiring_staff_in_db_gets_hiring_staff_role()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.AuditTrailControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AuditTrailControllerTests]/[method:an_unknown_type_is_a_400()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshServiceTests]/[method:leaves_removed_rows_and_rows_no_longer_offered_alone_and_adds_nothing()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.HiddenColumnsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.HiddenColumnsControllerTests]/[method:replacing_the_hidden_columns_of_an_unknown_recruitment_is_a_404()] (7 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:records_the_instructors_of_primary_sections_as_catalog_names()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminSoftOffersControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminSoftOffersControllerTests]/[method:logged_out_users_cannot_save_a_hiring_field()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.DeveloperAllocationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DeveloperAllocationsControllerTests]/[method:an_unknown_recruitment_is_a_404()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminRankingsControllerTests]/[method:missing_recruitment_is_explicit_404_without_reading_applicants_or_ranks()] (8 ms)</li><li>edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.InstructorFeedbackReportServiceTests]/[method:two_rows_of_one_section_keep_the_first()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.CoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CoursesControllerTests]/[method:instructors_can_get_all()] (15 ms)</li><li>edu.ucsb.cs.taapply.entity.AllocationVisibilityPersistenceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.entity.AllocationVisibilityPersistenceTests]/[method:a_new_recruitment_is_for_admins_only()] (11 ms)</li><li>edu.ucsb.cs.taapply.controller.FundingSourcesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.FundingSourcesControllerTests]/[method:deleting_an_unknown_abbreviation_is_a_404()] (10 ms)</li><li>edu.ucsb.cs.taapply.controller.SoftOfferNoticesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.SoftOfferNoticesControllerTests]/[method:any_signed_in_user_may_read_the_current_notice_and_a_version()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.DeveloperFakeRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DeveloperFakeRankingsControllerTests]/[method:an_admin_launches_the_job()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminsControllerTests]/[method:admin_can_delete_an_admin()] (10 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:adding_a_duplicate_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.repository.AuditTrailRepositoryTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.repository.AuditTrailRepositoryTests]/[method:a_row_with_neither_application_id_is_refused()] (8 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_8_is_complete_at_or_above_the_target_and_unassigned_applications_do_not_count()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorFeedbackSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorFeedbackSettingsControllerTests]/[method:notes_left_out_are_copied_from_the_newest_version()] (11 ms)</li><li>edu.ucsb.cs.taapply.controller.NoticesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.NoticesControllerTests]/[method:current_is_the_latest_version_for_the_type_as_a_one_element_list()] (21 ms)</li><li>edu.ucsb.cs.taapply.controller.AssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AssignmentsControllerTests]/[method:instructors_get_the_table()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorsCSVControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorsCSVControllerTests]/[method:a_catalog_name_on_record_is_set_on_a_new_instructor()] (9 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAuditServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAuditServiceTests]/[method:join_table_rows_are_recorded_as_json_rows_removed_then_added()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorFeedbackControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorFeedbackControllerTests]/[method:an_instructor_without_an_instructor_row_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.DeveloperFakeApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DeveloperFakeApplicationsControllerTests]/[method:an_unknown_coverage_is_a_400()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:opening_when_an_application_is_already_submitted_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminDraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminDraftApplicationsControllerTests]/[method:an_admin_sees_every_draft_of_a_recruitment_with_the_comments_on_each()] (18 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:a_course_not_in_the_recruitment_has_no_section_times()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:an_admin_shows_a_hidden_recruitment_again()] (27 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentAuditServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentAuditServiceTransactionTests]/[method:when_the_audit_rows_cannot_be_written_the_edit_is_rolled_back()] (13 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:my_own_other_tab_is_marked_as_the_same_person()] (14 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:a_second_tab_of_the_same_admin_is_the_same_person_and_is_marked_as_an_admin()] (8 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAuditServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAuditServiceTransactionTests]/[method:when_the_audit_rows_cannot_be_written_the_edit_is_rolled_back()] (23 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:a_placement_that_loses_a_race_for_the_application_is_409_with_the_current_page()] (16 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_save_that_names_its_client_counts_as_ranking_the_course()] (8 ms)</li><li>edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.DraftApplicationServiceTransactionTests]/[method:a_draft_is_opened_after_a_cancelled_application()] (31 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_sees_every_application_to_a_recruitment()] (34 ms)</li><li>edu.ucsb.cs.taapply.time.AppTimeInitializerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.time.AppTimeInitializerTests]/[method:initializing_configures_app_time_and_the_jvm_default_from_the_environment()] (102 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvPersistenceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvPersistenceTests]/[method:persisted_export_is_deterministic_and_never_reads_other_recruitment_rankings()] (36 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:cancelled_applications_are_never_candidates_and_not_interested_ones_only_on_request()] (15 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:comments_can_still_be_updated_after_the_deadline()] (17 ms)</li><li>edu.ucsb.cs.taapply.LegacyDocsResourceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.LegacyDocsResourceTests]/[method:the_legacy_readme_is_not_served()] (10 ms)</li><li>edu.ucsb.cs.taapply.services.SystemInfoServiceImplTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.SystemInfoServiceImplTests]/[method:testGetSystemInfo()] (17 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#1] (133 ms)</li><li>edu.ucsb.cs.taapply.FrontendProxyControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.FrontendProxyControllerTests]/[method:oauth2PathIsNotProxied()] (355 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
