@@ -3,6 +3,7 @@
 import edu.ucsb.cs.taapply.entity.FundingSource;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.FundingSourceRepository;
+import edu.ucsb.cs.taapply.repository.HiringRecordRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,43 +29,46 @@ import org.springframework.web.bind.annotation.RestController;
  * it.
  *
  * &lt;p&gt;The abbreviation is the key, so it is not editable: only the explanation can change. It is
- * stored as typed, after trimming, and compared case-sensitively.
+ * stored as typed, after trimming, and compared case-sensitively. A source that hiring records
+ * (issue #509) still carry cannot be deleted: the staff clear those rows first (issue #512, part
+ * 2).
  */
 @Tag(name = &quot;Funding Sources&quot;)
 @RequestMapping(&quot;/api/admin/fundingSources&quot;)
 @RestController
-<span class="fc" id="L36">@Slf4j</span>
-<span class="fc" id="L37">public class FundingSourcesController extends ApiController {</span>
+<span class="fc" id="L39">@Slf4j</span>
+<span class="fc" id="L40">public class FundingSourcesController extends ApiController {</span>
 
   /** The longest abbreviation the column holds; the frontend's ABBREVIATION_MAX is the same. */
   public static final int ABBREVIATION_MAX = 10;
 
   @Autowired FundingSourceRepository fundingSourceRepository;
+  @Autowired HiringRecordRepository hiringRecordRepository;
 
   /** The body of a PUT: the new explanation. */
-<span class="fc" id="L45">  public static record ExplanationBody(String explanation) {}</span>
+<span class="fc" id="L49">  public static record ExplanationBody(String explanation) {}</span>
 
   /** The abbreviation is a key: trimmed, non-blank, and no longer than the column. */
   static String cleanAbbreviation(String abbreviation) {
-<span class="fc" id="L49">    String cleaned = abbreviation.strip();</span>
-<span class="fc bfc" id="L50" title="All 2 branches covered.">    if (cleaned.isEmpty()) {</span>
-<span class="fc" id="L51">      throw new IllegalArgumentException(&quot;An abbreviation is required&quot;);</span>
+<span class="fc" id="L53">    String cleaned = abbreviation.strip();</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">    if (cleaned.isEmpty()) {</span>
+<span class="fc" id="L55">      throw new IllegalArgumentException(&quot;An abbreviation is required&quot;);</span>
     }
-<span class="fc bfc" id="L53" title="All 2 branches covered.">    if (cleaned.length() &gt; ABBREVIATION_MAX) {</span>
-<span class="fc" id="L54">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">    if (cleaned.length() &gt; ABBREVIATION_MAX) {</span>
+<span class="fc" id="L58">      throw new IllegalArgumentException(</span>
           &quot;An abbreviation is at most %d characters (%s has %d)&quot;
-<span class="fc" id="L56">              .formatted(ABBREVIATION_MAX, cleaned, cleaned.length()));</span>
+<span class="fc" id="L60">              .formatted(ABBREVIATION_MAX, cleaned, cleaned.length()));</span>
     }
-<span class="fc" id="L58">    return cleaned;</span>
+<span class="fc" id="L62">    return cleaned;</span>
   }
 
   /** The explanation is required too; null covers a PUT body without the field. */
   static String cleanExplanation(String explanation) {
-<span class="fc bfc" id="L63" title="All 2 branches covered.">    String cleaned = explanation == null ? &quot;&quot; : explanation.strip();</span>
-<span class="fc bfc" id="L64" title="All 2 branches covered.">    if (cleaned.isEmpty()) {</span>
-<span class="fc" id="L65">      throw new IllegalArgumentException(&quot;An explanation is required&quot;);</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    String cleaned = explanation == null ? &quot;&quot; : explanation.strip();</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">    if (cleaned.isEmpty()) {</span>
+<span class="fc" id="L69">      throw new IllegalArgumentException(&quot;An explanation is required&quot;);</span>
     }
-<span class="fc" id="L67">    return cleaned;</span>
+<span class="fc" id="L71">    return cleaned;</span>
   }
 
   @Operation(
@@ -73,10 +77,10 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasAnyRole('ROLE_ADMIN', 'ROLE_HIRING_STAFF')&quot;)
   @GetMapping(&quot;/all&quot;)
   public List&lt;FundingSource&gt; allFundingSources() {
-<span class="fc" id="L76">    Iterable&lt;FundingSource&gt; all = fundingSourceRepository.findAll();</span>
-<span class="fc" id="L77">    return StreamSupport.stream(all.spliterator(), false)</span>
-<span class="fc" id="L78">        .sorted(Comparator.comparing(FundingSource::getAbbreviation))</span>
-<span class="fc" id="L79">        .toList();</span>
+<span class="fc" id="L80">    Iterable&lt;FundingSource&gt; all = fundingSourceRepository.findAll();</span>
+<span class="fc" id="L81">    return StreamSupport.stream(all.spliterator(), false)</span>
+<span class="fc" id="L82">        .sorted(Comparator.comparing(FundingSource::getAbbreviation))</span>
+<span class="fc" id="L83">        .toList();</span>
   }
 
   @Operation(
@@ -89,18 +93,18 @@ import org.springframework.web.bind.annotation.RestController;
   public FundingSource postFundingSource(
       @Parameter(name = &quot;abbreviation&quot;) @RequestParam String abbreviation,
       @Parameter(name = &quot;explanation&quot;) @RequestParam String explanation) {
-<span class="fc" id="L92">    String cleanedAbbreviation = cleanAbbreviation(abbreviation);</span>
-<span class="fc" id="L93">    String cleanedExplanation = cleanExplanation(explanation);</span>
-<span class="fc bfc" id="L94" title="All 2 branches covered.">    if (fundingSourceRepository.existsById(cleanedAbbreviation)) {</span>
-<span class="fc" id="L95">      throw new IllegalArgumentException(</span>
-<span class="fc" id="L96">          &quot;Funding source %s already exists&quot;.formatted(cleanedAbbreviation));</span>
+<span class="fc" id="L96">    String cleanedAbbreviation = cleanAbbreviation(abbreviation);</span>
+<span class="fc" id="L97">    String cleanedExplanation = cleanExplanation(explanation);</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">    if (fundingSourceRepository.existsById(cleanedAbbreviation)) {</span>
+<span class="fc" id="L99">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L100">          &quot;Funding source %s already exists&quot;.formatted(cleanedAbbreviation));</span>
     }
     FundingSource fundingSource =
-<span class="fc" id="L99">        FundingSource.builder()</span>
-<span class="fc" id="L100">            .abbreviation(cleanedAbbreviation)</span>
-<span class="fc" id="L101">            .explanation(cleanedExplanation)</span>
-<span class="fc" id="L102">            .build();</span>
-<span class="fc" id="L103">    return fundingSourceRepository.save(fundingSource);</span>
+<span class="fc" id="L103">        FundingSource.builder()</span>
+<span class="fc" id="L104">            .abbreviation(cleanedAbbreviation)</span>
+<span class="fc" id="L105">            .explanation(cleanedExplanation)</span>
+<span class="fc" id="L106">            .build();</span>
+<span class="fc" id="L107">    return fundingSourceRepository.save(fundingSource);</span>
   }
 
   @Operation(
@@ -113,30 +117,41 @@ import org.springframework.web.bind.annotation.RestController;
   public FundingSource putFundingSource(
       @Parameter(name = &quot;abbreviation&quot;) @RequestParam String abbreviation,
       @RequestBody ExplanationBody body) {
-<span class="fc" id="L116">    FundingSource fundingSource =</span>
+<span class="fc" id="L120">    FundingSource fundingSource =</span>
         fundingSourceRepository
-<span class="fc" id="L118">            .findById(abbreviation)</span>
-<span class="fc" id="L119">            .orElseThrow(() -&gt; new EntityNotFoundException(FundingSource.class, abbreviation));</span>
-<span class="fc" id="L120">    fundingSource.setExplanation(cleanExplanation(body.explanation()));</span>
-<span class="fc" id="L121">    return fundingSourceRepository.save(fundingSource);</span>
+<span class="fc" id="L122">            .findById(abbreviation)</span>
+<span class="fc" id="L123">            .orElseThrow(() -&gt; new EntityNotFoundException(FundingSource.class, abbreviation));</span>
+<span class="fc" id="L124">    fundingSource.setExplanation(cleanExplanation(body.explanation()));</span>
+<span class="fc" id="L125">    return fundingSourceRepository.save(fundingSource);</span>
+  }
+
+  /** The refusal to delete a source that hiring records still carry, with their count. */
+  static String inUseMessage(String abbreviation, long count) {
+<span class="fc" id="L130">    return &quot;Funding source %s is used by %d hiring record(s) and cannot be deleted.&quot;</span>
+<span class="fc" id="L131">        .formatted(abbreviation, count);</span>
   }
 
   @Operation(
       summary = &quot;Delete a funding source&quot;,
-      description = &quot;404 if there is no such abbreviation.&quot;)
+      description =
+          &quot;404 if there is no such abbreviation; 400, with the count, while any hiring record&quot;
+              + &quot; carries it.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @DeleteMapping(&quot;/delete&quot;)
   public Object deleteFundingSource(
       @Parameter(name = &quot;abbreviation&quot;) @RequestParam String abbreviation) {
-<span class="fc" id="L131">    FundingSource fundingSource =</span>
+<span class="fc" id="L143">    FundingSource fundingSource =</span>
         fundingSourceRepository
-<span class="fc" id="L133">            .findById(abbreviation)</span>
-<span class="fc" id="L134">            .orElseThrow(() -&gt; new EntityNotFoundException(FundingSource.class, abbreviation));</span>
-    // Part 2 of issue #512: once the hiring_records table (issue #509) has its funding_source
-    // column, refuse here with a 400 that gives the count of hiring records still using this
-    // abbreviation, so the staff clear those rows first.
-<span class="fc" id="L138">    fundingSourceRepository.delete(fundingSource);</span>
-<span class="fc" id="L139">    return genericMessage(&quot;FundingSource with id %s deleted&quot;.formatted(abbreviation));</span>
+<span class="fc" id="L145">            .findById(abbreviation)</span>
+<span class="fc" id="L146">            .orElseThrow(() -&gt; new EntityNotFoundException(FundingSource.class, abbreviation));</span>
+    // Issue #512, part 2: a source still on a hiring record (issue #509) stays, so the dropdown and
+    // the CSV never show an abbreviation nobody can explain; the staff clear those rows first.
+<span class="fc" id="L149">    long used = hiringRecordRepository.countByFundingSource(abbreviation);</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">    if (used &gt; 0) {</span>
+<span class="fc" id="L151">      throw new IllegalArgumentException(inUseMessage(abbreviation, used));</span>
+    }
+<span class="fc" id="L153">    fundingSourceRepository.delete(fundingSource);</span>
+<span class="fc" id="L154">    return genericMessage(&quot;FundingSource with id %s deleted&quot;.formatted(abbreviation));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
