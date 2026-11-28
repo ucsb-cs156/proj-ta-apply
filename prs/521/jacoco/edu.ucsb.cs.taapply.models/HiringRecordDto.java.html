@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HiringRecordDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.models</a> &gt; <span class="el_source">HiringRecordDto.java</span></div><h1>HiringRecordDto.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.models;
+
+import edu.ucsb.cs.taapply.entity.HiringRecord;
+import edu.ucsb.cs.taapply.enums.NewHireForm;
+import java.time.LocalDateTime;
+
+/**
+ * One {@link HiringRecord} as the Soft Offer Results carry it (issue #509): the stamp of each
+ * checkbox (null when unchecked), the New Hire form choice and its stamp, the funding source's
+ * abbreviation, the staff's comments, and who saved last and when. For admins and hiring staff
+ * only; it never travels to an applicant.
+ */
+<span class="fc" id="L13">public record HiringRecordDto(</span>
+    Long id,
+    Long applicationId,
+    LocalDateTime formalOfferSentAt,
+    LocalDateTime formalOfferAcceptedAt,
+    NewHireForm newHireForm,
+    LocalDateTime newHireFormAt,
+    LocalDateTime flsaConflictFoundAt,
+    LocalDateTime flsaConflictResolvedAt,
+    LocalDateTime inUcpathAt,
+    LocalDateTime i9CompleteAt,
+    String fundingSource,
+    String staffComments,
+    LocalDateTime updatedAt,
+    String updatedByEmail) {
+
+  public static HiringRecordDto of(HiringRecord record) {
+<span class="fc" id="L30">    return new HiringRecordDto(</span>
+<span class="fc" id="L31">        record.getId(),</span>
+<span class="fc" id="L32">        record.getApplicationId(),</span>
+<span class="fc" id="L33">        record.getFormalOfferSentAt(),</span>
+<span class="fc" id="L34">        record.getFormalOfferAcceptedAt(),</span>
+<span class="fc" id="L35">        record.getNewHireForm(),</span>
+<span class="fc" id="L36">        record.getNewHireFormAt(),</span>
+<span class="fc" id="L37">        record.getFlsaConflictFoundAt(),</span>
+<span class="fc" id="L38">        record.getFlsaConflictResolvedAt(),</span>
+<span class="fc" id="L39">        record.getInUcpathAt(),</span>
+<span class="fc" id="L40">        record.getI9CompleteAt(),</span>
+<span class="fc" id="L41">        record.getFundingSource(),</span>
+<span class="fc" id="L42">        record.getStaffComments(),</span>
+<span class="fc" id="L43">        record.getUpdatedAt(),</span>
+<span class="fc" id="L44">        record.getUpdatedByEmail());</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
