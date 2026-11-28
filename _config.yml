@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/513-app-time-zone","number":522,"title":"Define the app's time zone in one place: app.timeZone, read by AppTime, the scheduler and the frontend (#513)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/522"}]
