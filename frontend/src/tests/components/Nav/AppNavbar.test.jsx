@@ -124,6 +124,7 @@ describe("AppNavbar tests", () => {
       "Admins",
       "Instructors",
       "Hiring Staff",
+      "Funding Sources",
       "Courses",
       "Quarters",
       "Budget for Quarter",
@@ -143,6 +144,17 @@ describe("AppNavbar tests", () => {
     expect(screen.getByText("Instructor Feedback Settings")).toHaveAttribute(
       "href",
       "/admin/instructorFeedbackSettings",
+    );
+    // Issue #512: Funding Sources follows Hiring Staff and opens its page.
+    expect(screen.getByText("Funding Sources")).toHaveAttribute(
+      "href",
+      "/admin/fundingSources",
+    );
+    const itemTexts = screen
+      .getAllByRole("link")
+      .map((link) => link.textContent);
+    expect(itemTexts.indexOf("Funding Sources")).toBe(
+      itemTexts.indexOf("Hiring Staff") + 1,
     );
     // Issue #141: the recruitments live on the admin's home page, so there is no menu item.
     expect(screen.queryByText("Recruitments")).toBeNull();

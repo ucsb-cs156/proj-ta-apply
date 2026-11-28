@@ -13,6 +13,9 @@ import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
 import HiringStaffIndexPage from "main/pages/Admin/HiringStaffIndexPage";
 import HiringStaffCreatePage from "main/pages/Admin/HiringStaffCreatePage";
+import FundingSourcesIndexPage from "main/pages/Admin/FundingSourcesIndexPage";
+import FundingSourcesCreatePage from "main/pages/Admin/FundingSourcesCreatePage";
+import FundingSourcesEditPage from "main/pages/Admin/FundingSourcesEditPage";
 import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
 import QuartersPage from "main/pages/Admin/QuartersPage";
 import BudgetSelectQuarterPage from "main/pages/Admin/BudgetSelectQuarterPage";
@@ -250,6 +253,36 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<HiringStaffCreatePage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/fundingSources"
+            element={
+              <ProtectedPage
+                component={<FundingSourcesIndexPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/fundingSources/create"
+            element={
+              <ProtectedPage
+                component={<FundingSourcesCreatePage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/fundingSources/edit/:abbreviation"
+            element={
+              <ProtectedPage
+                component={<FundingSourcesEditPage />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />

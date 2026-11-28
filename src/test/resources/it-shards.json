@@ -10,7 +10,8 @@
     "ApplicationsApplyWebIT",
     "ApplicationsSubmittedWebIT",
     "AppSettingsWebIT",
-    "OauthWebIT"
+    "OauthWebIT",
+    "FundingSourcesWebIT"
   ],
   "3": [
     "RecruitmentsWebIT",
