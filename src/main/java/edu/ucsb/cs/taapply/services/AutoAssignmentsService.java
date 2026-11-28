@@ -22,16 +22,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Automatically Assign No-Conflict Slots (issue #481): fills every place where there is one clear,
- * rational choice. A lecture that still needs assignments gets its highest-ranked remaining
- * candidate when that candidate is enthusiastic about the course and no other lecture that still
- * needs assignments has ranked them at all. Passes are repeated until one makes no assignment.
+ * Propose assignments (issues #481 and #515): finds every place where there is one clear, rational
+ * choice. A lecture that still needs assignments gets its highest-ranked remaining candidate when
+ * that candidate is enthusiastic about the course and no other lecture that still needs assignments
+ * has ranked them at all. Passes are repeated until one makes no assignment.
  *
- * <p>For a TA recruitment (issue #488) only PhD students in Computer Science are ever assigned
- * automatically. An MS student, or a PhD student in another major, is still a candidate, so a
- * lecture whose top remaining candidate is one gets nothing and is listed with the reason: passing
- * over them to the next PhD would override the instructor's ranking, which is a person's call. A
- * ULA recruitment has no class levels and the rule does not apply.
+ * <p>For a TA recruitment (issue #488) only PhD students in Computer Science are ever proposed. An
+ * MS student, or a PhD student in another major, is still a candidate, so a lecture whose top
+ * remaining candidate is one gets nothing and is listed with the reason: passing over them to the
+ * next PhD would override the instructor's ranking, which is a person's call. A ULA recruitment has
+ * no class levels and the rule does not apply.
+ *
+ * <p>Since issue #515 nothing is assigned unseen: {@link #preview} plans on the current state and
+ * changes nothing, the admin chooses which proposals to make, and {@link #apply} makes exactly
+ * those, re-checking each against the state as it then stands. {@link #undo} clears what an apply
+ * made.
  *
  * <p>The planning is pure ({@link #plan}) and works on the page's own data, so the controller tests
  * and this service's tests need no database. Within a pass, two assignments can never share a
@@ -61,8 +66,18 @@ public class AutoAssignmentsService {
   public static final String NOT_CS_MAJOR = "NOT_CS_MAJOR";
 
   /**
-   * The majors that count as Computer Science for a TA auto-assignment (issue #488), as the TA
-   * majors list has spelt them; compared ignoring case and surrounding spaces.
+   * Why a selected proposal was not made by {@link #apply} (issue #515): the state had moved since
+   * the preview. The applicant has been assigned meanwhile; the lecture is no longer on offer; or
+   * the application is no longer a real, uncancelled one of this recruitment.
+   */
+  public static final String ALREADY_ASSIGNED = "ALREADY_ASSIGNED";
+
+  public static final String LECTURE_GONE = "LECTURE_GONE";
+  public static final String APPLICANT_GONE = "APPLICANT_GONE";
+
+  /**
+   * The majors that count as Computer Science for a TA proposal (issue #488), as the TA majors list
+   * has spelt them; compared ignoring case and surrounding spaces.
    */
   static final Set<String> CS_MAJORS = Set.of("computer science", "computer science (cs)");
 
@@ -73,7 +88,7 @@ public class AutoAssignmentsService {
           AssignmentsService.SECOND_CHOICE,
           AssignmentsService.ENTHUSIASTIC);
 
-  /** One assignment the run made: who, to which lecture, at what rank, in which pass. */
+  /** One proposed (or made) assignment: who, to which lecture, at what rank, in which pass. */
   public record Made(Long applicationId, Long recruitmentCourseId, Integer rank, int pass) {}
 
   /**
@@ -92,9 +107,16 @@ public class AutoAssignmentsService {
   public record Plan(List<Made> made, List<Skipped> skipped) {}
 
   /**
-   * The answer to a run: the assignments as they now stand, and what the run did and did not do.
+   * The answer to a preview (issue #515): the plan on the current state, and the assignments
+   * version it was computed from, which an apply sends back.
    */
-  public record Outcome(Assignments assignments, List<Made> made, List<Skipped> skipped) {}
+  public record Preview(Integer version, List<Made> made, List<Skipped> skipped) {}
+
+  /** A selected proposal an apply did not make, and why (one of the {@code *_GONE} codes). */
+  public record NotMade(Made assignment, String reason) {}
+
+  /** The answer to an apply: the assignments as they now stand, what was made and what was not. */
+  public record Applied(Assignments assignments, List<Made> made, List<NotMade> notMade) {}
 
   /** The answer to an undo: the assignments as they now stand, and how many were cleared. */
   public record Undone(Assignments assignments, int cleared) {}
@@ -221,12 +243,12 @@ public class AutoAssignmentsService {
   }
 
   /**
-   * Plans and makes the run's assignments, all in one transaction: if any application cannot be
-   * saved (its own version moved, issue #302), none of them is changed. The answer carries the
-   * assignments as they stand afterwards.
+   * Plans on the recruitment as it stands, changing nothing (issue #515): the proposals and the
+   * lectures left unfilled, with the assignments version they were computed from. Applicants marked
+   * Not Hired take no part; on a TA recruitment those who may only be assigned by hand (issue #488)
+   * stay in the rankings but are never proposed.
    */
-  @Transactional
-  public Outcome run(Recruitment recruitment) {
+  public Preview preview(Recruitment recruitment) {
     List<Application> applications = assignmentsService.realApplications(recruitment.getId());
     Set<Long> ineligible = new HashSet<>();
     Map<Long, String> manualOnly = new HashMap<>();
@@ -241,19 +263,52 @@ public class AutoAssignmentsService {
         }
       }
     }
-    Plan plan = plan(assignmentsService.assignments(recruitment), ineligible, manualOnly);
-    for (Made assignment : plan.made()) {
-      Application application = byId(applications, assignment.applicationId());
-      application.setTentativeAssignmentId(assignment.recruitmentCourseId());
-      applicationRepository.save(application);
-    }
-    return new Outcome(assignmentsService.assignments(recruitment), plan.made(), plan.skipped());
+    Assignments page = assignmentsService.assignments(recruitment);
+    Plan plan = plan(page, ineligible, manualOnly);
+    return new Preview(page.version(), plan.made(), plan.skipped());
   }
 
   /**
-   * Undoes a run: clears exactly the given assignments, and only where the application is still
-   * pencilled into the lecture the run put it in, so a placement changed by hand since is kept. All
-   * in one transaction.
+   * Makes exactly the selected proposals, all in one transaction: if any application cannot be
+   * saved (its own version moved, issue #302), none of them is changed. Each is re-checked against
+   * the state as it now stands, since another admin may have acted since the preview: the
+   * application must still be a real, uncancelled one of this recruitment with no tentative
+   * assignment, and the lecture must still be on offer in it. One that no longer holds is not made
+   * and is reported with the reason instead. The answer carries the assignments as they stand
+   * afterwards.
+   */
+  @Transactional
+  public Applied apply(Recruitment recruitment, List<Made> selected) {
+    List<Application> applications = assignmentsService.realApplications(recruitment.getId());
+    Set<Long> onOffer = new HashSet<>();
+    for (CourseSummary course : assignmentsService.assignments(recruitment).courses()) {
+      if (!course.historical()) {
+        onOffer.add(course.id());
+      }
+    }
+    List<Made> made = new ArrayList<>();
+    List<NotMade> notMade = new ArrayList<>();
+    for (Made assignment : selected) {
+      Application application = byId(applications, assignment.applicationId());
+      if (application == null) {
+        notMade.add(new NotMade(assignment, APPLICANT_GONE));
+      } else if (application.getTentativeAssignmentId() != null) {
+        notMade.add(new NotMade(assignment, ALREADY_ASSIGNED));
+      } else if (!onOffer.contains(assignment.recruitmentCourseId())) {
+        notMade.add(new NotMade(assignment, LECTURE_GONE));
+      } else {
+        application.setTentativeAssignmentId(assignment.recruitmentCourseId());
+        applicationRepository.save(application);
+        made.add(assignment);
+      }
+    }
+    return new Applied(assignmentsService.assignments(recruitment), made, notMade);
+  }
+
+  /**
+   * Undoes an apply: clears exactly the given assignments, and only where the application is still
+   * pencilled into the lecture it was put in, so a placement changed by hand since is kept. All in
+   * one transaction.
    */
   @Transactional
   public Undone undo(Recruitment recruitment, List<Made> made) {
@@ -273,9 +328,9 @@ public class AutoAssignmentsService {
   }
 
   /**
-   * Why a TA applicant may only be assigned by hand (issue #488), or null when they may be assigned
-   * automatically: not a PhD student, or a PhD student whose major is not Computer Science. An
-   * application with no class level or no major recorded is not auto-assigned either.
+   * Why a TA applicant may only be assigned by hand (issue #488), or null when they may be
+   * proposed: not a PhD student, or a PhD student whose major is not Computer Science. An
+   * application with no class level or no major recorded is not proposed either.
    */
   static String manualOnlyReason(Application application) {
     if (application.getClassLevel() != ClassLevel.PHD) {

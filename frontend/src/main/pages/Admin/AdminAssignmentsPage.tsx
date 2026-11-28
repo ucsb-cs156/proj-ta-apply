@@ -9,8 +9,12 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import AssignmentsTable from "main/components/Assignments/AssignmentsTable";
 import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
-import AutoAssignModal from "main/components/Assignments/AutoAssignModal";
-import { AUTO_ASSIGN_LABEL, autoAssignTooltip } from "main/utils/autoAssign";
+import ProposeAssignmentsModal from "main/components/Assignments/ProposeAssignmentsModal";
+import {
+  PREVIEW_LABEL,
+  PROPOSE_LABEL,
+  proposeTooltip,
+} from "main/utils/autoAssign";
 import { copyToClipboard, emailsCopiedText } from "main/utils/clipboard";
 import {
   COPY_UNASSIGNED_LABEL,
@@ -146,8 +150,8 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
   // into the cache and nothing has to be re-read.
   const showAssignments = (updated: Assignments) =>
     queryClient.setQueryData(queryKey, updated);
-  // A failed save, move or run: a 409 carries the page as it now stands, which replaces the stale
-  // one; anything else is reported.
+  // A failed save, move, apply or undo: a 409 carries the page as it now stands, which replaces
+  // the stale one; anything else is reported.
   const reportFailure = (error: unknown) => {
     if (isConflict(error)) {
       const refreshed = (
@@ -185,8 +189,8 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
     { onSuccess: showAssignments, onError: reportFailure },
   );
 
-  // Issue #481: the no-conflict run, from its own modal (confirmation, then what it did).
-  const [showAutoAssign, setShowAutoAssign] = useState(false);
+  // Issue #515: the proposals, from their own modal (the preview, then what was made).
+  const [showPropose, setShowPropose] = useState(false);
 
   // Issue #385: Developer Mode's Create Fake Rankings lives in this page's footer slot (it used to
   // be on the Courses edit page), red like the other developer buttons while it can be used. The
@@ -309,6 +313,37 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           {positions} allocated, {assigned} assigned so far.
         </p>
         <InterestLegend testIdPrefix="AdminAssignmentsPage-legend" />
+        {/* Issue #515: the proposals (the no-conflict rule of #481) are shown first, in the modal,
+            and the admin chooses which to make. The tooltip says the rule in a breath, built from
+            the conditions per recruitment type (the TA one adds the PhD rule, issue #488). */}
+        <div
+          className="mb-2 d-flex align-items-center gap-2"
+          data-testid="AdminAssignmentsPage-propose"
+        >
+          <span data-testid="AdminAssignmentsPage-propose-label">
+            {PROPOSE_LABEL}
+          </span>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip
+                id="AdminAssignmentsPage-propose-tooltip"
+                data-testid="AdminAssignmentsPage-propose-tooltip"
+              >
+                {proposeTooltip(page.type)}
+              </Tooltip>
+            }
+          >
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => setShowPropose(true)}
+              data-testid="AdminAssignmentsPage-propose-preview"
+            >
+              {PREVIEW_LABEL}
+            </Button>
+          </OverlayTrigger>
+        </div>
         <div className="mb-2 d-flex align-items-center gap-2">
           <ColumnVisibilityControl
             choices={columnChoices}
@@ -329,28 +364,6 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           >
             Download CSV
           </a>
-          {/* Issue #481: fills every slot with one clear choice; see AutoAssignModal. The tooltip
-              (issue #488) says the rule in a breath, and for a TA recruitment the PhD rule. */}
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip
-                id="AdminAssignmentsPage-auto-assign-tooltip"
-                data-testid="AdminAssignmentsPage-auto-assign-tooltip"
-              >
-                {autoAssignTooltip(page.type)}
-              </Tooltip>
-            }
-          >
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={() => setShowAutoAssign(true)}
-              data-testid="AdminAssignmentsPage-auto-assign"
-            >
-              {AUTO_ASSIGN_LABEL}
-            </Button>
-          </OverlayTrigger>
           {/* Issue #497: the emails of the applicants still without an assignment, each once, the
               way the Instructor Feedback page copies the instructors still to answer. A disabled
               button gets no hover events, so the tooltip hangs on a span around it and says why. */}
@@ -408,16 +421,16 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           audience="admin"
           testIdPrefix="AdminAssignmentsPage-cancelled"
         />
-        {showAutoAssign && (
-          <AutoAssignModal
+        {showPropose && (
+          <ProposeAssignmentsModal
             recruitmentId={recruitmentId as string}
             page={page}
             recruitment={recruitment}
             headers={activity.headers}
             onUpdated={showAssignments}
             onError={reportFailure}
-            onHide={() => setShowAutoAssign(false)}
-            testIdPrefix="AdminAssignmentsPage-auto-assign-modal"
+            onHide={() => setShowPropose(false)}
+            testIdPrefix="AdminAssignmentsPage-propose-modal"
           />
         )}
         {showFakeRankings && (

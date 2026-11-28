@@ -159,25 +159,48 @@ public class AdminAssignmentsController extends ApiController {
   }
 
   @Operation(
-      summary = "Automatically assign the no-conflict slots",
+      summary = "Preview the assignments that would be proposed",
       description =
-          "Issue #481. Repeats until a pass makes no assignment: every lecture on offer with places"
-              + " still to fill gets its highest-ranked remaining candidate if that candidate is"
-              + " enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no"
-              + " other lecture with places to fill has ranked them at all. Candidates marked Not"
-              + " Hired take no part. Admins only. Carries the assignments version the page saw: if"
-              + " it has moved, nothing is changed and the answer is 409 Conflict with the"
-              + " assignments as they now stand, as a tentative assignment's is. Otherwise all the"
-              + " run's assignments are saved in one transaction (none if any one fails) and the"
-              + " answer is the assignments as the GET returns them, the list of assignments made"
-              + " (application, lecture, rank, pass) and, for each lecture still unfilled, why the"
-              + " final pass left it (NO_RANKINGS, ALL_RANKED_ASSIGNED, TIE, NOT_ENTHUSIASTIC or"
-              + " RANKED_ELSEWHERE with the lectures that rank the candidate).")
+          "Issue #515 (the rule is issue #481's). Plans on the recruitment as it stands and changes"
+              + " nothing: no assignment is made and the assignments version is not moved. Repeats"
+              + " until a pass proposes nothing: every lecture on offer with places still to fill"
+              + " gets its highest-ranked remaining candidate if that candidate is enthusiastic"
+              + " about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture"
+              + " with places to fill has ranked them at all. Candidates marked Not Hired take no"
+              + " part; on a TA recruitment only PhD students in Computer Science are proposed"
+              + " (issue #488). Admins only. Answers with the assignments version the plan was"
+              + " computed from (which an apply sends back), the proposals (application, lecture,"
+              + " rank, pass) and, for each lecture still unfilled, why the final pass left it"
+              + " (NO_RANKINGS, ALL_RANKED_ASSIGNED, TIE, NOT_ENTHUSIASTIC, RANKED_ELSEWHERE with"
+              + " the lectures that rank the candidate, NOT_PHD or NOT_CS_MAJOR). 404 for a"
+              + " recruitment that does not exist.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @PostMapping("/auto")
-  public ResponseEntity<Object> autoAssign(
+  @GetMapping("/auto/preview")
+  public AutoAssignmentsService.Preview previewAutoAssign(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+    return autoAssignmentsService.preview(recruitmentOf(recruitmentId));
+  }
+
+  @Operation(
+      summary = "Make the proposed assignments the admin selected",
+      description =
+          "Issue #515. Takes the proposals the admin kept checked (as the preview listed them) and"
+              + " makes exactly those, with no re-planning. Admins only. Carries the assignments"
+              + " version the preview was computed from: if it has moved, nothing is changed and"
+              + " the answer is 409 Conflict with the assignments as they now stand, as a tentative"
+              + " assignment's is. Otherwise each selected assignment is re-checked against the"
+              + " state as it now stands: the application must still be a real, uncancelled one of"
+              + " this recruitment with no tentative assignment, and the lecture must still be on"
+              + " offer; those that hold are saved in one transaction (none if any one fails), and"
+              + " those that do not are answered in notMade with the reason (ALREADY_ASSIGNED,"
+              + " LECTURE_GONE or APPLICANT_GONE) rather than failing the request. The answer is"
+              + " the assignments as the GET returns them, the list made and the list not made.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/auto/apply")
+  public ResponseEntity<Object> applyAutoAssign(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
       @Parameter(name = "version") @RequestParam Integer version,
+      @RequestBody List<AutoAssignmentsService.Made> selected,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     recruitmentOf(recruitmentId);
     clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());
@@ -186,20 +209,21 @@ public class AdminAssignmentsController extends ApiController {
     }
     try {
       // Re-read after the bump, so the answer carries the new version.
-      return ResponseEntity.ok(autoAssignmentsService.run(recruitmentOf(recruitmentId)));
+      return ResponseEntity.ok(
+          autoAssignmentsService.apply(recruitmentOf(recruitmentId), selected));
     } catch (ObjectOptimisticLockingFailureException e) {
       return conflict(recruitmentId);
     }
   }
 
   @Operation(
-      summary = "Undo an automatic assignment run",
+      summary = "Undo the assignments an apply made",
       description =
-          "Issue #481. Takes the list of assignments a run made (as its answer listed them) and"
-              + " clears each one whose application is still pencilled into the lecture the run"
-              + " put it in; a placement changed by hand since is kept. Admins only; the same"
-              + " version check and 409 as the run; all in one transaction. Answers with the"
-              + " assignments as they now stand and how many were cleared.")
+          "Issue #481. Takes the list of assignments an apply made (as its answer listed them) and"
+              + " clears each one whose application is still pencilled into the lecture it was put"
+              + " in; a placement changed by hand since is kept. Admins only; the same version"
+              + " check and 409 as the apply; all in one transaction. Answers with the assignments"
+              + " as they now stand and how many were cleared.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PostMapping("/auto/undo")
   public ResponseEntity<Object> undoAutoAssign(

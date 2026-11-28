@@ -1842,17 +1842,21 @@ describe("Help pages (issue #140)", () => {
         { name: "Download Rankings CSV" },
       ),
     ).toHaveAttribute("href", "/#rankings-csv");
-    // Issue #481: the no-conflict run.
+    // Issue #515: the proposals (the no-conflict rule of #481), shown first and chosen from.
     const autoAssign = screen.getByTestId("HelpAdminsPage-auto-assign-slots");
     expect(autoAssign).toHaveTextContent(
-      "Automatically Assign No-Conflict Slots, beside Download CSV, fills every place where there is one clear choice. A lecture that still has places to fill gets its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all; a ranking by a lecture that is already full does not count.",
+      "Propose assignments: Preview, in its own row above Columns and Download CSV, finds every place where there is one clear choice and shows the proposals before anything is made. A lecture that still has places to fill is proposed its highest-ranked unassigned candidate when that candidate is enthusiastic about the course (1st Choice, 2nd Choice or Enthusiastic) and no other lecture that still has places to fill has ranked them at all; a ranking by a lecture that is already full does not count.",
     );
     expect(autoAssign).toHaveTextContent(
-      "Before running it warns if the faculty ranking deadline has not passed, if a lecture with places to fill has no rankings yet, or if assignments are already published; afterwards it lists what it did, and Undo this run clears exactly those assignments.",
+      "The modal warns if the faculty ranking deadline has not passed, if a lecture with places to fill has no rankings yet, or if assignments are already published. Its Proposed assignments table has a checkbox per row, all checked to begin with, with the applicant, lecture, rank, preference and pass (and, on a TA recruitment, class level and major); Select All and Select None sit beside the instruction to uncheck any you do not want.",
     );
+    expect(autoAssign).toHaveTextContent(
+      "Later passes may depend on earlier ones: a proposal in pass 2 or later was found only after the pass-1 proposals were assumed made, so unchecking a pass-1 row is your call about the later ones too; exactly what is checked is made. Proceed makes those, the page updates at once, and a final step gives the count, anything that could not be made because the assignments changed meanwhile, and Undo this run, which clears exactly those assignments. Cancel changes nothing.",
+    );
+    expect(autoAssign).not.toHaveTextContent("Automatically Assign");
     // Issue #488: the TA-only rule.
     expect(autoAssign).toHaveTextContent(
-      "On a TA recruitment only PhD students whose major is Computer Science are ever assigned automatically: a lecture whose top remaining candidate is an MS student, or a PhD student in another major, is left for you and listed with that reason, since passing them over would override the instructor's ranking. The rule does not apply to ULA recruitments.",
+      "On a TA recruitment only PhD students whose major is Computer Science are ever proposed: a lecture whose top remaining candidate is an MS student, or a PhD student in another major, is left for you and listed with that reason, since passing them over would override the instructor's ranking. The rule does not apply to ULA recruitments.",
     );
     expect(
       screen

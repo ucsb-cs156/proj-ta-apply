@@ -29,10 +29,13 @@ const handlers = (page, after, others, hidden = []) => [
     HttpResponse.json(cancelledApplicationsFixtures.two),
   ),
   http.put("/api/admin/assignments/tentative", () => HttpResponse.json(after)),
-  // Issue #481: a run answers with what it made and why the rest was left; undoing it answers
-  // with the page as it was.
-  http.post("/api/admin/assignments/auto", () =>
-    HttpResponse.json({ ...autoAssignFixtures.twoMade, assignments: after }),
+  // Issue #515: Preview answers with the proposals and why the rest was left; Proceed answers
+  // with what it made and the page as it then stands; undoing answers with the page as it was.
+  http.get("/api/admin/assignments/auto/preview", () =>
+    HttpResponse.json(autoAssignFixtures.preview),
+  ),
+  http.post("/api/admin/assignments/auto/apply", () =>
+    HttpResponse.json({ ...autoAssignFixtures.applied, assignments: after }),
   ),
   http.post("/api/admin/assignments/auto/undo", () =>
     HttpResponse.json({ assignments: page, cleared: 2 }),
@@ -89,17 +92,17 @@ UlaRecruitment.parameters = {
 };
 
 /**
- * Issue #488: a TA recruitment whose run makes nothing because the top candidates may only be
- * assigned by hand (an MS student, a PhD student in another major). Hover the button for the TA
- * tooltip; the modal's explanation carries the PhD sentence; the results list both reasons.
+ * Issue #488: a TA recruitment whose preview proposes nothing because the top candidates may only
+ * be assigned by hand (an MS student, a PhD student in another major). Hover Preview for the TA
+ * tooltip; the modal says nothing can be proposed and its Not proposed table gives both reasons.
  */
 export const TaManualOnly = Template.bind({});
 TaManualOnly.parameters = {
   reactRouter: { initialEntries: ["/admin/recruitments/7/assignments"] },
   msw: {
     handlers: [
-      http.post("/api/admin/assignments/auto", () =>
-        HttpResponse.json(autoAssignFixtures.manualOnly),
+      http.get("/api/admin/assignments/auto/preview", () =>
+        HttpResponse.json(autoAssignFixtures.previewManualOnly),
       ),
       ...handlers(assignmentsFixtures.taPage, assignmentsFixtures.taPage),
     ],
