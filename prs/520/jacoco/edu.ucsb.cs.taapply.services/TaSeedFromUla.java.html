@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TaSeedFromUla.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">TaSeedFromUla.java</span></div><h1>TaSeedFromUla.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Issue #307: the answers a person's first TA application starts with when all they have on file is
+ * a ULA application. A pure function of the ULA application: nothing is read from or written to a
+ * database.
+ *
+ * &lt;p&gt;The result is built from scratch with only the fields that mean the same thing on both forms,
+ * rather than by copying the ULA application and clearing what does not belong. A field added to
+ * {@link Application} later is therefore left out of the seed until someone decides it should carry
+ * over, so nothing (review state, admin notes, cancellation, ids, timestamps, ULA-only answers) can
+ * leak into a TA application by accident.
+ *
+ * &lt;p&gt;What carries over: the three name fields, the major, the previous teaching experience, the
+ * &quot;anything else&quot; comments, the prior coursework (as new rows, without ids), the first and second
+ * choice courses, the interest in each other course, and the topic ratings (translated to the TA 1
+ * to 5 scale). The course and topic answers are keyed by name and the ULA recruitment need not
+ * offer what the TA one does, so the apply page keeps only those that the new recruitment also has.
+ * What does not carry over, and why, is tabled in docs/design/InitialDesign.md and on the applicant
+ * Help pages: the GPAs, the first quarter box, year in program and graduation date describe the
+ * person as an undergraduate; the availability answers have no place on the TA form; the notice
+ * agreement is to the other form's notice; and the ULA-only questions and interest areas have no TA
+ * counterpart.
+ */
+public final class TaSeedFromUla {
+  private TaSeedFromUla() {}
+
+  /** The ULA application's carried-over answers, as an unsaved TA-shaped application. */
+  public static Application seed(Application ula) {
+<span class="fc" id="L36">    return Application.builder()</span>
+<span class="fc" id="L37">        .firstName(ula.getFirstName())</span>
+<span class="fc" id="L38">        .middleName(ula.getMiddleName())</span>
+<span class="fc" id="L39">        .lastName(ula.getLastName())</span>
+<span class="fc" id="L40">        .major(ula.getMajor())</span>
+<span class="fc" id="L41">        .prevExperience(ula.getPrevExperience())</span>
+<span class="fc" id="L42">        .comments(ula.getComments())</span>
+<span class="fc" id="L43">        .firstChoiceCourse(ula.getFirstChoiceCourse())</span>
+<span class="fc" id="L44">        .secondChoiceCourse(ula.getSecondChoiceCourse())</span>
+<span class="fc" id="L45">        .courseInterests(new HashMap&lt;&gt;(ula.getCourseInterests()))</span>
+<span class="fc" id="L46">        .topicProficiencies(toTaScale(ula.getTopicProficiencies()))</span>
+<span class="fc" id="L47">        .priorCoursework(copyOfCoursework(ula.getPriorCoursework()))</span>
+<span class="fc" id="L48">        .build();</span>
+  }
+
+  /**
+   * The ULA scale runs 1 (very comfortable) to 3 (not familiar); the TA scale 1 (lowest) to 5
+   * (highest). So 1 becomes 5, 2 becomes 3 and 3 becomes 1.
+   */
+  private static Map&lt;String, Integer&gt; toTaScale(Map&lt;String, Integer&gt; ulaRatings) {
+<span class="fc" id="L56">    Map&lt;String, Integer&gt; ta = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L57">    ulaRatings.forEach((topic, level) -&gt; ta.put(topic, 7 - 2 * level));</span>
+<span class="fc" id="L58">    return ta;</span>
+  }
+
+  private static List&lt;PriorCoursework&gt; copyOfCoursework(List&lt;PriorCoursework&gt; courses) {
+<span class="fc" id="L62">    return PriorCoursework.collapse(</span>
+<span class="fc" id="L63">        courses.stream()</span>
+<span class="fc" id="L64">            .map(</span>
+                course -&gt;
+<span class="fc" id="L66">                    PriorCoursework.builder()</span>
+<span class="fc" id="L67">                        .ucsbCourse(course.isUcsbCourse())</span>
+<span class="fc" id="L68">                        .otherSchool(course.getOtherSchool())</span>
+<span class="fc" id="L69">                        .courseNumber(course.getCourseNumber())</span>
+<span class="fc" id="L70">                        .courseTitle(course.getCourseTitle())</span>
+<span class="fc" id="L71">                        .term(course.getTerm())</span>
+<span class="fc" id="L72">                        .grade(course.getGrade())</span>
+<span class="fc" id="L73">                        .build())</span>
+<span class="fc" id="L74">            .toList());</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

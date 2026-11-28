@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HiringRecordsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">HiringRecordsService.java</span></div><h1>HiringRecordsService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.HiringRecord;
+import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.enums.HiringField;
+import edu.ucsb.cs.taapply.enums.NewHireForm;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.HiringRecordRepository;
+import edu.ucsb.cs.taapply.time.AppTime;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Saving the Soft Offer Results page's hiring-tracking fields (issue #509), one field at a time, so
+ * that a change to one field never overwrites another.
+ *
+ * &lt;p&gt;Stamps are the server's {@link AppTime#now()}, never the browser's clock. Checking a box
+ * stamps it unless it is already stamped (the page only sends {@code true} on an unchecked to
+ * checked change, so a repeated {@code true} keeps the first stamp); unchecking clears it, and
+ * checking again records a new stamp. The New Hire form dropdown is stamped when its value is set
+ * or changed, and keeps its stamp when the same value is saved again; blank clears both.
+ */
+@Service
+<span class="fc" id="L28">public class HiringRecordsService {</span>
+  @Autowired ApplicationRepository applicationRepository;
+  @Autowired HiringRecordRepository hiringRecordRepository;
+  @Autowired CurrentUserService currentUserService;
+
+  public static final String CHECKBOX_VALUE = &quot;A checkbox takes the value true or false.&quot;;
+<span class="fc" id="L34">  public static final String NEW_HIRE_FORM_VALUE =</span>
+<span class="fc" id="L35">      &quot;New Hire form takes &quot; + Arrays.toString(NewHireForm.values()) + &quot; or blank.&quot;;</span>
+  public static final String STAFF_COMMENTS_TOO_LONG =
+      &quot;Staff Comments may be at most &quot; + SoftOffersService.COMMENTS_MAX + &quot; characters.&quot;;
+
+  /**
+   * Saves one field of an application's hiring record, creating the record on the first save.
+   *
+   * @param value {@code true}/{@code false} for a checkbox field, {@code DONE}/{@code NOT_NEEDED}
+   *     or blank for the New Hire form, text or blank for Funding and Staff Comments
+   * @throws EntityNotFoundException for an unknown application
+   * @throws IllegalArgumentException for a value the field does not take
+   */
+  public HiringRecord update(Long applicationId, HiringField field, String value) {
+<span class="fc bfc" id="L48" title="All 2 branches covered.">    if (!applicationRepository.existsById(applicationId)) {</span>
+<span class="fc" id="L49">      throw new EntityNotFoundException(Application.class, applicationId);</span>
+    }
+<span class="fc" id="L51">    HiringRecord record =</span>
+        hiringRecordRepository
+<span class="fc" id="L53">            .findByApplicationId(applicationId)</span>
+<span class="fc" id="L54">            .orElseGet(() -&gt; HiringRecord.builder().applicationId(applicationId).build());</span>
+<span class="fc" id="L55">    LocalDateTime now = AppTime.now();</span>
+<span class="fc bfc" id="L56" title="All 4 branches covered.">    switch (field) {</span>
+      case NEW_HIRE_FORM -&gt; {
+<span class="fc" id="L58">        NewHireForm form = newHireForm(value);</span>
+        // A change of value is a new event and gets a new stamp; the same value again keeps it.
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (form == null) {</span>
+<span class="fc" id="L61">          record.setNewHireFormAt(null);</span>
+<span class="fc bfc" id="L62" title="All 4 branches covered.">        } else if (form != record.getNewHireForm() || record.getNewHireFormAt() == null) {</span>
+<span class="fc" id="L63">          record.setNewHireFormAt(now);</span>
+        }
+<span class="fc" id="L65">        record.setNewHireForm(form);</span>
+<span class="fc" id="L66">      }</span>
+      // Issue #512, part 2, will check the abbreviation against the funding_sources table.
+<span class="fc" id="L68">      case FUNDING_SOURCE -&gt; record.setFundingSource(blankToNull(value));</span>
+      case STAFF_COMMENTS -&gt; {
+<span class="fc bfc" id="L70" title="All 4 branches covered.">        if (value != null &amp;&amp; value.length() &gt; SoftOffersService.COMMENTS_MAX) {</span>
+<span class="fc" id="L71">          throw new IllegalArgumentException(STAFF_COMMENTS_TOO_LONG);</span>
+        }
+        // Stored as typed, apart from nothing at all.
+<span class="fc" id="L74">        record.setStaffComments(blankToNull(value));</span>
+<span class="fc" id="L75">      }</span>
+      // The six checkbox fields.
+<span class="fc" id="L77">      default -&gt; checkbox(record, field, value, now);</span>
+    }
+<span class="fc" id="L79">    record.setUpdatedAt(now);</span>
+<span class="fc" id="L80">    User user = currentUserService.getUser();</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    record.setUpdatedByEmail(user == null ? null : user.getEmail());</span>
+<span class="fc" id="L82">    return hiringRecordRepository.save(record);</span>
+  }
+
+  /** Sets a checkbox field's stamp from its value; {@code field} must be one of the six. */
+  static void checkbox(HiringRecord record, HiringField field, String value, LocalDateTime now) {
+<span class="fc bfc" id="L87" title="All 7 branches covered.">    switch (field) {</span>
+      case FORMAL_OFFER_SENT -&gt;
+<span class="fc" id="L89">          record.setFormalOfferSentAt(stamp(record.getFormalOfferSentAt(), value, now));</span>
+      case FORMAL_OFFER_ACCEPTED -&gt;
+<span class="fc" id="L91">          record.setFormalOfferAcceptedAt(stamp(record.getFormalOfferAcceptedAt(), value, now));</span>
+      case FLSA_CONFLICT_FOUND -&gt;
+<span class="fc" id="L93">          record.setFlsaConflictFoundAt(stamp(record.getFlsaConflictFoundAt(), value, now));</span>
+      case FLSA_CONFLICT_RESOLVED -&gt;
+<span class="fc" id="L95">          record.setFlsaConflictResolvedAt(stamp(record.getFlsaConflictResolvedAt(), value, now));</span>
+<span class="fc" id="L96">      case IN_UCPATH -&gt; record.setInUcpathAt(stamp(record.getInUcpathAt(), value, now));</span>
+<span class="fc" id="L97">      case I9_COMPLETE -&gt; record.setI9CompleteAt(stamp(record.getI9CompleteAt(), value, now));</span>
+<span class="fc" id="L98">      default -&gt; throw new IllegalArgumentException(field + &quot; is not a checkbox field.&quot;);</span>
+    }
+<span class="fc" id="L100">  }</span>
+
+  /**
+   * The checkbox's new stamp: now for a first true, the old stamp for a repeated true, null for
+   * false.
+   */
+  static LocalDateTime stamp(LocalDateTime current, String value, LocalDateTime now) {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">    if (&quot;true&quot;.equalsIgnoreCase(value)) {</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">      return current == null ? now : current;</span>
+    }
+<span class="fc bfc" id="L110" title="All 2 branches covered.">    if (&quot;false&quot;.equalsIgnoreCase(value)) {</span>
+<span class="fc" id="L111">      return null;</span>
+    }
+<span class="fc" id="L113">    throw new IllegalArgumentException(CHECKBOX_VALUE);</span>
+  }
+
+  /** The dropdown's value: null for blank, else the enum by name. */
+  static NewHireForm newHireForm(String value) {
+<span class="fc bfc" id="L118" title="All 4 branches covered.">    if (value == null || value.isBlank()) {</span>
+<span class="fc" id="L119">      return null;</span>
+    }
+    try {
+<span class="fc" id="L122">      return NewHireForm.valueOf(value);</span>
+<span class="fc" id="L123">    } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L124">      throw new IllegalArgumentException(NEW_HIRE_FORM_VALUE);</span>
+    }
+  }
+
+  private static String blankToNull(String value) {
+<span class="fc bfc" id="L129" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

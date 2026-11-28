@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HiringField.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.enums</a> &gt; <span class="el_source">HiringField.java</span></div><h1>HiringField.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.enums;
+
+/**
+ * The hiring-tracking fields of a {@code HiringRecord} that the Soft Offer Results page saves one
+ * at a time (issue #509), as the {@code field} parameter of {@code PUT
+ * /api/admin/softOffers/hiring}.
+ *
+ * &lt;p&gt;The six checkbox fields take the value {@code true} (stamp now, unless already stamped) or
+ * {@code false} (clear the stamp); {@link #NEW_HIRE_FORM} takes {@code DONE}, {@code NOT_NEEDED} or
+ * blank; {@link #FUNDING_SOURCE} and {@link #STAFF_COMMENTS} take text, blank for none.
+ */
+<span class="fc" id="L12">public enum HiringField {</span>
+<span class="fc" id="L13">  FORMAL_OFFER_SENT,</span>
+<span class="fc" id="L14">  FORMAL_OFFER_ACCEPTED,</span>
+<span class="fc" id="L15">  NEW_HIRE_FORM,</span>
+<span class="fc" id="L16">  FLSA_CONFLICT_FOUND,</span>
+<span class="fc" id="L17">  FLSA_CONFLICT_RESOLVED,</span>
+<span class="fc" id="L18">  IN_UCPATH,</span>
+<span class="fc" id="L19">  I9_COMPLETE,</span>
+<span class="fc" id="L20">  FUNDING_SOURCE,</span>
+<span class="fc" id="L21">  STAFF_COMMENTS</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

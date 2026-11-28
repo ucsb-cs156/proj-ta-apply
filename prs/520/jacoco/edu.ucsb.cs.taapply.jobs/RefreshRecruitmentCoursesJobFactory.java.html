@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RefreshRecruitmentCoursesJobFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.jobs</a> &gt; <span class="el_source">RefreshRecruitmentCoursesJobFactory.java</span></div><h1>RefreshRecruitmentCoursesJobFactory.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.jobs;
+
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.time.AppTime;
+import java.time.LocalDate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Wires collaborators into {@link RefreshRecruitmentCoursesJob}, as the other job factories do. It
+ * does no work of its own, so nothing can fail between a launch and the job being recorded.
+ */
+@Service
+<span class="fc" id="L15">public class RefreshRecruitmentCoursesJobFactory {</span>
+
+  @Autowired private RecruitmentRepository recruitmentRepository;
+  @Autowired private ApplicationAccessService applicationAccessService;
+  @Autowired private PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+
+  /** A job judging eligibility as of today. */
+  public RefreshRecruitmentCoursesJob create() {
+<span class="fc" id="L23">    return create(AppTime.today());</span>
+  }
+
+  /** A job judging eligibility as of the given day. */
+  public RefreshRecruitmentCoursesJob create(LocalDate today) {
+<span class="fc" id="L28">    return RefreshRecruitmentCoursesJob.builder()</span>
+<span class="fc" id="L29">        .today(today)</span>
+<span class="fc" id="L30">        .recruitmentRepository(recruitmentRepository)</span>
+<span class="fc" id="L31">        .applicationAccessService(applicationAccessService)</span>
+<span class="fc" id="L32">        .populateRecruitmentCoursesJobFactory(populateRecruitmentCoursesJobFactory)</span>
+<span class="fc" id="L33">        .build();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
