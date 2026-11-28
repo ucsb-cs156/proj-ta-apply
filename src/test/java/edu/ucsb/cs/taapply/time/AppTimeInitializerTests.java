@@ -13,8 +13,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.mock.env.MockEnvironment;
 
@@ -86,8 +89,32 @@ public class AppTimeInitializerTests {
   @Test
   public void it_is_registered_as_an_application_context_initializer() {
     assertTrue(
-        SpringFactoriesLoader.loadFactoryNames(
-                ApplicationContextInitializer.class, getClass().getClassLoader())
-            .contains(AppTimeInitializer.class.getName()));
+        SpringFactoriesLoader.forDefaultResourceLocation(getClass().getClassLoader())
+            .load(ApplicationContextInitializer.class)
+            .stream()
+            .anyMatch(AppTimeInitializer.class::isInstance));
   }
+
+  /**
+   * End to end, the way the app starts: a Spring application started with the property runs in that
+   * zone, with nothing else told. No database: H2 remembers the JVM zone it first saw for the rest
+   * of the test run, so a context with a datasource started in Tokyo would shift every timestamp
+   * the later test classes read back.
+   */
+  @Test
+  public void a_spring_application_started_with_the_property_runs_in_that_zone() {
+    try (ConfigurableApplicationContext context =
+        new SpringApplicationBuilder(Nothing.class)
+            .web(WebApplicationType.NONE)
+            .logStartupInfo(false)
+            // a command-line argument outranks the test application.properties
+            .run("--app.timeZone=Asia/Tokyo")) {
+      assertTrue(context.isActive());
+      assertEquals(ZoneId.of("Asia/Tokyo"), AppTime.zone());
+      assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
+    }
+  }
+
+  @Configuration
+  static class Nothing {}
 }

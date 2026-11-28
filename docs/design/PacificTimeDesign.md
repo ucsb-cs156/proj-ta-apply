@@ -148,9 +148,12 @@ all of them, and leaves room.
 
 - `AppTimeTests`: `now` and `today` at midnight, both daylight saving changes and the repeated
   hour, whatever zone the clock or JVM has; configuring another zone moves them and the JVM default.
-- `AppTimeInitializerTests`: the property, blank, missing, padded and malformed, and the
-  `spring.factories` registration. `AppTimeZonePropertyTests`: a Spring context started with
-  `app.timeZone=Asia/Tokyo` runs in Tokyo and says so in `/api/systemInfo`.
+- `AppTimeInitializerTests`: the property, blank, missing, padded and malformed, the
+  `spring.factories` registration, and a Spring application started with `app.timeZone=Asia/Tokyo`
+  running in Tokyo. That last one has no database on purpose: H2 remembers the JVM zone it first
+  sees for the rest of the test run, so a context with a datasource started in another zone shifts
+  every timestamp the later test classes read back (seen in CI, where the test order differs).
+  `SystemInfoServiceImplTests` checks the zone reaches `/api/systemInfo`.
 - `UtcToPacificTimestampsTests`: every listed column, nulls, missing tables and columns, values near
   midnight and at the daylight saving boundaries, forward and back, under four JVM zones.
 - `PacificTimestampsChangelogTests`: the real changelog with rows in it: forward, rollback, forward
