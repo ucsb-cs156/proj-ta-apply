@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/515-propose-assignments","number":521,"title":"Propose assignments: preview and choose which to make, replacing Automatically Assign No-Conflict Slots (#515)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/521"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/509c-hiring-page","number":520,"title":"Edit the hiring-tracking fields and Funding on Soft Offer Results; refuse deleting a funding source in use (#509 part 3, #512 part 2)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/520"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/515-propose-assignments","number":521,"title":"Propose assignments: preview and choose which to make, replacing Automatically Assign No-Conflict Slots (#515)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/521"}]
