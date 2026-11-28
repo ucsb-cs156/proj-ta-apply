@@ -169,6 +169,33 @@ describe("FundingSourcesIndexPage tests", () => {
     );
   });
 
+  test("a refused Delete toasts the backend's message and the row stays (issue #512, part 2)", async () => {
+    axiosMock
+      .onGet(getEndpoint)
+      .reply(200, fundingSourcesFixtures.threeSources);
+    axiosMock.onDelete(deleteEndpoint).reply(400, {
+      message:
+        "Funding source sub0 is used by 2 hiring record(s) and cannot be deleted.",
+    });
+    renderPage();
+
+    fireEvent.click(
+      await screen.findByTestId(`${testId}-cell-row-1-col-delete-button`),
+    );
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Funding source sub0 is used by 2 hiring record(s) and cannot be deleted.",
+      ),
+    );
+    expect(axiosMock.history.delete[0].params).toEqual({
+      abbreviation: "sub0",
+    });
+    expect(
+      screen.getByTestId(`${testId}-cell-row-1-col-abbreviation`),
+    ).toHaveTextContent("sub0");
+  });
+
   test("renders an empty table and logs when the backend is unavailable", async () => {
     axiosMock.onGet(getEndpoint).timeout();
     const restoreConsole = mockConsole();

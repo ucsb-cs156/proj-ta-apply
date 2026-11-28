@@ -100,6 +100,46 @@ const softOfferResultsFixtures = {
         "Moving away",
       ],
     ],
+    /** The application id of each row of rows (issue #509). */
+    applicationIds: [11, 12, 13],
+    /**
+     * The staff's hiring records, by application id: Grace (11) has none yet; Ada (12) is well
+     * along, with Funding; Alan (13) was sent his offer first and has an FLSA conflict found.
+     */
+    hiring: {
+      12: {
+        id: 1,
+        applicationId: 12,
+        formalOfferSentAt: "2025-10-27T14:05:00",
+        formalOfferAcceptedAt: "2025-10-28T09:30:00",
+        newHireForm: "DONE",
+        newHireFormAt: "2025-10-29T10:00:00",
+        flsaConflictFoundAt: null,
+        flsaConflictResolvedAt: null,
+        inUcpathAt: "2025-11-03T16:45:00",
+        i9CompleteAt: null,
+        fundingSource: "sub0",
+        staffComments: "Paperwork started.",
+        updatedAt: "2025-11-03T16:45:00",
+        updatedByEmail: "finance@ucsb.edu",
+      },
+      13: {
+        id: 2,
+        applicationId: 13,
+        formalOfferSentAt: "2025-10-21T08:15:00",
+        formalOfferAcceptedAt: null,
+        newHireForm: "NOT_NEEDED",
+        newHireFormAt: "2025-10-30T11:20:00",
+        flsaConflictFoundAt: "2025-10-30T11:15:00",
+        flsaConflictResolvedAt: null,
+        inUcpathAt: null,
+        i9CompleteAt: null,
+        fundingSource: null,
+        staffComments: null,
+        updatedAt: "2025-10-30T11:20:00",
+        updatedByEmail: "hiringstaff@ucsb.edu",
+      },
+    },
   },
   /** Nobody assigned, nothing answered. */
   empty: {
@@ -110,8 +150,27 @@ const softOfferResultsFixtures = {
     counts: { assigned: 0, proceed: 0, declined: 0, none: 0 },
     headers,
     rows: [],
+    applicationIds: [],
+    hiring: {},
     unassignedHeaders,
     unassigned: [],
+  },
+  /** What PUT /api/admin/softOffers/hiring answers after Grace's Formal Offer Sent is ticked. */
+  graceFormalOfferSent: {
+    id: 3,
+    applicationId: 11,
+    formalOfferSentAt: "2025-11-24T18:30:00",
+    formalOfferAcceptedAt: null,
+    newHireForm: null,
+    newHireFormAt: null,
+    flsaConflictFoundAt: null,
+    flsaConflictResolvedAt: null,
+    inUcpathAt: null,
+    i9CompleteAt: null,
+    fundingSource: null,
+    staffComments: null,
+    updatedAt: "2025-11-24T18:30:00",
+    updatedByEmail: "finance@ucsb.edu",
   },
 };
 

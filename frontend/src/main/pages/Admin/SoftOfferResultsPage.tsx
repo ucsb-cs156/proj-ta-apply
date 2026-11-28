@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "react-bootstrap";
 import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -8,15 +9,25 @@ import CopySoftOfferEmails from "main/components/SoftOffers/CopySoftOfferEmails"
 import SoftOfferResultsTable from "main/components/SoftOffers/SoftOfferResultsTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { apiErrorMessage } from "main/utils/apiError";
+import {
+  FUNDING_SOURCES_ALL_URL,
+  type FundingSource,
+  sortFundingSources,
+} from "main/utils/fundingSources";
 import { formatPacificDateTime } from "main/utils/pacificTime";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import {
   CHANGE_DEADLINE_LABEL,
+  HIRING_URL,
   SOFT_OFFER_RESULTS_LABEL,
   SOFT_OFFER_RESULTS_URL,
   countsSentence,
+  pendingChange,
   softOfferResultsCsvFileName,
   softOfferResultsCsvUrl,
+  withHiringRecord,
+  type HiringChange,
+  type HiringRecord,
   type SoftOfferResults,
 } from "main/utils/softOffers";
 import {
@@ -27,7 +38,7 @@ import {
   columnChoices,
 } from "main/utils/softOfferResultsColumns";
 import { HIRING_STAFF_RECRUITMENTS_URL } from "main/utils/hiringStaff";
-import { useBackend } from "main/utils/useBackend";
+import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
 
 /**
@@ -40,10 +51,16 @@ import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
  * only admins may read the list of every recruitment; the answers carry the applicants' comments. Every column but First name and Last name can be hidden from the
  * Columns menu (issue #494), a choice the browser remembers for every recruitment's results, and
  * the second table follows the same choices for the columns it shares.
+ *
+ * The main table also holds the staff's hiring-tracking fields (issue #509) and Funding (issue
+ * #512), shown by default and editable by admins and hiring staff alike: each change is PUT at
+ * once, the row shows the stored value and stamp the backend answers with, and the results are
+ * re-read.
  */
 export default function SoftOfferResultsPage(): React.JSX.Element {
   const { recruitmentId } = useParams();
   const [changing, setChanging] = useState(false);
+  const queryClient = useQueryClient();
   const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
     SOFT_OFFER_COLUMNS_STORAGE_KEY,
     [],
@@ -58,6 +75,12 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
     { method: "GET", url: HIRING_STAFF_RECRUITMENTS_URL },
     [],
   );
+  // The Funding dropdown's choices (issue #512), read once for every row.
+  const { data: fundingSources } = useBackend<FundingSource[]>(
+    [FUNDING_SOURCES_ALL_URL],
+    { method: "GET", url: FUNDING_SOURCES_ALL_URL },
+    [],
+  );
   // Stryker restore all
   // Stryker disable next-line all : the query's initial data is an empty list, never undefined
   const recruitment = (recruitments ?? []).find(
@@ -65,12 +88,27 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
   );
 
   // Errors are shown on the page rather than toasted: "not released" is the usual one.
+  const resultsKey = [SOFT_OFFER_RESULTS_URL, recruitmentId];
   const { data, isError, error } = useBackend<SoftOfferResults | null>(
-    // Stryker disable next-line all : the key is only a cache name, read here alone
-    [SOFT_OFFER_RESULTS_URL, recruitmentId],
+    resultsKey,
     { url: SOFT_OFFER_RESULTS_URL, params: { recruitmentId } },
     null,
     true,
+  );
+
+  // One PUT per field change (issue #509). Its answer, the row's whole record, replaces the row's
+  // record at once, so the stored value and stamp show before the re-read that follows (the
+  // mutation's query key) has answered. A refusal is toasted, as usual.
+  const hiringMutation = useBackendMutation<HiringChange, HiringRecord>(
+    (change) => ({ url: HIRING_URL, method: "PUT", params: change }),
+    {
+      onSuccess: (record) =>
+        queryClient.setQueryData<SoftOfferResults | null>(
+          resultsKey,
+          (current) => withHiringRecord(current, record),
+        ),
+    },
+    [SOFT_OFFER_RESULTS_URL],
   );
 
   const name = recruitment
@@ -146,6 +184,18 @@ export default function SoftOfferResultsPage(): React.JSX.Element {
                 choices={choices}
                 onHide={hide}
                 testIdPrefix="SoftOfferResultsPage-table"
+                hiring={{
+                  applicationIds: data.applicationIds,
+                  records: data.hiring,
+                  // The query's initial data is an empty list, never undefined; sorting (the
+                  // backend's order already) is how the type says so.
+                  fundingSources: sortFundingSources(fundingSources),
+                  onChange: (change) => hiringMutation.mutate(change),
+                  pending: pendingChange(
+                    hiringMutation.isPending,
+                    hiringMutation.variables,
+                  ),
+                }}
               />
               {data.unassigned.length > 0 && (
                 <>

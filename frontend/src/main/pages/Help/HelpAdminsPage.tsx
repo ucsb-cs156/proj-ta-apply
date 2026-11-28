@@ -415,8 +415,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Edit</strong> button, which changes only the explanation, and
           a <strong>Delete</strong> button. An abbreviation cannot be changed
           once created, since hiring records refer to it: to change one, delete
-          it and create another. Hiring staff can see the list but not change
-          it.
+          it and create another. A source that a hiring record still carries
+          cannot be deleted: Delete is refused with a message giving how many
+          records use it, so clear the Funding of those rows on Soft Offer
+          Results first. Hiring staff can see the list but not change it.
         </p>
 
         <h2 className="my-3 h4" id="courses">
@@ -1049,14 +1051,32 @@ export default function HelpAdminsPage(): React.JSX.Element {
             it. Five columns for the financial office staff (Perm number, Prev
             LA Qtrs, Expected grad date, Other Campus Job? and Employee ID
             number, between Email and Course assignment) start hidden until you
-            show them. The CSV is laid out for that staff: it always has those
-            five, a blank <em>Funding</em> column after Course assignment, the
-            comments headed <em>Student Comments</em>, and blank columns at the
-            end for them to fill in (Formal Offer Sent, Formal Offer Accepted,
-            New Hire form done, the Other Campus Job FLSA conflict, In UCPath,
-            I-9 Complete and Staff Comments). The Comments column can be
-            dragged, by the handle at the right edge of its heading, between
-            200px and 80% of the window&apos;s width. Admins and{" "}
+            show them. Nine more columns are that staff&apos;s own
+            hiring-tracking fields, shown by default for admins and hiring staff
+            alike and hideable like the others: <em>Funding</em>, right after
+            Course assignment, a dropdown of the abbreviations from{" "}
+            <a href="#funding-sources">Funding Sources</a> (the explanation is
+            the tooltip); and, after Comments, Formal Offer Sent, Formal Offer
+            Accepted, New Hire form done (or not needed), Other Campus Job FLSA
+            conflict found, Other Campus Job FLSA conflict resolved, In UCPath,
+            I-9 Complete and Staff Comments. Six of those are checkboxes that
+            remember when they were ticked: the date (<em>mm/dd/yy</em>) and
+            time (<em>h:mm AM/PM</em>), Pacific, appear under the box; unticking
+            clears them, and ticking again records a new time. New Hire form is
+            a dropdown (blank, Done or Not needed) with the same stamp under it,
+            and Staff Comments is a text box that saves when you leave it (or
+            press Ctrl+Enter or Cmd+Enter). Every change is saved at once, and
+            admins and hiring staff may both make them. Sorting a stamped column
+            puts the unticked (or blank) rows together and orders the rest by
+            their time; New Hire form sorts by its value, then its time. The CSV
+            is laid out for that staff: it always has those five, the{" "}
+            <em>Funding</em> column after Course assignment with the chosen
+            abbreviation, the comments headed <em>Student Comments</em>, and the
+            hiring-tracking columns at the end with their values: a checkbox as
+            Yes or blank, and each stamped field followed by its Date/Time
+            column. The Comments column can be dragged, by the handle at the
+            right edge of its heading, between 200px and 80% of the
+            window&apos;s width. Admins and{" "}
             <a href="#hiring-staff">hiring staff</a> only: the page holds the
             applicants&apos; comments. Soft offers are optional and not a step
             of the diagram.

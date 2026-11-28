@@ -15,9 +15,15 @@ import { vi } from "vitest";
 import SoftOfferResultsPage from "main/pages/Admin/SoftOfferResultsPage";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import softOfferResultsFixtures from "fixtures/softOfferResultsFixtures";
+import { fundingSourcesFixtures } from "fixtures/fundingSourcesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
-import { SOFT_OFFER_COLUMNS_STORAGE_KEY } from "main/utils/softOfferResultsColumns";
+import {
+  HIRING_COLUMNS,
+  RESULTS_COLUMN_IDS,
+  SOFT_OFFER_COLUMNS_STORAGE_KEY,
+  layoutColumns,
+} from "main/utils/softOfferResultsColumns";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -28,6 +34,10 @@ vi.mock("react-toastify", async (importOriginal) => ({
 const axiosMock = new AxiosMockAdapter(axios);
 const P = "SoftOfferResultsPage";
 const T = `${P}-table`;
+const RESULTS = "/api/admin/softOffers";
+const HIRING = "/api/admin/softOffers/hiring";
+const { three } = softOfferResultsFixtures;
+const HIRING_IDS = HIRING_COLUMNS.map((column) => column.id);
 
 function renderPage(recruitmentId = 5) {
   render(
@@ -50,16 +60,33 @@ function renderPage(recruitmentId = 5) {
   );
 }
 
+/** The text of a row's cells, left to right, leaving out the hiring columns' controls. */
 const cells = (testid) =>
-  [...screen.getByTestId(testid).querySelectorAll("td")].map(
-    (td) => td.textContent,
-  );
+  [...screen.getByTestId(testid).querySelectorAll("td")]
+    .filter(
+      (td) =>
+        !HIRING_IDS.some((id) => td.dataset.testid.endsWith(`-col-${id}`)),
+    )
+    .map((td) => td.textContent);
 
 /** The headings of a table, left to right, without their "hide" links and sort carets. */
 const headings = (testid) =>
   [...screen.getByTestId(testid).querySelectorAll("thead th")].map((th) =>
     th.querySelector("[data-testid$='-sort-header']").textContent.trim(),
   );
+
+/** The main table's headings with every column shown. */
+const allHeadings = layoutColumns(RESULTS_COLUMN_IDS, three.headers).map(
+  (column) => column.heading,
+);
+
+const resultsRequests = () =>
+  axiosMock.history.get.filter((r) => r.url === RESULTS);
+
+/** A hiring control's test id: see HiringCell. */
+const control = (row, column, suffix = "") =>
+  screen.getByTestId(`${T}-hiring-row-${row}-${column}${suffix}`);
+const checkbox = (row, column) => control(row, column, "-checkbox");
 
 describe("SoftOfferResultsPage tests (issue #487)", () => {
   beforeEach(() => {
@@ -76,9 +103,10 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     axiosMock
       .onGet("/api/hiringStaff/recruitments")
       .reply(200, [recruitmentsFixtures.releasedUla]);
+    axiosMock.onGet(RESULTS).reply(200, three);
     axiosMock
-      .onGet("/api/admin/softOffers")
-      .reply(200, softOfferResultsFixtures.three);
+      .onGet("/api/admin/fundingSources/all")
+      .reply(200, fundingSourcesFixtures.threeSources);
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date("2026-11-25T02:30:00Z"));
   });
@@ -100,21 +128,46 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     expect(screen.getByTestId(`${P}-counts`)).toHaveTextContent(
       "3 assigned ULAs: 1 proceed, 0 declined, 2 no response yet.",
     );
-    const results = axiosMock.history.get.filter(
-      (r) => r.url === "/api/admin/softOffers",
-    );
+    const results = resultsRequests();
     expect(results).toHaveLength(1);
     expect(results[0].params).toEqual({ recruitmentId: "5" });
+    // The Funding dropdown's choices are read once (issue #512).
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/fundingSources/all",
+        ),
+      ).toHaveLength(1),
+    );
   });
 
   test("the main table: the headers, a row per assigned ULA, the stamp in Pacific with its late mark, the stale answer muted", async () => {
     renderPage();
 
     const table = await screen.findByTestId(T);
-    // Issue #500: the five columns for the financial office staff start hidden.
-    expect(headings(T)).toEqual(
-      softOfferResultsFixtures.three.headers.filter((h, i) => i < 3 || i > 7),
-    );
+    // Issue #500: the five columns for the financial office staff start hidden; the nine hiring
+    // columns (issues #509, #512) are shown.
+    expect(headings(T)).toEqual([
+      "First name",
+      "Last name",
+      "Email",
+      "Course assignment",
+      "Funding",
+      "Course instructor",
+      "Course instructor email",
+      "First time ULA",
+      "Offer Status",
+      "Offer Response Date/Time",
+      "Comments",
+      "Formal Offer Sent",
+      "Formal Offer Accepted",
+      "New Hire form done (or not needed)",
+      "Other Campus Job FLSA conflict found",
+      "Other Campus Job FLSA conflict resolved",
+      "In UCPath",
+      "I-9 Complete",
+      "Staff Comments",
+    ]);
     expect(table.querySelectorAll("tbody tr")).toHaveLength(3);
     expect(cells(`${T}-row-0`)).toEqual([
       "Grace",
@@ -158,15 +211,13 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     ).toHaveTextContent("");
   });
 
-  test("the second table lists answers from applicants no longer assigned, with its own columns", async () => {
+  test("the second table lists answers from applicants no longer assigned, with its own columns and no hiring columns", async () => {
     renderPage();
 
     expect(
       await screen.findByTestId(`${P}-unassigned-title`),
     ).toHaveTextContent("Responses from applicants no longer assigned");
-    expect(headings(`${P}-unassigned`)).toEqual(
-      softOfferResultsFixtures.three.unassignedHeaders,
-    );
+    expect(headings(`${P}-unassigned`)).toEqual(three.unassignedHeaders);
     expect(cells(`${P}-unassigned-row-0`)).toEqual([
       "Linus",
       "Torvalds",
@@ -180,6 +231,9 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       screen
         .getByTestId(`${P}-unassigned-cell-row-0-col-status`)
         .querySelector("span"),
+    ).toBeNull();
+    expect(
+      within(screen.getByTestId(`${P}-unassigned`)).queryByRole("checkbox"),
     ).toBeNull();
   });
 
@@ -227,7 +281,10 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
 
     await userEvent.click(await screen.findByTestId(`${P}-columns-toggle`));
     expect(
-      screen.getAllByRole("checkbox").map((box) => box.labels[0].textContent),
+      screen
+        .getAllByRole("checkbox")
+        .filter((box) => box.labels.length > 0)
+        .map((box) => box.labels[0].textContent),
     ).toEqual([
       "Email",
       "Perm number",
@@ -236,12 +293,21 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       "Other Campus Job?",
       "Employee ID number",
       "Course assignment",
+      "Funding",
       "Course instructor",
       "Course instructor email",
       "First time ULA",
       "Offer Status",
       "Offer Response Date/Time",
       "Comments",
+      "Formal Offer Sent",
+      "Formal Offer Accepted",
+      "New Hire form done (or not needed)",
+      "Other Campus Job FLSA conflict found",
+      "Other Campus Job FLSA conflict resolved",
+      "In UCPath",
+      "I-9 Complete",
+      "Staff Comments",
     ]);
     // No "hide" link over First name or Last name, in either table.
     expect(
@@ -253,6 +319,9 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     expect(
       screen.getAllByRole("button", { name: "Hide Comments column" }),
     ).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: "Hide Funding column" }),
+    ).toHaveLength(1);
     // The second table's own column is always shown.
     expect(
       screen.queryByRole("button", { name: "Hide Course answered for column" }),
@@ -329,7 +398,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     ).toEqual([]);
     // Show All shows the five opt-in columns too (issue #500).
     expect(screen.getByTestId(`${T}-header-employeeId`)).toBeInTheDocument();
-    expect(headings(T)).toEqual(softOfferResultsFixtures.three.headers);
+    expect(headings(T)).toEqual(allHeadings);
   });
 
   test("columns hidden on an earlier visit start hidden", async () => {
@@ -382,9 +451,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
   });
 
   test("with nobody assigned the table is empty and the second table is absent", async () => {
-    axiosMock
-      .onGet("/api/admin/softOffers")
-      .reply(200, softOfferResultsFixtures.empty);
+    axiosMock.onGet(RESULTS).reply(200, softOfferResultsFixtures.empty);
     renderPage();
 
     expect(await screen.findByTestId(`${P}-counts`)).toHaveTextContent(
@@ -396,7 +463,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
   });
 
   test("a refusal from the backend is shown on the page, and nothing else", async () => {
-    axiosMock.onGet("/api/admin/softOffers").reply(400, {
+    axiosMock.onGet(RESULTS).reply(400, {
       message: "Soft offers have not been released for this recruitment.",
     });
     renderPage();
@@ -444,11 +511,7 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
     await waitFor(() =>
       expect(screen.queryByTestId(`${P}-deadline-modal`)).toBeNull(),
     );
-    await waitFor(() =>
-      expect(
-        axiosMock.history.get.filter((r) => r.url === "/api/admin/softOffers"),
-      ).toHaveLength(2),
-    );
+    await waitFor(() => expect(resultsRequests()).toHaveLength(2));
   });
 
   test("Cancel closes the Change Deadline modal", async () => {
@@ -461,5 +524,215 @@ describe("SoftOfferResultsPage tests (issue #487)", () => {
       expect(screen.queryByTestId(`${P}-deadline-modal`)).toBeNull(),
     );
     expect(within(screen.getByTestId(T)).getAllByRole("row")).toHaveLength(4);
+  });
+
+  // ---- issues #509 and #512: the hiring columns ----
+
+  test("the hiring columns are shown by default for hiring staff too, filled from the records, and hide from the menu and the hide link like the others", async () => {
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.hiringStaffUser);
+    renderPage();
+
+    await screen.findByTestId(`${T}-row-0`);
+    expect(screen.getByTestId(`${P}-columns-toggle`)).toHaveTextContent(
+      "Columns (5 hidden)",
+    );
+    expect(checkbox(1, "formalOfferSent")).toBeChecked();
+    expect(control(1, "formalOfferSent", "-stamp-date")).toHaveTextContent(
+      "10/27/25",
+    );
+    expect(control(1, "formalOfferSent", "-stamp-time")).toHaveTextContent(
+      "2:05 PM",
+    );
+    expect(checkbox(0, "formalOfferSent")).not.toBeChecked();
+    expect(control(2, "newHireForm", "-select")).toHaveValue("NOT_NEEDED");
+    expect(control(1, "staffComments")).toHaveValue("Paperwork started.");
+    expect(control(1, "funding")).toHaveValue("sub0");
+
+    await userEvent.click(screen.getByTestId(`${P}-columns-toggle`));
+    expect(screen.getByRole("checkbox", { name: "Funding" })).toBeChecked();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Funding" }));
+    expect(screen.queryByTestId(`${T}-header-funding`)).toBeNull();
+    expect(screen.queryByTestId(`${T}-cell-row-0-col-funding`)).toBeNull();
+    expect(screen.getByTestId(`${P}-columns-toggle`)).toHaveTextContent(
+      "Columns (6 hidden)",
+    );
+    await userEvent.click(screen.getByTestId(`${T}-header-staffComments-hide`));
+    expect(screen.queryByTestId(`${T}-header-staffComments`)).toBeNull();
+    expect(
+      JSON.parse(localStorage.getItem(SOFT_OFFER_COLUMNS_STORAGE_KEY)),
+    ).toEqual(["funding", "staffComments"]);
+    expect(screen.getByTestId(`${T}-header-inUcpath`)).toBeInTheDocument();
+  });
+
+  test("hiring columns hidden on an earlier visit start hidden", async () => {
+    localStorage.setItem(
+      SOFT_OFFER_COLUMNS_STORAGE_KEY,
+      JSON.stringify(["formalOfferSent", "i9Complete"]),
+    );
+    renderPage();
+
+    await screen.findByTestId(`${T}-row-0`);
+    expect(screen.queryByTestId(`${T}-header-formalOfferSent`)).toBeNull();
+    expect(screen.queryByTestId(`${T}-header-i9Complete`)).toBeNull();
+    expect(
+      screen.getByTestId(`${T}-header-formalOfferAccepted`),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId(`${P}-columns-toggle`)).toHaveTextContent(
+      "Columns (7 hidden)",
+    );
+  });
+
+  test("ticking a box PUTs the field with the row's application id, shows the answer's stamp at once, and re-reads the results", async () => {
+    let reads = 0;
+    // The results are read once; the re-read after the save never answers here, so what the row
+    // shows is the save's own answer.
+    axiosMock.onGet(RESULTS).reply(() => {
+      reads++;
+      return reads === 1 ? [200, three] : new Promise(() => {});
+    });
+    axiosMock
+      .onPut(HIRING)
+      .reply(200, softOfferResultsFixtures.graceFormalOfferSent);
+    renderPage();
+
+    await userEvent.click(
+      await screen.findByTestId(`${T}-hiring-row-0-formalOfferSent-checkbox`),
+    );
+
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].url).toBe(HIRING);
+    expect(axiosMock.history.put[0].params).toEqual({
+      applicationId: 11,
+      field: "FORMAL_OFFER_SENT",
+      value: "true",
+    });
+    expect(
+      await screen.findByTestId(`${T}-hiring-row-0-formalOfferSent-stamp-date`),
+    ).toHaveTextContent("11/24/25");
+    expect(control(0, "formalOfferSent", "-stamp-time")).toHaveTextContent(
+      "6:30 PM",
+    );
+    expect(checkbox(0, "formalOfferSent")).toBeChecked();
+    await waitFor(() => expect(reads).toBe(2));
+    // The other rows' records are untouched, and nothing is toasted.
+    expect(checkbox(1, "formalOfferSent")).toBeChecked();
+    expect(control(1, "staffComments")).toHaveValue("Paperwork started.");
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("while a save is in flight its control is disabled; a refusal is toasted and the row is left as it was", async () => {
+    let answer;
+    axiosMock.onPut(HIRING).reply(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+    );
+    renderPage();
+
+    await userEvent.click(
+      await screen.findByTestId(`${T}-hiring-row-1-inUcpath-checkbox`),
+    );
+
+    await waitFor(() => expect(checkbox(1, "inUcpath")).toBeDisabled());
+    expect(axiosMock.history.put[0].params).toEqual({
+      applicationId: 12,
+      field: "IN_UCPATH",
+      value: "false",
+    });
+    // Only that control: the same field on another row, and another field on the same row, are
+    // still live.
+    expect(checkbox(2, "inUcpath")).toBeEnabled();
+    expect(checkbox(1, "i9Complete")).toBeEnabled();
+    expect(checkbox(1, "inUcpath")).toBeChecked();
+
+    answer([400, { message: "A checkbox takes the value true or false." }]);
+    // The usual toast of useBackendMutation (the mock's error reads "Error: ...").
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Error: Request failed with status code 400",
+      ),
+    );
+    expect(mockToast).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(checkbox(1, "inUcpath")).toBeEnabled());
+    expect(checkbox(1, "inUcpath")).toBeChecked();
+    expect(control(1, "inUcpath", "-stamp-date")).toHaveTextContent("11/03/25");
+    // The results are re-read after a refusal too.
+    await waitFor(() => expect(resultsRequests()).toHaveLength(2));
+  });
+
+  test("the New Hire form dropdown, Staff Comments (on blur) and Funding save through the same endpoint", async () => {
+    axiosMock.onPut(HIRING).reply((config) => [
+      200,
+      {
+        ...three.hiring[12],
+        applicationId: Number(config.params.applicationId),
+      },
+    ]);
+    renderPage();
+
+    await userEvent.selectOptions(
+      await screen.findByTestId(`${T}-hiring-row-0-newHireForm-select`),
+      "Not needed",
+    );
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].params).toEqual({
+      applicationId: 11,
+      field: "NEW_HIRE_FORM",
+      value: "NOT_NEEDED",
+    });
+
+    await userEvent.type(
+      control(2, "staffComments"),
+      "Needs an I-9 appointment.",
+    );
+    expect(axiosMock.history.put).toHaveLength(1);
+    await userEvent.tab();
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(2));
+    expect(axiosMock.history.put[1].params).toEqual({
+      applicationId: 13,
+      field: "STAFF_COMMENTS",
+      value: "Needs an I-9 appointment.",
+    });
+
+    // Funding (issue #512): the sources from the backend, by abbreviation, the explanation as the
+    // tooltip.
+    const options = [...control(0, "funding").querySelectorAll("option")];
+    expect(options.map((o) => o.value)).toEqual([
+      "",
+      "ds-gift",
+      "sub0",
+      "ula-gift",
+    ]);
+    expect(options[3].title).toBe("Gift funding for ULAs");
+    await userEvent.selectOptions(control(0, "funding"), "ula-gift");
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(3));
+    expect(axiosMock.history.put[2].params).toEqual({
+      applicationId: 11,
+      field: "FUNDING_SOURCE",
+      value: "ula-gift",
+    });
+    await waitFor(() => expect(resultsRequests().length).toBeGreaterThan(1));
+  });
+
+  test("sorting Formal Offer Sent groups the unticked rows and orders the rest by stamp; the toggle reverses it", async () => {
+    renderPage();
+    await screen.findByTestId(`${T}-row-0`);
+    const names = () =>
+      [...screen.getByTestId(T).querySelectorAll("tbody tr")].map(
+        (row) => row.cells[0].textContent,
+      );
+    expect(names()).toEqual(["Grace", "Ada", "Alan"]);
+
+    await userEvent.click(
+      screen.getByTestId(`${T}-header-formalOfferSent-sort-header`),
+    );
+    expect(names()).toEqual(["Grace", "Alan", "Ada"]);
+    await userEvent.click(
+      screen.getByTestId(`${T}-header-formalOfferSent-sort-header`),
+    );
+    expect(names()).toEqual(["Ada", "Alan", "Grace"]);
   });
 });
