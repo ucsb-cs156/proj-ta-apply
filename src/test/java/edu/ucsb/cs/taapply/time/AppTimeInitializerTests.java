@@ -97,9 +97,9 @@ public class AppTimeInitializerTests {
 
   /**
    * End to end, the way the app starts: a Spring application started with the property runs in that
-   * zone, with nothing else told. No database: H2 remembers the JVM zone it first saw for the rest
-   * of the test run, so a context with a datasource started in Tokyo would shift every timestamp
-   * the later test classes read back.
+   * zone, with nothing else told. No database: none is needed, and before AppTimeTestSession
+   * settled H2's zone (issue #523) a context with a datasource started in Tokyo, when it was the
+   * first to touch H2, shifted every timestamp the later test classes read back.
    */
   @Test
   public void a_spring_application_started_with_the_property_runs_in_that_zone() {
